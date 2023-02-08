@@ -28,6 +28,7 @@ import me.lauriichan.spigot.justlootit.message.impl.SimpleMessageProviderFactory
 import me.lauriichan.spigot.justlootit.nms.IServiceProvider;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.nms.VersionHelper;
+import me.lauriichan.spigot.justlootit.nms.packet.listener.PacketContainer;
 import me.lauriichan.spigot.justlootit.nms.packet.listener.PacketManager;
 import me.lauriichan.spigot.justlootit.util.BukkitExecutorService;
 import me.lauriichan.spigot.justlootit.util.BukkitSimpleLogger;
@@ -58,6 +59,12 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
     private ISimpleLogger logger;
     private CommandManager commandManager;
     private MessageManager messageManager;
+    
+    /*
+     * PacketContainers
+     */
+    
+    private PacketContainer itemFrameContainer;
 
     /*
      * Setup
@@ -132,7 +139,7 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
         
         pluginManager.registerEvents(itemFrameListener, this);
         if(packetManager != null) {
-            packetManager.register(itemFrameListener);
+            itemFrameContainer = packetManager.register(itemFrameListener).setGlobal(true);
         }
     }
 
@@ -143,6 +150,7 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
     @Override
     public void onDisable() {
         if (versionHandler != null) {
+            packetManager.unregister(itemFrameContainer);
             versionHandler.disable();
         }
     }

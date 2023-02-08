@@ -1,7 +1,6 @@
 package me.lauriichan.spigot.justlootit.nms.v1_19_R2;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
+import java.lang.invoke.MethodHandle;
 import java.util.List;
 
 import org.bukkit.craftbukkit.v1_19_R2.block.CraftBlockEntityState;
@@ -30,8 +29,8 @@ import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 
 public class VersionHelper1_19_R2 extends VersionHelper {
 
-    private final Method CraftEntityState_getTileEntity = ClassUtil.getMethod(CraftBlockEntityState.class, "getTileEntity");
-    private final Field CraftItemStack_handle = ClassUtil.getField(CraftItemStack.class, "handle");
+    private final MethodHandle CraftEntityState_getTileEntity = JavaAccess.accessMethod(ClassUtil.getMethod(CraftBlockEntityState.class, "getTileEntity"));
+    private final MethodHandle CraftItemStack_handle = JavaAccess.accessFieldGetter(ClassUtil.getField(CraftItemStack.class, "handle"));
 
     private final VersionHandler1_19_R2 handler;
 
@@ -62,7 +61,7 @@ public class VersionHelper1_19_R2 extends VersionHelper {
 
     private ItemStack extract(org.bukkit.inventory.ItemStack itemStack) {
         if (itemStack instanceof CraftItemStack) {
-            Object handle = JavaAccess.getObjectValue(itemStack, CraftItemStack_handle);
+            Object handle = JavaAccess.invoke(itemStack, CraftItemStack_handle);
             if (handle == null) {
                 return ItemStack.EMPTY;
             }
