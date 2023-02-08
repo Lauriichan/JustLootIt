@@ -1,7 +1,6 @@
 package me.lauriichan.spigot.justlootit.command.impl;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
+import java.lang.invoke.MethodHandle;
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Map;
@@ -23,10 +22,12 @@ import me.lauriichan.spigot.justlootit.util.VersionConstant;
 
 public final class BukkitCommandInjector implements ICommandInjector {
 
-    private final Constructor<?> pluginCommandConstructor = ClassUtil.getConstructor(PluginCommand.class, String.class, Plugin.class);
-    private final Method craftServerGetCommandMap = ClassUtil.getMethod(ClassUtil.findClass(VersionConstant.craftClassPath("CraftServer")),
-        "getCommandMap");
-    private final Method commandMapGetCommands = ClassUtil.getMethod(SimpleCommandMap.class, "knownCommands");
+    private final MethodHandle pluginCommandConstructor = JavaAccess
+        .accessConstructor(ClassUtil.getConstructor(PluginCommand.class, String.class, Plugin.class));
+    private final MethodHandle craftServerGetCommandMap = JavaAccess
+        .accessMethod(ClassUtil.getMethod(ClassUtil.findClass(VersionConstant.craftClassPath("CraftServer")), "getCommandMap"));
+    private final MethodHandle commandMapGetCommands = JavaAccess
+        .accessMethod(ClassUtil.getMethod(SimpleCommandMap.class, "knownCommands"));
 
     private final Plugin plugin;
     private final BukkitCommandBridge bridge;
@@ -36,7 +37,8 @@ public final class BukkitCommandInjector implements ICommandInjector {
 
     private final String prefix;
 
-    public BukkitCommandInjector(final VersionHelper versionHelper, final CommandManager commandManager, final MessageManager messageManager, final Plugin plugin) {
+    public BukkitCommandInjector(final VersionHelper versionHelper, final CommandManager commandManager,
+        final MessageManager messageManager, final Plugin plugin) {
         this.plugin = plugin;
         this.prefix = plugin.getName().toLowerCase(Locale.ROOT);
         this.bridge = new BukkitCommandBridge(versionHelper, commandManager, messageManager, prefix);
@@ -52,7 +54,7 @@ public final class BukkitCommandInjector implements ICommandInjector {
     @Override
     public void inject(NodeCommand nodeCommand) {
         final SimpleCommandMap commandMap = (SimpleCommandMap) JavaAccess.invoke(Bukkit.getServer(), craftServerGetCommandMap);
-        final PluginCommand pluginCommand = (PluginCommand) JavaAccess.instance(pluginCommandConstructor, nodeCommand.getName(), plugin);
+        final PluginCommand pluginCommand = (PluginCommand) JavaAccess.invokeStatic(pluginCommandConstructor, nodeCommand.getName(), plugin);
         pluginCommand.setAliases(new ArrayList<>(nodeCommand.getAliases()));
         pluginCommand.setExecutor(bridge);
         pluginCommand.setTabCompleter(bridge);
