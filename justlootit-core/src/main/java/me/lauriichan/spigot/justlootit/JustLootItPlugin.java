@@ -43,6 +43,10 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
      *      - Container without Loottable
      *  - Add support for third-party plugins (add an api or smth)
      *  - Add automatic detection for vanilla containers and item frames
+     *  
+     *  (Optional)
+     *  
+     *  - Use CommandManager as main command instead of each command being a main command
      * 
      */
 
