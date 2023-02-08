@@ -76,6 +76,7 @@ public class ItemFrameListener implements IPacketListener, Listener {
         if (container.has(playerKey, PersistentDataType.BYTE)) {
             return;
         }
+        container.set(playerKey, PersistentDataType.BYTE, JustLootItKey.TRUE);
         damager.getWorld().dropItem(entity.getLocation(), ((ItemFrame) entity).getItem().clone());
     }
 
