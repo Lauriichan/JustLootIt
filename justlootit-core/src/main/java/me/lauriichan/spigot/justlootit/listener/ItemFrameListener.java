@@ -8,6 +8,7 @@ import org.bukkit.entity.ItemFrame;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.hanging.HangingBreakEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataContainer;
@@ -27,7 +28,8 @@ public class ItemFrameListener implements IPacketListener, Listener {
     @PacketHandler
     public void onEntityMetadata(PlayerAdapter player, PacketOutSetEntityData packet) {
         Entity entity = player.getLevel().getBukkitEntityById(packet.getEntityId());
-        if (entity.getType() != EntityType.ITEM_FRAME) {
+        EntityType type = entity.getType();
+        if (type != EntityType.ITEM_FRAME && type != EntityType.GLOW_ITEM_FRAME) {
             return;
         }
         IEntityDataPack pack = packet.getData();
@@ -78,6 +80,16 @@ public class ItemFrameListener implements IPacketListener, Listener {
         }
         container.set(playerKey, PersistentDataType.BYTE, JustLootItKey.TRUE);
         damager.getWorld().dropItem(entity.getLocation(), ((ItemFrame) entity).getItem().clone());
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onHangingBreak(HangingBreakEvent event) {
+        Entity entity = event.getEntity();
+        EntityType type = entity.getType();
+        if (type != EntityType.ITEM_FRAME && type != EntityType.GLOW_ITEM_FRAME) {
+            return;
+        }
+        event.setCancelled(entity.getPersistentDataContainer().has(JustLootItKey.IDENTITY, PersistentDataType.BYTE));
     }
 
 }
