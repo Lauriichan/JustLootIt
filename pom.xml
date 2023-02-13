@@ -7,7 +7,7 @@
     <name>JustLootIt</name>
     <modules>
         <module>justlootit-core</module>
-        <module>justlootit-nms</module>
+        <module>justlootit-nms-api</module>
         <module>justlootit-nms-1_19_R2</module>
     </modules>
 

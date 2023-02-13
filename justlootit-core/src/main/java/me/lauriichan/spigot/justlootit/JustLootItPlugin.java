@@ -32,9 +32,10 @@ import me.lauriichan.spigot.justlootit.nms.packet.listener.PacketContainer;
 import me.lauriichan.spigot.justlootit.nms.packet.listener.PacketManager;
 import me.lauriichan.spigot.justlootit.util.BukkitExecutorService;
 import me.lauriichan.spigot.justlootit.util.BukkitSimpleLogger;
+import me.lauriichan.spigot.justlootit.util.VersionConstant;
 
 public final class JustLootItPlugin extends JavaPlugin implements IServiceProvider {
-    
+
     /*
      *  TODO List
      * 
@@ -52,6 +53,8 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
 
     private static final String VERSION_PATH = JustLootItPlugin.class.getPackageName() + ".nms.%s.VersionHandler%s";
 
+
+
     private final ExecutorService mainService = new BukkitExecutorService(this, false);
     private final ExecutorService asyncService = new BukkitExecutorService(this, true);
 
@@ -63,11 +66,11 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
     private ISimpleLogger logger;
     private CommandManager commandManager;
     private MessageManager messageManager;
-    
+
     /*
      * PacketContainers
      */
-    
+
     private PacketContainer itemFrameContainer;
 
     /*
@@ -95,8 +98,9 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
             versionHandler = initVersionHandler();
             versionHelper = versionHandler.getVersionHelper();
             packetManager = versionHandler.getPacketManager();
+            getLogger().severe("Initialized version support for " + coreVersion);
         } catch (Exception exp) {
-            getLogger().severe("Failed to initialize version support");
+            getLogger().severe("Failed to initialize version support for " + coreVersion);
             getLogger().severe("Reason: '" + exp.getMessage() + "'");
             getLogger().severe("");
             getLogger().severe("Some features might be disabled because of that");
@@ -140,9 +144,9 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
 
     private void registerListeners(PluginManager pluginManager) {
         ItemFrameListener itemFrameListener = new ItemFrameListener();
-        
+
         pluginManager.registerEvents(itemFrameListener, this);
-        if(packetManager != null) {
+        if (packetManager != null) {
             itemFrameContainer = packetManager.register(itemFrameListener).setGlobal(true);
         }
     }
@@ -203,8 +207,8 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
      */
 
     private VersionHandler initVersionHandler() {
-        String version = getServer().getClass().getPackage().getName().replace(".", ",").split(",")[3];
-        String path = String.format(VERSION_PATH, version, (coreVersion = version.substring(1)));
+        String path = String.format(VERSION_PATH, VersionConstant.PACKAGE_VERSION,
+            (coreVersion = VersionConstant.PACKAGE_VERSION.substring(1)));
         Class<?> clazz = ClassUtil.findClass(path);
         if (clazz == null || !VersionHandler.class.isAssignableFrom(clazz)) {
             throw new IllegalStateException("Couldn't find class '" + path + "'!");

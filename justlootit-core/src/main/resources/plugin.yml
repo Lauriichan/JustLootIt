@@ -1,0 +1,4 @@
+main: ${project.groupId}.JustLootItPlugin
+name: JustLootIt
+version: 1.0.0
+api-version: 1.19
