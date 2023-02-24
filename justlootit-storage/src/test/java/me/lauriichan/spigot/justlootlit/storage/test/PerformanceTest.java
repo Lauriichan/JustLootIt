@@ -20,7 +20,7 @@ public class PerformanceTest {
 
     private static final class Profiler {
 
-        private final ArrayList<Long> durations = new ArrayList<>();
+        private final ArrayList<Long> durations = new ArrayList<>(RUNS_PER_ROUND);
         private Long start = null;
 
         private boolean locked = false;
