@@ -14,16 +14,31 @@
             <version>${project.parent.version}</version>
         </dependency>
         
+        <!-- Spigot -->
+        <dependency>
+            <groupId>org.spigotmc</groupId>
+            <artifactId>spigot-api</artifactId>
+            <version>1.19-R0.1-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+        
+        <!-- JustLootIt Modules -->
+        <dependency>
+            <groupId>me.lauriichan.spigot.justlootit</groupId>
+            <artifactId>justlootit-storage</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>me.lauriichan.spigot.justlootit</groupId>
+            <artifactId>justlootit-nms-api</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+        
         <!-- Bukkit Version Compat (1.19.3) -->
         <dependency>
             <groupId>${project.parent.groupId}</groupId>
             <artifactId>justlootit-nms-1_19_R2</artifactId>
             <version>${project.parent.version}</version>
-        </dependency>
-        <dependency>
-        	<groupId>me.lauriichan.spigot.justlootit</groupId>
-        	<artifactId>justlootit-nms-api</artifactId>
-        	<version>1.0.0</version>
         </dependency>
     </dependencies>
 

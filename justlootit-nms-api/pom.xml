@@ -13,5 +13,12 @@
             <artifactId>command</artifactId>
             <version>0.1.0-10191ac-SNAPSHOT</version>
         </dependency>
+        <!-- Spigot -->
+        <dependency>
+            <groupId>org.spigotmc</groupId>
+            <artifactId>spigot-api</artifactId>
+            <version>1.19-R0.1-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 </project>
