@@ -3,6 +3,7 @@ package me.lauriichan.spigot.justlootit;
 import java.lang.reflect.Constructor;
 import java.util.concurrent.ExecutorService;
 
+import me.lauriichan.spigot.justlootit.listener.ContainerListener;
 import org.bukkit.NamespacedKey;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
@@ -144,8 +145,10 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
 
     private void registerListeners(PluginManager pluginManager) {
         ItemFrameListener itemFrameListener = new ItemFrameListener();
+        ContainerListener containerListener = new ContainerListener();
 
         pluginManager.registerEvents(itemFrameListener, this);
+        pluginManager.registerEvents(containerListener, this);
         if (packetManager != null) {
             itemFrameContainer = packetManager.register(itemFrameListener).setGlobal(true);
         }
