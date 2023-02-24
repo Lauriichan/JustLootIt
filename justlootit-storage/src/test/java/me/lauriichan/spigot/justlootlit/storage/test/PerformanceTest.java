@@ -15,7 +15,7 @@ import me.lauriichan.spigot.justlootit.storage.Storable;
 import me.lauriichan.spigot.justlootlit.storage.test.Test.StorageProvider;
 
 public class PerformanceTest {
-    
+
     /*
      * ONLY MODIFY PUBLIC FIELDS
      */
@@ -28,7 +28,7 @@ public class PerformanceTest {
     public static final Test<?>[] TESTS = new Test[] {
 
     };
-    
+
     /*
      * ONLY MODIFY PUBLIC FIELDS
      */
