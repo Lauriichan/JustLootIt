@@ -19,15 +19,15 @@ import me.lauriichan.spigot.justlootit.storage.cache.ThreadSafeCache;
 
 public class RAFStorage<S extends Storable> extends Storage<S> {
 
-    private static final long LOOKUP_HEADER_SIZE = Long.BYTES;
+    private static final int LOOKUP_HEADER_SIZE = Long.BYTES;
 
-    private static final long LOOKUP_ENTRY_ID_SIZE = Short.BYTES;
-    private static final long LOOKUP_ENTRY_OFFSET_SIZE = Long.BYTES;
-    private static final long LOOKUP_ENTRY_SIZE = LOOKUP_ENTRY_ID_SIZE + LOOKUP_ENTRY_OFFSET_SIZE;
+    private static final int LOOKUP_ENTRY_ID_SIZE = Short.BYTES;
+    private static final int LOOKUP_ENTRY_OFFSET_SIZE = Long.BYTES;
+    private static final int LOOKUP_ENTRY_SIZE = LOOKUP_ENTRY_ID_SIZE + LOOKUP_ENTRY_OFFSET_SIZE;
 
-    private static final long VALUE_HEADER_ID_SIZE = Short.BYTES;
-    private static final long VALUE_HEADER_LENGTH_SIZE = Integer.BYTES;
-    private static final long VALUE_HEADER_SIZE = VALUE_HEADER_ID_SIZE + VALUE_HEADER_LENGTH_SIZE;
+    private static final int VALUE_HEADER_ID_SIZE = Short.BYTES;
+    private static final int VALUE_HEADER_LENGTH_SIZE = Integer.BYTES;
+    private static final int VALUE_HEADER_SIZE = VALUE_HEADER_ID_SIZE + VALUE_HEADER_LENGTH_SIZE;
 
     private final File directory;
     private final ThreadSafeCache<Integer, RAFAccess<S>> accesses;
@@ -110,7 +110,7 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
             long lookupPosition = offsetPosition;
             while (file.getFilePointer() != offsetPosition) {
                 if (file.readShort() != valueId) {
-                    file.seek(file.getFilePointer() + LOOKUP_ENTRY_OFFSET_SIZE);
+                    file.skipBytes(LOOKUP_ENTRY_OFFSET_SIZE);
                     continue;
                 }
                 lookupPosition = file.readLong();
