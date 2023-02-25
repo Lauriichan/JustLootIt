@@ -18,6 +18,8 @@ import me.lauriichan.spigot.justlootit.storage.cache.Int2ObjectCache;
 import me.lauriichan.spigot.justlootit.storage.cache.ThreadSafeCache;
 
 public class RAFStorage<S extends Storable> extends Storage<S> {
+
+    private static final int COPY_BUFFER_SIZE = 1024 * 64;
     
     private static final int VALUE_ID_AMOUNT = 1024;
     
@@ -358,7 +360,7 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
         long oldFileEnd = file.length();
         file.setLength(oldFileEnd + amount);
         long pointer = oldFileEnd;
-        byte[] buffer = new byte[16384];
+        byte[] buffer = new byte[COPY_BUFFER_SIZE];
         while (pointer != offset) {
             long diff = pointer - offset;
             int size = diff > buffer.length ? buffer.length : (int) diff;
@@ -373,7 +375,7 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
     private void shrinkFile(RandomAccessFile file, long offset, long amount) throws IOException {
         long pointer = offset + amount;
         long newLength = file.length() - amount;
-        byte[] buffer = new byte[16384];
+        byte[] buffer = new byte[COPY_BUFFER_SIZE];
         while (pointer != newLength) {
             long diff = newLength - pointer;
             int size = diff > buffer.length ? buffer.length : (int) diff;

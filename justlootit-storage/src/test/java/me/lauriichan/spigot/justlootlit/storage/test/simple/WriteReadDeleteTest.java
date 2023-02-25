@@ -32,7 +32,10 @@ public class WriteReadDeleteTest extends BaseTest<SimpleObject> {
         for(int id = 0; id < amount; id++) {
             SimpleObject loaded = storage.read(id);
             assertEquals(loaded.number, objects[id].number);
-            assertTrue(storage.delete(id));
+            
+            if(id % 2 == 0) {
+                assertTrue(storage.delete(id));
+            }
         }
     }
 
