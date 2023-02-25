@@ -13,7 +13,7 @@ import org.junit.jupiter.api.TestFactory;
 
 import me.lauriichan.spigot.justlootit.storage.Storable;
 import me.lauriichan.spigot.justlootlit.storage.test.Test.StorageProvider;
-import me.lauriichan.spigot.justlootlit.storage.test.simple.SimpleTest;
+import me.lauriichan.spigot.justlootlit.storage.test.simple.WriteReadTest;
 
 public class PerformanceTest {
 
@@ -29,7 +29,7 @@ public class PerformanceTest {
     public static final boolean PRINT_EACH_ROUND = false;
 
     public static final Test<?>[] TESTS = new Test[] {
-        new SimpleTest(1024)
+        new WriteReadTest(1024)
     };
 
     /*

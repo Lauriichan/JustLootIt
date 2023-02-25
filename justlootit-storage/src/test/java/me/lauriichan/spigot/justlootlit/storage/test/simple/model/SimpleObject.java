@@ -1,4 +1,4 @@
-package me.lauriichan.spigot.justlootlit.storage.test.simple;
+package me.lauriichan.spigot.justlootlit.storage.test.simple.model;
 
 import me.lauriichan.spigot.justlootit.storage.Storable;
 
