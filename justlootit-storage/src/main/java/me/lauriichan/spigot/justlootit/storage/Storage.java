@@ -94,15 +94,15 @@ public abstract class Storage<S extends Storable> {
             lock.readLock().unlock();
         }
     }
-
-    public abstract void updateEach(Consumer<S> updater) throws StorageException;
-
-    public abstract void write(S storable) throws StorageException;
-
-    public abstract boolean delete(long id) throws StorageException;
     
     public abstract void clear() throws StorageException;
 
     public abstract S read(long id) throws StorageException;
+
+    public abstract void write(S storable) throws StorageException;
+
+    public abstract boolean delete(long id) throws StorageException;
+
+    public abstract void updateEach(Consumer<S> updater) throws StorageException;
 
 }

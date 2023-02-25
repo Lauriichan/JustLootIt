@@ -9,6 +9,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import me.lauriichan.spigot.justlootit.storage.Storable;
 import me.lauriichan.spigot.justlootit.storage.Storage;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapter;
@@ -24,11 +25,13 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
     private static final long LOOKUP_ENTRY_OFFSET_SIZE = Long.BYTES;
     private static final long LOOKUP_ENTRY_SIZE = LOOKUP_ENTRY_ID_SIZE + LOOKUP_ENTRY_OFFSET_SIZE;
 
-    private static final long VALUE_HEADER_SIZE = Short.BYTES + Integer.BYTES;
+    private static final long VALUE_HEADER_ID_SIZE = Short.BYTES;
+    private static final long VALUE_HEADER_LENGTH_SIZE = Integer.BYTES;
+    private static final long VALUE_HEADER_SIZE = VALUE_HEADER_ID_SIZE + VALUE_HEADER_LENGTH_SIZE;
 
     private final File directory;
     private final ThreadSafeCache<Integer, RAFAccess<S>> accesses;
-    
+
     private final Logger logger;
 
     public RAFStorage(Logger logger, Class<S> baseType, File directory) {
@@ -38,29 +41,105 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
         this.directory = directory;
     }
 
+    /*
+     * Clear data
+     */
+
     @Override
-    public void updateEach(Consumer<S> updater) {
-        if (!directory.exists()) {
-            return;
-        }
-        File[] files = directory.listFiles(RAFAccess.FILE_FILTER);
-        for (File file : files) {
-            int fileId;
-            try {
-                fileId = Integer.parseInt(file.getName().substring(0, file.getName().length() - 4));
-            } catch (NumberFormatException nfe) {
+    public void clear() {
+        List<Integer> list = accesses.keys();
+        for (Integer id : list) {
+            RAFAccess<S> access = accesses.remove(id);
+            if (access == null || !access.isOpen()) {
                 continue;
             }
-            if (!accesses.has(fileId)) {
-                // TODO: Load and update
+            if (access.isOpen()) {
+                access.writeLock();
+                try {
+                    access.close();
+                } catch (Exception e) {
+                    logger.log(Level.WARNING, "Couldn't close File access to '" + access.hexId() + "'");
+                } finally {
+                    access.writeUnlock();
+                }
             }
+            access.file().delete();
+        }
+    }
+
+    /*
+     * Data reading
+     */
+
+    @SuppressWarnings("resource")
+    @Override
+    public S read(long id) throws StorageException {
+        long possibleId = id >> 10;
+        if (Long.compareUnsigned((possibleId | 0xFFFFFFFF), 0xFFFFFFFF) >= 1) {
+            throw new StorageException("Unsupported file id '" + Long.toHexString(possibleId) + "'!");
+        }
+        int fileId = (int) (possibleId & 0xFFFFFFFF);
+        short valueId = (short) (id & 0x3FF);
+        if (accesses.has(fileId)) {
+            return read(accesses.get(fileId), id, valueId);
+        }
+        RAFAccess<S> access = new RAFAccess<>(fileId, directory);
+        if (!access.exists()) {
+            return null;
+        }
+        accesses.set(fileId, access);
+        return read(access, id, valueId);
+    }
+
+    private S read(RAFAccess<S> access, long fullId, short valueId) {
+        if (!access.exists()) {
+            return null;
+        }
+        access.readLock();
+        try {
+            RandomAccessFile file = access.open();
+            long fileSize = file.length();
+            if (fileSize == 0) {
+                // Remove file access as its empty
+                accesses.remove(access.id());
+                return null;
+            }
+            long offsetPosition = fileSize - LOOKUP_HEADER_SIZE;
+            file.seek(offsetPosition);
+            file.seek(file.readLong());
+            long lookupPosition = offsetPosition;
+            while (file.getFilePointer() != offsetPosition) {
+                if (file.readShort() != valueId) {
+                    file.seek(file.getFilePointer() + LOOKUP_ENTRY_OFFSET_SIZE);
+                    continue;
+                }
+                lookupPosition = file.readLong();
+            }
+            if (lookupPosition == offsetPosition) {
+                return null;
+            }
+            file.seek(lookupPosition);
+            short typeId = file.readShort();
+            StorageAdapter<? extends S> adapter = findAdapterFor(typeId);
+            if(adapter == null) {
+                // TODO: Figure out if we should delete the data now
+                throw new StorageException("Failed to read value with id '" + Long.toHexString(fullId) + "' from file because the type " + typeId + " is unknown!");
+            }
+            int bufferSize = file.readInt();
+            byte[] rawBuffer = new byte[bufferSize];
+            file.read(rawBuffer);
+            return adapter.deserialize(fullId, Unpooled.wrappedBuffer(rawBuffer));
+        } catch (IOException e) {
+            throw new StorageException("Failed to read value with id '" + Long.toHexString(fullId) + "' from file!", e);
+        } finally {
+            access.readUnlock();
         }
     }
 
     /*
      * Data writing & file creation
      */
-    
+
     @Override
     public void write(S storable) throws StorageException {
         long id = storable.id();
@@ -89,25 +168,8 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
         try {
             RandomAccessFile file = access.open();
             long fileSize = file.length();
-            long offsetPosition = 0;
-            long headerPosition = 0;
-            long lookupPosition = 0;
-            if (fileSize != 0) {
-                offsetPosition = file.length() - LOOKUP_HEADER_SIZE;
-                file.seek(offsetPosition);
-                headerPosition = file.readLong();
-                file.seek(headerPosition);
-                lookupPosition = offsetPosition;
-                while (file.getFilePointer() != offsetPosition) {
-                    if (file.readShort() != valueId) {
-                        file.seek(file.getFilePointer() + LOOKUP_ENTRY_OFFSET_SIZE);
-                        continue;
-                    }
-                    lookupPosition = file.readLong();
-                }
-            }
-            int bufferSize = buffer.readableBytes();
             if (fileSize == 0) {
+                int bufferSize = buffer.readableBytes();
                 file.setLength(bufferSize + LOOKUP_HEADER_SIZE + LOOKUP_ENTRY_SIZE + VALUE_HEADER_SIZE);
                 file.seek(file.length() - LOOKUP_HEADER_SIZE);
                 long headerOffset = file.getFilePointer() - LOOKUP_HEADER_SIZE;
@@ -121,6 +183,19 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
                 file.write(buffer.array());
                 return;
             }
+            long offsetPosition = file.length() - LOOKUP_HEADER_SIZE;
+            file.seek(offsetPosition);
+            long headerPosition = file.readLong();
+            file.seek(headerPosition);
+            long lookupPosition = offsetPosition;
+            while (file.getFilePointer() != offsetPosition) {
+                if (file.readShort() != valueId) {
+                    file.seek(file.getFilePointer() + LOOKUP_ENTRY_OFFSET_SIZE);
+                    continue;
+                }
+                lookupPosition = file.readLong();
+            }
+            int bufferSize = buffer.readableBytes();
             if (lookupPosition != offsetPosition) {
                 file.seek(lookupPosition);
                 long dataOffset = file.readLong();
@@ -151,7 +226,7 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
             access.writeUnlock();
         }
     }
-    
+
     /*
      * Data deletion & file deletion
      */
@@ -165,51 +240,68 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
         }
         int fileId = (int) (possibleId & 0xFFFFFFFF);
         short valueId = (short) (id & 0x3FF);
-        if(accesses.has(fileId)) {
-            return delete(accesses.get(fileId), valueId);
+        if (accesses.has(fileId)) {
+            return delete(accesses.get(fileId), id, valueId);
         }
         RAFAccess<S> access = new RAFAccess<>(fileId, directory);
-        if(!access.exists()) {
+        if (!access.exists()) {
             return false;
         }
         accesses.set(fileId, access);
-        return delete(access, valueId);
+        return delete(access, id, valueId);
     }
-    
-    private boolean delete(RAFAccess<S> access, short valueId) {
-        if(!access.exists()) {
+
+    private boolean delete(RAFAccess<S> access, long fullId, short valueId) {
+        if (!access.exists()) {
             return false;
         }
-        
-        return true;
-    }
-    
-    /*
-     * Clear data
-     */
-    
-    @Override
-    public void clear() {
-        List<Integer> list = accesses.keys();
-        for(Integer id : list) {
-            RAFAccess<S> access = accesses.remove(id);
-            if(access == null || !access.isOpen()) {
-                continue;
+        access.writeLock();
+        try {
+            RandomAccessFile file = access.open();
+            long fileSize = file.length();
+            if (fileSize == 0) {
+                // Remove file access as its empty
+                accesses.remove(access.id());
+                return false;
             }
-            if(access.isOpen()) {
-                access.writeLock();
-                try {
-                    access.close();
-                } catch (Exception e) {
-                    logger.log(Level.WARNING, "Couldn't close File access to '" + access.hexId() + "'");
-                } finally {
-                    access.writeUnlock();
+            long offsetPosition = fileSize - LOOKUP_HEADER_SIZE;
+            file.seek(offsetPosition);
+            long headerPosition = file.readLong();
+            file.seek(headerPosition);
+            long lookupPosition = offsetPosition;
+            long lookupHeaderPosition = 0;
+            while (file.getFilePointer() != offsetPosition) {
+                if (file.readShort() != valueId) {
+                    file.seek(file.getFilePointer() + LOOKUP_ENTRY_OFFSET_SIZE);
+                    continue;
                 }
+                lookupHeaderPosition = file.getFilePointer() - LOOKUP_ENTRY_ID_SIZE;
+                lookupPosition = file.readLong();
             }
-            access.file().delete();
+            if (lookupPosition == offsetPosition) {
+                return false;
+            }
+            file.seek(lookupPosition + VALUE_HEADER_ID_SIZE);
+            int bufferSize = file.readInt();
+            long offset = updateFileSize(file, lookupPosition, bufferSize, 0);
+            offset += updateFileSize(file, lookupHeaderPosition + offset, LOOKUP_ENTRY_SIZE, 0);
+            offsetPosition = file.length() - LOOKUP_HEADER_SIZE;
+            if(offsetPosition == 0) {
+                access.close();
+                access.file().delete();
+                accesses.remove(access.id());
+                return true;
+            }
+            file.seek(offsetPosition);
+            file.writeLong(headerPosition + offset);
+            return true;
+        } catch (IOException e) {
+            throw new StorageException("Failed to delete value with id '" + Long.toHexString(fullId) + "' from file!", e);
+        } finally {
+            access.writeUnlock();
         }
     }
-    
+
     /*
      * File size management
      */
@@ -261,36 +353,26 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
     }
     
     /*
-     * Data reading
+     * Update each data entry
      */
 
-    @SuppressWarnings("resource")
     @Override
-    public S read(long id) throws StorageException {
-        long possibleId = id >> 10;
-        if (Long.compareUnsigned((possibleId | 0xFFFFFFFF), 0xFFFFFFFF) >= 1) {
-            throw new StorageException("Unsupported file id '" + Long.toHexString(possibleId) + "'!");
+    public void updateEach(Consumer<S> updater) {
+        if (!directory.exists()) {
+            return;
         }
-        int fileId = (int) (possibleId & 0xFFFFFFFF);
-        short valueId = (short) (id & 0x3FF);
-        if (accesses.has(fileId)) {
-            return read(accesses.get(fileId), valueId);
+        File[] files = directory.listFiles(RAFAccess.FILE_FILTER);
+        for (File file : files) {
+            int fileId;
+            try {
+                fileId = Integer.parseInt(file.getName().substring(0, file.getName().length() - 4));
+            } catch (NumberFormatException nfe) {
+                continue;
+            }
+            if (!accesses.has(fileId)) {
+                // TODO: Load and update
+            }
         }
-        RAFAccess<S> access = new RAFAccess<>(fileId, directory);
-        if(!access.exists()) {
-            return null;
-        }
-        accesses.set(fileId, access);
-        return read(access, valueId);
     }
-
-    private S read(RAFAccess<S> access, short valueId) {
-        if (!access.exists()) {
-            return null;
-        }
-        return null;
-    }
-    
-    
 
 }

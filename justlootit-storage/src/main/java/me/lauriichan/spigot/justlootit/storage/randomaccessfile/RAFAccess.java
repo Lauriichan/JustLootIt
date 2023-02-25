@@ -1,5 +1,6 @@
 package me.lauriichan.spigot.justlootit.storage.randomaccessfile;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -10,7 +11,7 @@ import java.util.regex.Pattern;
 
 import me.lauriichan.spigot.justlootit.storage.Storable;
 
-public final class RAFAccess<S extends Storable> implements AutoCloseable {
+public final class RAFAccess<S extends Storable> implements Closeable {
 
     private static final Predicate<String> IS_HEX = Pattern.compile("[a-fA-F0-9]+").asMatchPredicate();
 
@@ -71,14 +72,11 @@ public final class RAFAccess<S extends Storable> implements AutoCloseable {
         if (access != null) {
             return access;
         }
-        if (!file.exists()) {
-            file.createNewFile();
-        }
-        return access = new RandomAccessFile(file, "");
+        return access = new RandomAccessFile(file, "rw");
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() throws IOException {
         if (access != null) {
             access.close();
             access = null;
