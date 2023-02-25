@@ -21,14 +21,15 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
 
     private static final int COPY_BUFFER_SIZE = 1024 * 64;
     
-    private static final int VALUE_ID_AMOUNT = 1024;
+    /* This will be rounded up to the next power of two if this isn't a power of two already */
+    private static final int VALUE_ID_AMOUNT = 1025;
     
     private static final int VALUE_ID_BITS = Integer.bitCount(VALUE_ID_AMOUNT - 1);
     private static final int VALUE_ID_MASK = -1 >> (Integer.SIZE - VALUE_ID_BITS);
 
     private static final int LOOKUP_AMOUNT_SIZE = Short.BYTES;
     private static final int LOOKUP_ENTRY_SIZE = Long.BYTES;
-    private static final int LOOKUP_HEADER_SIZE = VALUE_ID_AMOUNT * LOOKUP_ENTRY_SIZE + LOOKUP_AMOUNT_SIZE;
+    private static final int LOOKUP_HEADER_SIZE = (VALUE_ID_MASK + 1)  * LOOKUP_ENTRY_SIZE + LOOKUP_AMOUNT_SIZE;
 
     private static final int VALUE_HEADER_ID_SIZE = Short.BYTES;
     private static final int VALUE_HEADER_LENGTH_SIZE = Integer.BYTES;
