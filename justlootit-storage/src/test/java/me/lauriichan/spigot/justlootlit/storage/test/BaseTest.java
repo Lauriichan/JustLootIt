@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import me.lauriichan.spigot.justlootit.storage.Storable;
+import me.lauriichan.spigot.justlootit.storage.Storage;
 import me.lauriichan.spigot.justlootit.storage.randomaccessfile.RAFStorage;
 
 public abstract class BaseTest<T extends Storable> extends Test<T> {
@@ -21,7 +22,14 @@ public abstract class BaseTest<T extends Storable> extends Test<T> {
 
     @Override
     public void createProviders(List<StorageProvider<T>> list) {
-        list.add(provider("RandomAccessFile", (file) -> new RAFStorage<>(LOGGER, type, file)));
+        list.add(provider("RandomAccessFile", (file) -> apply(new RAFStorage<>(LOGGER, type, file))));
     }
+
+    private Storage<T> apply(Storage<T> storage) {
+        setup(storage);
+        return storage;
+    }
+
+    protected abstract void setup(Storage<T> storage);
 
 }

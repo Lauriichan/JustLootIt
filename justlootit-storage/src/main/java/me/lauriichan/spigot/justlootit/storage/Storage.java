@@ -95,6 +95,8 @@ public abstract class Storage<S extends Storable> {
         }
     }
     
+    public abstract void close() throws StorageException;
+    
     public abstract void clear() throws StorageException;
 
     public abstract S read(long id) throws StorageException;

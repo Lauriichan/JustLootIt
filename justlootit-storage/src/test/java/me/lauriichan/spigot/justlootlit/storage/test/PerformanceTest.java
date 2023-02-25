@@ -27,7 +27,7 @@ public class PerformanceTest {
     public static final int SAMPLE_ROUNDS = 3;
 
     public static final Test<?>[] TESTS = new Test[] {
-        new SimpleTest(2048)
+        new SimpleTest(4)
     };
 
     /*
@@ -93,6 +93,13 @@ public class PerformanceTest {
                 System.out.println("Results for Round " + (index + 1) + " of '" + provider.name + "'\n");
                 printResult(result.min(), result.max(), result.average());
                 System.out.println(" ");
+                if(min > result.min()) {
+                    min = result.min();
+                }
+                if(max < result.max()) {
+                    max = result.max();
+                }
+                average.add(BigInteger.valueOf(result.average()));
             }
             System.out.println("\n\nOverall results of '" + provider.name + "':");
             printResult(min, max, average.divide(BigInteger.valueOf(SAMPLE_ROUNDS)).longValue());
@@ -101,8 +108,8 @@ public class PerformanceTest {
 
     private static void printResult(long min, long max, long average) {
         printValue("Minimum", min);
-        printValue("Maximum", min);
-        printValue("Average", min);
+        printValue("Maximum", max);
+        printValue("Average", average);
     }
 
     private static void printValue(String name, long value) {

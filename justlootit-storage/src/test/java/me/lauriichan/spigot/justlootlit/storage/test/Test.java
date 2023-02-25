@@ -38,6 +38,7 @@ public abstract class Test<T extends Storable> {
         profiler.time();
         executeTest(provider.name, storage);
         profiler.time();
+        storage.close();
     }
 
     protected abstract void executeTest(String storageName, Storage<T> storage) throws Throwable;

@@ -67,6 +67,27 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
         }
     }
 
+    @Override
+    public void close() {
+        List<Integer> list = accesses.keys();
+        for (Integer id : list) {
+            RAFAccess<S> access = accesses.remove(id);
+            if (access == null || !access.isOpen()) {
+                continue;
+            }
+            if (access.isOpen()) {
+                access.writeLock();
+                try {
+                    access.close();
+                } catch (Exception e) {
+                    logger.log(Level.WARNING, "Couldn't close File access to '" + access.hexId() + "'");
+                } finally {
+                    access.writeUnlock();
+                }
+            }
+        }
+    }
+
     /*
      * Data reading
      */
@@ -181,7 +202,7 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
                 file.seek(0);
                 file.writeShort(adapter.typeId());
                 file.writeInt(bufferSize);
-                buffer.readBytes(file.getChannel(), VALUE_HEADER_SIZE, bufferSize);
+//                buffer.readBytes(file.getChannel(), VALUE_HEADER_SIZE, bufferSize);
                 return;
             }
             long offsetPosition = file.length() - LOOKUP_HEADER_SIZE;
@@ -191,7 +212,7 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
             long lookupPosition = offsetPosition;
             while (file.getFilePointer() != offsetPosition) {
                 if (file.readShort() != valueId) {
-                    file.seek(file.getFilePointer() + LOOKUP_ENTRY_OFFSET_SIZE);
+                    file.skipBytes(LOOKUP_ENTRY_OFFSET_SIZE);
                     continue;
                 }
                 lookupPosition = file.readLong();
@@ -273,7 +294,7 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
             long lookupHeaderPosition = 0;
             while (file.getFilePointer() != offsetPosition) {
                 if (file.readShort() != valueId) {
-                    file.seek(file.getFilePointer() + LOOKUP_ENTRY_OFFSET_SIZE);
+                    file.skipBytes(LOOKUP_ENTRY_OFFSET_SIZE);
                     continue;
                 }
                 lookupHeaderPosition = file.getFilePointer() - LOOKUP_ENTRY_ID_SIZE;
