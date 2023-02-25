@@ -33,8 +33,6 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
             }
             if (!accesses.has(fileId)) {
                 // TODO: Load and update
-                // Should we cache here?
-                // Can we even cache? - probably but still
             }
         }
     }
