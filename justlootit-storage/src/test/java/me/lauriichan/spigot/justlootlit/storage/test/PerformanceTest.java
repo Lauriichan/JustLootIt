@@ -13,6 +13,7 @@ import org.junit.jupiter.api.TestFactory;
 
 import me.lauriichan.spigot.justlootit.storage.Storable;
 import me.lauriichan.spigot.justlootlit.storage.test.Test.StorageProvider;
+import me.lauriichan.spigot.justlootlit.storage.test.simple.SimpleTest;
 
 public class PerformanceTest {
 
@@ -26,7 +27,7 @@ public class PerformanceTest {
     public static final int SAMPLE_ROUNDS = 3;
 
     public static final Test<?>[] TESTS = new Test[] {
-
+        new SimpleTest(2048)
     };
 
     /*
@@ -39,7 +40,7 @@ public class PerformanceTest {
     private static final int WARUMUP_RUNS = RUNS_PER_ROUND * WARMUP_ROUNDS;
 
     @TestFactory
-    public static Collection<DynamicTest> performanceTests() {
+    public Collection<DynamicTest> performanceTests() {
         ArrayList<DynamicTest> tests = new ArrayList<>(TESTS.length);
         if (TESTS.length == 0) {
             return tests;
@@ -57,7 +58,9 @@ public class PerformanceTest {
         StorageProvider<T>[] providers = providerList.toArray(StorageProvider[]::new);
         providerList.clear();
         File workingDir = new File("tests", test.name);
-        FileUtils.forceDelete(workingDir);
+        if(workingDir.exists()) {
+            FileUtils.forceDelete(workingDir);
+        }
         workingDir.mkdirs();
         File warmupDir = new File(workingDir, "warmup");
         for (StorageProvider<T> provider : providers) {

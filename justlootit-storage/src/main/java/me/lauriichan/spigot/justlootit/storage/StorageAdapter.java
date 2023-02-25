@@ -34,7 +34,7 @@ public abstract class StorageAdapter<T extends Storable> {
     public final ByteBuf serialize(T storable) {
         ByteBuf buffer = Unpooled.buffer();
         serialize(storable, buffer);
-        return buffer.asReadOnly();
+        return buffer;
     }
 
     public abstract void serialize(T storable, ByteBuf buffer);
