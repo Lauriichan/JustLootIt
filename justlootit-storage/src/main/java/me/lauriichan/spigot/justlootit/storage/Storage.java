@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Consumer;
 
 public abstract class Storage<S extends Storable> {
 
@@ -58,6 +59,8 @@ public abstract class Storage<S extends Storable> {
             lock.readLock().unlock();
         }
     }
+    
+    public abstract void updateEach(Consumer<S> updater);
     
     public abstract void write(S storable);
     

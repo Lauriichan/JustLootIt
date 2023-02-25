@@ -49,6 +49,7 @@ public abstract class CachedStorage<S extends Storable> extends Storage<S> {
     protected final Long2ObjectOpenHashMap<Cached<S>> cache = new Long2ObjectOpenHashMap<>();
     protected final long timeoutTicks;
     
+    // TODO: Possibly rework to use Cache utilities
     // TODO: Add timer
 
     public CachedStorage(Class<S> baseType, final long timeoutTicks) {
