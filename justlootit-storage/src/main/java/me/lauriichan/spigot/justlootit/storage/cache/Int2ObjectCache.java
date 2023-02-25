@@ -36,5 +36,10 @@ public final class Int2ObjectCache<V> extends Cache<Integer, V> {
     protected Integer[] entryKeys() {
         return map.keySet().toArray(Integer[]::new);
     }
+    
+    @Override
+    protected void clearEntries() {
+        map.clear();
+    }
 
 }

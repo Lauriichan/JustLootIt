@@ -36,5 +36,10 @@ public final class Long2ObjectCache<V> extends Cache<Long, V> {
     protected Long[] entryKeys() {
         return map.keySet().toArray(Long[]::new);
     }
+    
+    @Override
+    protected void clearEntries() {
+        map.clear();
+    }
 
 }

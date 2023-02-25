@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import io.netty.buffer.ByteBuf;
@@ -27,9 +28,12 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
 
     private final File directory;
     private final ThreadSafeCache<Integer, RAFAccess<S>> accesses;
+    
+    private final Logger logger;
 
     public RAFStorage(Logger logger, Class<S> baseType, File directory) {
         super(baseType);
+        this.logger = logger;
         this.accesses = new ThreadSafeCache<>(new Int2ObjectCache<>(logger));
         this.directory = directory;
     }
@@ -185,11 +189,24 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
      */
     
     @Override
-    public void clear() throws StorageException {
+    public void clear() {
         List<Integer> list = accesses.keys();
         for(Integer id : list) {
-            RAFAccess<S> access = accesses.get(id);
-            accesses.remove(id);
+            RAFAccess<S> access = accesses.remove(id);
+            if(access == null || !access.isOpen()) {
+                continue;
+            }
+            if(access.isOpen()) {
+                access.writeLock();
+                try {
+                    access.close();
+                } catch (Exception e) {
+                    logger.log(Level.WARNING, "Couldn't close File access to '" + access.hexId() + "'");
+                } finally {
+                    access.writeUnlock();
+                }
+            }
+            access.file().delete();
         }
     }
     

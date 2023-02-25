@@ -29,6 +29,8 @@ public abstract class Cache<K, V> {
     protected abstract void putEntry(K key, CachedValue<V> value);
 
     protected abstract CachedValue<V> removeEntry(K key);
+    
+    protected abstract void clearEntries();
 
     protected abstract K[] entryKeys();
 
@@ -63,6 +65,10 @@ public abstract class Cache<K, V> {
 
     public final List<K> keys() {
         return Arrays.asList(entryKeys());
+    }
+    
+    public final void clear() {
+        clearEntries();
     }
 
     void tick() {

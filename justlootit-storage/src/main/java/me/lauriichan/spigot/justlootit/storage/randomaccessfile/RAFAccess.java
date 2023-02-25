@@ -18,6 +18,7 @@ public final class RAFAccess<S extends Storable> implements AutoCloseable {
         && IS_HEX.test(name.substring(0, name.length() - 4));
 
     private final int id;
+    private final String hexId;
 
     private final File file;
     private volatile RandomAccessFile access;
@@ -26,11 +27,16 @@ public final class RAFAccess<S extends Storable> implements AutoCloseable {
 
     public RAFAccess(final int id, final File directory) {
         this.id = id;
-        this.file = new File(directory, Long.toHexString(id) + ".jli");
+        this.hexId = Integer.toHexString(id);
+        this.file = new File(directory, hexId + ".jli");
     }
 
     public int id() {
         return id;
+    }
+    
+    public String hexId() {
+        return hexId;
     }
 
     public File file() {
