@@ -8,7 +8,7 @@ public class SimpleObjectAdapter extends StorageAdapter<SimpleObject> {
     public static final SimpleObjectAdapter INSTANCE = new SimpleObjectAdapter();
 
     private SimpleObjectAdapter() {
-        super(SimpleObject.class);
+        super(SimpleObject.class, 0);
     }
 
     @Override

@@ -22,7 +22,7 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
     private static final long LOOKUP_ENTRY_OFFSET_SIZE = Long.BYTES;
     private static final long LOOKUP_ENTRY_SIZE = LOOKUP_ENTRY_ID_SIZE + LOOKUP_ENTRY_OFFSET_SIZE;
 
-    private static final long VALUE_HEADER_SIZE = Integer.BYTES;
+    private static final long VALUE_HEADER_SIZE = Short.BYTES + Integer.BYTES;
 
     private final File directory;
     private final ThreadSafeCache<Integer, RAFAccess<S>> accesses;
@@ -76,6 +76,7 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
             throw new StorageException("Couldn't find storage adapter for type '" + storable.getClass().getName() + "'!");
         }
         ByteBuf buffer = adapter.serializeValue(adapter.type().cast(storable));
+        access.writeLock();
         try {
             RandomAccessFile file = access.open();
             long fileSize = file.length();
@@ -97,7 +98,7 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
                 }
             }
             int bufferSize = buffer.readableBytes();
-            if(fileSize == 0) {
+            if (fileSize == 0) {
                 file.setLength(bufferSize + LOOKUP_HEADER_SIZE + LOOKUP_ENTRY_SIZE + VALUE_HEADER_SIZE);
                 file.seek(file.length() - LOOKUP_HEADER_SIZE);
                 long headerOffset = file.getFilePointer() - LOOKUP_HEADER_SIZE;
@@ -106,6 +107,7 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
                 file.writeShort(valueId);
                 file.writeLong(0);
                 file.seek(0);
+                file.writeShort(adapter.typeId());
                 file.writeInt(bufferSize);
                 file.write(buffer.array());
                 return;
@@ -119,6 +121,7 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
                 file.seek(offsetPosition + offset);
                 file.writeLong(headerPosition + offset);
                 file.seek(dataOffset);
+                file.writeShort(adapter.typeId());
                 file.writeInt(bufferSize);
                 file.write(buffer.array());
                 return;
@@ -130,10 +133,13 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
             file.writeShort(valueId);
             file.writeLong(headerPosition);
             file.seek(headerPosition);
+            file.writeShort(adapter.typeId());
             file.writeInt(bufferSize);
             file.write(buffer.array());
         } catch (IOException e) {
             throw new StorageException("Failed to write value with id '" + Long.toHexString(storable.id()) + "' to file!", e);
+        } finally {
+            access.writeUnlock();
         }
     }
 
@@ -171,7 +177,7 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
         long pointer = offset + amount;
         long newLength = file.length() - amount;
         byte[] buffer = new byte[16384];
-        while(pointer != newLength) {
+        while (pointer != newLength) {
             long diff = newLength - pointer;
             int size = diff > buffer.length ? buffer.length : (int) diff;
             file.seek(pointer);
@@ -183,6 +189,7 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
         file.setLength(newLength);
     }
 
+    @SuppressWarnings("resource")
     @Override
     public S read(long id) throws StorageException {
         long possibleId = id >> 10;
@@ -195,18 +202,46 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
             return read(accesses.get(fileId), valueId);
         }
         RAFAccess<S> access = new RAFAccess<>(fileId, directory);
+        if(!access.exists()) {
+            return null;
+        }
         accesses.set(fileId, access);
         return read(access, valueId);
     }
 
     private S read(RAFAccess<S> access, short valueId) {
+        if (!access.exists()) {
+            return null;
+        }
         return null;
     }
-    
+
+    @SuppressWarnings("resource")
     @Override
     public boolean delete(long id) throws StorageException {
-        // TODO Auto-generated method stub
-        return false;
+        long possibleId = id >> 10;
+        if (Long.compareUnsigned((possibleId | 0xFFFFFFFF), 0xFFFFFFFF) >= 1) {
+            throw new StorageException("Unsupported file id '" + Long.toHexString(possibleId) + "'!");
+        }
+        int fileId = (int) (possibleId & 0xFFFFFFFF);
+        short valueId = (short) (id & 0x3FF);
+        if(accesses.has(fileId)) {
+            return delete(accesses.get(fileId), valueId);
+        }
+        RAFAccess<S> access = new RAFAccess<>(fileId, directory);
+        if(!access.exists()) {
+            return false;
+        }
+        accesses.set(fileId, access);
+        return delete(access, valueId);
+    }
+    
+    private boolean delete(RAFAccess<S> access, short valueId) {
+        if(!access.exists()) {
+            return false;
+        }
+        
+        return true;
     }
 
 }

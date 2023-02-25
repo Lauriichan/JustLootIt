@@ -8,19 +8,25 @@ import io.netty.buffer.Unpooled;
 public abstract class StorageAdapter<T extends Storable> {
 
     protected final Class<T> type;
+    protected final short typeId;
 
-    public StorageAdapter(final Class<T> type) {
+    public StorageAdapter(final Class<T> type, final int typeId) {
         this.type = Objects.requireNonNull(type);
+        this.typeId = (short) (typeId & 0xFF);
     }
 
     public final Class<T> type() {
         return type;
     }
-    
+
+    public final short typeId() {
+        return typeId;
+    }
+
     public final ByteBuf serializeValue(Storable storable) {
         return serialize(type.cast(storable));
     }
-    
+
     public final void serializeValue(Storable storable, ByteBuf buffer) {
         serialize(type.cast(storable), buffer);
     }

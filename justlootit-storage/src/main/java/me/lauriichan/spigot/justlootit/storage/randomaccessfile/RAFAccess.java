@@ -52,6 +52,10 @@ public final class RAFAccess<S extends Storable> implements AutoCloseable {
     public void readUnlock() {
         lock.readLock().unlock();
     }
+    
+    public boolean exists() {
+        return file.exists();
+    }
 
     public boolean isOpen() {
         return access != null;
