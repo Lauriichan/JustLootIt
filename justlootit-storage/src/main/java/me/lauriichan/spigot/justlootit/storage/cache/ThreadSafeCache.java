@@ -11,6 +11,7 @@ public class ThreadSafeCache<K, V> extends Cache<K, V> {
     private final Lock writeLock = lock.writeLock();
 
     public ThreadSafeCache(Cache<K, V> delegate) {
+        super(delegate.logger);
         this.delegate = delegate;
     }
 

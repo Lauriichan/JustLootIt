@@ -1,10 +1,16 @@
 package me.lauriichan.spigot.justlootit.storage.cache;
 
+import java.util.logging.Logger;
+
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 
 public final class Long2ObjectCache<V> extends Cache<Long, V> {
 
     private final Long2ObjectOpenHashMap<CachedValue<V>> map = new Long2ObjectOpenHashMap<>();
+
+    public Long2ObjectCache(Logger logger) {
+        super(logger);
+    }
 
     @Override
     protected boolean hasEntry(Long key) {
@@ -25,7 +31,7 @@ public final class Long2ObjectCache<V> extends Cache<Long, V> {
     protected boolean removeEntry(Long key) {
         return map.remove(key.longValue()) != null;
     }
-    
+
     @Override
     protected Long[] entryKeys() {
         return map.keySet().toArray(Long[]::new);

@@ -16,6 +16,14 @@ public abstract class StorageAdapter<T extends Storable> {
     public final Class<T> type() {
         return type;
     }
+    
+    public final ByteBuf serializeValue(Storable storable) {
+        return serialize(type.cast(storable));
+    }
+    
+    public final void serializeValue(Storable storable, ByteBuf buffer) {
+        serialize(type.cast(storable), buffer);
+    }
 
     public final ByteBuf serialize(T storable) {
         ByteBuf buffer = Unpooled.buffer();

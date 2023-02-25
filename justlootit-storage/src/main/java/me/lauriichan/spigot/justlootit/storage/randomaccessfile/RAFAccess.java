@@ -37,37 +37,34 @@ public final class RAFAccess<S extends Storable> implements AutoCloseable {
         return file;
     }
 
-    public void store(short valueId, S storable) {
+    public void writeLock() {
         lock.writeLock().lock();
-        try {
-
-        } finally {
-            lock.writeLock().unlock();
-        }
     }
 
-    public S read(short valueId) {
+    public void writeUnlock() {
+        lock.writeLock().unlock();
+    }
+
+    public void readLock() {
         lock.readLock().lock();
-        try {
-            return null;
-        } finally {
-            lock.readLock().unlock();
-        }
+    }
+
+    public void readUnlock() {
+        lock.readLock().unlock();
     }
 
     public boolean isOpen() {
         return access != null;
     }
 
-    public RAFAccess<S> open() throws IOException {
+    public RandomAccessFile open() throws IOException {
         if (access != null) {
-            return this;
+            return access;
         }
         if (!file.exists()) {
             file.createNewFile();
         }
-        access = new RandomAccessFile(file, "");
-        return this;
+        return access = new RandomAccessFile(file, "");
     }
 
     @Override

@@ -60,10 +60,10 @@ public abstract class Storage<S extends Storable> {
         }
     }
     
-    public abstract void updateEach(Consumer<S> updater);
+    public abstract void updateEach(Consumer<S> updater) throws StorageException;
     
-    public abstract void write(S storable);
+    public abstract void write(S storable) throws StorageException;
     
-    public abstract S read(long id);
+    public abstract S read(long id) throws StorageException;
 
 }

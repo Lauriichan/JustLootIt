@@ -2,10 +2,17 @@ package me.lauriichan.spigot.justlootit.storage.cache;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public abstract class Cache<K, V> {
 
-    protected volatile long cacheTime;
+    protected final Logger logger;
+    private volatile long cacheTime;
+
+    public Cache(final Logger logger) {
+        this.logger = logger;
+    }
 
     public final void setCacheTime(long cacheTime) {
         this.cacheTime = Math.max(cacheTime, 1);
@@ -45,7 +52,7 @@ public abstract class Cache<K, V> {
         }
         putEntry(key, new CachedValue<>(value));
     }
-    
+
     public final boolean has(K key) {
         return hasEntry(key);
     }
@@ -58,8 +65,17 @@ public abstract class Cache<K, V> {
         K[] keys = entryKeys();
         for (K key : keys) {
             CachedValue<V> entry = getEntry(key);
-            if (entry.tick() >= cacheTime) {
-                removeEntry(key);
+            if (entry.tick() < cacheTime) {
+                continue;
+            }
+            removeEntry(key);
+            V value = entry.value();
+            if (value instanceof AutoCloseable) {
+                try {
+                    ((AutoCloseable) value).close();
+                } catch (Exception e) {
+                    logger.log(Level.WARNING, "Couldn't close cached resource", e);
+                }
             }
         }
     }
