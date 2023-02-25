@@ -23,7 +23,7 @@ public class PerformanceTest {
 
     public static final int RUNS_PER_ROUND = 50;
 
-    public static final int WARMUP_ROUNDS = 3;
+    public static final int WARMUP_RUNS = 20;
     public static final int SAMPLE_ROUNDS = 3;
 
     public static final boolean PRINT_EACH_ROUND = false;
@@ -38,8 +38,6 @@ public class PerformanceTest {
 
     private static final double MILLI_IN_NANOS = TimeUnit.MILLISECONDS.toNanos(1);
     private static final DecimalFormat FORMAT = new DecimalFormat("0.000");
-
-    private static final int WARUMUP_RUNS = RUNS_PER_ROUND * WARMUP_ROUNDS;
 
     @TestFactory
     public Collection<DynamicTest> performanceTests() {
@@ -68,7 +66,7 @@ public class PerformanceTest {
         for (StorageProvider<T> provider : providers) {
             Profiler profiler = new Profiler(RUNS_PER_ROUND);
             profiler.lock();
-            for (int index = 0; index < WARUMUP_RUNS; index++) {
+            for (int index = 0; index < WARMUP_RUNS; index++) {
                 warmupDir.mkdirs();
                 test.executeTest(warmupDir, provider, profiler);
                 FileUtils.forceDelete(warmupDir);
