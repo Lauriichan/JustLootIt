@@ -18,16 +18,21 @@ import me.lauriichan.spigot.justlootit.storage.cache.Int2ObjectCache;
 import me.lauriichan.spigot.justlootit.storage.cache.ThreadSafeCache;
 
 public class RAFStorage<S extends Storable> extends Storage<S> {
+    
+    private static final int VALUE_ID_AMOUNT = 1024;
+    
+    private static final int VALUE_ID_BITS = Integer.bitCount(VALUE_ID_AMOUNT - 1);
+    private static final int VALUE_ID_MASK = -1 >> (Integer.SIZE - VALUE_ID_BITS);
 
-    private static final int LOOKUP_HEADER_SIZE = Long.BYTES;
-
-    private static final int LOOKUP_ENTRY_ID_SIZE = Short.BYTES;
-    private static final int LOOKUP_ENTRY_OFFSET_SIZE = Long.BYTES;
-    private static final int LOOKUP_ENTRY_SIZE = LOOKUP_ENTRY_ID_SIZE + LOOKUP_ENTRY_OFFSET_SIZE;
+    private static final int LOOKUP_AMOUNT_SIZE = Short.BYTES;
+    private static final int LOOKUP_ENTRY_SIZE = Long.BYTES;
+    private static final int LOOKUP_HEADER_SIZE = VALUE_ID_AMOUNT * LOOKUP_ENTRY_SIZE + LOOKUP_AMOUNT_SIZE;
 
     private static final int VALUE_HEADER_ID_SIZE = Short.BYTES;
     private static final int VALUE_HEADER_LENGTH_SIZE = Integer.BYTES;
     private static final int VALUE_HEADER_SIZE = VALUE_HEADER_ID_SIZE + VALUE_HEADER_LENGTH_SIZE;
+    
+    private static final long INVALID_HEADER_OFFSET = 0L;
 
     private final File directory;
     private final ThreadSafeCache<Integer, RAFAccess<S>> accesses;
@@ -93,12 +98,12 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
     @SuppressWarnings("resource")
     @Override
     public S read(long id) throws StorageException {
-        long possibleId = id >> 10;
+        long possibleId = id >> VALUE_ID_BITS;
         if (Long.compareUnsigned((possibleId | 0xFFFFFFFF), 0xFFFFFFFF) >= 1) {
             throw new StorageException("Unsupported file id '" + Long.toHexString(possibleId) + "'!");
         }
         int fileId = (int) (possibleId & 0xFFFFFFFF);
-        short valueId = (short) (id & 0x3FF);
+        short valueId = (short) (id & VALUE_ID_MASK);
         if (accesses.has(fileId)) {
             return read(accesses.get(fileId), id, valueId);
         }
@@ -116,25 +121,16 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
             RandomAccessFile file = access.open();
             long fileSize = file.length();
             if (fileSize == 0) {
-                // Remove file access as its empty
                 accesses.remove(access.id());
+                access.close();
+                access.file().delete();
                 return null;
             }
-            long offsetPosition = fileSize - LOOKUP_HEADER_SIZE;
-            file.seek(offsetPosition);
-            long headerPosition = file.readLong();
-            file.seek(headerPosition);
-            long lookupPosition = offsetPosition;
-            long lookupHeaderPosition = 0;
-            while (file.getFilePointer() != offsetPosition) {
-                if (file.readShort() != valueId) {
-                    file.skipBytes(LOOKUP_ENTRY_OFFSET_SIZE);
-                    continue;
-                }
-                lookupHeaderPosition = file.getFilePointer() - LOOKUP_ENTRY_ID_SIZE;
-                lookupPosition = file.readLong();
-            }
-            if (lookupPosition == offsetPosition) {
+            long headerOffset = LOOKUP_AMOUNT_SIZE + LOOKUP_ENTRY_SIZE * valueId;
+            file.seek(headerOffset);
+            long lookupPosition = file.readLong();
+            if(lookupPosition == INVALID_HEADER_OFFSET) {
+                access.readUnlock();
                 return null;
             }
             file.seek(lookupPosition);
@@ -145,7 +141,7 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
                 access.readUnlock();
                 access.writeLock();
                 try {
-                    if(deleteEntry(file, lookupPosition, bufferSize, headerPosition, lookupHeaderPosition, offsetPosition)) {
+                    if(deleteEntry(file, lookupPosition, bufferSize, headerOffset)) {
                         accesses.remove(access.id());
                         access.close();
                         access.file().delete();
@@ -175,12 +171,12 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
     @Override
     public void write(S storable) throws StorageException {
         long id = storable.id();
-        long possibleId = id >> 10;
+        long possibleId = id >> VALUE_ID_BITS;
         if (Long.compareUnsigned((possibleId | 0xFFFFFFFF), 0xFFFFFFFF) >= 1) {
             throw new StorageException("Unsupported file id '" + Long.toHexString(possibleId) + "'!");
         }
         int fileId = (int) (possibleId & 0xFFFFFFFF);
-        short valueId = (short) (id & 0x3FF);
+        short valueId = (short) (id & VALUE_ID_MASK);
         if (accesses.has(fileId)) {
             write(accesses.get(fileId), valueId, storable);
             return;
@@ -202,69 +198,52 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
             long fileSize = file.length();
             if (fileSize == 0) {
                 int bufferSize = buffer.readableBytes();
-                file.setLength(bufferSize + LOOKUP_HEADER_SIZE + LOOKUP_ENTRY_SIZE + VALUE_HEADER_SIZE);
+                file.setLength(LOOKUP_HEADER_SIZE + bufferSize);
                 fileSize = file.length();
-                long headerOffset = fileSize - LOOKUP_HEADER_SIZE;
-                file.seek(headerOffset);
-                file.writeLong(headerOffset -= LOOKUP_ENTRY_SIZE);
-                file.seek(headerOffset);
-                file.writeShort(valueId);
-                file.writeLong(0L);
                 file.seek(0);
+                file.writeShort(1);
+                file.skipBytes(LOOKUP_ENTRY_SIZE * valueId);
+                file.writeLong(LOOKUP_HEADER_SIZE);
+                file.seek(LOOKUP_HEADER_SIZE);
                 file.writeShort(adapter.typeId());
                 file.writeInt(bufferSize);
                 buffer.readBytes(file.getChannel(), bufferSize);
                 return;
             }
-            long offsetPosition = file.length() - LOOKUP_HEADER_SIZE;
-            file.seek(offsetPosition);
-            long headerPosition = file.readLong();
-            file.seek(headerPosition);
-            long lookupPosition = offsetPosition;
-            while (file.getFilePointer() != offsetPosition) {
-                if (file.readShort() != valueId) {
-                    file.skipBytes(LOOKUP_ENTRY_OFFSET_SIZE);
-                    continue;
-                }
-                lookupPosition = file.readLong();
-            }
+            file.seek(0);
+            short amount = file.readShort();
+            file.seek(0);
+            file.writeShort(amount + 1);
+            long headerOffset = LOOKUP_AMOUNT_SIZE + LOOKUP_ENTRY_SIZE * valueId;
+            file.seek(headerOffset);
+            long lookupPosition = file.readLong();
             int bufferSize = buffer.readableBytes();
-            if (lookupPosition != offsetPosition) {
-                file.seek(lookupPosition);
-                long dataOffset = file.readLong();
-                file.seek(dataOffset);
+            if (lookupPosition != INVALID_HEADER_OFFSET) {
+                file.seek(lookupPosition + VALUE_HEADER_ID_SIZE);
                 int dataSize = file.readInt();
-                long offset = updateFileSize(file, dataOffset, dataSize + VALUE_HEADER_SIZE, bufferSize + VALUE_HEADER_SIZE);
-                file.seek(offsetPosition + offset);
-                long newHeaderPosition = headerPosition + offset;
-                file.writeLong(newHeaderPosition);
+                long offset = updateFileSize(file, lookupPosition, dataSize + VALUE_HEADER_SIZE, bufferSize + VALUE_HEADER_SIZE);
+                long newDataEnd = lookupPosition + bufferSize + VALUE_HEADER_SIZE;
                 if (offset != 0) {
-                    file.seek(newHeaderPosition);
-                    while (file.getFilePointer() != offsetPosition) {
-                        file.skipBytes(LOOKUP_ENTRY_ID_SIZE);
+                    file.seek(LOOKUP_AMOUNT_SIZE);
+                    while (file.getFilePointer() != LOOKUP_HEADER_SIZE) {
                         long entryOffset = file.readLong();
-                        if (entryOffset < dataOffset) {
+                        if (entryOffset < newDataEnd) {
                             continue;
                         }
-                        file.seek(file.getFilePointer() - LOOKUP_ENTRY_OFFSET_SIZE);
+                        file.seek(file.getFilePointer() - LOOKUP_ENTRY_SIZE);
                         file.writeLong(entryOffset + offset);
                     }
                 }
-                file.seek(dataOffset);
+                file.seek(lookupPosition);
                 file.writeShort(adapter.typeId());
                 file.writeInt(bufferSize);
                 buffer.readBytes(file.getChannel(), bufferSize);
                 return;
             }
-            long offset = updateFileSize(file, headerPosition, 0, bufferSize + VALUE_HEADER_SIZE + LOOKUP_ENTRY_SIZE);
-            offsetPosition += offset;
-            file.seek(offsetPosition);
-            long newHeaderPosition = headerPosition + offset - LOOKUP_ENTRY_SIZE;
-            file.writeLong(newHeaderPosition);
-            file.seek(newHeaderPosition);
-            file.writeShort(valueId);
-            file.writeLong(headerPosition);
-            file.seek(headerPosition);
+            file.setLength(fileSize + bufferSize + VALUE_HEADER_SIZE);
+            file.seek(headerOffset);
+            file.writeLong(lookupPosition = fileSize);
+            file.seek(lookupPosition);
             file.writeShort(adapter.typeId());
             file.writeInt(bufferSize);
             buffer.readBytes(file.getChannel(), bufferSize);
@@ -282,12 +261,12 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
     @SuppressWarnings("resource")
     @Override
     public boolean delete(long id) throws StorageException {
-        long possibleId = id >> 10;
+        long possibleId = id >> VALUE_ID_BITS;
         if (Long.compareUnsigned((possibleId | 0xFFFFFFFF), 0xFFFFFFFF) >= 1) {
             throw new StorageException("Unsupported file id '" + Long.toHexString(possibleId) + "'!");
         }
         int fileId = (int) (possibleId & 0xFFFFFFFF);
-        short valueId = (short) (id & 0x3FF);
+        short valueId = (short) (id & VALUE_ID_MASK);
         if (accesses.has(fileId)) {
             return delete(accesses.get(fileId), id, valueId);
         }
@@ -305,30 +284,20 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
             RandomAccessFile file = access.open();
             long fileSize = file.length();
             if (fileSize == 0) {
-                // Remove file access as its empty
                 accesses.remove(access.id());
+                access.close();
+                access.file().delete();
                 return false;
             }
-            long offsetPosition = fileSize - LOOKUP_HEADER_SIZE;
-            file.seek(offsetPosition);
-            long headerPosition = file.readLong();
-            file.seek(headerPosition);
-            long lookupPosition = offsetPosition;
-            long lookupHeaderPosition = 0;
-            while (file.getFilePointer() != offsetPosition) {
-                if (file.readShort() != valueId) {
-                    file.skipBytes(LOOKUP_ENTRY_OFFSET_SIZE);
-                    continue;
-                }
-                lookupHeaderPosition = file.getFilePointer() - LOOKUP_ENTRY_ID_SIZE;
-                lookupPosition = file.readLong();
-            }
-            if (lookupPosition == offsetPosition) {
+            long headerOffset = LOOKUP_AMOUNT_SIZE + LOOKUP_ENTRY_SIZE * valueId;
+            file.seek(headerOffset);
+            long lookupPosition = file.readLong();
+            if(lookupPosition == INVALID_HEADER_OFFSET) {
                 return false;
             }
-            file.seek(lookupPosition + VALUE_HEADER_ID_SIZE);
+            file.seek(lookupPosition);
             int bufferSize = file.readInt();
-            if(deleteEntry(file, lookupPosition, bufferSize, headerPosition, lookupHeaderPosition, offsetPosition)) {
+            if(deleteEntry(file, lookupPosition, bufferSize, headerOffset)) {
                 accesses.remove(access.id());
                 access.close();
                 access.file().delete();
@@ -341,26 +310,26 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
         }
     }
     
-    private boolean deleteEntry(RandomAccessFile file, long lookupPosition, int bufferSize, long headerPosition, long lookupHeaderPosition, long offsetPosition) throws IOException {
-        long offset = updateFileSize(file, lookupPosition, bufferSize, 0);
-        offset += updateFileSize(file, lookupHeaderPosition + offset, LOOKUP_ENTRY_SIZE, 0);
-        offsetPosition = file.length() - LOOKUP_HEADER_SIZE;
-        if (offsetPosition == 0) {
+    private boolean deleteEntry(RandomAccessFile file, long lookupPosition, int bufferSize, long headerOffset) throws IOException {
+        file.seek(0);
+        short amount = file.readShort();
+        if(amount - 1 == 0) {
             return true;
         }
-        file.seek(offsetPosition);
-        long newHeaderPosition = headerPosition + offset;
-        file.writeLong(newHeaderPosition);
+        file.seek(0);
+        file.writeShort(amount - 1);
+        file.seek(headerOffset);
+        file.writeLong(INVALID_HEADER_OFFSET);
+        long offset = updateFileSize(file, lookupPosition, bufferSize, 0);
+        long newDataEnd = lookupPosition + bufferSize + VALUE_HEADER_SIZE;
         if (offset != 0) {
-            lookupPosition += bufferSize + VALUE_HEADER_LENGTH_SIZE;
-            file.seek(newHeaderPosition);
-            while (file.getFilePointer() != offsetPosition) {
-                file.skipBytes(LOOKUP_ENTRY_ID_SIZE);
+            file.seek(LOOKUP_AMOUNT_SIZE);
+            while (file.getFilePointer() != LOOKUP_HEADER_SIZE) {
                 long entryOffset = file.readLong();
-                if (entryOffset < lookupPosition) {
+                if (entryOffset < newDataEnd) {
                     continue;
                 }
-                file.seek(file.getFilePointer() - LOOKUP_ENTRY_OFFSET_SIZE);
+                file.seek(file.getFilePointer() - LOOKUP_ENTRY_SIZE);
                 file.writeLong(entryOffset + offset);
             }
         }
