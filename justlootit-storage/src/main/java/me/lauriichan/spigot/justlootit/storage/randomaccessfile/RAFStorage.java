@@ -171,8 +171,9 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
             if (fileSize == 0) {
                 int bufferSize = buffer.readableBytes();
                 file.setLength(bufferSize + LOOKUP_HEADER_SIZE + LOOKUP_ENTRY_SIZE + VALUE_HEADER_SIZE);
-                file.seek(file.length() - LOOKUP_HEADER_SIZE);
-                long headerOffset = file.getFilePointer() - LOOKUP_HEADER_SIZE;
+                fileSize = file.length();
+                file.seek(fileSize - LOOKUP_HEADER_SIZE);
+                long headerOffset = fileSize - LOOKUP_ENTRY_SIZE;
                 file.writeLong(headerOffset);
                 file.seek(headerOffset);
                 file.writeShort(valueId);
@@ -180,7 +181,7 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
                 file.seek(0);
                 file.writeShort(adapter.typeId());
                 file.writeInt(bufferSize);
-                file.write(buffer.array());
+                buffer.readBytes(file.getChannel(), VALUE_HEADER_SIZE, bufferSize);
                 return;
             }
             long offsetPosition = file.length() - LOOKUP_HEADER_SIZE;
