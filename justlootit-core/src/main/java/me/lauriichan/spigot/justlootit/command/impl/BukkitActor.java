@@ -101,8 +101,7 @@ public final class BukkitActor<P extends CommandSender> extends Actor<P> {
                 if (hoverAction.getValue() instanceof ItemStack item) {
                     hover = new HoverEvent(HoverEvent.Action.SHOW_ITEM,
                         new Item(item.getType().getKey().toString(), item.getAmount(), versionHelper.asItemTag(item)));
-                }
-                if (hoverAction.getValue() instanceof Entity entity) {
+                } else if (hoverAction.getValue() instanceof Entity entity) {
                     hover = new HoverEvent(HoverEvent.Action.SHOW_ENTITY, versionHelper.createEntityHover(entity));
                 }
                 break;
