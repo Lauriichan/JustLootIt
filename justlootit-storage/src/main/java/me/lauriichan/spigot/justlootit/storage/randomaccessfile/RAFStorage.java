@@ -50,7 +50,7 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
         List<Integer> list = accesses.keys();
         for (Integer id : list) {
             RAFAccess<S> access = accesses.remove(id);
-            if (access == null || !access.isOpen()) {
+            if (access == null) {
                 continue;
             }
             if (access.isOpen()) {
@@ -75,15 +75,13 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
             if (access == null || !access.isOpen()) {
                 continue;
             }
-            if (access.isOpen()) {
-                access.writeLock();
-                try {
-                    access.close();
-                } catch (Exception e) {
-                    logger.log(Level.WARNING, "Couldn't close File access to '" + access.hexId() + "'");
-                } finally {
-                    access.writeUnlock();
-                }
+            access.writeLock();
+            try {
+                access.close();
+            } catch (Exception e) {
+                logger.log(Level.WARNING, "Couldn't close File access to '" + access.hexId() + "'");
+            } finally {
+                access.writeUnlock();
             }
         }
     }
