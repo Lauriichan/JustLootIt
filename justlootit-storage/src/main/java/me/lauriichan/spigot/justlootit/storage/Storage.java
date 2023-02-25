@@ -66,4 +66,6 @@ public abstract class Storage<S extends Storable> {
     
     public abstract S read(long id) throws StorageException;
 
+    public abstract boolean delete(long id) throws StorageException;
+    
 }

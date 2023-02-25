@@ -70,22 +70,6 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
         write(access, valueId, storable);
     }
 
-    @Override
-    public S read(long id) throws StorageException {
-        long possibleId = id >> 10;
-        if (Long.compareUnsigned((possibleId | 0xFFFFFFFF), 0xFFFFFFFF) >= 1) {
-            throw new StorageException("Unsupported file id '" + Long.toHexString(possibleId) + "'!");
-        }
-        int fileId = (int) (possibleId & 0xFFFFFFFF);
-        short valueId = (short) (id & 0x3FF);
-        if (accesses.has(fileId)) {
-            return read(accesses.get(fileId), valueId);
-        }
-        RAFAccess<S> access = new RAFAccess<>(fileId, directory);
-        accesses.set(fileId, access);
-        return read(access, valueId);
-    }
-
     private void write(RAFAccess<S> access, short valueId, S storable) throws StorageException {
         StorageAdapter<? extends S> adapter = findAdapterFor(storable.getClass().asSubclass(baseType));
         if (adapter == null) {
@@ -199,8 +183,30 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
         file.setLength(newLength);
     }
 
+    @Override
+    public S read(long id) throws StorageException {
+        long possibleId = id >> 10;
+        if (Long.compareUnsigned((possibleId | 0xFFFFFFFF), 0xFFFFFFFF) >= 1) {
+            throw new StorageException("Unsupported file id '" + Long.toHexString(possibleId) + "'!");
+        }
+        int fileId = (int) (possibleId & 0xFFFFFFFF);
+        short valueId = (short) (id & 0x3FF);
+        if (accesses.has(fileId)) {
+            return read(accesses.get(fileId), valueId);
+        }
+        RAFAccess<S> access = new RAFAccess<>(fileId, directory);
+        accesses.set(fileId, access);
+        return read(access, valueId);
+    }
+
     private S read(RAFAccess<S> access, short valueId) {
         return null;
+    }
+    
+    @Override
+    public boolean delete(long id) throws StorageException {
+        // TODO Auto-generated method stub
+        return false;
     }
 
 }
