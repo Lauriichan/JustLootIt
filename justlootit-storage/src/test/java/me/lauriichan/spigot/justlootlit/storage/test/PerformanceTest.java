@@ -29,7 +29,7 @@ public class PerformanceTest {
     public static final boolean PRINT_EACH_ROUND = false;
 
     public static final Test<?>[] TESTS = new Test[] {
-        new SimpleTest(2048)
+        new SimpleTest(1523)
     };
 
     /*
