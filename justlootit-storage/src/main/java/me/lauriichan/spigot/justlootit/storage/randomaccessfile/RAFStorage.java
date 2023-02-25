@@ -202,7 +202,7 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
                 file.seek(0);
                 file.writeShort(adapter.typeId());
                 file.writeInt(bufferSize);
-//                buffer.readBytes(file.getChannel(), VALUE_HEADER_SIZE, bufferSize);
+                buffer.readBytes(file.getChannel(), VALUE_HEADER_SIZE, bufferSize);
                 return;
             }
             long offsetPosition = file.length() - LOOKUP_HEADER_SIZE;
