@@ -28,7 +28,7 @@ public abstract class Cache<K, V> {
 
     protected abstract void putEntry(K key, CachedValue<V> value);
 
-    protected abstract boolean removeEntry(K key);
+    protected abstract CachedValue<V> removeEntry(K key);
 
     protected abstract K[] entryKeys();
 
@@ -40,8 +40,12 @@ public abstract class Cache<K, V> {
         return entry.value();
     }
 
-    public final boolean remove(K key) {
-        return removeEntry(key);
+    public final V remove(K key) {
+        CachedValue<V> cached = removeEntry(key);
+        if(cached != null) {
+            return cached.value();
+        }
+        return null;
     }
 
     public final void set(K key, V value) {

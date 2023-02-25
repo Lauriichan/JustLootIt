@@ -46,7 +46,7 @@ public class ThreadSafeCache<K, V> extends Cache<K, V> {
     }
 
     @Override
-    protected boolean removeEntry(K key) {
+    protected CachedValue<V> removeEntry(K key) {
         writeLock.lock();
         try {
             return delegate.removeEntry(key);

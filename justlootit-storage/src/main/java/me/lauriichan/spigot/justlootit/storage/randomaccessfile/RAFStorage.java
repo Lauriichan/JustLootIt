@@ -3,6 +3,7 @@ package me.lauriichan.spigot.justlootit.storage.randomaccessfile;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 
@@ -52,6 +53,10 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
         }
     }
 
+    /*
+     * Data writing & file creation
+     */
+    
     @Override
     public void write(S storable) throws StorageException {
         long id = storable.id();
@@ -142,6 +147,55 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
             access.writeUnlock();
         }
     }
+    
+    /*
+     * Data deletion & file deletion
+     */
+
+    @SuppressWarnings("resource")
+    @Override
+    public boolean delete(long id) throws StorageException {
+        long possibleId = id >> 10;
+        if (Long.compareUnsigned((possibleId | 0xFFFFFFFF), 0xFFFFFFFF) >= 1) {
+            throw new StorageException("Unsupported file id '" + Long.toHexString(possibleId) + "'!");
+        }
+        int fileId = (int) (possibleId & 0xFFFFFFFF);
+        short valueId = (short) (id & 0x3FF);
+        if(accesses.has(fileId)) {
+            return delete(accesses.get(fileId), valueId);
+        }
+        RAFAccess<S> access = new RAFAccess<>(fileId, directory);
+        if(!access.exists()) {
+            return false;
+        }
+        accesses.set(fileId, access);
+        return delete(access, valueId);
+    }
+    
+    private boolean delete(RAFAccess<S> access, short valueId) {
+        if(!access.exists()) {
+            return false;
+        }
+        
+        return true;
+    }
+    
+    /*
+     * Clear data
+     */
+    
+    @Override
+    public void clear() throws StorageException {
+        List<Integer> list = accesses.keys();
+        for(Integer id : list) {
+            RAFAccess<S> access = accesses.get(id);
+            accesses.remove(id);
+        }
+    }
+    
+    /*
+     * File size management
+     */
 
     private long updateFileSize(RandomAccessFile file, long offset, long oldSize, long newSize) throws IOException {
         long difference = oldSize - newSize;
@@ -188,6 +242,10 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
         }
         file.setLength(newLength);
     }
+    
+    /*
+     * Data reading
+     */
 
     @SuppressWarnings("resource")
     @Override
@@ -215,33 +273,7 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
         }
         return null;
     }
-
-    @SuppressWarnings("resource")
-    @Override
-    public boolean delete(long id) throws StorageException {
-        long possibleId = id >> 10;
-        if (Long.compareUnsigned((possibleId | 0xFFFFFFFF), 0xFFFFFFFF) >= 1) {
-            throw new StorageException("Unsupported file id '" + Long.toHexString(possibleId) + "'!");
-        }
-        int fileId = (int) (possibleId & 0xFFFFFFFF);
-        short valueId = (short) (id & 0x3FF);
-        if(accesses.has(fileId)) {
-            return delete(accesses.get(fileId), valueId);
-        }
-        RAFAccess<S> access = new RAFAccess<>(fileId, directory);
-        if(!access.exists()) {
-            return false;
-        }
-        accesses.set(fileId, access);
-        return delete(access, valueId);
-    }
     
-    private boolean delete(RAFAccess<S> access, short valueId) {
-        if(!access.exists()) {
-            return false;
-        }
-        
-        return true;
-    }
+    
 
 }

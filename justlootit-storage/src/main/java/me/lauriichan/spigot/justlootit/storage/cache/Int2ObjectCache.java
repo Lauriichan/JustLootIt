@@ -28,8 +28,8 @@ public final class Int2ObjectCache<V> extends Cache<Integer, V> {
     }
 
     @Override
-    protected boolean removeEntry(Integer key) {
-        return map.remove(key.intValue()) != null;
+    protected CachedValue<V> removeEntry(Integer key) {
+        return map.remove(key.intValue());
     }
     
     @Override

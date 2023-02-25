@@ -28,8 +28,8 @@ public final class Long2ObjectCache<V> extends Cache<Long, V> {
     }
 
     @Override
-    protected boolean removeEntry(Long key) {
-        return map.remove(key.longValue()) != null;
+    protected CachedValue<V> removeEntry(Long key) {
+        return map.remove(key.longValue());
     }
 
     @Override
