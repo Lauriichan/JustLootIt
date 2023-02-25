@@ -45,6 +45,10 @@ public abstract class Cache<K, V> {
         }
         putEntry(key, new CachedValue<>(value));
     }
+    
+    public final boolean has(K key) {
+        return hasEntry(key);
+    }
 
     public final List<K> keys() {
         return Arrays.asList(entryKeys());

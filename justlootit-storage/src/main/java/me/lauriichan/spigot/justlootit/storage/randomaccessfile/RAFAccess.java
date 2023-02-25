@@ -1,27 +1,35 @@
 package me.lauriichan.spigot.justlootit.storage.randomaccessfile;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
 
 import me.lauriichan.spigot.justlootit.storage.Storable;
 
 public final class RAFAccess<S extends Storable> implements AutoCloseable {
 
-    private final long id;
+    private static final Predicate<String> IS_HEX = Pattern.compile("[a-fA-F0-9]+").asMatchPredicate();
+
+    public static final FilenameFilter FILE_FILTER = (dir, name) -> name.endsWith(".jli")
+        && IS_HEX.test(name.substring(0, name.length() - 4));
+
+    private final int id;
 
     private final File file;
     private volatile RandomAccessFile access;
 
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
-    public RAFAccess(final long id, final File directory) {
+    public RAFAccess(final int id, final File directory) {
         this.id = id;
         this.file = new File(directory, Long.toHexString(id) + ".jli");
     }
 
-    public long id() {
+    public int id() {
         return id;
     }
 
@@ -29,16 +37,16 @@ public final class RAFAccess<S extends Storable> implements AutoCloseable {
         return file;
     }
 
-    public void store(S storable) {
+    public void store(short valueId, S storable) {
         lock.writeLock().lock();
         try {
-            
+
         } finally {
             lock.writeLock().unlock();
         }
     }
 
-    public S read(long id) {
+    public S read(short valueId) {
         lock.readLock().lock();
         try {
             return null;
