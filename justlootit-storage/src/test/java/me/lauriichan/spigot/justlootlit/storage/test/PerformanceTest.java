@@ -26,8 +26,10 @@ public class PerformanceTest {
     public static final int WARMUP_ROUNDS = 3;
     public static final int SAMPLE_ROUNDS = 3;
 
+    public static final boolean PRINT_EACH_ROUND = false;
+
     public static final Test<?>[] TESTS = new Test[] {
-        new SimpleTest(4)
+        new SimpleTest(2048)
     };
 
     /*
@@ -58,7 +60,7 @@ public class PerformanceTest {
         StorageProvider<T>[] providers = providerList.toArray(StorageProvider[]::new);
         providerList.clear();
         File workingDir = new File("tests", test.name);
-        if(workingDir.exists()) {
+        if (workingDir.exists()) {
             FileUtils.forceDelete(workingDir);
         }
         workingDir.mkdirs();
@@ -90,16 +92,18 @@ public class PerformanceTest {
             for (int index = 0; index < SAMPLE_ROUNDS; index++) {
                 Profiler.Result result = results[index];
                 result.evaluate();
-                System.out.println("Results for Round " + (index + 1) + " of '" + provider.name + "'\n");
-                printResult(result.min(), result.max(), result.average());
-                System.out.println(" ");
-                if(min > result.min()) {
+                if (min > result.min()) {
                     min = result.min();
                 }
-                if(max < result.max()) {
+                if (max < result.max()) {
                     max = result.max();
                 }
-                average.add(BigInteger.valueOf(result.average()));
+                average = average.add(BigInteger.valueOf(result.average()));
+                if (PRINT_EACH_ROUND) {
+                    System.out.println("Results for Round " + (index + 1) + " of '" + provider.name + "'\n");
+                    printResult(result.min(), result.max(), result.average());
+                    System.out.println(" ");
+                }
             }
             System.out.println("\n\nOverall results of '" + provider.name + "':");
             printResult(min, max, average.divide(BigInteger.valueOf(SAMPLE_ROUNDS)).longValue());

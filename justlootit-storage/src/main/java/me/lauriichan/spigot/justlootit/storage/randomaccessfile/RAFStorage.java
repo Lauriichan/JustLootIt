@@ -193,16 +193,16 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
                 int bufferSize = buffer.readableBytes();
                 file.setLength(bufferSize + LOOKUP_HEADER_SIZE + LOOKUP_ENTRY_SIZE + VALUE_HEADER_SIZE);
                 fileSize = file.length();
-                file.seek(fileSize - LOOKUP_HEADER_SIZE);
-                long headerOffset = fileSize - LOOKUP_ENTRY_SIZE;
-                file.writeLong(headerOffset);
+                long headerOffset = fileSize - LOOKUP_HEADER_SIZE;
+                file.seek(headerOffset);
+                file.writeLong(headerOffset -=  LOOKUP_ENTRY_SIZE);
                 file.seek(headerOffset);
                 file.writeShort(valueId);
-                file.writeLong(0);
+                file.writeLong(0L);
                 file.seek(0);
                 file.writeShort(adapter.typeId());
                 file.writeInt(bufferSize);
-                buffer.readBytes(file.getChannel(), VALUE_HEADER_SIZE, bufferSize);
+                buffer.readBytes(file.getChannel(), bufferSize);
                 return;
             }
             long offsetPosition = file.length() - LOOKUP_HEADER_SIZE;
@@ -229,7 +229,7 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
                 file.seek(dataOffset);
                 file.writeShort(adapter.typeId());
                 file.writeInt(bufferSize);
-                file.write(buffer.array());
+                buffer.readBytes(file.getChannel(), bufferSize);
                 return;
             }
             long offset = updateFileSize(file, headerPosition, 0, bufferSize + VALUE_HEADER_SIZE + LOOKUP_ENTRY_SIZE);
@@ -241,7 +241,7 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
             file.seek(headerPosition);
             file.writeShort(adapter.typeId());
             file.writeInt(bufferSize);
-            file.write(buffer.array());
+            buffer.readBytes(file.getChannel(), bufferSize);
         } catch (IOException e) {
             throw new StorageException("Failed to write value with id '" + Long.toHexString(storable.id()) + "' to file!", e);
         } finally {
@@ -329,7 +329,7 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
      */
 
     private long updateFileSize(RandomAccessFile file, long offset, long oldSize, long newSize) throws IOException {
-        long difference = oldSize - newSize;
+        long difference = newSize - oldSize;
         if (difference == 0) {
             return 0;
         }

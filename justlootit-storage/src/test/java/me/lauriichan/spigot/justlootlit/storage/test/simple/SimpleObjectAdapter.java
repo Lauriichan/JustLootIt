@@ -13,12 +13,12 @@ public class SimpleObjectAdapter extends StorageAdapter<SimpleObject> {
 
     @Override
     public void serialize(SimpleObject storable, ByteBuf buffer) {
-        // This object has no data
+        buffer.writeInt(storable.number);
     }
 
     @Override
     public SimpleObject deserialize(long id, ByteBuf buffer) {
-        return new SimpleObject(id);
+        return new SimpleObject(id, buffer.readInt());
     }
 
 }

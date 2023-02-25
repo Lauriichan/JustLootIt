@@ -34,6 +34,7 @@ public abstract class Storage<S extends Storable> {
         }
         lock.writeLock().lock();
         try {
+            idToAdapter.put(adapter.typeId(), adapter);
             classToAdapter.put(adapter.type(), adapter);
         } finally {
             lock.writeLock().unlock();

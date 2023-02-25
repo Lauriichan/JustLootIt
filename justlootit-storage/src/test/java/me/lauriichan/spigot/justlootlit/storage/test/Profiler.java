@@ -49,7 +49,7 @@ public class Profiler {
                 if (duration < min) {
                     min = duration;
                 }
-                average.add(BigInteger.valueOf(duration));
+                average = average.add(BigInteger.valueOf(duration));
             }
             this.min = min;
             this.max = max;
