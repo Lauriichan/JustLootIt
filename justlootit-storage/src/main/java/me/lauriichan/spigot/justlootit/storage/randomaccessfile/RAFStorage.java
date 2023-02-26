@@ -7,17 +7,16 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.spigot.justlootit.storage.Storable;
 import me.lauriichan.spigot.justlootit.storage.Storage;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapter;
 import me.lauriichan.spigot.justlootit.storage.StorageException;
-import me.lauriichan.spigot.justlootit.storage.cache.Int2ObjectCache;
-import me.lauriichan.spigot.justlootit.storage.cache.ThreadSafeCache;
+import me.lauriichan.spigot.justlootit.storage.util.cache.Int2ObjectCache;
+import me.lauriichan.spigot.justlootit.storage.util.cache.ThreadSafeCache;
 
 public class RAFStorage<S extends Storable> extends Storage<S> {
 
@@ -26,16 +25,13 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
     private final File directory;
     private final ThreadSafeCache<Integer, RAFAccess<S>> accesses;
 
-    private final Logger logger;
-
-    public RAFStorage(Logger logger, Class<S> baseType, File directory) {
+    public RAFStorage(ISimpleLogger logger, Class<S> baseType, File directory) {
         this(logger, baseType, directory, RAFSettings.DEFAULT);
     }
 
-    public RAFStorage(Logger logger, Class<S> baseType, File directory, RAFSettings settings) {
-        super(baseType);
+    public RAFStorage(ISimpleLogger logger, Class<S> baseType, File directory, RAFSettings settings) {
+        super(logger, baseType);
         this.settings = settings;
-        this.logger = logger;
         this.accesses = new ThreadSafeCache<>(new Int2ObjectCache<>(logger));
         this.directory = directory;
     }
@@ -57,7 +53,7 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
                 try {
                     access.close();
                 } catch (Exception e) {
-                    logger.log(Level.WARNING, "Couldn't close File access to '" + access.hexId() + "'");
+                    logger.warning("Couldn't close File access to '" + access.hexId() + "'");
                 } finally {
                     access.writeUnlock();
                 }
@@ -78,7 +74,7 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
             try {
                 access.close();
             } catch (Exception e) {
-                logger.log(Level.WARNING, "Couldn't close File access to '" + access.hexId() + "'");
+                logger.warning("Couldn't close File access to '" + access.hexId() + "'");
             } finally {
                 access.writeUnlock();
             }

@@ -1,14 +1,13 @@
-package me.lauriichan.spigot.justlootit.storage.cache;
-
-import java.util.logging.Logger;
+package me.lauriichan.spigot.justlootit.storage.util.cache;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import me.lauriichan.laylib.logger.ISimpleLogger;
 
 public final class Long2ObjectCache<V> extends Cache<Long, V> {
 
     private final Long2ObjectOpenHashMap<CachedValue<V>> map = new Long2ObjectOpenHashMap<>();
 
-    public Long2ObjectCache(Logger logger) {
+    public Long2ObjectCache(ISimpleLogger logger) {
         super(logger);
     }
 

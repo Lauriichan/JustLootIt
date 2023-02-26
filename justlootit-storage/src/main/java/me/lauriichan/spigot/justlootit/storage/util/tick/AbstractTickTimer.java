@@ -1,4 +1,4 @@
-package me.lauriichan.spigot.justlootit.storage.tick;
+package me.lauriichan.spigot.justlootit.storage.util.tick;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;

@@ -1,16 +1,16 @@
-package me.lauriichan.spigot.justlootit.storage.cache;
+package me.lauriichan.spigot.justlootit.storage.util.cache;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import me.lauriichan.laylib.logger.ISimpleLogger;
 
 public abstract class Cache<K, V> {
 
-    protected final Logger logger;
+    protected final ISimpleLogger logger;
     private volatile long cacheTime;
 
-    public Cache(final Logger logger) {
+    public Cache(final ISimpleLogger logger) {
         this.logger = logger;
     }
 
@@ -84,7 +84,7 @@ public abstract class Cache<K, V> {
                 try {
                     ((AutoCloseable) value).close();
                 } catch (Exception e) {
-                    logger.log(Level.WARNING, "Couldn't close cached resource", e);
+                    logger.warning("Couldn't close cached resource", e);
                 }
             }
         }

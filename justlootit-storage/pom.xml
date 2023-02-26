@@ -7,6 +7,12 @@
     </parent>
     <artifactId>justlootit-storage</artifactId>
     <dependencies>
+        <!-- Laylib -->
+        <dependency>
+            <groupId>me.lauriichan.laylib</groupId>
+            <artifactId>logger</artifactId>
+            <version>0.1.0-10191ac-SNAPSHOT</version>
+        </dependency>
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-buffer</artifactId>

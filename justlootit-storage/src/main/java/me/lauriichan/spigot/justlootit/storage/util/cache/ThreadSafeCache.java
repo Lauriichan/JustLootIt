@@ -1,4 +1,4 @@
-package me.lauriichan.spigot.justlootit.storage.cache;
+package me.lauriichan.spigot.justlootit.storage.util.cache;
 
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;

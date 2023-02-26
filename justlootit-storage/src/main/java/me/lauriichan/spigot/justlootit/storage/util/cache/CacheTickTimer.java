@@ -1,9 +1,9 @@
-package me.lauriichan.spigot.justlootit.storage.cache;
+package me.lauriichan.spigot.justlootit.storage.util.cache;
 
 import java.util.ArrayList;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import me.lauriichan.spigot.justlootit.storage.tick.AbstractTickTimer;
+import me.lauriichan.spigot.justlootit.storage.util.tick.AbstractTickTimer;
 
 public final class CacheTickTimer extends AbstractTickTimer {
 

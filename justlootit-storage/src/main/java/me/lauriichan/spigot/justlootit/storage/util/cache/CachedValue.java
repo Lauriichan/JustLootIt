@@ -1,4 +1,4 @@
-package me.lauriichan.spigot.justlootit.storage.cache;
+package me.lauriichan.spigot.justlootit.storage.util.cache;
 
 public final class CachedValue<V> {
 

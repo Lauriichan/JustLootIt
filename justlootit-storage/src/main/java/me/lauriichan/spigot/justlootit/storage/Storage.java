@@ -7,6 +7,7 @@ import java.util.function.Consumer;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.shorts.Short2ObjectOpenHashMap;
+import me.lauriichan.laylib.logger.ISimpleLogger;
 
 public abstract class Storage<S extends Storable> {
 
@@ -15,10 +16,16 @@ public abstract class Storage<S extends Storable> {
 
     protected final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
+    protected final ISimpleLogger logger;
     protected final Class<S> baseType;
 
-    public Storage(final Class<S> baseType) {
+    public Storage(final ISimpleLogger logger, final Class<S> baseType) {
+        this.logger = logger;
         this.baseType = baseType;
+    }
+    
+    public final ISimpleLogger logger() {
+        return logger;
     }
 
     public final Class<S> baseType() {
