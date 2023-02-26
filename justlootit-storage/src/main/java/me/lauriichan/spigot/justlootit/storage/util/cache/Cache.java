@@ -118,9 +118,39 @@ public abstract class Cache<K, V> {
     public final boolean isEmpty() {
         return hasNoEntries();
     }
+    
+    public final int purge(long cacheTime) {
+        if(hasNoEntries()) {
+            return 0;
+        }
+        K[] keys = entryKeys();
+        int purged = 0;
+        for (K key : keys) {
+            CachedValue<V> entry = getEntry(key);
+            if (entry.tick() < cacheTime) {
+                continue;
+            }
+            purged++;
+            removeEntry(key);
+            V value = entry.value();
+            try {
+                callback.onInvalidate(key, entry.peekValue());
+            } catch(Exception e) {
+                logger.warning("Couldn't run invalidate callback for resource", e);
+            }
+            if (value instanceof AutoCloseable) {
+                try {
+                    ((AutoCloseable) value).close();
+                } catch (Exception e) {
+                    logger.warning("Couldn't close cached resource", e);
+                }
+            }
+        }
+        return purged;
+    }
 
     void tick() {
-        if(tickPaused || !hasNoEntries()) {
+        if(tickPaused || hasNoEntries()) {
             return;
         }
         K[] keys = entryKeys();
