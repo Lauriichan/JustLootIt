@@ -21,6 +21,8 @@ public final class RAFSettings {
          * The value specified will be rounded up to the next power of two if the value
          * itself isn't a power of two
          * 
+         * Max support value is 2^16 (65536)
+         * 
          * @param  valuesPerFile the value to set
          *
          * @return               the same builder
@@ -127,8 +129,8 @@ public final class RAFSettings {
 
     private RAFSettings(int valuesPerFile, int copyBufferBytes, long fileCacheTicks, long fileCachePurgeStep, int fileCacheMaxAmount) {
         this.copyBufferSize = Math.max(copyBufferBytes * 1024, 1024);
-        this.valueIdBits = Math.max(Integer.bitCount(valuesPerFile - 1), 1);
-        this.valueIdMask = -1 >> (Integer.SIZE - valueIdBits);
+        this.valueIdBits = Math.max(Integer.bitCount((valuesPerFile - 1) & 0xFFFF), 1);
+        this.valueIdMask = 0xFFFF >>> (Short.SIZE - valueIdBits);
         this.valueIdAmount = valueIdMask + 1;
         this.lookupHeaderSize = valueIdAmount * LOOKUP_ENTRY_SIZE + LOOKUP_AMOUNT_SIZE;
         this.fileCacheTicks = Math.max(fileCacheTicks, 30);

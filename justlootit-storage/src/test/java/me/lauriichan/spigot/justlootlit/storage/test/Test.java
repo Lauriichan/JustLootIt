@@ -2,6 +2,7 @@ package me.lauriichan.spigot.justlootlit.storage.test;
 
 import java.io.File;
 import java.util.List;
+import java.util.Random;
 import java.util.function.Function;
 
 import me.lauriichan.spigot.justlootit.storage.Storable;
@@ -33,14 +34,15 @@ public abstract class Test<T extends Storable> {
 
     public abstract void createProviders(List<StorageProvider<T>> list);
 
-    public final void executeTest(File workingDir, StorageProvider<T> provider, Profiler profiler) throws Throwable {
+    public final void executeTest(File workingDir, StorageProvider<T> provider, Profiler profiler, long seed) throws Throwable {
         Storage<T> storage = provider.builder.apply(workingDir);
+        Random random = new Random(seed);
         profiler.time();
-        executeTest(provider.name, storage);
+        executeTest(provider.name, storage, random);
         profiler.time();
         storage.close();
     }
 
-    protected abstract void executeTest(String storageName, Storage<T> storage) throws Throwable;
+    protected abstract void executeTest(String storageName, Storage<T> storage, Random random) throws Throwable;
 
 }

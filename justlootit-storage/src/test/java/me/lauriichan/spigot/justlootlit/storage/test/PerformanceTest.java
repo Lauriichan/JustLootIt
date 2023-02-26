@@ -5,6 +5,7 @@ import java.math.BigInteger;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.FileUtils;
@@ -20,6 +21,8 @@ public class PerformanceTest {
     /*
      * ONLY MODIFY PUBLIC FIELDS
      */
+    
+    public static final long SEED = 285428738523L;
 
     public static final int RUNS_PER_ROUND = 50;
 
@@ -68,18 +71,20 @@ public class PerformanceTest {
             profiler.lock();
             for (int index = 0; index < WARMUP_RUNS; index++) {
                 warmupDir.mkdirs();
-                test.executeTest(warmupDir, provider, profiler);
+                test.executeTest(warmupDir, provider, profiler, SEED);
                 FileUtils.forceDelete(warmupDir);
             }
             profiler.unlock();
+            Random seedRandom = new Random(SEED);
             Profiler.Result[] results = new Profiler.Result[SAMPLE_ROUNDS];
             for (int index = 0; index < SAMPLE_ROUNDS; index++) {
                 File roundDir = new File(workingDir, "round" + index);
                 roundDir.mkdirs();
+                long roundSeed = seedRandom.nextLong();
                 for (int idx = 0; idx < RUNS_PER_ROUND; idx++) {
                     File runDir = new File(roundDir, "run" + idx);
                     runDir.mkdirs();
-                    test.executeTest(runDir, provider, profiler);
+                    test.executeTest(runDir, provider, profiler, roundSeed);
                 }
                 results[index] = profiler.result();
             }

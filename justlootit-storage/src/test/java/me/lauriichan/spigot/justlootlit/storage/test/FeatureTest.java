@@ -20,10 +20,13 @@ public class FeatureTest {
     /*
      * ONLY MODIFY PUBLIC FIELDS
      */
+    
+    public static final long SEED = 285428738523L;
 
     public static final Test<?>[] TESTS = new Test[] {
         new WriteReadTest(1024),
-        new WriteReadDeleteTest(1024)
+        new WriteReadDeleteTest(1024),
+        new WriteUpdateReadTest(1024),
     };
 
     /*
@@ -62,7 +65,7 @@ public class FeatureTest {
         for (StorageProvider<T> provider : providers) {
             File storageDir = new File(workingDir, provider.name);
             storageDir.mkdirs();
-            collection.add(DynamicTest.dynamicTest(test.name + " [" + provider.name + "]", () -> test.executeTest(storageDir, provider, profiler)));
+            collection.add(DynamicTest.dynamicTest(test.name + " [" + provider.name + "]", () -> test.executeTest(storageDir, provider, profiler, SEED)));
         }
         profiler.unlock();
     }

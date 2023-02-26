@@ -2,6 +2,8 @@ package me.lauriichan.spigot.justlootlit.storage.test.simple;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.util.Random;
+
 import me.lauriichan.spigot.justlootit.storage.Storage;
 import me.lauriichan.spigot.justlootlit.storage.test.BaseTest;
 import me.lauriichan.spigot.justlootlit.storage.test.simple.model.SimpleObject;
@@ -17,20 +19,20 @@ public class WriteReadTest extends BaseTest<SimpleObject> {
     }
 
     @Override
-    protected void executeTest(String storageName, Storage<SimpleObject> storage) {
+    protected void executeTest(String storageName, Storage<SimpleObject> storage, Random random) {
         if(amount == 0) {
             return;
         }
         SimpleObject[] objects = new SimpleObject[amount];
         for(int id = 0; id < amount; id++) {
-            SimpleObject object = new SimpleObject(id);
+            SimpleObject object = new SimpleObject(id, random.nextInt(Integer.MAX_VALUE));
             objects[id] = object;
             storage.write(object);
         }
         
         for(int id = 0; id < amount; id++) {
             SimpleObject loaded = storage.read(id);
-            assertEquals(loaded.number, objects[id].number);
+            assertEquals(objects[id].number, loaded.number, "Invalid entry " + id);
         }
     }
 
