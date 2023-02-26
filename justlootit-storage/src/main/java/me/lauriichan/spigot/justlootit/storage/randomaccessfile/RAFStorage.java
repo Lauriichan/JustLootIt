@@ -1,5 +1,7 @@
 package me.lauriichan.spigot.justlootit.storage.randomaccessfile;
 
+import static me.lauriichan.spigot.justlootit.storage.randomaccessfile.RAFSettings.*;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -19,31 +21,20 @@ import me.lauriichan.spigot.justlootit.storage.cache.ThreadSafeCache;
 
 public class RAFStorage<S extends Storable> extends Storage<S> {
 
-    private static final int COPY_BUFFER_SIZE = 1024 * 64;
+    private final RAFSettings settings;
     
-    /* This will be rounded up to the next power of two if this isn't a power of two already */
-    private static final int VALUE_ID_AMOUNT = 1025;
-    
-    private static final int VALUE_ID_BITS = Integer.bitCount(VALUE_ID_AMOUNT - 1);
-    private static final int VALUE_ID_MASK = -1 >> (Integer.SIZE - VALUE_ID_BITS);
-
-    private static final int LOOKUP_AMOUNT_SIZE = Short.BYTES;
-    private static final int LOOKUP_ENTRY_SIZE = Long.BYTES;
-    private static final int LOOKUP_HEADER_SIZE = (VALUE_ID_MASK + 1)  * LOOKUP_ENTRY_SIZE + LOOKUP_AMOUNT_SIZE;
-
-    private static final int VALUE_HEADER_ID_SIZE = Short.BYTES;
-    private static final int VALUE_HEADER_LENGTH_SIZE = Integer.BYTES;
-    private static final int VALUE_HEADER_SIZE = VALUE_HEADER_ID_SIZE + VALUE_HEADER_LENGTH_SIZE;
-    
-    private static final long INVALID_HEADER_OFFSET = 0L;
-
     private final File directory;
     private final ThreadSafeCache<Integer, RAFAccess<S>> accesses;
 
     private final Logger logger;
 
     public RAFStorage(Logger logger, Class<S> baseType, File directory) {
+        this(logger, baseType, directory, RAFSettings.DEFAULT);
+    }
+
+    public RAFStorage(Logger logger, Class<S> baseType, File directory, RAFSettings settings) {
         super(baseType);
+        this.settings = settings;
         this.logger = logger;
         this.accesses = new ThreadSafeCache<>(new Int2ObjectCache<>(logger));
         this.directory = directory;
@@ -101,12 +92,12 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
     @SuppressWarnings("resource")
     @Override
     public S read(long id) throws StorageException {
-        long possibleId = id >> VALUE_ID_BITS;
+        long possibleId = id >> settings.valueIdBits;
         if (Long.compareUnsigned((possibleId | 0xFFFFFFFF), 0xFFFFFFFF) >= 1) {
             throw new StorageException("Unsupported file id '" + Long.toHexString(possibleId) + "'!");
         }
         int fileId = (int) (possibleId & 0xFFFFFFFF);
-        short valueId = (short) (id & VALUE_ID_MASK);
+        short valueId = (short) (id & settings.valueIdMask);
         if (accesses.has(fileId)) {
             return read(accesses.get(fileId), id, valueId);
         }
@@ -174,12 +165,12 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
     @Override
     public void write(S storable) throws StorageException {
         long id = storable.id();
-        long possibleId = id >> VALUE_ID_BITS;
+        long possibleId = id >> settings.valueIdBits;
         if (Long.compareUnsigned((possibleId | 0xFFFFFFFF), 0xFFFFFFFF) >= 1) {
             throw new StorageException("Unsupported file id '" + Long.toHexString(possibleId) + "'!");
         }
         int fileId = (int) (possibleId & 0xFFFFFFFF);
-        short valueId = (short) (id & VALUE_ID_MASK);
+        short valueId = (short) (id & settings.valueIdMask);
         if (accesses.has(fileId)) {
             write(accesses.get(fileId), valueId, storable);
             return;
@@ -201,13 +192,13 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
             long fileSize = file.length();
             if (fileSize == 0) {
                 int bufferSize = buffer.readableBytes();
-                file.setLength(LOOKUP_HEADER_SIZE + bufferSize);
+                file.setLength(settings.lookupHeaderSize + bufferSize);
                 fileSize = file.length();
                 file.seek(0);
                 file.writeShort(1);
                 file.skipBytes(LOOKUP_ENTRY_SIZE * valueId);
-                file.writeLong(LOOKUP_HEADER_SIZE);
-                file.seek(LOOKUP_HEADER_SIZE);
+                file.writeLong(settings.lookupHeaderSize);
+                file.seek(settings.lookupHeaderSize);
                 file.writeShort(adapter.typeId());
                 file.writeInt(bufferSize);
                 buffer.readBytes(file.getChannel(), bufferSize);
@@ -228,7 +219,7 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
                 long newDataEnd = lookupPosition + bufferSize + VALUE_HEADER_SIZE;
                 if (offset != 0) {
                     file.seek(LOOKUP_AMOUNT_SIZE);
-                    while (file.getFilePointer() != LOOKUP_HEADER_SIZE) {
+                    while (file.getFilePointer() != settings.lookupHeaderSize) {
                         long entryOffset = file.readLong();
                         if (entryOffset < newDataEnd) {
                             continue;
@@ -264,12 +255,12 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
     @SuppressWarnings("resource")
     @Override
     public boolean delete(long id) throws StorageException {
-        long possibleId = id >> VALUE_ID_BITS;
+        long possibleId = id >> settings.valueIdBits;
         if (Long.compareUnsigned((possibleId | 0xFFFFFFFF), 0xFFFFFFFF) >= 1) {
             throw new StorageException("Unsupported file id '" + Long.toHexString(possibleId) + "'!");
         }
         int fileId = (int) (possibleId & 0xFFFFFFFF);
-        short valueId = (short) (id & VALUE_ID_MASK);
+        short valueId = (short) (id & settings.valueIdMask);
         if (accesses.has(fileId)) {
             return delete(accesses.get(fileId), id, valueId);
         }
@@ -327,7 +318,7 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
         long newDataEnd = lookupPosition + bufferSize + VALUE_HEADER_SIZE;
         if (offset != 0) {
             file.seek(LOOKUP_AMOUNT_SIZE);
-            while (file.getFilePointer() != LOOKUP_HEADER_SIZE) {
+            while (file.getFilePointer() != settings.lookupHeaderSize) {
                 long entryOffset = file.readLong();
                 if (entryOffset < newDataEnd) {
                     continue;
@@ -361,7 +352,7 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
         long oldFileEnd = file.length();
         file.setLength(oldFileEnd + amount);
         long pointer = oldFileEnd;
-        byte[] buffer = new byte[COPY_BUFFER_SIZE];
+        byte[] buffer = new byte[settings.copyBufferSize];
         while (pointer != offset) {
             long diff = pointer - offset;
             int size = diff > buffer.length ? buffer.length : (int) diff;
@@ -376,7 +367,7 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
     private void shrinkFile(RandomAccessFile file, long offset, long amount) throws IOException {
         long pointer = offset + amount;
         long newLength = file.length() - amount;
-        byte[] buffer = new byte[COPY_BUFFER_SIZE];
+        byte[] buffer = new byte[settings.copyBufferSize];
         while (pointer != newLength) {
             long diff = newLength - pointer;
             int size = diff > buffer.length ? buffer.length : (int) diff;
