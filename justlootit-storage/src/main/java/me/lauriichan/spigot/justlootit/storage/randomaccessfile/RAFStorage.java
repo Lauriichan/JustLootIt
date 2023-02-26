@@ -13,6 +13,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.shorts.Short2LongOpenHashMap;
 import it.unimi.dsi.fastutil.shorts.ShortArrayList;
 import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.spigot.justlootit.storage.Storable;
@@ -561,50 +562,59 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
             }
             // Here we delete all entries mentioned above
             // This should speed up this process by a lot compared to individual delete operations
-            long fileEnd = file.length();
+            long newFileSize = file.length();
             Long2IntOpenHashMap keysToIndex = new Long2IntOpenHashMap();
             LongArrayList headerKeys = new LongArrayList(items);
             LongArrayList headerValues = new LongArrayList(items);
             LongArrayList headerNewValues = new LongArrayList(items);
+            int headerAmount = 0;
+            Short2LongOpenHashMap deleteHeaders = new Short2LongOpenHashMap(amount);
             for(short valueId = 0; valueId < settings.valueIdAmount; valueId++) {
-                headerOffset = LOOKUP_AMOUNT_SIZE + LOOKUP_ENTRY_SIZE * valueId;
-                file.seek(headerOffset);
-                lookupPosition = file.readLong();
-                if(lookupPosition == INVALID_HEADER_OFFSET || delete.contains(valueId)) {
-                    continue;
-                }
-                keysToIndex.put(headerOffset, headerKeys.size());
-                headerKeys.add(headerOffset);
-                headerValues.add(lookupPosition);
-                headerNewValues.add(lookupPosition);
-            }
-            int headerAmount = headerKeys.size();
-            for(int index = 0; index < amount; index++) {
-                short valueId = delete.getShort(index);
                 headerOffset = LOOKUP_AMOUNT_SIZE + LOOKUP_ENTRY_SIZE * valueId;
                 file.seek(headerOffset);
                 lookupPosition = file.readLong();
                 if(lookupPosition == INVALID_HEADER_OFFSET) {
                     continue;
                 }
+                if(delete.contains(valueId)) {
+                    deleteHeaders.put(valueId, lookupPosition);
+                    continue;
+                }
+                keysToIndex.put(headerOffset, headerAmount++);
+                headerKeys.add(headerOffset);
+                headerValues.add(lookupPosition);
+                headerNewValues.add(lookupPosition);
+            }
+            int dataSize;
+            while(amount != 0) {
+                short valueId = delete.removeShort(0);
+                amount--;
+                headerOffset = LOOKUP_AMOUNT_SIZE + LOOKUP_ENTRY_SIZE * valueId;
                 file.seek(headerOffset);
                 file.writeLong(INVALID_HEADER_OFFSET);
+                lookupPosition = deleteHeaders.remove(valueId);
                 file.seek(lookupPosition + VALUE_HEADER_ID_SIZE);
-                int dataSize = file.readInt();
-                long offset = dataSize + VALUE_HEADER_SIZE;
-                fileEnd -= offset;
+                dataSize = file.readInt() + VALUE_HEADER_SIZE;
+                newFileSize -= dataSize;
                 for(int headerIdx = 0; headerIdx < items; headerIdx++) {
                     long headerValue = headerNewValues.getLong(headerIdx);
                     if(headerValue < lookupPosition) {
                         continue;
                     }
-                    headerNewValues.set(headerIdx, headerValue - offset);
+                    headerNewValues.set(headerIdx, headerValue - dataSize);
+                }
+                for(int entry = 0; entry < amount; entry++) {
+                    short entryId = delete.getShort(entry);
+                    long headerValue = deleteHeaders.get(entryId);
+                    if(headerValue < lookupPosition) {
+                        continue;
+                    }
+                    deleteHeaders.put(entryId, headerValue - dataSize);
                 }
             }
             headerKeys.sort((k1, k2) -> Long.compare(headerNewValues.getLong(keysToIndex.get(k1)), headerNewValues.getLong(keysToIndex.get(k2))));
             int valueIdx;
             long copyFrom, copyTo, copyEnd, copyAmount;
-            int dataSize;
             byte[] buffer = new byte[settings.copyBufferSize];
             for(int keyIdx = 0; keyIdx < headerAmount; keyIdx++) {
                 headerOffset = headerKeys.getLong(keyIdx);
@@ -633,7 +643,7 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
                     copyAmount += size;
                 }
             }
-            file.setLength(fileEnd);
+            file.setLength(newFileSize);
         } finally {
             access.writeUnlock();
         }
