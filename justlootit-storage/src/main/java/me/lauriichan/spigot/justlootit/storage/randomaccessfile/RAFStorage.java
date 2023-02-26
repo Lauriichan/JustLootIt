@@ -560,10 +560,12 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
             if(amount == 0) {
                 return; 
             }
+            file.seek(0);
+            file.writeShort(items);
             // Here we delete all entries mentioned above
             // This should speed up this process by a lot compared to individual delete operations
             long newFileSize = file.length();
-            Long2IntOpenHashMap keysToIndex = new Long2IntOpenHashMap();
+            Long2IntOpenHashMap keysToIndex = new Long2IntOpenHashMap(items);
             LongArrayList headerKeys = new LongArrayList(items);
             LongArrayList headerValues = new LongArrayList(items);
             LongArrayList headerNewValues = new LongArrayList(items);
