@@ -113,6 +113,6 @@ public abstract class Storage<S extends Storable> {
 
     public abstract boolean delete(long id) throws StorageException;
 
-    public abstract void updateEach(Function<S, UpdateState> updater) throws StorageException;
+    public abstract void updateEach(Function<S, UpdateInfo<S>> updater) throws StorageException;
 
 }

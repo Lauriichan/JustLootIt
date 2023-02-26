@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
 
 import io.netty.buffer.ByteBuf;
@@ -15,7 +16,8 @@ import me.lauriichan.spigot.justlootit.storage.Storable;
 import me.lauriichan.spigot.justlootit.storage.Storage;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapter;
 import me.lauriichan.spigot.justlootit.storage.StorageException;
-import me.lauriichan.spigot.justlootit.storage.UpdateState;
+import me.lauriichan.spigot.justlootit.storage.UpdateInfo;
+import me.lauriichan.spigot.justlootit.storage.UpdateInfo.UpdateState;
 import me.lauriichan.spigot.justlootit.storage.util.cache.Int2ObjectCache;
 import me.lauriichan.spigot.justlootit.storage.util.cache.ThreadSafeCache;
 
@@ -183,7 +185,12 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
         if (adapter == null) {
             throw new StorageException("Couldn't find storage adapter for type '" + storable.getClass().getName() + "'!");
         }
-        ByteBuf buffer = adapter.serializeValue(adapter.type().cast(storable));
+        ByteBuf buffer;
+        try {
+            buffer = adapter.serializeValue(storable);
+        } catch(RuntimeException e) {
+            throw new StorageException("Failed to write value with id '" + Long.toHexString(storable.id()) + "' to file!", e);
+        }
         access.writeLock();
         try {
             RandomAccessFile file = access.open();
@@ -214,9 +221,9 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
                 file.seek(lookupPosition + VALUE_HEADER_ID_SIZE);
                 int dataSize = file.readInt();
                 long offset = updateFileSize(file, lookupPosition, dataSize + VALUE_HEADER_SIZE, bufferSize + VALUE_HEADER_SIZE);
-                long newDataEnd = lookupPosition + bufferSize + VALUE_HEADER_SIZE;
                 if (offset != 0) {
                     file.seek(LOOKUP_AMOUNT_SIZE);
+                    long newDataEnd = lookupPosition + bufferSize + VALUE_HEADER_SIZE;
                     while (file.getFilePointer() != settings.lookupHeaderSize) {
                         long entryOffset = file.readLong();
                         if (entryOffset < newDataEnd) {
@@ -313,9 +320,9 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
         file.seek(headerOffset);
         file.writeLong(INVALID_HEADER_OFFSET);
         long offset = updateFileSize(file, lookupPosition, bufferSize, 0);
-        long newDataEnd = lookupPosition + bufferSize + VALUE_HEADER_SIZE;
         if (offset != 0) {
             file.seek(LOOKUP_AMOUNT_SIZE);
+            long newDataEnd = lookupPosition + bufferSize + VALUE_HEADER_SIZE;
             while (file.getFilePointer() != settings.lookupHeaderSize) {
                 long entryOffset = file.readLong();
                 if (entryOffset < newDataEnd) {
@@ -383,10 +390,11 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
      */
 
     @Override
-    public void updateEach(Function<S, UpdateState> updater) {
+    public void updateEach(Function<S, UpdateInfo<S>> updater) {
         if (!directory.exists()) {
             return;
         }
+        accesses.tickPaused(true);
         File[] files = directory.listFiles(RAFAccess.FILE_FILTER);
         for (File file : files) {
             int fileId;
@@ -409,13 +417,127 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
                 logger.warning("Failed to run update for file '" + Integer.toHexString(fileId) + "'!", e);
             }
         }
+        accesses.tickPaused(false);
     }
 
-    private void doUpdate(RAFAccess<S> access, Function<S, UpdateState> updater) throws IOException {
+    private void doUpdate(RAFAccess<S> access, Function<S, UpdateInfo<S>> updater) throws IOException {
         access.writeLock();
         try {
             RandomAccessFile file = access.open();
-            
+            long fileSize = file.length();
+            if(fileSize == 0) {
+                if(accesses.has(access.id())) {
+                    accesses.remove(access.id());
+                }
+                access.close();
+                access.file().delete();
+                return;
+            }
+            long headerOffset;
+            long lookupPosition;
+            long idBase = access.id() << settings.valueIdBits;
+            for(short valueId = 0; valueId < settings.valueIdAmount; valueId++) {
+                headerOffset = LOOKUP_AMOUNT_SIZE + LOOKUP_ENTRY_SIZE * valueId;
+                file.seek(headerOffset);
+                lookupPosition = file.readLong();
+                if(lookupPosition == INVALID_HEADER_OFFSET) {
+                    continue;
+                }
+                file.seek(lookupPosition);
+                long fullId = idBase + valueId;
+                short typeId = file.readShort();
+                int dataSize = file.readInt();
+                StorageAdapter<? extends S> adapter = findAdapterFor(typeId);
+                if(adapter == null) {
+                    try {
+                        if (deleteEntry(file, lookupPosition, dataSize, headerOffset)) {
+                            accesses.remove(access.id());
+                            access.close();
+                            access.file().delete();
+                            break; // File is gone
+                        }
+                    } catch (IOException e) {
+                        throw new StorageException("Failed to delete value with id '" + Long.toHexString(fullId) + "', because of the type "
+                            + typeId + " is unknown, from file!", e);
+                    }
+                    continue;
+                }
+                byte[] rawBuffer = new byte[dataSize];
+                file.read(rawBuffer);
+                S storable = null;
+                try {
+                    storable = adapter.deserialize(fullId, Unpooled.wrappedBuffer(rawBuffer));
+                } catch(IndexOutOfBoundsException exp) {
+                    logger.warning("Couldn't deserialize resource with id '" + Long.toHexString(fullId) + "'!", exp);
+                }
+                rawBuffer = null; // We no longer need this data, this can be a lot so we remove it from cache
+                if(storable == null) {
+                    try {
+                        if (deleteEntry(file, lookupPosition, dataSize, headerOffset)) {
+                            accesses.remove(access.id());
+                            access.close();
+                            access.file().delete();
+                            break; // File is gone
+                        }
+                    } catch (IOException e) {
+                        throw new StorageException("Failed to delete value with id '" + Long.toHexString(fullId) + "', because of the type "
+                            + typeId + " is unknown, from file!", e);
+                    }
+                    continue;
+                }
+                UpdateInfo<S> info = UpdateInfo.none();
+                try {
+                    info = Objects.requireNonNull(updater.apply(storable), "Update state can't be null");
+                } catch(Throwable exp) {
+                    logger.warning("Couldn't update resource with id '" + Long.toHexString(fullId) + "'!", exp);
+                    continue;
+                }
+                UpdateState state = info.state();
+                if(state == UpdateState.NONE) {
+                    continue;
+                }
+                if(state == UpdateState.DELETE) {
+                    try {
+                        if (deleteEntry(file, lookupPosition, dataSize, headerOffset)) {
+                            accesses.remove(access.id());
+                            access.close();
+                            access.file().delete();
+                            break; // File is gone
+                        }
+                    } catch (IOException e) {
+                        throw new StorageException("Failed to delete value with id '" + Long.toHexString(fullId) + "', because of the type "
+                            + typeId + " is unknown, from file!", e);
+                    }
+                }
+                if(info.storable() != null) {
+                    storable = info.storable();
+                    adapter = findAdapterFor(storable.getClass().asSubclass(baseType));
+                }
+                ByteBuf buffer;
+                try {
+                    buffer = adapter.serializeValue(storable);
+                } catch(RuntimeException exp) {
+                    logger.warning("Couldn't update resource with id '" + Long.toHexString(fullId) + "'!", exp);
+                    continue;
+                }
+                int bufferSize = buffer.readableBytes();
+                long offset = updateFileSize(file, headerOffset, dataSize, bufferSize);
+                if(offset != 0) {
+                    long newDataEnd = lookupPosition + bufferSize + VALUE_HEADER_SIZE;
+                    while (file.getFilePointer() != settings.lookupHeaderSize) {
+                        long entryOffset = file.readLong();
+                        if (entryOffset < newDataEnd) {
+                            continue;
+                        }
+                        file.seek(file.getFilePointer() - LOOKUP_ENTRY_SIZE);
+                        file.writeLong(entryOffset + offset);
+                    }
+                }
+                file.seek(lookupPosition);
+                file.writeShort(adapter.typeId());
+                file.writeInt(bufferSize);
+                buffer.readBytes(file.getChannel(), bufferSize);
+            }
         } finally {
             access.writeUnlock();
         }

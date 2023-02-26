@@ -18,7 +18,9 @@ public abstract class Cache<K, V> {
 
     protected final ISimpleLogger logger;
     protected final ICacheCallback<K, V> callback;
-    private volatile long cacheTime;
+    
+    private volatile long cacheTime = 1;
+    private volatile boolean tickPaused = false;
 
     public Cache(final ISimpleLogger logger) {
         this(logger, nopCallback());
@@ -28,14 +30,8 @@ public abstract class Cache<K, V> {
         this.logger = logger;
         this.callback = callback;
     }
-
-    public final void setCacheTime(long cacheTime) {
-        this.cacheTime = Math.max(cacheTime, 1);
-    }
-
-    public final long getCacheTime() {
-        return cacheTime;
-    }
+    
+    protected abstract boolean hasNoEntries();
 
     protected abstract boolean hasEntry(K key);
 
@@ -46,6 +42,22 @@ public abstract class Cache<K, V> {
     protected abstract CachedValue<V> removeEntry(K key);
 
     protected abstract K[] entryKeys();
+    
+    public final void tickPaused(boolean tickPaused) {
+        this.tickPaused = tickPaused;
+    }
+    
+    public final boolean tickPaused() {
+        return tickPaused;
+    }
+
+    public final void cacheTime(long cacheTime) {
+        this.cacheTime = Math.max(cacheTime, 1);
+    }
+
+    public final long cacheTime() {
+        return cacheTime;
+    }
 
     public final V get(K key) {
         CachedValue<V> entry = getEntry(key);
@@ -102,8 +114,15 @@ public abstract class Cache<K, V> {
             }
         }
     }
+    
+    public final boolean isEmpty() {
+        return hasNoEntries();
+    }
 
     void tick() {
+        if(tickPaused || !hasNoEntries()) {
+            return;
+        }
         K[] keys = entryKeys();
         for (K key : keys) {
             CachedValue<V> entry = getEntry(key);

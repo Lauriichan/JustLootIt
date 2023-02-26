@@ -111,7 +111,7 @@ public class CachedStorage<S extends Storable> extends Storage<S> {
     }
 
     @Override
-    public void updateEach(Function<S, UpdateState> updater) throws StorageException {
+    public void updateEach(Function<S, UpdateInfo<S>> updater) throws StorageException {
         cache.clear();
         updateEach(updater);
     }

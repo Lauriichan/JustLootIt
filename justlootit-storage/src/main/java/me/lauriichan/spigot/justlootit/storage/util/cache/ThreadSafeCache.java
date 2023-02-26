@@ -54,12 +54,22 @@ public class ThreadSafeCache<K, V> extends Cache<K, V> {
             writeLock.unlock();
         }
     }
-    
+
     @Override
     protected K[] entryKeys() {
         readLock.lock();
         try {
             return delegate.entryKeys();
+        } finally {
+            readLock.unlock();
+        }
+    }
+
+    @Override
+    protected boolean hasNoEntries() {
+        readLock.lock();
+        try {
+            return delegate.hasNoEntries();
         } finally {
             readLock.unlock();
         }
