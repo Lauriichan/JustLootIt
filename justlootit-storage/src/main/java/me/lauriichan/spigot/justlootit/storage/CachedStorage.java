@@ -1,6 +1,6 @@
 package me.lauriichan.spigot.justlootit.storage;
 
-import java.util.function.Consumer;
+import java.util.function.Function;
 
 import me.lauriichan.spigot.justlootit.storage.util.cache.Long2ObjectCache;
 
@@ -111,7 +111,7 @@ public class CachedStorage<S extends Storable> extends Storage<S> {
     }
 
     @Override
-    public void updateEach(Consumer<S> updater) throws StorageException {
+    public void updateEach(Function<S, UpdateState> updater) throws StorageException {
         cache.clear();
         updateEach(updater);
     }

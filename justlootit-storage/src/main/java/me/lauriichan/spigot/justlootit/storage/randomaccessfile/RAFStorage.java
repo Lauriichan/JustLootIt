@@ -6,7 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.List;
-import java.util.function.Consumer;
+import java.util.function.Function;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -15,13 +15,14 @@ import me.lauriichan.spigot.justlootit.storage.Storable;
 import me.lauriichan.spigot.justlootit.storage.Storage;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapter;
 import me.lauriichan.spigot.justlootit.storage.StorageException;
+import me.lauriichan.spigot.justlootit.storage.UpdateState;
 import me.lauriichan.spigot.justlootit.storage.util.cache.Int2ObjectCache;
 import me.lauriichan.spigot.justlootit.storage.util.cache.ThreadSafeCache;
 
 public class RAFStorage<S extends Storable> extends Storage<S> {
 
     private final RAFSettings settings;
-    
+
     private final File directory;
     private final ThreadSafeCache<Integer, RAFAccess<S>> accesses;
 
@@ -119,7 +120,7 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
             long headerOffset = LOOKUP_AMOUNT_SIZE + LOOKUP_ENTRY_SIZE * valueId;
             file.seek(headerOffset);
             long lookupPosition = file.readLong();
-            if(lookupPosition == INVALID_HEADER_OFFSET) {
+            if (lookupPosition == INVALID_HEADER_OFFSET) {
                 access.readUnlock();
                 return null;
             }
@@ -131,13 +132,14 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
                 access.readUnlock();
                 access.writeLock();
                 try {
-                    if(deleteEntry(file, lookupPosition, bufferSize, headerOffset)) {
+                    if (deleteEntry(file, lookupPosition, bufferSize, headerOffset)) {
                         accesses.remove(access.id());
                         access.close();
                         access.file().delete();
                     }
-                } catch(IOException e) {
-                    throw new StorageException("Failed to delete value with id '" + Long.toHexString(fullId) + "', because of the type " + typeId +" is unknown, from file!", e);
+                } catch (IOException e) {
+                    throw new StorageException("Failed to delete value with id '" + Long.toHexString(fullId) + "', because of the type "
+                        + typeId + " is unknown, from file!", e);
                 } finally {
                     access.writeUnlock();
                 }
@@ -282,12 +284,12 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
             long headerOffset = LOOKUP_AMOUNT_SIZE + LOOKUP_ENTRY_SIZE * valueId;
             file.seek(headerOffset);
             long lookupPosition = file.readLong();
-            if(lookupPosition == INVALID_HEADER_OFFSET) {
+            if (lookupPosition == INVALID_HEADER_OFFSET) {
                 return false;
             }
             file.seek(lookupPosition);
             int bufferSize = file.readInt();
-            if(deleteEntry(file, lookupPosition, bufferSize, headerOffset)) {
+            if (deleteEntry(file, lookupPosition, bufferSize, headerOffset)) {
                 accesses.remove(access.id());
                 access.close();
                 access.file().delete();
@@ -299,11 +301,11 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
             access.writeUnlock();
         }
     }
-    
+
     private boolean deleteEntry(RandomAccessFile file, long lookupPosition, int bufferSize, long headerOffset) throws IOException {
         file.seek(0);
         short amount = file.readShort();
-        if(amount - 1 == 0) {
+        if (amount - 1 == 0) {
             return true;
         }
         file.seek(0);
@@ -381,7 +383,7 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
      */
 
     @Override
-    public void updateEach(Consumer<S> updater) {
+    public void updateEach(Function<S, UpdateState> updater) {
         if (!directory.exists()) {
             return;
         }
@@ -393,9 +395,29 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
             } catch (NumberFormatException nfe) {
                 continue;
             }
-            if (!accesses.has(fileId)) {
-                // TODO: Load and update
+            if (accesses.has(fileId)) {
+                try {
+                    doUpdate(accesses.peek(fileId), updater);
+                } catch (IOException e) {
+                    logger.warning("Failed to run update for file '" + Integer.toHexString(fileId) + "'!", e);
+                }
+                continue;
             }
+            try (RAFAccess<S> access = new RAFAccess<>(fileId, directory)) {
+                doUpdate(access, updater);
+            } catch (IOException e) {
+                logger.warning("Failed to run update for file '" + Integer.toHexString(fileId) + "'!", e);
+            }
+        }
+    }
+
+    private void doUpdate(RAFAccess<S> access, Function<S, UpdateState> updater) throws IOException {
+        access.writeLock();
+        try {
+            RandomAccessFile file = access.open();
+            
+        } finally {
+            access.writeUnlock();
         }
     }
 

@@ -3,7 +3,7 @@ package me.lauriichan.spigot.justlootit.storage;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Consumer;
+import java.util.function.Function;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.shorts.Short2ObjectOpenHashMap;
@@ -113,6 +113,6 @@ public abstract class Storage<S extends Storable> {
 
     public abstract boolean delete(long id) throws StorageException;
 
-    public abstract void updateEach(Consumer<S> updater) throws StorageException;
+    public abstract void updateEach(Function<S, UpdateState> updater) throws StorageException;
 
 }
