@@ -14,6 +14,16 @@ public class ThreadSafeCache<K, V> extends Cache<K, V> {
         super(delegate.logger);
         this.delegate = delegate;
     }
+    
+    @Override
+    protected int entryCount() {
+        readLock.lock();
+        try {
+            return delegate.entryCount();
+        } finally {
+            readLock.unlock();
+        }
+    }
 
     @Override
     protected boolean hasEntry(K key) {

@@ -14,6 +14,11 @@ public final class Int2ObjectCache<V> extends Cache<Integer, V> {
     public Int2ObjectCache(ISimpleLogger logger, ICacheCallback<Integer, V> callback) {
         super(logger, callback);
     }
+    
+    @Override
+    protected int entryCount() {
+        return map.size();
+    }
 
     @Override
     protected boolean hasEntry(Integer key) {

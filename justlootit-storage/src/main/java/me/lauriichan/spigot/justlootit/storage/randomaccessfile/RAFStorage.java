@@ -38,6 +38,23 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
         this.accesses = new ThreadSafeCache<>(new Int2ObjectCache<>(logger));
         this.directory = directory;
     }
+    
+    /*
+     * File cache
+     */
+
+    private void saveAccess(RAFAccess<S> access) {
+        if (accesses.size() < settings.fileCacheMaxAmount) {
+            accesses.set(access.id(), access);
+            return;
+        }
+        long cacheTime = settings.fileCacheTicks;
+        while (accesses.size() >= settings.fileCacheMaxAmount) {
+            cacheTime -= settings.fileCachePurgeStep;
+            accesses.purge(cacheTime);
+        }
+        accesses.set(access.id(), access);
+    }
 
     /*
      * Clear data
@@ -104,7 +121,7 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
         if (!access.exists()) {
             return null;
         }
-        accesses.set(fileId, access);
+        saveAccess(access);
         return read(access, id, valueId);
     }
 
@@ -176,7 +193,7 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
             return;
         }
         RAFAccess<S> access = new RAFAccess<>(fileId, directory);
-        accesses.set(fileId, access);
+        saveAccess(access);
         write(access, valueId, storable);
     }
 
@@ -188,7 +205,7 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
         ByteBuf buffer;
         try {
             buffer = adapter.serializeValue(storable);
-        } catch(RuntimeException e) {
+        } catch (RuntimeException e) {
             throw new StorageException("Failed to write value with id '" + Long.toHexString(storable.id()) + "' to file!", e);
         }
         access.writeLock();
@@ -273,7 +290,7 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
         if (!access.exists()) {
             return false;
         }
-        accesses.set(fileId, access);
+        saveAccess(access);
         return delete(access, id, valueId);
     }
 
@@ -425,8 +442,8 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
         try {
             RandomAccessFile file = access.open();
             long fileSize = file.length();
-            if(fileSize == 0) {
-                if(accesses.has(access.id())) {
+            if (fileSize == 0) {
+                if (accesses.has(access.id())) {
                     accesses.remove(access.id());
                 }
                 access.close();
@@ -436,11 +453,11 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
             long headerOffset;
             long lookupPosition;
             long idBase = access.id() << settings.valueIdBits;
-            for(short valueId = 0; valueId < settings.valueIdAmount; valueId++) {
+            for (short valueId = 0; valueId < settings.valueIdAmount; valueId++) {
                 headerOffset = LOOKUP_AMOUNT_SIZE + LOOKUP_ENTRY_SIZE * valueId;
                 file.seek(headerOffset);
                 lookupPosition = file.readLong();
-                if(lookupPosition == INVALID_HEADER_OFFSET) {
+                if (lookupPosition == INVALID_HEADER_OFFSET) {
                     continue;
                 }
                 file.seek(lookupPosition);
@@ -448,7 +465,7 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
                 short typeId = file.readShort();
                 int dataSize = file.readInt();
                 StorageAdapter<? extends S> adapter = findAdapterFor(typeId);
-                if(adapter == null) {
+                if (adapter == null) {
                     try {
                         if (deleteEntry(file, lookupPosition, dataSize, headerOffset)) {
                             accesses.remove(access.id());
@@ -467,11 +484,11 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
                 S storable = null;
                 try {
                     storable = adapter.deserialize(fullId, Unpooled.wrappedBuffer(rawBuffer));
-                } catch(IndexOutOfBoundsException exp) {
+                } catch (IndexOutOfBoundsException exp) {
                     logger.warning("Couldn't deserialize resource with id '" + Long.toHexString(fullId) + "'!", exp);
                 }
                 rawBuffer = null; // We no longer need this data, this can be a lot so we remove it from cache
-                if(storable == null) {
+                if (storable == null) {
                     try {
                         if (deleteEntry(file, lookupPosition, dataSize, headerOffset)) {
                             accesses.remove(access.id());
@@ -488,15 +505,15 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
                 UpdateInfo<S> info = UpdateInfo.none();
                 try {
                     info = Objects.requireNonNull(updater.apply(storable), "Update state can't be null");
-                } catch(Throwable exp) {
+                } catch (Throwable exp) {
                     logger.warning("Couldn't update resource with id '" + Long.toHexString(fullId) + "'!", exp);
                     continue;
                 }
                 UpdateState state = info.state();
-                if(state == UpdateState.NONE) {
+                if (state == UpdateState.NONE) {
                     continue;
                 }
-                if(state == UpdateState.DELETE) {
+                if (state == UpdateState.DELETE) {
                     try {
                         if (deleteEntry(file, lookupPosition, dataSize, headerOffset)) {
                             accesses.remove(access.id());
@@ -509,20 +526,20 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
                             + typeId + " is unknown, from file!", e);
                     }
                 }
-                if(info.storable() != null) {
+                if (info.storable() != null) {
                     storable = info.storable();
                     adapter = findAdapterFor(storable.getClass().asSubclass(baseType));
                 }
                 ByteBuf buffer;
                 try {
                     buffer = adapter.serializeValue(storable);
-                } catch(RuntimeException exp) {
+                } catch (RuntimeException exp) {
                     logger.warning("Couldn't update resource with id '" + Long.toHexString(fullId) + "'!", exp);
                     continue;
                 }
                 int bufferSize = buffer.readableBytes();
                 long offset = updateFileSize(file, headerOffset, dataSize, bufferSize);
-                if(offset != 0) {
+                if (offset != 0) {
                     long newDataEnd = lookupPosition + bufferSize + VALUE_HEADER_SIZE;
                     while (file.getFilePointer() != settings.lookupHeaderSize) {
                         long entryOffset = file.readLong();

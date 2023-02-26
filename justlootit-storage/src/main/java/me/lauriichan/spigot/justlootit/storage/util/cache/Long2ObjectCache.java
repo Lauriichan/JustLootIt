@@ -14,6 +14,11 @@ public final class Long2ObjectCache<V> extends Cache<Long, V> {
     public Long2ObjectCache(ISimpleLogger logger, ICacheCallback<Long, V> callback) {
         super(logger, callback);
     }
+    
+    @Override
+    protected int entryCount() {
+        return map.size();
+    }
 
     @Override
     protected boolean hasEntry(Long key) {

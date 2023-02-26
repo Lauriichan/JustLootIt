@@ -32,6 +32,8 @@ public abstract class Cache<K, V> {
     }
     
     protected abstract boolean hasNoEntries();
+    
+    protected abstract int entryCount();
 
     protected abstract boolean hasEntry(K key);
 
@@ -57,6 +59,10 @@ public abstract class Cache<K, V> {
 
     public final long cacheTime() {
         return cacheTime;
+    }
+    
+    public final int size() {
+        return entryCount();
     }
 
     public final V get(K key) {
