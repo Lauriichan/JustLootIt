@@ -454,7 +454,7 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
                             accesses.remove(access.id());
                             access.close();
                             access.file().delete();
-                            break; // File is gone
+                            return; // File is gone
                         }
                     } catch (IOException e) {
                         throw new StorageException("Failed to delete value with id '" + Long.toHexString(fullId) + "', because of the type "
@@ -477,7 +477,7 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
                             accesses.remove(access.id());
                             access.close();
                             access.file().delete();
-                            break; // File is gone
+                            return; // File is gone
                         }
                     } catch (IOException e) {
                         throw new StorageException("Failed to delete value with id '" + Long.toHexString(fullId) + "', because of the type "
@@ -502,7 +502,7 @@ public class RAFStorage<S extends Storable> extends Storage<S> {
                             accesses.remove(access.id());
                             access.close();
                             access.file().delete();
-                            break; // File is gone
+                            return; // File is gone
                         }
                     } catch (IOException e) {
                         throw new StorageException("Failed to delete value with id '" + Long.toHexString(fullId) + "', because of the type "
