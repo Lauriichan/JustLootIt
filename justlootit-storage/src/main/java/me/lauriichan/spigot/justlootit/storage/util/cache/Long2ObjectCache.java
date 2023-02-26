@@ -11,6 +11,10 @@ public final class Long2ObjectCache<V> extends Cache<Long, V> {
         super(logger);
     }
 
+    public Long2ObjectCache(ISimpleLogger logger, ICacheCallback<Long, V> callback) {
+        super(logger, callback);
+    }
+
     @Override
     protected boolean hasEntry(Long key) {
         return map.containsKey(key.longValue());
@@ -34,11 +38,6 @@ public final class Long2ObjectCache<V> extends Cache<Long, V> {
     @Override
     protected Long[] entryKeys() {
         return map.keySet().toArray(Long[]::new);
-    }
-    
-    @Override
-    protected void clearEntries() {
-        map.clear();
     }
 
 }

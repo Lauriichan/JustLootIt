@@ -7,11 +7,26 @@ import me.lauriichan.laylib.logger.ISimpleLogger;
 
 public abstract class Cache<K, V> {
 
+    @SuppressWarnings("rawtypes")
+    private static final ICacheCallback NOP_CALLBACK = (a, b) -> {
+    };
+
+    @SuppressWarnings("unchecked")
+    public static <A, B> ICacheCallback<A, B> nopCallback() {
+        return NOP_CALLBACK;
+    }
+
     protected final ISimpleLogger logger;
+    protected final ICacheCallback<K, V> callback;
     private volatile long cacheTime;
 
     public Cache(final ISimpleLogger logger) {
+        this(logger, nopCallback());
+    }
+
+    public Cache(final ISimpleLogger logger, ICacheCallback<K, V> callback) {
         this.logger = logger;
+        this.callback = callback;
     }
 
     public final void setCacheTime(long cacheTime) {
@@ -29,8 +44,6 @@ public abstract class Cache<K, V> {
     protected abstract void putEntry(K key, CachedValue<V> value);
 
     protected abstract CachedValue<V> removeEntry(K key);
-    
-    protected abstract void clearEntries();
 
     protected abstract K[] entryKeys();
 
@@ -42,9 +55,17 @@ public abstract class Cache<K, V> {
         return entry.value();
     }
 
+    public final V peek(K key) {
+        CachedValue<V> entry = getEntry(key);
+        if (entry == null) {
+            return null;
+        }
+        return entry.peekValue();
+    }
+
     public final V remove(K key) {
         CachedValue<V> cached = removeEntry(key);
-        if(cached != null) {
+        if (cached != null) {
             return cached.value();
         }
         return null;
@@ -66,9 +87,20 @@ public abstract class Cache<K, V> {
     public final List<K> keys() {
         return Arrays.asList(entryKeys());
     }
-    
+
     public final void clear() {
-        clearEntries();
+        List<K> keys = keys();
+        for (K key : keys) {
+            CachedValue<V> entry = removeEntry(key);
+            if (entry == null) { // Value is already uncached
+                continue;
+            }
+            try {
+                callback.onRemove(key, entry.peekValue());
+            } catch (Exception e) {
+                logger.warning("Couldn't run remove callback for resource", e);
+            }
+        }
     }
 
     void tick() {
@@ -80,6 +112,11 @@ public abstract class Cache<K, V> {
             }
             removeEntry(key);
             V value = entry.value();
+            try {
+                callback.onInvalidate(key, entry.peekValue());
+            } catch(Exception e) {
+                logger.warning("Couldn't run invalidate callback for resource", e);
+            }
             if (value instanceof AutoCloseable) {
                 try {
                     ((AutoCloseable) value).close();

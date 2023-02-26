@@ -11,6 +11,10 @@ public final class Int2ObjectCache<V> extends Cache<Integer, V> {
         super(logger);
     }
 
+    public Int2ObjectCache(ISimpleLogger logger, ICacheCallback<Integer, V> callback) {
+        super(logger, callback);
+    }
+
     @Override
     protected boolean hasEntry(Integer key) {
         return map.containsKey(key.intValue());
@@ -34,11 +38,6 @@ public final class Int2ObjectCache<V> extends Cache<Integer, V> {
     @Override
     protected Integer[] entryKeys() {
         return map.keySet().toArray(Integer[]::new);
-    }
-    
-    @Override
-    protected void clearEntries() {
-        map.clear();
     }
 
 }

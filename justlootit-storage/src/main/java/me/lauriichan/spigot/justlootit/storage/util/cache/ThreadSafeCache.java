@@ -64,15 +64,5 @@ public class ThreadSafeCache<K, V> extends Cache<K, V> {
             readLock.unlock();
         }
     }
-    
-    @Override
-    protected void clearEntries() {
-        writeLock.lock();
-        try {
-            delegate.clearEntries();
-        } finally {
-            writeLock.unlock();
-        }
-    }
 
 }

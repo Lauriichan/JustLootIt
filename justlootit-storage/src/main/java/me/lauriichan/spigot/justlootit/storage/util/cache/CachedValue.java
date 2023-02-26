@@ -9,6 +9,10 @@ public final class CachedValue<V> {
         this.value = value;
     }
 
+    public V peekValue() {
+        return value;
+    }
+
     public V value() {
         time = 0;
         return value;
