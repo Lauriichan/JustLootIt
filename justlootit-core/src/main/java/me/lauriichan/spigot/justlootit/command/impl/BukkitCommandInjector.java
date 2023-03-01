@@ -23,9 +23,9 @@ import me.lauriichan.spigot.justlootit.util.VersionConstant;
 
 public final class BukkitCommandInjector implements ICommandInjector {
 
-    private final Constructor<?> pluginCommandConstructor = ClassUtil.getConstructor(PluginCommand.class, String.class, Plugin.class);
-    private final Method craftServerGetCommandMap = ClassUtil.getMethod(ClassUtil.findClass(VersionConstant.craftClassPath("CraftServer")), "getCommandMap");
-    private final Method commandMapGetCommands = ClassUtil.getMethod(SimpleCommandMap.class, "knownCommands");
+    final static Constructor<?> pluginCommandConstructor = ClassUtil.getConstructor(PluginCommand.class, String.class, Plugin.class);
+    final static Method craftServerGetCommandMap = ClassUtil.getMethod(ClassUtil.findClass(VersionConstant.craftClassPath("CraftServer")), "getCommandMap");
+    final static Method commandMapGetCommands = ClassUtil.getMethod(SimpleCommandMap.class, "knownCommands");
 
     private final Plugin plugin;
     private final BukkitCommandBridge bridge;
