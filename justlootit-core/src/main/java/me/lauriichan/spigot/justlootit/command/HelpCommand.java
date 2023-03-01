@@ -11,24 +11,20 @@ import me.lauriichan.laylib.command.NodeCommand;
 import me.lauriichan.laylib.command.annotation.Action;
 import me.lauriichan.laylib.command.annotation.Argument;
 import me.lauriichan.laylib.command.annotation.Command;
-import me.lauriichan.laylib.command.annotation.Description;
 import me.lauriichan.laylib.command.util.Triple;
 import me.lauriichan.laylib.localization.Key;
 import me.lauriichan.laylib.reflection.ClassUtil;
 
-@Command(name = "justlootit", aliases = {
-    "jloot",
-    "jli"
-}, description = "command.description.justlootit.parent")
-public class JustLootItCommand {
+@Command(name = "help", aliases = {
+    "?"
+}, description = "command.description.justlootit.help")
+public class HelpCommand {
 
     /*
      * Help command
      */
-
-    @Action("?")
-    @Action("help")
-    @Description("command.description.justlootit.help")
+    
+    @Action("")
     public void help(CommandManager commandManager, Actor<?> actor, @Argument(name = "command") String command) {
         Triple<NodeCommand, Node, String> triple = commandManager.findNode(command);
         if (triple == null) {
