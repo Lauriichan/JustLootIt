@@ -5,6 +5,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
 
 import me.lauriichan.spigot.justlootit.nms.*;
+import me.lauriichan.spigot.justlootit.nms.packet.*;
 import me.lauriichan.spigot.justlootit.nms.v1_19_R2.network.*;
 import me.lauriichan.spigot.justlootit.nms.v1_19_R2.packet.*;
 
@@ -33,8 +34,9 @@ public final class VersionHandler1_19_R2 extends VersionHandler implements IServ
         packetManager.register(ServerboundSwingPacket.class, PacketInSwingArm1_19_R2::new);
         packetManager.register(ServerboundContainerClickPacket.class, PacketInContainerClick1_19_R2::new);
         // Outgoing packets (nms)
-        
+        packetManager.register(ClientboundSetEntityDataPacket.class, PacketOutSetEntityData1_19_R2::new);
         // Outgoing packets (adapter)
+        packetManager.registerAdapter(PacketOutSetEntityData.class, PacketOutSetEntityData1_19_R2::new);
     }
 
     @Override
