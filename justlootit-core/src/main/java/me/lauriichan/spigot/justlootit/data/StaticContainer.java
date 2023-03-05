@@ -4,44 +4,35 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 import io.netty.buffer.ByteBuf;
-import me.lauriichan.spigot.justlootit.JustLootItPlugin;
+import me.lauriichan.spigot.justlootit.data.io.DataIO;
 import me.lauriichan.spigot.justlootit.nms.io.IOHandler;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapter;
 
 public final class StaticContainer extends Container {
 
-    public static final StorageAdapter<StaticContainer> ADAPTER = new Adapter();
-
-    private static final class Adapter extends StorageAdapter<StaticContainer> {
-
-        @SuppressWarnings("unchecked")
-        private final IOHandler<ItemStack> itemIO = (IOHandler<ItemStack>) JustLootItPlugin.get().versionHandler().io()
-            .handlerOf(ItemStack.class);
-
-        private Adapter() {
-            super(StaticContainer.class, 15);
-        }
+    public static final StorageAdapter<StaticContainer> ADAPTER = new BaseAdapter<>(StaticContainer.class, 15) {
+        private final IOHandler<ItemStack> itemIO = DataIO.find(ItemStack.class);
 
         @Override
-        public void serialize(StaticContainer storable, ByteBuf buffer) {
+        protected void serializeSpecial(StaticContainer storable, ByteBuf buffer) {
             itemIO.serializeArray(buffer, storable.items);
         }
 
         @Override
-        public StaticContainer deserialize(long id, ByteBuf buffer) {
-            return new StaticContainer(id, itemIO.deserializeArray(buffer));
+        protected StaticContainer deserializeSpecial(long id, ContainerData data, ByteBuf buffer) {
+            return new StaticContainer(id, data, itemIO.deserializeArray(buffer));
         }
+    };
 
-    }
-
-    private final ItemStack[] items;
+    private ItemStack[] items;
 
     public StaticContainer(long id, final Inventory inventory) {
-        this(id, inventory.getContents());
+        super(id);
+        saveFrom(inventory);
     }
 
-    public StaticContainer(long id, final ItemStack[] items) {
-        super(id);
+    private StaticContainer(long id, ContainerData data, final ItemStack[] items) {
+        super(id, data);
         this.items = items;
     }
 
@@ -49,8 +40,31 @@ public final class StaticContainer extends Container {
         return items;
     }
 
-    public void restore(Inventory inventory) {
-        inventory.setContents(items);
+    public void loadTo(Inventory inventory) {
+        int size = Math.min(inventory.getSize(), items.length);
+        for (int index = 0; index < size; index++) {
+            ItemStack item = items[index];
+            if (item == null) {
+                inventory.clear(index);
+                continue;
+            }
+            inventory.setItem(index, item.clone());
+        }
+    }
+
+    public void saveFrom(Inventory inventory) {
+        ItemStack[] contents = inventory.getContents();
+        ItemStack[] items = new ItemStack[contents.length];
+        for (int index = 0; index < contents.length; index++) {
+            ItemStack item = contents[index];
+            if (item == null || item.getType().isAir()) {
+                items[index] = null;
+                continue;
+            }
+            contents[index] = item.clone();
+        }
+        this.items = items;
+        setDirty();
     }
 
 }
