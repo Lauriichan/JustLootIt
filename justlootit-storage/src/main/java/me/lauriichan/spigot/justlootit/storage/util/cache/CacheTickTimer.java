@@ -7,10 +7,10 @@ import me.lauriichan.spigot.justlootit.storage.util.tick.AbstractTickTimer;
 
 public final class CacheTickTimer extends AbstractTickTimer {
 
-    private final ArrayList<Cache<?, ?>> caches = new ArrayList<>();
+    private final ArrayList<Cache> caches = new ArrayList<>();
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
-    public final void add(Cache<?, ?> cache) {
+    public final void add(Cache cache) {
         lock.readLock().lock();
         try {
             if (caches.contains(cache)) {
@@ -27,7 +27,7 @@ public final class CacheTickTimer extends AbstractTickTimer {
         }
     }
 
-    public final boolean has(Cache<?, ?> cache) {
+    public final boolean has(Cache cache) {
         lock.readLock().lock();
         try {
             return caches.contains(cache);
@@ -36,7 +36,7 @@ public final class CacheTickTimer extends AbstractTickTimer {
         }
     }
 
-    public final void remove(Cache<?, ?> cache) {
+    public final void remove(Cache cache) {
         lock.readLock().lock();
         try {
             if (!caches.contains(cache)) {
@@ -56,13 +56,13 @@ public final class CacheTickTimer extends AbstractTickTimer {
     @Override
     protected void tick(long delta) {
         lock.readLock().lock();
-        Cache<?, ?>[] caches;
+        Cache[] caches;
         try {
-            caches = this.caches.toArray(Cache[]::new);
+            caches = this.caches.toArray(MapCache[]::new);
         } finally {
             lock.readLock().unlock();
         }
-        for (Cache<?, ?> cache : caches) {
+        for (Cache cache : caches) {
             cache.tick();
         }
     }

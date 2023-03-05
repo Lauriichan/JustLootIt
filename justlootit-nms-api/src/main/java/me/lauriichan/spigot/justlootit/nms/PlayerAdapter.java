@@ -7,9 +7,10 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
+import me.lauriichan.spigot.justlootit.nms.capability.Capable;
 import me.lauriichan.spigot.justlootit.nms.packet.AbstractPacketOut;
 
-public abstract class PlayerAdapter {
+public abstract class PlayerAdapter extends Capable<PlayerAdapter> {
 
     protected final ConcurrentHashMap<String, Object> data = new ConcurrentHashMap<>();
     protected final UUID uniqueId;

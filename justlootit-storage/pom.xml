@@ -12,19 +12,10 @@
             <groupId>me.lauriichan.laylib</groupId>
             <artifactId>logger</artifactId>
             <version>0.1.0-10191ac-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-buffer</artifactId>
-            <version>4.1.82.Final</version>
             <scope>provided</scope>
         </dependency>
-        <dependency>
-            <groupId>it.unimi.dsi</groupId>
-            <artifactId>fastutil</artifactId>
-            <version>8.5.9</version>
-            <scope>provided</scope>
-        </dependency>
+        
+        <!-- Test -->
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>

@@ -16,6 +16,12 @@
             <version>${project.parent.version}</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>${project.parent.groupId}</groupId>
+            <artifactId>justlootit-storage</artifactId>
+            <version>${project.parent.version}</version>
+            <scope>provided</scope>
+        </dependency>
         <!-- Spigot -->
         <dependency>
             <groupId>org.spigotmc</groupId>

@@ -11,19 +11,27 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 
+import me.lauriichan.laylib.logger.ISimpleLogger;
+import me.lauriichan.spigot.justlootit.nms.capability.CapabilityManager;
+import me.lauriichan.spigot.justlootit.nms.capability.Capable;
+import me.lauriichan.spigot.justlootit.nms.capability.ICapability;
+import me.lauriichan.spigot.justlootit.nms.io.IOProvider;
 import me.lauriichan.spigot.justlootit.nms.packet.listener.PacketManager;
 
 public abstract class VersionHandler {
 
-    protected final PlayerListener playerListener = new PlayerListener(this);
+    protected final VersionListener bukkitListener = new VersionListener(this);
+
+    protected final CapabilityManager capabilityManager = new CapabilityManager();
+    protected final IOProvider io = new IOProvider();
 
     protected final ConcurrentHashMap<UUID, PlayerAdapter> players = new ConcurrentHashMap<>();
     protected final ConcurrentHashMap<UUID, LevelAdapter> levels = new ConcurrentHashMap<>();
 
-    protected final IServiceProvider provider;
+    protected final IServiceProvider serviceProvider;
 
-    public VersionHandler(final IServiceProvider provider) {
-        this.provider = provider;
+    public VersionHandler(final IServiceProvider serviceProvider) {
+        this.serviceProvider = serviceProvider;
     }
 
     /*
@@ -33,16 +41,22 @@ public abstract class VersionHandler {
     public final void enable() {
         PluginManager pluginManager = Bukkit.getPluginManager();
         onEnable(pluginManager);
-        pluginManager.registerEvents(playerListener, provider.plugin());
+        pluginManager.registerEvents(bukkitListener, serviceProvider.plugin());
+        for (World world : Bukkit.getWorlds()) {
+            load(world);
+        }
         for (Player player : Bukkit.getOnlinePlayers()) {
             join(player);
         }
     }
 
     public final void disable() {
-        HandlerList.unregisterAll(playerListener);
+        HandlerList.unregisterAll(bukkitListener);
         for (Player player : Bukkit.getOnlinePlayers()) {
             quit(player);
+        }
+        for (World world : Bukkit.getWorlds()) {
+            unload(world);
         }
         onDisable();
     }
@@ -89,10 +103,12 @@ public abstract class VersionHandler {
     }
 
     final void quit(Player player) {
-        if (!players.containsKey(player.getUniqueId())) {
+        PlayerAdapter adapter = players.remove(player.getUniqueId());
+        if (adapter == null) {
             return;
         }
-        terminateAdapter(players.remove(player.getUniqueId()));
+        terminateAdapter(adapter);
+        terminateCapabilities(adapter);
     }
 
     protected abstract PlayerAdapter createAdapter(Player player);
@@ -137,10 +153,12 @@ public abstract class VersionHandler {
     }
 
     final void unload(World world) {
-        if (!levels.containsKey(world.getUID())) {
+        LevelAdapter adapter = levels.remove(world.getUID());
+        if (adapter == null) {
             return;
         }
-        terminateAdapter(levels.remove(world.getUID()));
+        terminateAdapter(adapter);
+        terminateCapabilities(adapter);
     }
 
     protected abstract LevelAdapter createAdapter(World world);
@@ -148,23 +166,45 @@ public abstract class VersionHandler {
     protected abstract void terminateAdapter(LevelAdapter adapter);
 
     /*
+     * Capabilities
+     */
+
+    private final void terminateCapabilities(Capable<?> capable) {
+        for (ICapability capability : capable.getCapabilities()) {
+            capability.terminate();
+        }
+    }
+
+    /*
      * Getter
      */
 
-    public abstract PacketManager getPacketManager();
+    public abstract PacketManager packetManager();
 
-    public abstract VersionHelper getVersionHelper();
+    public abstract VersionHelper versionHelper();
+
+    public final CapabilityManager capabilities() {
+        return capabilities();
+    }
+
+    public final IOProvider io() {
+        return io;
+    }
 
     public final Plugin plugin() {
-        return provider.plugin();
+        return serviceProvider.plugin();
+    }
+    
+    public final ISimpleLogger logger() {
+        return serviceProvider.logger();
     }
 
     public final ExecutorService mainService() {
-        return provider.mainService();
+        return serviceProvider.mainService();
     }
 
     public final ExecutorService asyncService() {
-        return provider.asyncService();
+        return serviceProvider.asyncService();
     }
 
 }

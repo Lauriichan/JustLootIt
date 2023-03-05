@@ -1,10 +1,13 @@
 package me.lauriichan.spigot.justlootit.nms.v1_19_R2;
 
 import org.bukkit.World;
+import org.bukkit.craftbukkit.v1_19_R2.CraftWorld;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
 
 import me.lauriichan.spigot.justlootit.nms.*;
+import me.lauriichan.spigot.justlootit.nms.packet.*;
+import me.lauriichan.spigot.justlootit.nms.v1_19_R2.io.*;
 import me.lauriichan.spigot.justlootit.nms.v1_19_R2.network.*;
 import me.lauriichan.spigot.justlootit.nms.v1_19_R2.packet.*;
 
@@ -24,7 +27,8 @@ public final class VersionHandler1_19_R2 extends VersionHandler implements IServ
     @Override
     protected void onEnable(PluginManager pluginManager) {
         registerPackets();
-        packetManager.close();
+        packetManager.finish();
+        registerIO();
     }
 
     private void registerPackets() {
@@ -33,17 +37,22 @@ public final class VersionHandler1_19_R2 extends VersionHandler implements IServ
         packetManager.register(ServerboundSwingPacket.class, PacketInSwingArm1_19_R2::new);
         packetManager.register(ServerboundContainerClickPacket.class, PacketInContainerClick1_19_R2::new);
         // Outgoing packets (nms)
-        
+        packetManager.register(ClientboundSetEntityDataPacket.class, PacketOutSetEntityData1_19_R2::new);
         // Outgoing packets (adapter)
+        packetManager.registerAdapter(PacketOutSetEntityData.class, PacketOutSetEntityData1_19_R2::new);
+    }
+    
+    private void registerIO() {
+        io.register(ItemStackIO1_19_R2.ITEM_STACK);
     }
 
     @Override
-    public PacketManager1_19_R2 getPacketManager() {
+    public PacketManager1_19_R2 packetManager() {
         return packetManager;
     }
 
     @Override
-    public VersionHelper1_19_R2 getVersionHelper() {
+    public VersionHelper1_19_R2 versionHelper() {
         return versionHelper;
     }
     
@@ -62,13 +71,13 @@ public final class VersionHandler1_19_R2 extends VersionHandler implements IServ
 
     @Override
     protected LevelAdapter createAdapter(World world) {
-        return null;
+        if(!(world instanceof CraftWorld)) {
+            return null;
+        }
+        return new LevelAdapter1_19_R2(((CraftWorld) world).getHandle());
     }
 
     @Override
-    protected void terminateAdapter(LevelAdapter adapter) {
-        // TODO Auto-generated method stub
-        
-    }
+    protected void terminateAdapter(LevelAdapter adapter) {}
 
 }

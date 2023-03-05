@@ -98,7 +98,7 @@ public final class PacketManager1_19_R2 extends PacketManager {
         return packetType.cast(packet);
     }
 
-    public void close() {
+    public void finish() {
         if (!(nmsBuilders instanceof HashMap)) {
             return;
         }

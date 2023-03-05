@@ -17,11 +17,12 @@ import me.lauriichan.laylib.localization.source.EnumMessageSource;
 import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.laylib.reflection.ClassUtil;
 import me.lauriichan.laylib.reflection.JavaAccess;
-import me.lauriichan.spigot.justlootit.command.HelpCommand;
+import me.lauriichan.spigot.justlootit.capability.JustLootItCapabilityProvider;
+import me.lauriichan.spigot.justlootit.command.*;
 import me.lauriichan.spigot.justlootit.command.impl.BukkitCommandInjectedBridge;
 import me.lauriichan.spigot.justlootit.command.impl.BukkitCommandInjectedBridge.CommandDefinition;
-import me.lauriichan.spigot.justlootit.command.provider.LoggerProvider;
-import me.lauriichan.spigot.justlootit.command.provider.PluginProvider;
+import me.lauriichan.spigot.justlootit.command.provider.*;
+import me.lauriichan.spigot.justlootit.data.io.*;
 import me.lauriichan.spigot.justlootit.listener.ItemFrameListener;
 import me.lauriichan.spigot.justlootit.message.CommandDescription;
 import me.lauriichan.spigot.justlootit.message.CommandManagerMessage;
@@ -30,6 +31,8 @@ import me.lauriichan.spigot.justlootit.message.impl.SimpleMessageProviderFactory
 import me.lauriichan.spigot.justlootit.nms.IServiceProvider;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.nms.VersionHelper;
+import me.lauriichan.spigot.justlootit.nms.capability.CapabilityManager;
+import me.lauriichan.spigot.justlootit.nms.io.IOProvider;
 import me.lauriichan.spigot.justlootit.nms.packet.listener.PacketContainer;
 import me.lauriichan.spigot.justlootit.nms.packet.listener.PacketManager;
 import me.lauriichan.spigot.justlootit.util.BukkitExecutorService;
@@ -45,9 +48,13 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
      *      - Container with Loottable
      *      - Container without Loottable
      *  - Add support for third-party plugins (add an api or smth)
-     *  - Add automatic detection for vanilla containers and item frames (using new StructureGenerateEvent possibly?)
+     *  - Add automatic detection for vanilla containers and item frames (using new AsyncStructureGenerateEvent possibly?)
      * 
      */
+    
+    public static JustLootItPlugin get() {
+        return getPlugin(JustLootItPlugin.class);
+    }
 
     private static final String VERSION_PATH = JustLootItPlugin.class.getPackageName() + ".nms.%s.VersionHandler%s";
 
@@ -62,7 +69,10 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
     private ISimpleLogger logger;
     private CommandManager commandManager;
     private MessageManager messageManager;
+    
     private BukkitCommandInjectedBridge commandBridge;
+    
+    private boolean disabled = false;
 
     /*
      * PacketContainers
@@ -76,32 +86,45 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
 
     @Override
     public void onLoad() {
-        setupVersionHandler();
+        if (!setupVersionHandler()) {
+            return;
+        }
         setupEnvironment();
+        setupIO();
+        setupCapabilities();
     }
 
-    public NamespacedKey key(String name) {
-        return new NamespacedKey(this, name);
-    }
-
-    private void setupEnvironment() {
+    private boolean setupVersionHandler() {
         logger = new BukkitSimpleLogger(getLogger());
-        messageManager = new MessageManager();
-        commandManager = new CommandManager(logger);
-    }
-
-    private void setupVersionHandler() {
         try {
             versionHandler = initVersionHandler();
-            versionHelper = versionHandler.getVersionHelper();
-            packetManager = versionHandler.getPacketManager();
-            getLogger().severe("Initialized version support for " + coreVersion);
+            versionHelper = versionHandler.versionHelper();
+            packetManager = versionHandler.packetManager();
+            getLogger().info("Initialized version support for " + coreVersion);
+            return true;
         } catch (Exception exp) {
             getLogger().severe("Failed to initialize version support for " + coreVersion);
             getLogger().severe("Reason: '" + exp.getMessage() + "'");
             getLogger().severe("");
-            getLogger().severe("Some features might be disabled because of that");
+            getLogger().severe("Can't work like this, disabling...");
+            this.disabled = true;
+            return false;
         }
+    }
+
+    private void setupEnvironment() {
+        messageManager = new MessageManager();
+        commandManager = new CommandManager(logger);
+    }
+    
+    private void setupIO() {
+        IOProvider io = versionHandler.io();
+        io.register(NamespacedKeyIO.NAMESPACED_KEY);
+    }
+    
+    private void setupCapabilities() {
+        CapabilityManager capabilities = versionHandler.capabilities();
+        capabilities.add(JustLootItCapabilityProvider.CAPABILITY_PROVIDER);
     }
 
     /*
@@ -110,6 +133,10 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
 
     @Override
     public void onEnable() {
+        if(disabled) {
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
         commandBridge = new BukkitCommandInjectedBridge(this, versionHelper, commandManager, messageManager,
             CommandDefinition.of("justlootit").alias("jloot").alias("jli").description("command.description.justlootit.parent").build(this))
                 .inject();
@@ -158,6 +185,9 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
 
     @Override
     public void onDisable() {
+        if(disabled) {
+            return;
+        }
         if (versionHandler != null) {
             packetManager.unregister(itemFrameContainer);
             versionHandler.disable();
@@ -195,6 +225,11 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
     public Plugin plugin() {
         return this;
     }
+    
+    @Override
+    public ISimpleLogger logger() {
+        return logger;
+    }
 
     @Override
     public ExecutorService mainService() {
@@ -204,6 +239,14 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
     @Override
     public ExecutorService asyncService() {
         return asyncService;
+    }
+    
+    /*
+     * Utility
+     */
+
+    public NamespacedKey key(String name) {
+        return new NamespacedKey(this, name);
     }
 
     /*

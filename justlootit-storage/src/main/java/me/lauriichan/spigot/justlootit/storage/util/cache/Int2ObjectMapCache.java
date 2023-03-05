@@ -3,15 +3,15 @@ package me.lauriichan.spigot.justlootit.storage.util.cache;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import me.lauriichan.laylib.logger.ISimpleLogger;
 
-public final class Int2ObjectCache<V> extends Cache<Integer, V> {
+public final class Int2ObjectMapCache<V> extends MapCache<Integer, V> {
 
     private final Int2ObjectOpenHashMap<CachedValue<V>> map = new Int2ObjectOpenHashMap<>();
 
-    public Int2ObjectCache(ISimpleLogger logger) {
+    public Int2ObjectMapCache(ISimpleLogger logger) {
         super(logger);
     }
 
-    public Int2ObjectCache(ISimpleLogger logger, ICacheCallback<Integer, V> callback) {
+    public Int2ObjectMapCache(ISimpleLogger logger, ICallback<Integer, V> callback) {
         super(logger, callback);
     }
     

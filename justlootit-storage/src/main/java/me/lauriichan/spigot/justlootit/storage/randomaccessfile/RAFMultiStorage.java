@@ -22,24 +22,24 @@ import me.lauriichan.spigot.justlootit.storage.StorageAdapter;
 import me.lauriichan.spigot.justlootit.storage.StorageException;
 import me.lauriichan.spigot.justlootit.storage.UpdateInfo;
 import me.lauriichan.spigot.justlootit.storage.UpdateInfo.UpdateState;
-import me.lauriichan.spigot.justlootit.storage.util.cache.Int2ObjectCache;
-import me.lauriichan.spigot.justlootit.storage.util.cache.ThreadSafeCache;
+import me.lauriichan.spigot.justlootit.storage.util.cache.Int2ObjectMapCache;
+import me.lauriichan.spigot.justlootit.storage.util.cache.ThreadSafeMapCache;
 
-public class RAFStorage<S extends Storable> extends Storage<S> {
+public class RAFMultiStorage<S extends Storable> extends Storage<S> {
 
     private final RAFSettings settings;
 
     private final File directory;
-    private final ThreadSafeCache<Integer, RAFAccess<S>> accesses;
+    private final ThreadSafeMapCache<Integer, RAFAccess<S>> accesses;
 
-    public RAFStorage(ISimpleLogger logger, Class<S> baseType, File directory) {
+    public RAFMultiStorage(ISimpleLogger logger, Class<S> baseType, File directory) {
         this(logger, baseType, directory, RAFSettings.DEFAULT);
     }
 
-    public RAFStorage(ISimpleLogger logger, Class<S> baseType, File directory, RAFSettings settings) {
+    public RAFMultiStorage(ISimpleLogger logger, Class<S> baseType, File directory, RAFSettings settings) {
         super(logger, baseType);
         this.settings = settings;
-        this.accesses = new ThreadSafeCache<>(new Int2ObjectCache<>(logger));
+        this.accesses = new ThreadSafeMapCache<>(new Int2ObjectMapCache<>(logger));
         this.directory = directory;
     }
 

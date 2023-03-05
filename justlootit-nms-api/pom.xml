@@ -7,6 +7,12 @@
     </parent>
     <artifactId>justlootit-nms-api</artifactId>
     <dependencies>
+        <dependency>
+            <groupId>${project.parent.groupId}</groupId>
+            <artifactId>justlootit-storage</artifactId>
+            <version>${project.parent.version}</version>
+            <scope>provided</scope>
+        </dependency>
         <!-- Laylib -->
         <dependency>
             <groupId>me.lauriichan.laylib</groupId>
