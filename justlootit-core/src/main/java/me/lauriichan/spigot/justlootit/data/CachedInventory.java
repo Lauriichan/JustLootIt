@@ -30,8 +30,7 @@ public final class CachedInventory extends Storable {
 
         @Override
         public CachedInventory deserialize(long id, ByteBuf buffer) {
-            ItemStack[] items = itemIO.deserializeArray(buffer);
-            return new CachedInventory(id, items);
+            return new CachedInventory(id, itemIO.deserializeArray(buffer));
         }
 
     }
