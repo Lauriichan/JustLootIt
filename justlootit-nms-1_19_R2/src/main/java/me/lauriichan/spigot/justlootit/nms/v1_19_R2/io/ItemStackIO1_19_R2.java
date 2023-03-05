@@ -23,12 +23,17 @@ public final class ItemStackIO1_19_R2 extends NbtIO1_19_R2<org.bukkit.inventory.
 
     @Override
     public CompoundTag asNbt(org.bukkit.inventory.ItemStack value) {
-        return asMinecraftStack(value).save(new CompoundTag());
+        ItemStack itemStack = asMinecraftStack(value);
+        CompoundTag tag = new CompoundTag();
+        if(itemStack == ItemStack.EMPTY) {
+            return tag;
+        }
+        return itemStack.save(tag);
     }
 
     @Override
     public org.bukkit.inventory.ItemStack fromNbt(CompoundTag tag) {
-        return CraftItemStack.asCraftMirror(ItemStack.of(tag));
+        return CraftItemStack.asCraftMirror(tag.isEmpty() ? ItemStack.EMPTY : ItemStack.of(tag));
     }
 
     private ItemStack asMinecraftStack(org.bukkit.inventory.ItemStack itemStack) {
