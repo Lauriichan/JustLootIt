@@ -88,10 +88,6 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
         setupEnvironment();
     }
 
-    public NamespacedKey key(String name) {
-        return new NamespacedKey(this, name);
-    }
-
     private void setupEnvironment() {
         logger = new BukkitSimpleLogger(getLogger());
         messageManager = new MessageManager();
@@ -217,6 +213,14 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
     @Override
     public ExecutorService asyncService() {
         return asyncService;
+    }
+    
+    /*
+     * Utility
+     */
+
+    public NamespacedKey key(String name) {
+        return new NamespacedKey(this, name);
     }
 
     /*
