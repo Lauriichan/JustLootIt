@@ -1,5 +1,7 @@
 package me.lauriichan.spigot.justlootit.data;
 
+import java.util.Objects;
+
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.loot.LootTable;
@@ -25,8 +27,8 @@ public final class VanillaContainer extends Container {
         }
     };
 
-    private final NamespacedKey lootTableKey;
-    private final long seed;
+    private NamespacedKey lootTableKey;
+    private long seed;
 
     public VanillaContainer(long id, LootTable lootTable, long seed) {
         super(id);
@@ -48,8 +50,18 @@ public final class VanillaContainer extends Container {
         return Bukkit.getLootTable(lootTableKey);
     }
 
+    public void setLootTable(LootTable lootTable) {
+        this.lootTableKey = Objects.requireNonNull(lootTable, "LootTable can't be null").getKey();
+        setDirty();
+    }
+
     public long getSeed() {
         return seed;
+    }
+
+    public void setSeed(long seed) {
+        this.seed = seed;
+        setDirty();
     }
 
 }

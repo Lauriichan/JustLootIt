@@ -10,10 +10,11 @@ import java.util.concurrent.TimeUnit;
 import io.netty.buffer.ByteBuf;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import me.lauriichan.spigot.justlootit.data.io.DataIO;
+import me.lauriichan.spigot.justlootit.storage.IModifiable;
 import me.lauriichan.spigot.justlootit.storage.Storable;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapter;
 
-public abstract class Container extends Storable {
+public abstract class Container extends Storable implements IModifiable {
 
     protected static abstract class BaseAdapter<C extends Container> extends StorageAdapter<C> {
 
@@ -60,6 +61,7 @@ public abstract class Container extends Storable {
     }
 
     final ContainerData data;
+    private boolean dirty = false;
 
     public Container(long id) {
         this(id, new ContainerData());
@@ -68,6 +70,15 @@ public abstract class Container extends Storable {
     public Container(long id, ContainerData data) {
         super(id);
         this.data = data;
+    }
+    
+    @Override
+    public final boolean isDirty() {
+        return dirty;
+    }
+    
+    protected final void setDirty() {
+        this.dirty = true;
     }
 
     public OffsetDateTime getAccessTime(UUID id) {
@@ -95,6 +106,7 @@ public abstract class Container extends Storable {
         OffsetDateTime now = OffsetDateTime.now();
         if (time == null || time.plus(data.refreshInterval, ChronoUnit.MILLIS).isBefore(now)) {
             data.playerAccess.put(id, now);
+            setDirty();
             return true;
         }
         return false;
@@ -110,6 +122,7 @@ public abstract class Container extends Storable {
             throw new IllegalArgumentException("Interval can't be lower than 0 in milliseconds!");
         }
         data.refreshInterval = value;
+        setDirty();
     }
 
 }

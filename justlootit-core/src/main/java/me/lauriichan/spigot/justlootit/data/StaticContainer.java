@@ -12,7 +12,7 @@ public final class StaticContainer extends Container {
 
     public static final StorageAdapter<StaticContainer> ADAPTER = new BaseAdapter<>(StaticContainer.class, 15) {
         private final IOHandler<ItemStack> itemIO = DataIO.find(ItemStack.class);
-        
+
         @Override
         protected void serializeSpecial(StaticContainer storable, ByteBuf buffer) {
             itemIO.serializeArray(buffer, storable.items);
@@ -24,11 +24,11 @@ public final class StaticContainer extends Container {
         }
     };
 
-    private final ItemStack[] items;
+    private ItemStack[] items;
 
     public StaticContainer(long id, final Inventory inventory) {
         super(id);
-        this.items = inventory.getContents();
+        saveFrom(inventory);
     }
 
     private StaticContainer(long id, ContainerData data, final ItemStack[] items) {
@@ -40,8 +40,31 @@ public final class StaticContainer extends Container {
         return items;
     }
 
-    public void restore(Inventory inventory) {
-        inventory.setContents(items);
+    public void loadTo(Inventory inventory) {
+        int size = Math.min(inventory.getSize(), items.length);
+        for (int index = 0; index < size; index++) {
+            ItemStack item = items[index];
+            if (item == null) {
+                inventory.clear(index);
+                continue;
+            }
+            inventory.setItem(index, item.clone());
+        }
+    }
+
+    public void saveFrom(Inventory inventory) {
+        ItemStack[] contents = inventory.getContents();
+        ItemStack[] items = new ItemStack[contents.length];
+        for (int index = 0; index < contents.length; index++) {
+            ItemStack item = contents[index];
+            if (item == null || item.getType().isAir()) {
+                items[index] = null;
+                continue;
+            }
+            contents[index] = item.clone();
+        }
+        this.items = items;
+        setDirty();
     }
 
 }

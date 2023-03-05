@@ -2,6 +2,9 @@ package me.lauriichan.spigot.justlootit.capability;
 
 import java.io.File;
 
+import me.lauriichan.spigot.justlootit.data.CachedInventory;
+import me.lauriichan.spigot.justlootit.data.StaticContainer;
+import me.lauriichan.spigot.justlootit.data.VanillaContainer;
 import me.lauriichan.spigot.justlootit.nms.LevelAdapter;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
@@ -20,6 +23,8 @@ public abstract class StorageCapability<C> implements ICapability {
         public LevelImpl(VersionHandler handler, LevelAdapter adapter) {
             super(new CachedStorage<>(new RAFMultiStorage<>(handler.logger(), Storable.class,
                 new File(adapter.asBukkit().getWorldFolder(), "justlootit/containers"))));
+            storage.register(VanillaContainer.ADAPTER);
+            storage.register(StaticContainer.ADAPTER);
         }
 
     }
@@ -30,6 +35,7 @@ public abstract class StorageCapability<C> implements ICapability {
             super(new CachedStorage<>(new RAFSingleStorage<>(handler.logger(), Storable.class,
                 new File(handler.plugin().getDataFolder(), "player/" + adapter.getUniqueId().toString() + ".jli"),
                 RAFSettings.builder().copyBufferBytes(128).valuesPerFile(64).build())));
+            storage.register(CachedInventory.ADAPTER);
         }
 
     }
