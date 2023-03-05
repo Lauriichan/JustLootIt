@@ -17,6 +17,7 @@ import me.lauriichan.laylib.localization.source.EnumMessageSource;
 import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.laylib.reflection.ClassUtil;
 import me.lauriichan.laylib.reflection.JavaAccess;
+import me.lauriichan.spigot.justlootit.capability.JustLootItCapabilityProvider;
 import me.lauriichan.spigot.justlootit.command.*;
 import me.lauriichan.spigot.justlootit.command.impl.BukkitCommandInjector;
 import me.lauriichan.spigot.justlootit.command.provider.*;
@@ -29,6 +30,7 @@ import me.lauriichan.spigot.justlootit.message.impl.SimpleMessageProviderFactory
 import me.lauriichan.spigot.justlootit.nms.IServiceProvider;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.nms.VersionHelper;
+import me.lauriichan.spigot.justlootit.nms.capability.CapabilityManager;
 import me.lauriichan.spigot.justlootit.nms.io.IOProvider;
 import me.lauriichan.spigot.justlootit.nms.packet.listener.PacketContainer;
 import me.lauriichan.spigot.justlootit.nms.packet.listener.PacketManager;
@@ -86,13 +88,15 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
         }
         setupEnvironment();
         setupIO();
+        setupCapabilities();
     }
 
     private boolean setupVersionHandler() {
+        logger = new BukkitSimpleLogger(getLogger());
         try {
             versionHandler = initVersionHandler();
-            versionHelper = versionHandler.getVersionHelper();
-            packetManager = versionHandler.getPacketManager();
+            versionHelper = versionHandler.versionHelper();
+            packetManager = versionHandler.packetManager();
             getLogger().info("Initialized version support for " + coreVersion);
             return true;
         } catch (Exception exp) {
@@ -106,7 +110,6 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
     }
 
     private void setupEnvironment() {
-        logger = new BukkitSimpleLogger(getLogger());
         messageManager = new MessageManager();
         commandManager = new CommandManager(logger);
     }
@@ -114,6 +117,11 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
     private void setupIO() {
         IOProvider io = versionHandler.io();
         io.register(NamespacedKeyIO.NAMESPACED_KEY);
+    }
+    
+    private void setupCapabilities() {
+        CapabilityManager capabilities = versionHandler.capabilities();
+        capabilities.add(JustLootItCapabilityProvider.CAPABILITY_PROVIDER);
     }
 
     /*
@@ -208,6 +216,11 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
     @Override
     public Plugin plugin() {
         return this;
+    }
+    
+    @Override
+    public ISimpleLogger logger() {
+        return logger;
     }
 
     @Override

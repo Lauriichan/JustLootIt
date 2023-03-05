@@ -3,7 +3,9 @@ package me.lauriichan.spigot.justlootit.nms;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
 
-public abstract class LevelAdapter {
+import me.lauriichan.spigot.justlootit.nms.capability.Capable;
+
+public abstract class LevelAdapter extends Capable<LevelAdapter> {
 
     public abstract World asBukkit();
 

@@ -11,12 +11,18 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 
+import me.lauriichan.laylib.logger.ISimpleLogger;
+import me.lauriichan.spigot.justlootit.nms.capability.CapabilityManager;
+import me.lauriichan.spigot.justlootit.nms.capability.Capable;
+import me.lauriichan.spigot.justlootit.nms.capability.ICapability;
 import me.lauriichan.spigot.justlootit.nms.io.IOProvider;
 import me.lauriichan.spigot.justlootit.nms.packet.listener.PacketManager;
 
 public abstract class VersionHandler {
 
     protected final VersionListener bukkitListener = new VersionListener(this);
+
+    protected final CapabilityManager capabilityManager = new CapabilityManager();
     protected final IOProvider io = new IOProvider();
 
     protected final ConcurrentHashMap<UUID, PlayerAdapter> players = new ConcurrentHashMap<>();
@@ -97,10 +103,12 @@ public abstract class VersionHandler {
     }
 
     final void quit(Player player) {
-        if (!players.containsKey(player.getUniqueId())) {
+        PlayerAdapter adapter = players.remove(player.getUniqueId());
+        if (adapter == null) {
             return;
         }
-        terminateAdapter(players.remove(player.getUniqueId()));
+        terminateAdapter(adapter);
+        terminateCapabilities(adapter);
     }
 
     protected abstract PlayerAdapter createAdapter(Player player);
@@ -145,10 +153,12 @@ public abstract class VersionHandler {
     }
 
     final void unload(World world) {
-        if (!levels.containsKey(world.getUID())) {
+        LevelAdapter adapter = levels.remove(world.getUID());
+        if (adapter == null) {
             return;
         }
-        terminateAdapter(levels.remove(world.getUID()));
+        terminateAdapter(adapter);
+        terminateCapabilities(adapter);
     }
 
     protected abstract LevelAdapter createAdapter(World world);
@@ -156,12 +166,26 @@ public abstract class VersionHandler {
     protected abstract void terminateAdapter(LevelAdapter adapter);
 
     /*
+     * Capabilities
+     */
+
+    private final void terminateCapabilities(Capable<?> capable) {
+        for (ICapability capability : capable.getCapabilities()) {
+            capability.terminate();
+        }
+    }
+
+    /*
      * Getter
      */
 
-    public abstract PacketManager getPacketManager();
+    public abstract PacketManager packetManager();
 
-    public abstract VersionHelper getVersionHelper();
+    public abstract VersionHelper versionHelper();
+
+    public final CapabilityManager capabilities() {
+        return capabilities();
+    }
 
     public final IOProvider io() {
         return io;
@@ -169,6 +193,10 @@ public abstract class VersionHandler {
 
     public final Plugin plugin() {
         return serviceProvider.plugin();
+    }
+    
+    public final ISimpleLogger logger() {
+        return serviceProvider.logger();
     }
 
     public final ExecutorService mainService() {

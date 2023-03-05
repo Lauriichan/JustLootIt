@@ -34,7 +34,7 @@ public final class PlayerAdapter1_19_R2 extends PlayerAdapter {
         super(player.getUniqueId());
         this.bukkit = (CraftPlayer) player;
         this.minecraft = bukkit.getHandle();
-        this.network = new PlayerNetwork1_19_R2(versionHandler.getPacketManager(), this);
+        this.network = new PlayerNetwork1_19_R2(versionHandler.packetManager(), this);
         this.versionHandler = versionHandler;
     }
 

@@ -47,12 +47,12 @@ public final class VersionHandler1_19_R2 extends VersionHandler implements IServ
     }
 
     @Override
-    public PacketManager1_19_R2 getPacketManager() {
+    public PacketManager1_19_R2 packetManager() {
         return packetManager;
     }
 
     @Override
-    public VersionHelper1_19_R2 getVersionHelper() {
+    public VersionHelper1_19_R2 versionHelper() {
         return versionHelper;
     }
     
