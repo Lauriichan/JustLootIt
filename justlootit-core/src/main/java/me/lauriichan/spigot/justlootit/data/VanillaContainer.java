@@ -5,45 +5,37 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.loot.LootTable;
 
 import io.netty.buffer.ByteBuf;
-import me.lauriichan.spigot.justlootit.data.io.NamespacedKeyIO;
+import me.lauriichan.spigot.justlootit.data.io.DataIO;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapter;
 
 public final class VanillaContainer extends Container {
 
-    public static final StorageAdapter<VanillaContainer> ADAPTER = new Adapter();
-
-    private static final class Adapter extends StorageAdapter<VanillaContainer> {
-
-        private final NamespacedKeyIO keyIO = NamespacedKeyIO.NAMESPACED_KEY;
-
-        private Adapter() {
-            super(VanillaContainer.class, 15);
-        }
-
+    public static final StorageAdapter<VanillaContainer> ADAPTER = new BaseAdapter<>(VanillaContainer.class, 16) {
         @Override
-        public void serialize(VanillaContainer storable, ByteBuf buffer) {
-            keyIO.serialize(buffer, storable.lootTableKey);
+        protected void serializeSpecial(VanillaContainer storable, ByteBuf buffer) {
+            DataIO.NAMESPACED_KEY.serialize(buffer, storable.lootTableKey);
             buffer.writeLong(storable.seed);
         }
 
         @Override
-        public VanillaContainer deserialize(long id, ByteBuf buffer) {
-            NamespacedKey key = keyIO.deserialize(buffer);
+        protected VanillaContainer deserializeSpecial(long id, ContainerData data, ByteBuf buffer) {
+            NamespacedKey key = DataIO.NAMESPACED_KEY.deserialize(buffer);
             long seed = buffer.readLong();
-            return new VanillaContainer(id, key, seed);
+            return new VanillaContainer(id, data, key, seed);
         }
-
-    }
+    };
 
     private final NamespacedKey lootTableKey;
     private final long seed;
 
     public VanillaContainer(long id, LootTable lootTable, long seed) {
-        this(id, lootTable.getKey(), seed);
+        super(id);
+        this.lootTableKey = lootTable.getKey();
+        this.seed = seed;
     }
 
-    public VanillaContainer(long id, NamespacedKey lootTableKey, long seed) {
-        super(id);
+    private VanillaContainer(long id, ContainerData data, NamespacedKey lootTableKey, long seed) {
+        super(id, data);
         this.lootTableKey = lootTableKey;
         this.seed = seed;
     }

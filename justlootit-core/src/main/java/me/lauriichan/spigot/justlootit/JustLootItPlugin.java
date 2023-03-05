@@ -22,7 +22,7 @@ import me.lauriichan.spigot.justlootit.command.*;
 import me.lauriichan.spigot.justlootit.command.impl.BukkitCommandInjectedBridge;
 import me.lauriichan.spigot.justlootit.command.impl.BukkitCommandInjectedBridge.CommandDefinition;
 import me.lauriichan.spigot.justlootit.command.provider.*;
-import me.lauriichan.spigot.justlootit.data.io.*;
+import me.lauriichan.spigot.justlootit.data.io.DataIO;
 import me.lauriichan.spigot.justlootit.listener.ItemFrameListener;
 import me.lauriichan.spigot.justlootit.message.CommandDescription;
 import me.lauriichan.spigot.justlootit.message.CommandManagerMessage;
@@ -32,7 +32,6 @@ import me.lauriichan.spigot.justlootit.nms.IServiceProvider;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.nms.VersionHelper;
 import me.lauriichan.spigot.justlootit.nms.capability.CapabilityManager;
-import me.lauriichan.spigot.justlootit.nms.io.IOProvider;
 import me.lauriichan.spigot.justlootit.nms.packet.listener.PacketContainer;
 import me.lauriichan.spigot.justlootit.nms.packet.listener.PacketManager;
 import me.lauriichan.spigot.justlootit.util.BukkitExecutorService;
@@ -90,7 +89,7 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
             return;
         }
         setupEnvironment();
-        setupIO();
+        DataIO.setup(versionHandler.io());
         setupCapabilities();
     }
 
@@ -115,11 +114,6 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
     private void setupEnvironment() {
         messageManager = new MessageManager();
         commandManager = new CommandManager(logger);
-    }
-    
-    private void setupIO() {
-        IOProvider io = versionHandler.io();
-        io.register(NamespacedKeyIO.NAMESPACED_KEY);
     }
     
     private void setupCapabilities() {

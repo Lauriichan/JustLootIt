@@ -6,42 +6,40 @@ import org.bukkit.inventory.ItemStack;
 import io.netty.buffer.ByteBuf;
 import me.lauriichan.spigot.justlootit.data.io.DataIO;
 import me.lauriichan.spigot.justlootit.nms.io.IOHandler;
+import me.lauriichan.spigot.justlootit.storage.Storable;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapter;
 
-public final class StaticContainer extends Container {
+public final class CachedInventory extends Storable {
 
-    public static final StorageAdapter<StaticContainer> ADAPTER = new BaseAdapter<>(StaticContainer.class, 15) {
+    public static final StorageAdapter<CachedInventory> ADAPTER = new StorageAdapter<>(CachedInventory.class, 0) {
         private final IOHandler<ItemStack> itemIO = DataIO.find(ItemStack.class);
-        
+
         @Override
-        protected void serializeSpecial(StaticContainer storable, ByteBuf buffer) {
+        public void serialize(CachedInventory storable, ByteBuf buffer) {
             itemIO.serializeArray(buffer, storable.items);
         }
 
         @Override
-        protected StaticContainer deserializeSpecial(long id, ContainerData data, ByteBuf buffer) {
-            return new StaticContainer(id, data, itemIO.deserializeArray(buffer));
+        public CachedInventory deserialize(long id, ByteBuf buffer) {
+            return new CachedInventory(id, itemIO.deserializeArray(buffer));
         }
+
     };
 
     private final ItemStack[] items;
 
-    public StaticContainer(long id, final Inventory inventory) {
+    public CachedInventory(long id, Inventory inventory) {
         super(id);
         this.items = inventory.getContents();
     }
 
-    private StaticContainer(long id, ContainerData data, final ItemStack[] items) {
-        super(id, data);
+    private CachedInventory(long id, ItemStack[] items) {
+        super(id);
         this.items = items;
     }
 
     public ItemStack[] getItems() {
         return items;
-    }
-
-    public void restore(Inventory inventory) {
-        inventory.setContents(items);
     }
 
 }
