@@ -51,6 +51,10 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
      *  - Use CommandManager as main command instead of each command being a main command
      * 
      */
+    
+    public static JustLootItPlugin get() {
+        return getPlugin(JustLootItPlugin.class);
+    }
 
     private static final String VERSION_PATH = JustLootItPlugin.class.getPackageName() + ".nms.%s.VersionHandler%s";
 
