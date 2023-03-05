@@ -46,10 +46,10 @@ public class CachedStorage<S extends Storable> extends Storage<S> {
     }
 
     private void invalidate(Long key, CacheObject<S> cached) {
-        if (!cached.isDirty()) {
+        S storable = cached.storable();
+        if (!cached.isDirty() && (storable != null && storable instanceof IModifiable modifable && !modifable.isDirty())) {
             return;
         }
-        S storable = cached.storable();
         if (storable == null) {
             try {
                 delegate.delete(key.longValue());

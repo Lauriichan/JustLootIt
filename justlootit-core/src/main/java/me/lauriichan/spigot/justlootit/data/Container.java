@@ -1,8 +1,11 @@
 package me.lauriichan.spigot.justlootit.data;
 
+import java.time.Duration;
 import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Map.Entry;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import io.netty.buffer.ByteBuf;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -22,11 +25,11 @@ public abstract class Container extends Storable {
         public final void serialize(C storable, ByteBuf buffer) {
             ContainerData data = storable.data;
             buffer.writeInt(data.playerAccess.size());
-            for(Entry<UUID, OffsetDateTime> entry : data.playerAccess.entrySet()) {
+            for (Entry<UUID, OffsetDateTime> entry : data.playerAccess.entrySet()) {
                 DataIO.UUID.serialize(buffer, entry.getKey());
                 DataIO.OFFSET_DATE_TIME.serialize(buffer, entry.getValue());
             }
-            DataIO.OFFSET_DATE_TIME.serialize(buffer, data.refreshDate);
+            buffer.writeLong(data.refreshInterval);
             serializeSpecial(storable, buffer);
         }
 
@@ -39,7 +42,7 @@ public abstract class Container extends Storable {
                 OffsetDateTime time = DataIO.OFFSET_DATE_TIME.deserialize(buffer);
                 data.playerAccess.put(uuid, time);
             }
-            data.refreshDate = DataIO.OFFSET_DATE_TIME.deserialize(buffer);
+            data.refreshInterval = Math.max(buffer.readLong(), 0);
             return deserializeSpecial(id, data, buffer);
         }
 
@@ -52,7 +55,7 @@ public abstract class Container extends Storable {
     protected static final class ContainerData {
 
         private final Object2ObjectOpenHashMap<UUID, OffsetDateTime> playerAccess = new Object2ObjectOpenHashMap<>();
-        private OffsetDateTime refreshDate;
+        private long refreshInterval = 0;
 
     }
 
@@ -60,12 +63,53 @@ public abstract class Container extends Storable {
 
     public Container(long id) {
         this(id, new ContainerData());
-        data.refreshDate = OffsetDateTime.now();
     }
 
     public Container(long id, ContainerData data) {
         super(id);
         this.data = data;
+    }
+
+    public OffsetDateTime getAccessTime(UUID id) {
+        return data.playerAccess.get(id);
+    }
+
+    public Duration durationUntilNextAccess(UUID id) {
+        OffsetDateTime time = data.playerAccess.get(id);
+        if (time == null) {
+            return Duration.ZERO;
+        }
+        Duration duration = Duration.between(OffsetDateTime.now(), time.plus(data.refreshInterval, ChronoUnit.MILLIS));
+        if (duration.isNegative()) {
+            return Duration.ZERO;
+        }
+        return duration;
+    }
+
+    public boolean hasAccessed(UUID id) {
+        return data.playerAccess.containsKey(id);
+    }
+
+    public boolean access(UUID id) {
+        OffsetDateTime time = data.playerAccess.get(id);
+        OffsetDateTime now = OffsetDateTime.now();
+        if (time == null || time.plus(data.refreshInterval, ChronoUnit.MILLIS).isBefore(now)) {
+            data.playerAccess.put(id, now);
+            return true;
+        }
+        return false;
+    }
+
+    public long getRefreshInterval(TimeUnit unit) {
+        return unit.convert(data.refreshInterval, TimeUnit.MILLISECONDS);
+    }
+
+    public void setRefreshInterval(long interval, TimeUnit unit) {
+        long value = unit.toMillis(interval);
+        if (value < 0) {
+            throw new IllegalArgumentException("Interval can't be lower than 0 in milliseconds!");
+        }
+        data.refreshInterval = value;
     }
 
 }
