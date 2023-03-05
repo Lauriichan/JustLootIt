@@ -2,6 +2,7 @@ package me.lauriichan.spigot.justlootit.capability;
 
 import java.io.File;
 
+import me.lauriichan.spigot.justlootit.data.CacheLookupTable;
 import me.lauriichan.spigot.justlootit.data.CachedInventory;
 import me.lauriichan.spigot.justlootit.data.StaticContainer;
 import me.lauriichan.spigot.justlootit.data.VanillaContainer;
@@ -16,9 +17,9 @@ import me.lauriichan.spigot.justlootit.storage.randomaccessfile.RAFMultiStorage;
 import me.lauriichan.spigot.justlootit.storage.randomaccessfile.RAFSettings;
 import me.lauriichan.spigot.justlootit.storage.randomaccessfile.RAFSingleStorage;
 
-public abstract class StorageCapability<C> implements ICapability {
+public abstract class StorageCapability implements ICapability {
 
-    static final class LevelImpl extends StorageCapability<LevelAdapter> {
+    static final class LevelImpl extends StorageCapability {
 
         public LevelImpl(VersionHandler handler, LevelAdapter adapter) {
             super(new CachedStorage<>(new RAFMultiStorage<>(handler.logger(), Storable.class,
@@ -29,13 +30,14 @@ public abstract class StorageCapability<C> implements ICapability {
 
     }
 
-    static final class PlayerImpl extends StorageCapability<PlayerAdapter> {
+    static final class PlayerImpl extends StorageCapability {
 
         public PlayerImpl(VersionHandler handler, PlayerAdapter adapter) {
             super(new CachedStorage<>(new RAFSingleStorage<>(handler.logger(), Storable.class,
                 new File(handler.plugin().getDataFolder(), "player/" + adapter.getUniqueId().toString() + ".jli"),
                 RAFSettings.builder().copyBufferBytes(128).valuesPerFile(64).build())));
             storage.register(CachedInventory.ADAPTER);
+            storage.register(CacheLookupTable.ADAPTER);
         }
 
     }

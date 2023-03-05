@@ -24,6 +24,8 @@ import me.lauriichan.spigot.justlootit.nms.packet.listener.IPacketListener;
 import me.lauriichan.spigot.justlootit.nms.packet.listener.PacketHandler;
 
 public class ItemFrameListener implements IPacketListener, Listener {
+    
+    // TODO: Rework to match new systems
 
     @PacketHandler
     public void onEntityMetadata(PlayerAdapter player, PacketOutSetEntityData packet) {

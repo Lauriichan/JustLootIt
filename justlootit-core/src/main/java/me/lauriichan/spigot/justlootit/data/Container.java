@@ -86,6 +86,9 @@ public abstract class Container extends Storable implements IModifiable {
     }
 
     public Duration durationUntilNextAccess(UUID id) {
+        if(data.refreshInterval == 0) {
+            return Duration.ofSeconds(-1);
+        }
         OffsetDateTime time = data.playerAccess.get(id);
         if (time == null) {
             return Duration.ZERO;
@@ -104,7 +107,7 @@ public abstract class Container extends Storable implements IModifiable {
     public boolean access(UUID id) {
         OffsetDateTime time = data.playerAccess.get(id);
         OffsetDateTime now = OffsetDateTime.now();
-        if (time == null || time.plus(data.refreshInterval, ChronoUnit.MILLIS).isBefore(now)) {
+        if (time == null || (data.refreshInterval != 0 && time.plus(data.refreshInterval, ChronoUnit.MILLIS).isBefore(now))) {
             data.playerAccess.put(id, now);
             setDirty();
             return true;
