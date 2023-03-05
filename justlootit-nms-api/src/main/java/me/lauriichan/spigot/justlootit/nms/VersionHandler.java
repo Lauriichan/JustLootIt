@@ -11,19 +11,21 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 
+import me.lauriichan.spigot.justlootit.nms.io.IOProvider;
 import me.lauriichan.spigot.justlootit.nms.packet.listener.PacketManager;
 
 public abstract class VersionHandler {
 
-    protected final PlayerListener playerListener = new PlayerListener(this);
+    protected final VersionListener bukkitListener = new VersionListener(this);
+    protected final IOProvider io = new IOProvider();
 
     protected final ConcurrentHashMap<UUID, PlayerAdapter> players = new ConcurrentHashMap<>();
     protected final ConcurrentHashMap<UUID, LevelAdapter> levels = new ConcurrentHashMap<>();
 
-    protected final IServiceProvider provider;
+    protected final IServiceProvider serviceProvider;
 
-    public VersionHandler(final IServiceProvider provider) {
-        this.provider = provider;
+    public VersionHandler(final IServiceProvider serviceProvider) {
+        this.serviceProvider = serviceProvider;
     }
 
     /*
@@ -33,16 +35,22 @@ public abstract class VersionHandler {
     public final void enable() {
         PluginManager pluginManager = Bukkit.getPluginManager();
         onEnable(pluginManager);
-        pluginManager.registerEvents(playerListener, provider.plugin());
+        pluginManager.registerEvents(bukkitListener, serviceProvider.plugin());
+        for (World world : Bukkit.getWorlds()) {
+            load(world);
+        }
         for (Player player : Bukkit.getOnlinePlayers()) {
             join(player);
         }
     }
 
     public final void disable() {
-        HandlerList.unregisterAll(playerListener);
+        HandlerList.unregisterAll(bukkitListener);
         for (Player player : Bukkit.getOnlinePlayers()) {
             quit(player);
+        }
+        for (World world : Bukkit.getWorlds()) {
+            unload(world);
         }
         onDisable();
     }
@@ -155,16 +163,20 @@ public abstract class VersionHandler {
 
     public abstract VersionHelper getVersionHelper();
 
+    public final IOProvider io() {
+        return io;
+    }
+
     public final Plugin plugin() {
-        return provider.plugin();
+        return serviceProvider.plugin();
     }
 
     public final ExecutorService mainService() {
-        return provider.mainService();
+        return serviceProvider.mainService();
     }
 
     public final ExecutorService asyncService() {
-        return provider.asyncService();
+        return serviceProvider.asyncService();
     }
 
 }

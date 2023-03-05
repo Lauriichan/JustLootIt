@@ -12,6 +12,7 @@
             <groupId>me.lauriichan.laylib</groupId>
             <artifactId>logger</artifactId>
             <version>0.1.0-10191ac-SNAPSHOT</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>io.netty</groupId>
