@@ -19,7 +19,8 @@ import me.lauriichan.laylib.reflection.ClassUtil;
 import me.lauriichan.laylib.reflection.JavaAccess;
 import me.lauriichan.spigot.justlootit.capability.JustLootItCapabilityProvider;
 import me.lauriichan.spigot.justlootit.command.*;
-import me.lauriichan.spigot.justlootit.command.impl.BukkitCommandInjector;
+import me.lauriichan.spigot.justlootit.command.impl.BukkitCommandInjectedBridge;
+import me.lauriichan.spigot.justlootit.command.impl.BukkitCommandInjectedBridge.CommandDefinition;
 import me.lauriichan.spigot.justlootit.command.provider.*;
 import me.lauriichan.spigot.justlootit.data.io.*;
 import me.lauriichan.spigot.justlootit.listener.ItemFrameListener;
@@ -47,7 +48,7 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
      *      - Container with Loottable
      *      - Container without Loottable
      *  - Add support for third-party plugins (add an api or smth)
-     *  - Add automatic detection for vanilla containers and item frames
+     *  - Add automatic detection for vanilla containers and item frames (using new AsyncStructureGenerateEvent possibly?)
      * 
      */
     
@@ -68,6 +69,8 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
     private ISimpleLogger logger;
     private CommandManager commandManager;
     private MessageManager messageManager;
+    
+    private BukkitCommandInjectedBridge commandBridge;
     
     private boolean disabled = false;
 
@@ -134,7 +137,9 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
-        commandManager.setInjector(new BukkitCommandInjector(versionHelper, commandManager, messageManager, this));
+        commandBridge = new BukkitCommandInjectedBridge(this, versionHelper, commandManager, messageManager,
+            CommandDefinition.of("justlootit").alias("jloot").alias("jli").description("command.description.justlootit.parent").build(this))
+                .inject();
         registerMessages(messageManager);
         registerArgumentTypes(commandManager.getRegistry());
         registerCommands(commandManager);
@@ -160,7 +165,7 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
     }
 
     private void registerCommands(CommandManager manager) {
-        manager.register(JustLootItCommand.class);
+        manager.register(HelpCommand.class);
     }
 
     private void registerListeners(PluginManager pluginManager) {
@@ -186,6 +191,9 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
         if (versionHandler != null) {
             packetManager.unregister(itemFrameContainer);
             versionHandler.disable();
+        }
+        if (commandBridge != null) {
+            commandBridge.uninject();
         }
     }
 
