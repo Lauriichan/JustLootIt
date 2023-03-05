@@ -20,7 +20,7 @@ public abstract class Container extends Storable {
 
         @Override
         public final void serialize(C storable, ByteBuf buffer) {
-            ContainerData data = storable.containerData;
+            ContainerData data = storable.data;
             buffer.writeInt(data.playerAccess.size());
             for(Entry<UUID, OffsetDateTime> entry : data.playerAccess.entrySet()) {
                 DataIO.UUID.serialize(buffer, entry.getKey());
@@ -56,16 +56,16 @@ public abstract class Container extends Storable {
 
     }
 
-    final ContainerData containerData;
+    final ContainerData data;
 
     public Container(long id) {
         this(id, new ContainerData());
-        containerData.refreshDate = OffsetDateTime.now();
+        data.refreshDate = OffsetDateTime.now();
     }
 
-    public Container(long id, ContainerData containerData) {
+    public Container(long id, ContainerData data) {
         super(id);
-        this.containerData = containerData;
+        this.data = data;
     }
 
 }
