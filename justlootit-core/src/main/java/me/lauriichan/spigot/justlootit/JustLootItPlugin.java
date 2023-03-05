@@ -45,10 +45,6 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
      *      - Container without Loottable
      *  - Add support for third-party plugins (add an api or smth)
      *  - Add automatic detection for vanilla containers and item frames
-     *  
-     *  (Optional)
-     *  
-     *  - Use CommandManager as main command instead of each command being a main command
      * 
      */
     
@@ -71,6 +67,8 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
     private ISimpleLogger logger;
     private CommandManager commandManager;
     private MessageManager messageManager;
+    
+    private boolean disabled = false;
 
     /*
      * PacketContainers
@@ -84,7 +82,9 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
 
     @Override
     public void onLoad() {
-        setupVersionHandler();
+        if (!setupVersionHandler()) {
+            return;
+        }
         setupEnvironment();
     }
 
@@ -98,17 +98,20 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
         commandManager = new CommandManager(logger);
     }
 
-    private void setupVersionHandler() {
+    private boolean setupVersionHandler() {
         try {
             versionHandler = initVersionHandler();
             versionHelper = versionHandler.getVersionHelper();
             packetManager = versionHandler.getPacketManager();
-            getLogger().severe("Initialized version support for " + coreVersion);
+            getLogger().info("Initialized version support for " + coreVersion);
+            return true;
         } catch (Exception exp) {
             getLogger().severe("Failed to initialize version support for " + coreVersion);
             getLogger().severe("Reason: '" + exp.getMessage() + "'");
             getLogger().severe("");
-            getLogger().severe("Some features might be disabled because of that");
+            getLogger().severe("Can't work like this, disabling...");
+            this.disabled = true;
+            return false;
         }
     }
 
@@ -118,6 +121,10 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
 
     @Override
     public void onEnable() {
+        if(disabled) {
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
         commandManager.setInjector(new BukkitCommandInjector(versionHelper, commandManager, messageManager, this));
         registerMessages(messageManager);
         registerArgumentTypes(commandManager.getRegistry());
@@ -164,6 +171,9 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
 
     @Override
     public void onDisable() {
+        if(disabled) {
+            return;
+        }
         if (versionHandler != null) {
             packetManager.unregister(itemFrameContainer);
             versionHandler.disable();
