@@ -17,10 +17,10 @@ import me.lauriichan.laylib.localization.source.EnumMessageSource;
 import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.laylib.reflection.ClassUtil;
 import me.lauriichan.laylib.reflection.JavaAccess;
-import me.lauriichan.spigot.justlootit.command.JustLootItCommand;
+import me.lauriichan.spigot.justlootit.command.*;
 import me.lauriichan.spigot.justlootit.command.impl.BukkitCommandInjector;
-import me.lauriichan.spigot.justlootit.command.provider.LoggerProvider;
-import me.lauriichan.spigot.justlootit.command.provider.PluginProvider;
+import me.lauriichan.spigot.justlootit.command.provider.*;
+import me.lauriichan.spigot.justlootit.data.io.*;
 import me.lauriichan.spigot.justlootit.listener.ItemFrameListener;
 import me.lauriichan.spigot.justlootit.message.CommandDescription;
 import me.lauriichan.spigot.justlootit.message.CommandManagerMessage;
@@ -29,6 +29,7 @@ import me.lauriichan.spigot.justlootit.message.impl.SimpleMessageProviderFactory
 import me.lauriichan.spigot.justlootit.nms.IServiceProvider;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.nms.VersionHelper;
+import me.lauriichan.spigot.justlootit.nms.io.IOProvider;
 import me.lauriichan.spigot.justlootit.nms.packet.listener.PacketContainer;
 import me.lauriichan.spigot.justlootit.nms.packet.listener.PacketManager;
 import me.lauriichan.spigot.justlootit.util.BukkitExecutorService;
@@ -84,6 +85,7 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
             return;
         }
         setupEnvironment();
+        setupIO();
     }
 
     private boolean setupVersionHandler() {
@@ -107,6 +109,11 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
         logger = new BukkitSimpleLogger(getLogger());
         messageManager = new MessageManager();
         commandManager = new CommandManager(logger);
+    }
+    
+    private void setupIO() {
+        IOProvider io = versionHandler.io();
+        io.register(NamespacedKeyIO.NAMESPACED_KEY);
     }
 
     /*
