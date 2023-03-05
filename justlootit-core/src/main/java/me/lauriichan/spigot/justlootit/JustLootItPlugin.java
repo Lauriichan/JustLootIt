@@ -54,8 +54,6 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
 
     private static final String VERSION_PATH = JustLootItPlugin.class.getPackageName() + ".nms.%s.VersionHandler%s";
 
-
-
     private final ExecutorService mainService = new BukkitExecutorService(this, false);
     private final ExecutorService asyncService = new BukkitExecutorService(this, true);
 
