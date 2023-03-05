@@ -88,12 +88,6 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
         setupEnvironment();
     }
 
-    private void setupEnvironment() {
-        logger = new BukkitSimpleLogger(getLogger());
-        messageManager = new MessageManager();
-        commandManager = new CommandManager(logger);
-    }
-
     private boolean setupVersionHandler() {
         try {
             versionHandler = initVersionHandler();
@@ -109,6 +103,12 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
             this.disabled = true;
             return false;
         }
+    }
+
+    private void setupEnvironment() {
+        logger = new BukkitSimpleLogger(getLogger());
+        messageManager = new MessageManager();
+        commandManager = new CommandManager(logger);
     }
 
     /*
