@@ -1,7 +1,7 @@
 package me.lauriichan.spigot.justlootit.storage.randomaccessfile;
 
 /**
- * Settings for the {@link RAFStorage}
+ * Settings for the {@link RAFMultiStorage}
  */
 public final class RAFSettings {
 

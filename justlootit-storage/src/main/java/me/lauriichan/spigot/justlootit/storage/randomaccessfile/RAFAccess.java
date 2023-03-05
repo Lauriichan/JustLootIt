@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 
 import me.lauriichan.spigot.justlootit.storage.Storable;
 
-public final class RAFAccess<S extends Storable> implements Closeable {
+final class RAFAccess<S extends Storable> implements Closeable {
 
     private static final Predicate<String> IS_HEX = Pattern.compile("[a-fA-F0-9]+").asMatchPredicate();
 
@@ -26,10 +26,16 @@ public final class RAFAccess<S extends Storable> implements Closeable {
 
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
-    public RAFAccess(final int id, final File directory) {
+    RAFAccess(final int id, final File directory) {
         this.id = id;
         this.hexId = Integer.toHexString(id);
         this.file = new File(directory, hexId + ".jli");
+    }
+    
+    RAFAccess(final File file) {
+        this.id = 0;
+        this.hexId = "0";
+        this.file = file;
     }
 
     public int id() {

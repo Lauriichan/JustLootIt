@@ -2,7 +2,7 @@ package me.lauriichan.spigot.justlootit.storage;
 
 import java.util.function.Function;
 
-import me.lauriichan.spigot.justlootit.storage.util.cache.Long2ObjectCache;
+import me.lauriichan.spigot.justlootit.storage.util.cache.Long2ObjectMapCache;
 
 public class CachedStorage<S extends Storable> extends Storage<S> {
 
@@ -37,12 +37,12 @@ public class CachedStorage<S extends Storable> extends Storage<S> {
     }
 
     private final Storage<S> delegate;
-    private final Long2ObjectCache<CacheObject<S>> cache;
+    private final Long2ObjectMapCache<CacheObject<S>> cache;
 
     public CachedStorage(Storage<S> delegate) {
         super(delegate.logger, delegate.baseType);
         this.delegate = delegate;
-        this.cache = new Long2ObjectCache<>(logger, this::invalidate);
+        this.cache = new Long2ObjectMapCache<>(logger, this::invalidate);
     }
 
     private void invalidate(Long key, CacheObject<S> cached) {
