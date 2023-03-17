@@ -1,6 +1,7 @@
 package me.lauriichan.spigot.justlootit.nms.capability;
 
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Consumer;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
@@ -8,6 +9,24 @@ public final class CapabilityManager {
 
     private final ObjectArrayList<ICapabilityProvider> list = new ObjectArrayList<>();
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    
+    public final void forEach(Consumer<ICapabilityProvider> consumer) {
+        lock.readLock().lock();
+        try {
+            list.forEach(consumer);
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+    
+    public final ICapabilityProvider[] array() {
+        lock.readLock().lock();
+        try {
+            return list.toArray(ICapabilityProvider[]::new);
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
 
     public final ICapabilityProvider get(int index) {
         lock.readLock().lock();

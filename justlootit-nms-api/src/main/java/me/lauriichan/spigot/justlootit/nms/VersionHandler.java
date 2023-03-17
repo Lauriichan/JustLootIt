@@ -15,7 +15,6 @@ import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.spigot.justlootit.nms.capability.CapabilityManager;
 import me.lauriichan.spigot.justlootit.nms.capability.Capable;
 import me.lauriichan.spigot.justlootit.nms.capability.ICapability;
-import me.lauriichan.spigot.justlootit.nms.capability.ICapabilityProvider;
 import me.lauriichan.spigot.justlootit.nms.io.IOProvider;
 import me.lauriichan.spigot.justlootit.nms.packet.listener.PacketManager;
 
@@ -171,14 +170,7 @@ public abstract class VersionHandler {
      */
 
     private final <T extends Capable<?>> T applyCapabilities(T capable) {
-        int amount = capabilityManager.amount();
-        for (int index = 0; index < amount; index++) {
-            ICapabilityProvider provider = capabilityManager.get(index);
-            if (provider == null) {
-                continue;
-            }
-            capable.addCapabilities(this, provider);
-        }
+        capabilityManager.forEach(provider -> capable.addCapabilities(this, provider));
         return capable;
     }
 
