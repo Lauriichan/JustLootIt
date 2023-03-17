@@ -12,6 +12,8 @@ import me.lauriichan.spigot.justlootit.storage.Storage;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapter;
 
 public class CacheLookupTable extends Storable implements IModifiable {
+    
+    // TODO: Add multiworld support
 
     public static final long ID = 0;
     public static final int SIZE = 10;

@@ -161,6 +161,7 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
 
     private void registerCommands(CommandManager manager) {
         manager.register(HelpCommand.class);
+        manager.register(DebugCommand.class);
     }
 
     private void registerListeners(PluginManager pluginManager) {

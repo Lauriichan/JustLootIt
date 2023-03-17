@@ -21,6 +21,11 @@ public final class Messages {
     /*
      * Commands
      */
+    
+    // System (general)
+    
+    @Message(id = "command.system.actor.not-supported", content = "$#plugin.prefix The command '&c$command&7' can only be excuted by actors of type &c$actorType&7.")
+    public static SimpleMessageProvider COMMAND_SYSTEM_ACTOR_NOT$SUPPORTED;
 
     // Help
 
