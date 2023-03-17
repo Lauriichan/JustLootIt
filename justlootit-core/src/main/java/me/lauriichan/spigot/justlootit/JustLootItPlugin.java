@@ -95,6 +95,7 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
 
     private boolean setupVersionHandler() {
         logger = new BukkitSimpleLogger(getLogger());
+        logger.setDebug(true); // TODO: Debug is activated
         try {
             versionHandler = initVersionHandler();
             versionHelper = versionHandler.versionHelper();
@@ -163,14 +164,15 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
     }
 
     private void registerListeners(PluginManager pluginManager) {
+        // Construct listener used for events and packets
         ItemFrameListener itemFrameListener = new ItemFrameListener();
-        ContainerListener containerListener = new ContainerListener();
 
+        // Register event listener
         pluginManager.registerEvents(itemFrameListener, this);
-        pluginManager.registerEvents(containerListener, this);
-        if (packetManager != null) {
-            itemFrameContainer = packetManager.register(itemFrameListener).setGlobal(true);
-        }
+        pluginManager.registerEvents(new ContainerListener(versionHandler), this);
+        
+        // Register packet listener
+        itemFrameContainer = packetManager.register(itemFrameListener).setGlobal(true);
     }
 
     /*

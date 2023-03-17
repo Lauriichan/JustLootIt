@@ -10,11 +10,14 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.laylib.reflection.ClassUtil;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.nms.packet.AbstractPacket;
 
 public final class PacketContainer {
+    
+    private final ISimpleLogger logger;
 
     private final ExecutorService mainService;
     private final ExecutorService asyncService;
@@ -28,7 +31,8 @@ public final class PacketContainer {
 
     private final boolean acceptCancelled;
 
-    public PacketContainer(final ExecutorService mainService, final ExecutorService asyncService, final IPacketListener instance) {
+    public PacketContainer(final ISimpleLogger logger, final ExecutorService mainService, final ExecutorService asyncService, final IPacketListener instance) {
+        this.logger = Objects.requireNonNull(logger);
         this.mainService = Objects.requireNonNull(mainService);
         this.asyncService = Objects.requireNonNull(asyncService);
         this.instance = Objects.requireNonNull(instance);
@@ -60,6 +64,10 @@ public final class PacketContainer {
         this.executors = Collections.unmodifiableList(executors);
     }
 
+    public ISimpleLogger logger() {
+        return logger;
+    }
+    
     public ExecutorService mainService() {
         return mainService;
     }

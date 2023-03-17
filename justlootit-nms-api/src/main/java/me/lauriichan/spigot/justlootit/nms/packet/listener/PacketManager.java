@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.nms.packet.AbstractPacket;
@@ -16,12 +17,19 @@ public abstract class PacketManager {
     private final ArrayList<PacketContainer> listeners = new ArrayList<>();
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     
+    private final ISimpleLogger logger;
+    
     private final ExecutorService mainService;
     private final ExecutorService asyncService;
     
     public PacketManager(final VersionHandler handler) {
+        this.logger = handler.logger();
         this.mainService = handler.mainService();
         this.asyncService = handler.asyncService();
+    }
+    
+    public final ISimpleLogger logger() {
+        return logger;
     }
     
     public final ExecutorService mainService() {
@@ -44,7 +52,7 @@ public abstract class PacketManager {
         } finally {
             lock.readLock().unlock();
         }
-        PacketContainer container = new PacketContainer(mainService, asyncService, listener);
+        PacketContainer container = new PacketContainer(logger, mainService, asyncService, listener);
         lock.writeLock().lock();
         try {
             listeners.add(container);
