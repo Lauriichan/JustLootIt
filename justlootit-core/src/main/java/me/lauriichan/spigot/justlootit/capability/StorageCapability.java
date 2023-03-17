@@ -4,6 +4,7 @@ import java.io.File;
 
 import me.lauriichan.spigot.justlootit.data.CacheLookupTable;
 import me.lauriichan.spigot.justlootit.data.CachedInventory;
+import me.lauriichan.spigot.justlootit.data.FrameContainer;
 import me.lauriichan.spigot.justlootit.data.StaticContainer;
 import me.lauriichan.spigot.justlootit.data.VanillaContainer;
 import me.lauriichan.spigot.justlootit.nms.LevelAdapter;
@@ -26,6 +27,7 @@ public abstract class StorageCapability implements ICapability {
                 new File(adapter.asBukkit().getWorldFolder(), "justlootit/containers"))));
             storage.register(VanillaContainer.ADAPTER);
             storage.register(StaticContainer.ADAPTER);
+            storage.register(FrameContainer.ADAPTER);
         }
 
     }
