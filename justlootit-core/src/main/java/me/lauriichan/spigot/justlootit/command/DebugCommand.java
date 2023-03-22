@@ -87,7 +87,7 @@ public class DebugCommand {
             return;
         }
         Container stateContainer = (Container) state;
-        if(stateContainer.getPersistentDataContainer().has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+        if(!stateContainer.getPersistentDataContainer().has(JustLootItKey.identity(), PersistentDataType.LONG)) {
             actor.sendMessage("&cIs already a JustLootIt container");
             return;
         }
@@ -125,7 +125,7 @@ public class DebugCommand {
             return;
         }
         Container stateContainer = (Container) state;
-        if(stateContainer.getPersistentDataContainer().has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+        if(!stateContainer.getPersistentDataContainer().has(JustLootItKey.identity(), PersistentDataType.LONG)) {
             actor.sendMessage("&cIs already a JustLootIt container");
             return;
         }
