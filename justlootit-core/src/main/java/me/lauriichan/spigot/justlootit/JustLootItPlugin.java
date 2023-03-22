@@ -132,6 +132,7 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
+        JustLootItKey.setup(this);
         commandBridge = new BukkitCommandInjectedBridge(this, versionHelper, commandManager, messageManager,
             CommandDefinition.of("justlootit").alias("jloot").alias("jli").description("command.description.justlootit.parent").build(this))
                 .inject();
