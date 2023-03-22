@@ -6,20 +6,20 @@ import java.util.Random;
 import java.util.function.Function;
 
 import me.lauriichan.spigot.justlootit.storage.Storable;
-import me.lauriichan.spigot.justlootit.storage.Storage;
+import me.lauriichan.spigot.justlootit.storage.AbstractStorage;
 
 public abstract class Test<T extends Storable> {
 
     public static final class StorageProvider<T extends Storable> {
 
-        public static <T extends Storable> StorageProvider<T> provider(final String name, final Function<File, Storage<T>> builder) {
+        public static <T extends Storable> StorageProvider<T> provider(final String name, final Function<File, AbstractStorage<T>> builder) {
             return new StorageProvider<>(name, builder);
         }
 
         public final String name;
-        private final Function<File, Storage<T>> builder;
+        private final Function<File, AbstractStorage<T>> builder;
 
-        private StorageProvider(final String name, final Function<File, Storage<T>> builder) {
+        private StorageProvider(final String name, final Function<File, AbstractStorage<T>> builder) {
             this.name = name;
             this.builder = builder;
         }
@@ -35,7 +35,7 @@ public abstract class Test<T extends Storable> {
     public abstract void createProviders(List<StorageProvider<T>> list);
 
     public final void executeTest(File workingDir, StorageProvider<T> provider, Profiler profiler, long seed) throws Throwable {
-        Storage<T> storage = provider.builder.apply(workingDir);
+        AbstractStorage<T> storage = provider.builder.apply(workingDir);
         Random random = new Random(seed);
         profiler.time();
         executeTest(provider.name, storage, random);
@@ -43,6 +43,6 @@ public abstract class Test<T extends Storable> {
         storage.close();
     }
 
-    protected abstract void executeTest(String storageName, Storage<T> storage, Random random) throws Throwable;
+    protected abstract void executeTest(String storageName, AbstractStorage<T> storage, Random random) throws Throwable;
 
 }

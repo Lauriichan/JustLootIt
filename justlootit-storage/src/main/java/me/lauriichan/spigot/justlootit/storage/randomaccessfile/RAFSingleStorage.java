@@ -16,14 +16,14 @@ import it.unimi.dsi.fastutil.shorts.Short2LongOpenHashMap;
 import it.unimi.dsi.fastutil.shorts.ShortArrayList;
 import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.spigot.justlootit.storage.Storable;
-import me.lauriichan.spigot.justlootit.storage.Storage;
+import me.lauriichan.spigot.justlootit.storage.AbstractStorage;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapter;
 import me.lauriichan.spigot.justlootit.storage.StorageException;
 import me.lauriichan.spigot.justlootit.storage.UpdateInfo;
 import me.lauriichan.spigot.justlootit.storage.UpdateInfo.UpdateState;
 import me.lauriichan.spigot.justlootit.storage.util.cache.ThreadSafeSingletonCache;
 
-public class RAFSingleStorage<S extends Storable> extends Storage<S> {
+public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
 
     private final RAFSettings settings;
 

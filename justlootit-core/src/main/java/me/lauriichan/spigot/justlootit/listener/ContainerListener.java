@@ -7,7 +7,7 @@ import me.lauriichan.spigot.justlootit.data.Container;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.storage.Storable;
-import me.lauriichan.spigot.justlootit.storage.Storage;
+import me.lauriichan.spigot.justlootit.storage.IStorage;
 
 import java.time.Duration;
 import java.util.UUID;
@@ -79,7 +79,7 @@ public class ContainerListener implements Listener {
             }
             event.setCancelled(true);
             player.getCapability(StorageCapability.class).ifPresentOrElse(playerCapability -> {
-                Storage<Storable> playerStorage = playerCapability.storage();
+                IStorage<Storable> playerStorage = playerCapability.storage();
                 CacheLookupTable lookupTable = CacheLookupTable.retrieve(playerStorage);
                 if (!dataContainer.access(playerId)) {
                     if (lookupTable.access(id)) {

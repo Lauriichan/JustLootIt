@@ -12,8 +12,8 @@ import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.nms.capability.ICapability;
 import me.lauriichan.spigot.justlootit.storage.CachedStorage;
+import me.lauriichan.spigot.justlootit.storage.IStorage;
 import me.lauriichan.spigot.justlootit.storage.Storable;
-import me.lauriichan.spigot.justlootit.storage.Storage;
 import me.lauriichan.spigot.justlootit.storage.randomaccessfile.RAFMultiStorage;
 import me.lauriichan.spigot.justlootit.storage.randomaccessfile.RAFSettings;
 import me.lauriichan.spigot.justlootit.storage.randomaccessfile.RAFSingleStorage;
@@ -44,13 +44,13 @@ public abstract class StorageCapability implements ICapability {
 
     }
 
-    protected final Storage<Storable> storage;
+    protected final IStorage<Storable> storage;
 
-    public StorageCapability(final Storage<Storable> storage) {
+    public StorageCapability(final IStorage<Storable> storage) {
         this.storage = storage;
     }
 
-    public final Storage<Storable> storage() {
+    public final IStorage<Storable> storage() {
         return storage;
     }
 

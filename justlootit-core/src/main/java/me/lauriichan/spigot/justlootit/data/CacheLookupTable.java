@@ -7,8 +7,8 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import me.lauriichan.spigot.justlootit.data.io.DataIO;
 import me.lauriichan.spigot.justlootit.storage.IModifiable;
+import me.lauriichan.spigot.justlootit.storage.IStorage;
 import me.lauriichan.spigot.justlootit.storage.Storable;
-import me.lauriichan.spigot.justlootit.storage.Storage;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapter;
 
 public class CacheLookupTable extends Storable implements IModifiable {
@@ -200,7 +200,7 @@ public class CacheLookupTable extends Storable implements IModifiable {
         return entry.tableId;
     }
 
-    public static CacheLookupTable retrieve(Storage<Storable> storage) {
+    public static CacheLookupTable retrieve(IStorage<Storable> storage) {
         Storable entry = storage.read(ID);
         if (entry != null) {
             if (entry instanceof CacheLookupTable table) {

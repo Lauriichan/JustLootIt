@@ -1,6 +1,7 @@
 package me.lauriichan.spigot.justlootit.command;
 
 import java.util.Random;
+import java.util.concurrent.CompletableFuture;
 
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
@@ -25,14 +26,14 @@ import me.lauriichan.spigot.justlootit.data.VanillaContainer;
 import me.lauriichan.spigot.justlootit.message.Messages;
 import me.lauriichan.spigot.justlootit.nms.LevelAdapter;
 import me.lauriichan.spigot.justlootit.storage.Storable;
-import me.lauriichan.spigot.justlootit.storage.Storage;
+import me.lauriichan.spigot.justlootit.storage.IStorage;
 
 @Command(name = "debug", description = "A debug command")
 public class DebugCommand {
 
     public static final Random RANDOM = new Random(System.currentTimeMillis());
 
-    private static long newId(Storage<?> storage) {
+    private static long newId(IStorage<?> storage) {
         long id = RANDOM.nextLong();
         while (storage.has(id) || !storage.isSupported(id)) {
             id = RANDOM.nextLong();
@@ -81,6 +82,7 @@ public class DebugCommand {
             return;
         }
         plugin.mainService().submit(() -> {
+            // If a exception happens in this lambda it will not be detected.
             Block block = result.getHitBlock();
             BlockState state = block.getState();
             if (!(state instanceof Container)) {
@@ -94,7 +96,7 @@ public class DebugCommand {
             }
             LevelAdapter level = plugin.versionHandler().getLevel(block.getWorld());
             level.getCapability(StorageCapability.class).ifPresentOrElse(capability -> {
-                Storage<Storable> storage = capability.storage();
+                IStorage<Storable> storage = capability.storage();
                 long id = newId(storage);
                 stateContainer.getPersistentDataContainer().set(JustLootItKey.identity(), PersistentDataType.LONG, id);
                 stateContainer.getInventory().clear();
@@ -121,6 +123,7 @@ public class DebugCommand {
             return;
         }
         plugin.mainService().submit(() -> {
+            // If a exception happens in this lambda it will not be detected.
             Block block = result.getHitBlock();
             BlockState state = block.getState();
             if (!(state instanceof Container)) {
@@ -134,7 +137,7 @@ public class DebugCommand {
             }
             LevelAdapter level = plugin.versionHandler().getLevel(block.getWorld());
             level.getCapability(StorageCapability.class).ifPresentOrElse(capability -> {
-                Storage<Storable> storage = capability.storage();
+                IStorage<Storable> storage = capability.storage();
                 long id = newId(storage);
                 stateContainer.getPersistentDataContainer().set(JustLootItKey.identity(), PersistentDataType.LONG, id);
                 storage.write(new StaticContainer(id, stateContainer.getInventory()));

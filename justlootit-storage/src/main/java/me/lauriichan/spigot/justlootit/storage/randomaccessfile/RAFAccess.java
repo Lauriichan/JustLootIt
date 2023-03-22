@@ -78,6 +78,13 @@ final class RAFAccess<S extends Storable> implements Closeable {
         if (access != null) {
             return access;
         }
+        if(!file.exists()) {
+            File parentFile = file.getParentFile();
+            if(parentFile != null && !parentFile.exists()) {
+                parentFile.mkdirs();
+            }
+            file.createNewFile();
+        }
         return access = new RandomAccessFile(file, "rw");
     }
 
