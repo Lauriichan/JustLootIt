@@ -96,6 +96,7 @@ public class DebugCommand {
             Storage<Storable> storage = capability.storage();
             long id = newId(storage);
             stateContainer.getPersistentDataContainer().set(JustLootItKey.identity(), PersistentDataType.LONG, id);
+            stateContainer.getInventory().clear();
             stateContainer.update();
             storage.write(new VanillaContainer(id, table, seed));
             actor.sendMessage("&aCreated container with id '" + Long.toHexString(id) + "'!");
