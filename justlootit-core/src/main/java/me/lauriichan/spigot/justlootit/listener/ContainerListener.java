@@ -47,11 +47,11 @@ public class ContainerListener implements Listener {
             return;
         }
         org.bukkit.block.Container container = (org.bukkit.block.Container) state;
-        Long id = container.getPersistentDataContainer().get(JustLootItKey.identity(), PersistentDataType.LONG);
-        if (id == null) {
+        PersistentDataContainer dataContainer = container.getPersistentDataContainer();
+        if(!dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
             return;
         }
-        accessContainer(container.getPersistentDataContainer(), event, event.getPlayer(), block.getWorld(), id.longValue());
+        accessContainer(dataContainer, event, event.getPlayer(), block.getWorld(), dataContainer.get(JustLootItKey.identity(), PersistentDataType.LONG).longValue());
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
@@ -61,11 +61,11 @@ public class ContainerListener implements Listener {
         if (type != EntityType.MINECART_CHEST && type != EntityType.MINECART_HOPPER && type != EntityType.CHEST_BOAT) {
             return;
         }
-        Long id = entity.getPersistentDataContainer().get(JustLootItKey.identity(), PersistentDataType.LONG);
-        if (id == null) {
+        PersistentDataContainer dataContainer = entity.getPersistentDataContainer();
+        if(!dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
             return;
         }
-        accessContainer(entity.getPersistentDataContainer(), event, event.getPlayer(), entity.getWorld(), id.longValue());
+        accessContainer(dataContainer, event, event.getPlayer(), entity.getWorld(), dataContainer.get(JustLootItKey.identity(), PersistentDataType.LONG).longValue());
     }
 
     private void accessContainer(PersistentDataContainer data, Cancellable event, Player bukkitPlayer, World world, long id) {
