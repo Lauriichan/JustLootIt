@@ -9,7 +9,7 @@ import me.lauriichan.spigot.justlootit.storage.StorageAdapter;
 
 public final class FrameContainer extends Container {
 
-    public static final StorageAdapter<FrameContainer> ADAPTER = new BaseAdapter<>(FrameContainer.class, 15) {
+    public static final StorageAdapter<FrameContainer> ADAPTER = new BaseAdapter<>(FrameContainer.class, 14) {
         private final IOHandler<ItemStack> itemIO = DataIO.find(ItemStack.class);
 
         @Override
