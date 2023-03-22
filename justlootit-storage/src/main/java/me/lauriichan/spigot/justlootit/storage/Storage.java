@@ -103,9 +103,13 @@ public abstract class Storage<S extends Storable> {
         }
     }
     
+    public abstract boolean isSupported(long id);
+    
     public abstract void close() throws StorageException;
     
     public abstract void clear() throws StorageException;
+    
+    public abstract boolean has(long id) throws StorageException;
 
     public abstract S read(long id) throws StorageException;
 

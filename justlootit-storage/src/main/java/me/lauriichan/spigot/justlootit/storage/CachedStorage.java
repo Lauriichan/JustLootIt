@@ -64,6 +64,11 @@ public class CachedStorage<S extends Storable> extends Storage<S> {
             logger.warning("Couldn't save resource with id '" + Long.toHexString(key) + "'!", exp);
         }
     }
+    
+    @Override
+    public boolean isSupported(long id) {
+        return delegate.isSupported(id);
+    }
 
     @Override
     public void close() throws StorageException {
@@ -75,6 +80,11 @@ public class CachedStorage<S extends Storable> extends Storage<S> {
     public void clear() throws StorageException {
         cache.clear();
         delegate.clear();
+    }
+    
+    @Override
+    public boolean has(long id) throws StorageException {
+        return cache.has(id) || delegate.has(id);
     }
 
     @Override

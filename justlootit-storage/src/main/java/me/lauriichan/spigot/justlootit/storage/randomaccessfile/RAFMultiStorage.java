@@ -42,6 +42,11 @@ public class RAFMultiStorage<S extends Storable> extends Storage<S> {
         this.accesses = new ThreadSafeMapCache<>(new Int2ObjectMapCache<>(logger));
         this.directory = directory;
     }
+    
+    @Override
+    public boolean isSupported(long id) {
+        return Long.compareUnsigned((id >> settings.valueIdBits | 0xFFFFFFFF), 0xFFFFFFFF) <= 0;
+    }
 
     /*
      * File cache
@@ -108,8 +113,53 @@ public class RAFMultiStorage<S extends Storable> extends Storage<S> {
     /*
      * Data reading
      */
-
-    @SuppressWarnings("resource")
+    
+    @Override
+    public boolean has(long id) throws StorageException {
+        long possibleId = id >> settings.valueIdBits;
+        if (Long.compareUnsigned((possibleId | 0xFFFFFFFF), 0xFFFFFFFF) >= 1) {
+            return false;
+        }
+        int fileId = (int) (possibleId & 0xFFFFFFFF);
+        short valueId = (short) (id & settings.valueIdMask);
+        if (accesses.has(fileId)) {
+            return has(accesses.get(fileId), id, valueId);
+        }
+        RAFAccess<S> access = new RAFAccess<>(fileId, directory);
+        if (!access.exists()) {
+            try {
+                access.close();
+            } catch (IOException e) {
+                // Ignore because we're not even open
+            }
+            return false;
+        }
+        saveAccess(access);
+        return has(access, id, valueId);
+    }
+    
+    private boolean has(RAFAccess<S> access, long fullId, short valueId) {
+        access.readLock();
+        try {
+            RandomAccessFile file = access.open();
+            long fileSize = file.length();
+            if (fileSize == 0) {
+                accesses.remove(access.id());
+                access.close();
+                access.file().delete();
+                return false;
+            }
+            long headerOffset = LOOKUP_AMOUNT_SIZE + LOOKUP_ENTRY_SIZE * valueId;
+            file.seek(headerOffset);
+            long lookupPosition = file.readLong();
+            access.readUnlock();
+            return lookupPosition != INVALID_HEADER_OFFSET;
+        } catch (IOException e) {
+            access.readUnlock();
+            throw new StorageException("Failed to check if value with id '" + Long.toHexString(fullId) + "' exists!", e);
+        }
+    }
+    
     @Override
     public S read(long id) throws StorageException {
         long possibleId = id >> settings.valueIdBits;
@@ -123,6 +173,11 @@ public class RAFMultiStorage<S extends Storable> extends Storage<S> {
         }
         RAFAccess<S> access = new RAFAccess<>(fileId, directory);
         if (!access.exists()) {
+            try {
+                access.close();
+            } catch (IOException e) {
+                // Ignore because we're not even open
+            }
             return null;
         }
         saveAccess(access);

@@ -40,6 +40,11 @@ public class RAFSingleStorage<S extends Storable> extends Storage<S> {
         this.settings = settings;
         this.accessCache = new ThreadSafeSingletonCache<>(logger);
     }
+    
+    @Override
+    public boolean isSupported(long id) {
+        return id < settings.valueIdAmount && id >= 0;
+    }
 
     /*
      * Clear data
@@ -83,11 +88,55 @@ public class RAFSingleStorage<S extends Storable> extends Storage<S> {
     /*
      * Data reading
      */
+    
+    @Override
+    public boolean has(long id) throws StorageException {
+        if (id >= settings.valueIdAmount || id < 0) {
+            return false;
+        }
+        short valueId = (short) (id & settings.valueIdMask);
+        if (accessCache.isPresent()) {
+            return has(accessCache.get(), id, valueId);
+        }
+        RAFAccess<S> access = new RAFAccess<>(file);
+        if (!access.exists()) {
+            try {
+                access.close();
+            } catch (IOException e) {
+                // Ignore because we're not even open
+            }
+            return false;
+        }
+        accessCache.set(access);
+        return has(access, id, valueId);
+    }
+    
+    private boolean has(RAFAccess<S> access, long fullId, short valueId) {
+        access.readLock();
+        try {
+            RandomAccessFile file = access.open();
+            long fileSize = file.length();
+            if (fileSize == 0) {
+                accessCache.remove();
+                access.close();
+                access.file().delete();
+                return false;
+            }
+            long headerOffset = LOOKUP_AMOUNT_SIZE + LOOKUP_ENTRY_SIZE * valueId;
+            file.seek(headerOffset);
+            long lookupPosition = file.readLong();
+            access.readUnlock();
+            return lookupPosition != INVALID_HEADER_OFFSET;
+        } catch (IOException e) {
+            access.readUnlock();
+            throw new StorageException("Failed to check if value with id '" + Long.toHexString(fullId) + "' exists!", e);
+        }
+    }
+    
 
-    @SuppressWarnings("resource")
     @Override
     public S read(long id) throws StorageException {
-        if (id > settings.valueIdAmount || id < 0) {
+        if (id >= settings.valueIdAmount || id < 0) {
             throw new StorageException("Unsupported value id '" + id + "'!");
         }
         short valueId = (short) (id & settings.valueIdMask);
@@ -96,6 +145,11 @@ public class RAFSingleStorage<S extends Storable> extends Storage<S> {
         }
         RAFAccess<S> access = new RAFAccess<>(file);
         if (!access.exists()) {
+            try {
+                access.close();
+            } catch (IOException e) {
+                // Ignore because we're not even open
+            }
             return null;
         }
         accessCache.set(access);
@@ -159,7 +213,7 @@ public class RAFSingleStorage<S extends Storable> extends Storage<S> {
     @Override
     public void write(S storable) throws StorageException {
         long id = storable.id();
-        if (id > settings.valueIdAmount || id < 0) {
+        if (id >= settings.valueIdAmount || id < 0) {
             throw new StorageException("Unsupported value id '" + id + "'!");
         }
         short valueId = (short) (id & settings.valueIdMask);
@@ -252,7 +306,7 @@ public class RAFSingleStorage<S extends Storable> extends Storage<S> {
     @SuppressWarnings("resource")
     @Override
     public boolean delete(long id) throws StorageException {
-        if (id > settings.valueIdAmount || id < 0) {
+        if (id >= settings.valueIdAmount || id < 0) {
             throw new StorageException("Unsupported value id '" + id + "'!");
         }
         short valueId = (short) (id & settings.valueIdMask);
