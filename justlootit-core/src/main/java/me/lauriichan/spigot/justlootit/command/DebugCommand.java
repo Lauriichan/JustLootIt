@@ -80,28 +80,30 @@ public class DebugCommand {
             actor.sendMessage("&cYou have to look at a block!");
             return;
         }
-        Block block = result.getHitBlock();
-        BlockState state = block.getState();
-        if (!(state instanceof Container)) {
-            actor.sendMessage("&cYou have to look at a container!");
-            return;
-        }
-        Container stateContainer = (Container) state;
-        if(!stateContainer.getPersistentDataContainer().has(JustLootItKey.identity(), PersistentDataType.LONG)) {
-            actor.sendMessage("&cIs already a JustLootIt container");
-            return;
-        }
-        LevelAdapter level = plugin.versionHandler().getLevel(block.getWorld());
-        level.getCapability(StorageCapability.class).ifPresentOrElse(capability -> {
-            Storage<Storable> storage = capability.storage();
-            long id = newId(storage);
-            stateContainer.getPersistentDataContainer().set(JustLootItKey.identity(), PersistentDataType.LONG, id);
-            stateContainer.getInventory().clear();
-            stateContainer.update();
-            storage.write(new VanillaContainer(id, table, seed));
-            actor.sendMessage("&aCreated container with id '" + Long.toHexString(id) + "'!");
-        }, () -> {
-            actor.sendMessage("&cNo storage available!");
+        plugin.mainService().submit(() -> {
+            Block block = result.getHitBlock();
+            BlockState state = block.getState();
+            if (!(state instanceof Container)) {
+                actor.sendMessage("&cYou have to look at a container!");
+                return;
+            }
+            Container stateContainer = (Container) state;
+            if (stateContainer.getPersistentDataContainer().has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+                actor.sendMessage("&cIs already a JustLootIt container");
+                return;
+            }
+            LevelAdapter level = plugin.versionHandler().getLevel(block.getWorld());
+            level.getCapability(StorageCapability.class).ifPresentOrElse(capability -> {
+                Storage<Storable> storage = capability.storage();
+                long id = newId(storage);
+                stateContainer.getPersistentDataContainer().set(JustLootItKey.identity(), PersistentDataType.LONG, id);
+                stateContainer.getInventory().clear();
+                stateContainer.update();
+                storage.write(new VanillaContainer(id, table, seed));
+                actor.sendMessage("&aCreated container with id '" + Long.toHexString(id) + "'!");
+            }, () -> {
+                actor.sendMessage("&cNo storage available!");
+            });
         });
     }
 
@@ -118,28 +120,30 @@ public class DebugCommand {
             actor.sendMessage("&cYou have to look at a block!");
             return;
         }
-        Block block = result.getHitBlock();
-        BlockState state = block.getState();
-        if (!(state instanceof Container)) {
-            actor.sendMessage("&cYou have to look at a container!");
-            return;
-        }
-        Container stateContainer = (Container) state;
-        if(!stateContainer.getPersistentDataContainer().has(JustLootItKey.identity(), PersistentDataType.LONG)) {
-            actor.sendMessage("&cIs already a JustLootIt container");
-            return;
-        }
-        LevelAdapter level = plugin.versionHandler().getLevel(block.getWorld());
-        level.getCapability(StorageCapability.class).ifPresentOrElse(capability -> {
-            Storage<Storable> storage = capability.storage();
-            long id = newId(storage);
-            stateContainer.getPersistentDataContainer().set(JustLootItKey.identity(), PersistentDataType.LONG, id);
-            storage.write(new StaticContainer(id, stateContainer.getInventory()));
-            stateContainer.getInventory().clear();
-            stateContainer.update();
-            actor.sendMessage("&aCreated container with id '" + Long.toHexString(id) + "'!");
-        }, () -> {
-            actor.sendMessage("&cNo storage available!");
+        plugin.mainService().submit(() -> {
+            Block block = result.getHitBlock();
+            BlockState state = block.getState();
+            if (!(state instanceof Container)) {
+                actor.sendMessage("&cYou have to look at a container!");
+                return;
+            }
+            Container stateContainer = (Container) state;
+            if (stateContainer.getPersistentDataContainer().has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+                actor.sendMessage("&cIs already a JustLootIt container");
+                return;
+            }
+            LevelAdapter level = plugin.versionHandler().getLevel(block.getWorld());
+            level.getCapability(StorageCapability.class).ifPresentOrElse(capability -> {
+                Storage<Storable> storage = capability.storage();
+                long id = newId(storage);
+                stateContainer.getPersistentDataContainer().set(JustLootItKey.identity(), PersistentDataType.LONG, id);
+                storage.write(new StaticContainer(id, stateContainer.getInventory()));
+                stateContainer.getInventory().clear();
+                stateContainer.update();
+                actor.sendMessage("&aCreated container with id '" + Long.toHexString(id) + "'!");
+            }, () -> {
+                actor.sendMessage("&cNo storage available!");
+            });
         });
     }
 
