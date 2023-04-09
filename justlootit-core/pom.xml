@@ -34,10 +34,17 @@
             <version>1.0.0</version>
         </dependency>
         
-        <!-- Bukkit Version Compat (1.19.3) -->
+        <!-- Bukkit Version Compat -->
+        <!-- 1.19.3 -->
         <dependency>
             <groupId>${project.parent.groupId}</groupId>
             <artifactId>justlootit-nms-1_19_R2</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <!-- 1.19.4 -->
+        <dependency>
+            <groupId>${project.parent.groupId}</groupId>
+            <artifactId>justlootit-nms-1_19_R3</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
     </dependencies>
