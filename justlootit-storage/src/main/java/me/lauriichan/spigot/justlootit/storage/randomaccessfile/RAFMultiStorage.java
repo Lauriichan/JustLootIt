@@ -107,6 +107,8 @@ public class RAFMultiStorage<S extends Storable> extends AbstractStorage<S> {
             }
             access.file().delete();
         }
+        identifier.reset();
+        identifier.save();
     }
 
     @Override
@@ -126,6 +128,7 @@ public class RAFMultiStorage<S extends Storable> extends AbstractStorage<S> {
                 access.writeUnlock();
             }
         }
+        identifier.save();
     }
 
     /*
