@@ -46,7 +46,7 @@ public final class PlayerAdapter1_19_R3 extends PlayerAdapter {
         this.versionHandler = versionHandler;
     }
 
-    void terminate() {
+    final void terminateAdapter() {
         network.setActive(false);
     }
 

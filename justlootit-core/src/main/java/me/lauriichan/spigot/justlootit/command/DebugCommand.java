@@ -1,7 +1,5 @@
 package me.lauriichan.spigot.justlootit.command;
 
-import java.util.Random;
-
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
@@ -33,16 +31,6 @@ import me.lauriichan.spigot.justlootit.storage.Storable;
 
 @Command(name = "debug", description = "A debug command")
 public class DebugCommand {
-
-    public static final Random RANDOM = new Random(System.currentTimeMillis());
-
-    private static long newId(final IStorage<?> storage) {
-        long id = RANDOM.nextLong();
-        while (storage.has(id) || !storage.isSupported(id)) {
-            id = RANDOM.nextLong();
-        }
-        return id;
-    }
 
     @Action("container frame")
     public void frameContainer(final JustLootItPlugin plugin, final Actor<?> actor) {
@@ -76,10 +64,10 @@ public class DebugCommand {
             final LevelAdapter level = plugin.versionHandler().getLevel(itemFrame.getWorld());
             level.getCapability(StorageCapability.class).ifPresentOrElse(capability -> {
                 final IStorage<Storable> storage = capability.storage();
-                final long id = newId(storage);
+                final long id = storage.newId();
                 itemFrame.getPersistentDataContainer().set(JustLootItKey.identity(), PersistentDataType.LONG, id);
-                itemFrame.setItem(null);
                 storage.write(new FrameContainer(id, item.clone()));
+                itemFrame.setItem(null);
                 actor.sendMessage("&aCreated item frame with id '" + Long.toHexString(id) + "'!");
             }, () -> {
                 actor.sendMessage("&cNo storage available!");
@@ -127,7 +115,7 @@ public class DebugCommand {
             final LevelAdapter level = plugin.versionHandler().getLevel(block.getWorld());
             level.getCapability(StorageCapability.class).ifPresentOrElse(capability -> {
                 final IStorage<Storable> storage = capability.storage();
-                final long id = newId(storage);
+                final long id = storage.newId();
                 stateContainer.getPersistentDataContainer().set(JustLootItKey.identity(), PersistentDataType.LONG, id);
                 stateContainer.getInventory().clear();
                 stateContainer.update();
@@ -168,7 +156,7 @@ public class DebugCommand {
             final LevelAdapter level = plugin.versionHandler().getLevel(block.getWorld());
             level.getCapability(StorageCapability.class).ifPresentOrElse(capability -> {
                 final IStorage<Storable> storage = capability.storage();
-                final long id = newId(storage);
+                final long id = storage.newId();
                 stateContainer.getPersistentDataContainer().set(JustLootItKey.identity(), PersistentDataType.LONG, id);
                 storage.write(new StaticContainer(id, stateContainer.getInventory()));
                 stateContainer.getInventory().clear();

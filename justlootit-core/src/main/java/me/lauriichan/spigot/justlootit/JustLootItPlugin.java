@@ -28,6 +28,7 @@ import me.lauriichan.spigot.justlootit.inventory.item.HeadProfileProvider;
 import me.lauriichan.spigot.justlootit.listener.ContainerListener;
 import me.lauriichan.spigot.justlootit.listener.GuiListener;
 import me.lauriichan.spigot.justlootit.listener.ItemFrameListener;
+import me.lauriichan.spigot.justlootit.listener.StructureListener;
 import me.lauriichan.spigot.justlootit.message.CommandDescription;
 import me.lauriichan.spigot.justlootit.message.CommandManagerMessage;
 import me.lauriichan.spigot.justlootit.message.Messages;
@@ -47,12 +48,7 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
     /*
      *  TODO List
      * 
-     *  - Add support for item containers
-     *      - Container with Loottable
-     *      - Container without Loottable
      *  - Add support for third-party plugins (add an api or smth)
-     *  - Add automatic detection for vanilla containers and item frames (using new AsyncStructureGenerateEvent possibly?)
-     * 
      */
 
     public static JustLootItPlugin get() {
@@ -176,6 +172,7 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
         // Register event listener
         pluginManager.registerEvents(itemFrameListener, this);
         pluginManager.registerEvents(new ContainerListener(versionHandler), this);
+        pluginManager.registerEvents(new StructureListener(versionHandler), this);
         pluginManager.registerEvents(new GuiListener(this), this);
 
         // Register packet listener
