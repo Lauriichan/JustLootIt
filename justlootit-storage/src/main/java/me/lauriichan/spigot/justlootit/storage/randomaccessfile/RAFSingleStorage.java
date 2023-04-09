@@ -21,6 +21,8 @@ import me.lauriichan.spigot.justlootit.storage.StorageAdapter;
 import me.lauriichan.spigot.justlootit.storage.StorageException;
 import me.lauriichan.spigot.justlootit.storage.UpdateInfo;
 import me.lauriichan.spigot.justlootit.storage.UpdateInfo.UpdateState;
+import me.lauriichan.spigot.justlootit.storage.identifier.FileIdentifier;
+import me.lauriichan.spigot.justlootit.storage.identifier.IIdentifier;
 import me.lauriichan.spigot.justlootit.storage.util.cache.ThreadSafeSingletonCache;
 
 public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
@@ -29,6 +31,8 @@ public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
 
     private final File file;
     private final ThreadSafeSingletonCache<RAFAccess<S>> accessCache;
+
+    private final IIdentifier identifier;
 
     public RAFSingleStorage(ISimpleLogger logger, Class<S> baseType, File file) {
         this(logger, baseType, file, RAFSettings.DEFAULT);
@@ -39,11 +43,22 @@ public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
         this.file = file;
         this.settings = settings;
         this.accessCache = new ThreadSafeSingletonCache<>(logger);
+        this.identifier = new FileIdentifier(logger, file);
+        identifier.load();
     }
     
     @Override
     public boolean isSupported(long id) {
         return id < settings.valueIdAmount && id >= 0;
+    }
+
+    @Override
+    public long newId() {
+        long id = identifier.nextId();
+        while (has(id)) {
+            id = identifier.nextId();
+        }
+        return id;
     }
 
     /*
@@ -67,6 +82,8 @@ public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
             }
         }
         access.file().delete();
+        identifier.reset();
+        identifier.save();
     }
 
     @Override
@@ -75,6 +92,7 @@ public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
         if (access == null || !access.isOpen()) {
             return;
         }
+        identifier.save();
         access.writeLock();
         try {
             access.close();

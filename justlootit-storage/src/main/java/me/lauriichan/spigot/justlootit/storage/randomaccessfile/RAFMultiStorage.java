@@ -22,6 +22,8 @@ import me.lauriichan.spigot.justlootit.storage.StorageAdapter;
 import me.lauriichan.spigot.justlootit.storage.StorageException;
 import me.lauriichan.spigot.justlootit.storage.UpdateInfo;
 import me.lauriichan.spigot.justlootit.storage.UpdateInfo.UpdateState;
+import me.lauriichan.spigot.justlootit.storage.identifier.FileIdentifier;
+import me.lauriichan.spigot.justlootit.storage.identifier.IIdentifier;
 import me.lauriichan.spigot.justlootit.storage.util.cache.Int2ObjectMapCache;
 import me.lauriichan.spigot.justlootit.storage.util.cache.ThreadSafeMapCache;
 
@@ -32,6 +34,8 @@ public class RAFMultiStorage<S extends Storable> extends AbstractStorage<S> {
     private final File directory;
     private final ThreadSafeMapCache<Integer, RAFAccess<S>> accesses;
 
+    private final IIdentifier identifier;
+
     public RAFMultiStorage(ISimpleLogger logger, Class<S> baseType, File directory) {
         this(logger, baseType, directory, RAFSettings.DEFAULT);
     }
@@ -41,11 +45,21 @@ public class RAFMultiStorage<S extends Storable> extends AbstractStorage<S> {
         this.settings = settings;
         this.accesses = new ThreadSafeMapCache<>(new Int2ObjectMapCache<>(logger));
         this.directory = directory;
+        this.identifier = new FileIdentifier(logger, directory);
     }
-    
+
     @Override
     public boolean isSupported(long id) {
         return Long.compareUnsigned((id >> settings.valueIdBits | 0xFFFFFFFF), 0xFFFFFFFF) <= 0;
+    }
+
+    @Override
+    public long newId() {
+        long id = identifier.nextId();
+        while (has(id)) {
+            id = identifier.nextId();
+        }
+        return id;
     }
 
     /*
@@ -113,7 +127,7 @@ public class RAFMultiStorage<S extends Storable> extends AbstractStorage<S> {
     /*
      * Data reading
      */
-    
+
     @Override
     public boolean has(long id) throws StorageException {
         long possibleId = id >> settings.valueIdBits;
@@ -137,7 +151,7 @@ public class RAFMultiStorage<S extends Storable> extends AbstractStorage<S> {
         saveAccess(access);
         return has(access, id, valueId);
     }
-    
+
     private boolean has(RAFAccess<S> access, long fullId, short valueId) {
         access.readLock();
         try {
@@ -159,7 +173,7 @@ public class RAFMultiStorage<S extends Storable> extends AbstractStorage<S> {
             throw new StorageException("Failed to check if value with id '" + Long.toHexString(fullId) + "' exists!", e);
         }
     }
-    
+
     @Override
     public S read(long id) throws StorageException {
         long possibleId = id >> settings.valueIdBits;
@@ -612,8 +626,8 @@ public class RAFMultiStorage<S extends Storable> extends AbstractStorage<S> {
                 buffer.readBytes(file.getChannel(), bufferSize);
             }
             int amount = delete.size();
-            if(amount == 0) {
-                return; 
+            if (amount == 0) {
+                return;
             }
             file.seek(0);
             file.writeShort(items);
@@ -626,14 +640,14 @@ public class RAFMultiStorage<S extends Storable> extends AbstractStorage<S> {
             LongArrayList headerNewValues = new LongArrayList(items);
             int headerAmount = 0;
             Short2LongOpenHashMap deleteHeaders = new Short2LongOpenHashMap(amount);
-            for(short valueId = 0; valueId < settings.valueIdAmount; valueId++) {
+            for (short valueId = 0; valueId < settings.valueIdAmount; valueId++) {
                 headerOffset = LOOKUP_AMOUNT_SIZE + LOOKUP_ENTRY_SIZE * valueId;
                 file.seek(headerOffset);
                 lookupPosition = file.readLong();
-                if(lookupPosition == INVALID_HEADER_OFFSET) {
+                if (lookupPosition == INVALID_HEADER_OFFSET) {
                     continue;
                 }
-                if(delete.contains(valueId)) {
+                if (delete.contains(valueId)) {
                     deleteHeaders.put(valueId, lookupPosition);
                     continue;
                 }
@@ -643,7 +657,7 @@ public class RAFMultiStorage<S extends Storable> extends AbstractStorage<S> {
                 headerNewValues.add(lookupPosition);
             }
             int dataSize;
-            while(amount != 0) {
+            while (amount != 0) {
                 short valueId = delete.removeShort(0);
                 amount--;
                 headerOffset = LOOKUP_AMOUNT_SIZE + LOOKUP_ENTRY_SIZE * valueId;
@@ -653,32 +667,33 @@ public class RAFMultiStorage<S extends Storable> extends AbstractStorage<S> {
                 file.seek(lookupPosition + VALUE_HEADER_ID_SIZE);
                 dataSize = file.readInt() + VALUE_HEADER_SIZE;
                 newFileSize -= dataSize;
-                for(int headerIdx = 0; headerIdx < items; headerIdx++) {
+                for (int headerIdx = 0; headerIdx < items; headerIdx++) {
                     long headerValue = headerNewValues.getLong(headerIdx);
-                    if(headerValue < lookupPosition) {
+                    if (headerValue < lookupPosition) {
                         continue;
                     }
                     headerNewValues.set(headerIdx, headerValue - dataSize);
                 }
-                for(int entry = 0; entry < amount; entry++) {
+                for (int entry = 0; entry < amount; entry++) {
                     short entryId = delete.getShort(entry);
                     long headerValue = deleteHeaders.get(entryId);
-                    if(headerValue < lookupPosition) {
+                    if (headerValue < lookupPosition) {
                         continue;
                     }
                     deleteHeaders.put(entryId, headerValue - dataSize);
                 }
             }
-            headerKeys.sort((k1, k2) -> Long.compare(headerNewValues.getLong(keysToIndex.get(k1)), headerNewValues.getLong(keysToIndex.get(k2))));
+            headerKeys
+                .sort((k1, k2) -> Long.compare(headerNewValues.getLong(keysToIndex.get(k1)), headerNewValues.getLong(keysToIndex.get(k2))));
             int valueIdx;
             long copyFrom, copyTo, copyEnd, copyAmount;
             byte[] buffer = new byte[settings.copyBufferSize];
-            for(int keyIdx = 0; keyIdx < headerAmount; keyIdx++) {
+            for (int keyIdx = 0; keyIdx < headerAmount; keyIdx++) {
                 headerOffset = headerKeys.getLong(keyIdx);
                 valueIdx = keysToIndex.get(headerOffset);
                 copyFrom = headerValues.getLong(valueIdx);
                 copyTo = headerNewValues.getLong(valueIdx);
-                if(copyTo == copyFrom) {
+                if (copyTo == copyFrom) {
                     continue;
                 }
                 file.seek(headerOffset);

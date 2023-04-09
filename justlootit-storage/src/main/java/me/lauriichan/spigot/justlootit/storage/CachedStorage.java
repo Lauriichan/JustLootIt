@@ -155,5 +155,10 @@ public class CachedStorage<S extends Storable> implements IStorage<S> {
         cache.clear();
         updateEach(updater);
     }
+    
+    @Override
+    public long newId() {
+        return delegate.newId();
+    }
 
 }

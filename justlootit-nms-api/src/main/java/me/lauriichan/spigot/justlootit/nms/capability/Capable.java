@@ -1,6 +1,7 @@
 package me.lauriichan.spigot.justlootit.nms.capability;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map.Entry;
 import java.util.Optional;
 
@@ -10,10 +11,11 @@ import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 
 public abstract class Capable<C extends Capable<C>> {
 
-    private final Object2ObjectOpenHashMap<Class<? extends ICapability>, ICapability> capabilities = new Object2ObjectOpenHashMap<>(
-        5);
+    private final Object2ObjectOpenHashMap<Class<? extends ICapability>, ICapability> capabilities = new Object2ObjectOpenHashMap<>(5);
     private final C self;
     private final Class<C> selfType;
+
+    private volatile boolean terminated = false;
 
     @SuppressWarnings("unchecked")
     public Capable() {
@@ -26,6 +28,9 @@ public abstract class Capable<C extends Capable<C>> {
     }
 
     public final <T extends ICapability> Optional<T> getCapability(Class<T> type) {
+        if (terminated) {
+            return Optional.empty();
+        }
         ICapability capability = capabilities.get(type);
         if (capability != null) {
             return Optional.of(type.cast(capability));
@@ -39,6 +44,9 @@ public abstract class Capable<C extends Capable<C>> {
     }
 
     public final boolean hasCapability(Class<? extends ICapability> type) {
+        if (terminated) {
+            return false;
+        }
         if (capabilities.containsKey(type)) {
             return true;
         }
@@ -49,13 +57,16 @@ public abstract class Capable<C extends Capable<C>> {
         }
         return false;
     }
-    
+
     public final Collection<ICapability> getCapabilities() {
+        if (terminated) {
+            return Collections.emptyList();
+        }
         return capabilities.values();
     }
 
     public final void addCapabilities(VersionHandler versionHandler, ICapabilityProvider provider) {
-        if (!provider.isSupported(selfType)) {
+        if (terminated || !provider.isSupported(selfType)) {
             return;
         }
         ObjectArrayList<ICapability> capabilityList = new ObjectArrayList<>(5);
@@ -71,6 +82,21 @@ public abstract class Capable<C extends Capable<C>> {
             }
             capabilities.put(type, capability);
         }
+    }
+
+    public final boolean isTerminated() {
+        return terminated;
+    }
+    
+    public final void terminate() {
+        if (terminated) {
+            return;
+        }
+        terminated = true;
+        for (ICapability capability : capabilities.values()) {
+            capability.terminate();
+        }
+        capabilities.clear();
     }
 
 }

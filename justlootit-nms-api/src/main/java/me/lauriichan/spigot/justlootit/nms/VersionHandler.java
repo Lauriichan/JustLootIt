@@ -14,7 +14,6 @@ import org.bukkit.plugin.PluginManager;
 import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.spigot.justlootit.nms.capability.CapabilityManager;
 import me.lauriichan.spigot.justlootit.nms.capability.Capable;
-import me.lauriichan.spigot.justlootit.nms.capability.ICapability;
 import me.lauriichan.spigot.justlootit.nms.io.IOProvider;
 import me.lauriichan.spigot.justlootit.nms.packet.listener.PacketManager;
 
@@ -108,7 +107,7 @@ public abstract class VersionHandler {
             return;
         }
         terminateAdapter(adapter);
-        terminateCapabilities(adapter);
+        adapter.terminate();
     }
 
     protected abstract PlayerAdapter createAdapter(Player player);
@@ -158,7 +157,7 @@ public abstract class VersionHandler {
             return;
         }
         terminateAdapter(adapter);
-        terminateCapabilities(adapter);
+        adapter.terminate();
     }
 
     protected abstract LevelAdapter createAdapter(World world);
@@ -172,12 +171,6 @@ public abstract class VersionHandler {
     private final <T extends Capable<?>> T applyCapabilities(T capable) {
         capabilityManager.forEach(provider -> capable.addCapabilities(this, provider));
         return capable;
-    }
-
-    private final void terminateCapabilities(Capable<?> capable) {
-        for (ICapability capability : capable.getCapabilities()) {
-            capability.terminate();
-        }
     }
 
     /*

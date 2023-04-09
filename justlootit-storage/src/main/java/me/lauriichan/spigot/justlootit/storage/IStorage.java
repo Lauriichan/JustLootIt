@@ -34,4 +34,8 @@ public interface IStorage<S extends Storable> {
     
     void updateEach(Function<S, UpdateInfo<S>> updater);
 
+    default long newId() {
+        throw new UnsupportedOperationException();
+    }
+    
 }
