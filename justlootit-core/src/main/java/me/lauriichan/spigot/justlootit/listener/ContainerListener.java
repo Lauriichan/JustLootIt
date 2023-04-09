@@ -3,6 +3,7 @@ package me.lauriichan.spigot.justlootit.listener;
 import me.lauriichan.spigot.justlootit.JustLootItKey;
 import me.lauriichan.spigot.justlootit.capability.StorageCapability;
 import me.lauriichan.spigot.justlootit.data.CacheLookupTable;
+import me.lauriichan.spigot.justlootit.data.CacheLookupTable.WorldEntry;
 import me.lauriichan.spigot.justlootit.data.Container;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
@@ -69,6 +70,7 @@ public class ContainerListener implements Listener {
     }
 
     private void accessContainer(PersistentDataContainer data, Cancellable event, Player bukkitPlayer, World world, long id) {
+        WorldEntry entryId = new WorldEntry(world, id);
         PlayerAdapter player = versionHandler.getPlayer(bukkitPlayer);
         UUID playerId = bukkitPlayer.getUniqueId();
         versionHandler.getLevel(world).getCapability(StorageCapability.class).ifPresentOrElse(capability -> {
@@ -82,8 +84,8 @@ public class ContainerListener implements Listener {
                 IStorage<Storable> playerStorage = playerCapability.storage();
                 CacheLookupTable lookupTable = CacheLookupTable.retrieve(playerStorage);
                 if (!dataContainer.access(playerId)) {
-                    if (lookupTable.access(id)) {
-                        long playerCacheId = lookupTable.getEntryIdByMapped(id);
+                    if (lookupTable.access(entryId)) {
+                        long playerCacheId = lookupTable.getEntryIdByMapped(entryId);
                         // TODO: Open cached inventory
                         // TODO: Save container after use
                         return;
@@ -97,7 +99,7 @@ public class ContainerListener implements Listener {
                     return;
                 }
                 // TODO: Access container
-                long playerCacheId = lookupTable.acquire(id);
+                long playerCacheId = lookupTable.acquire(entryId);
                 // TODO: Save container after use
             }, () -> {
                 // TODO: No storage available for some reason?
