@@ -9,7 +9,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.shorts.Short2ObjectOpenHashMap;
 import me.lauriichan.laylib.logger.ISimpleLogger;
 
-public abstract class Storage<S extends Storable> {
+public abstract class AbstractStorage<S extends Storable> implements IStorage<S> {
 
     protected final Object2ObjectOpenHashMap<Class<? extends S>, StorageAdapter<? extends S>> classToAdapter = new Object2ObjectOpenHashMap<>();
     protected final Short2ObjectOpenHashMap<StorageAdapter<? extends S>> idToAdapter = new Short2ObjectOpenHashMap<>();
@@ -19,7 +19,7 @@ public abstract class Storage<S extends Storable> {
     protected final ISimpleLogger logger;
     protected final Class<S> baseType;
 
-    public Storage(final ISimpleLogger logger, final Class<S> baseType) {
+    public AbstractStorage(final ISimpleLogger logger, final Class<S> baseType) {
         this.logger = logger;
         this.baseType = baseType;
     }
@@ -103,9 +103,13 @@ public abstract class Storage<S extends Storable> {
         }
     }
     
+    public abstract boolean isSupported(long id);
+    
     public abstract void close() throws StorageException;
     
     public abstract void clear() throws StorageException;
+    
+    public abstract boolean has(long id) throws StorageException;
 
     public abstract S read(long id) throws StorageException;
 

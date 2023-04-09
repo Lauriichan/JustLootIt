@@ -1,73 +1,113 @@
 package me.lauriichan.spigot.justlootit.listener;
 
 import me.lauriichan.spigot.justlootit.JustLootItKey;
-import me.lauriichan.spigot.justlootit.util.UUIDTagType;
+import me.lauriichan.spigot.justlootit.capability.StorageCapability;
+import me.lauriichan.spigot.justlootit.data.CacheLookupTable;
+import me.lauriichan.spigot.justlootit.data.CacheLookupTable.WorldEntry;
+import me.lauriichan.spigot.justlootit.data.Container;
+import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
+import me.lauriichan.spigot.justlootit.nms.VersionHandler;
+import me.lauriichan.spigot.justlootit.storage.Storable;
+import me.lauriichan.spigot.justlootit.storage.IStorage;
+
+import java.time.Duration;
+import java.util.UUID;
+
+import org.bukkit.World;
 import org.bukkit.block.Block;
-import org.bukkit.block.Container;
+import org.bukkit.block.BlockState;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Player;
+import org.bukkit.event.Cancellable;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.loot.Lootable;
 import org.bukkit.persistence.PersistentDataContainer;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import org.bukkit.persistence.PersistentDataType;
 
 public class ContainerListener implements Listener {
 
-    private static final List<EntityType> validEntities = Arrays.asList(EntityType.MINECART_CHEST,
-            EntityType.CHEST_BOAT,
-            EntityType.MINECART_HOPPER);
+    private final VersionHandler versionHandler;
 
-    @EventHandler(ignoreCancelled = true)
-    public void onInteract(PlayerInteractEvent event) {
-        Block block = event.getClickedBlock();
-        if (!(block.getState() instanceof Lootable)) {
-            return;
-        }
-
-        Container chest = (Container) block.getState();
-        UUID container = getContainerUuid(chest.getPersistentDataContainer(), (Lootable) chest);
-        if (container != null) {
-            // TODO open the custom container
-            event.setCancelled(true);
-        }
+    public ContainerListener(final VersionHandler versionHandler) {
+        this.versionHandler = versionHandler;
     }
 
-    @EventHandler(ignoreCancelled = true)
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
+    public void onInteract(PlayerInteractEvent event) {
+        if (event.getAction() != Action.RIGHT_CLICK_BLOCK) {
+            return;
+        }
+        Block block = event.getClickedBlock();
+        BlockState state = block.getState();
+        if (!(state instanceof org.bukkit.block.Container)) {
+            return;
+        }
+        org.bukkit.block.Container container = (org.bukkit.block.Container) state;
+        PersistentDataContainer dataContainer = container.getPersistentDataContainer();
+        if(!dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+            return;
+        }
+        accessContainer(dataContainer, event, event.getPlayer(), block.getWorld(), dataContainer.get(JustLootItKey.identity(), PersistentDataType.LONG).longValue());
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onInteractEntity(PlayerInteractAtEntityEvent event) {
         Entity entity = event.getRightClicked();
-        if (!validEntities.contains(entity.getType())) {
+        EntityType type = entity.getType();
+        if (type != EntityType.MINECART_CHEST && type != EntityType.MINECART_HOPPER && type != EntityType.CHEST_BOAT) {
             return;
         }
-
-        if (!(entity instanceof Lootable)) {
+        PersistentDataContainer dataContainer = entity.getPersistentDataContainer();
+        if(!dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
             return;
         }
+        accessContainer(dataContainer, event, event.getPlayer(), entity.getWorld(), dataContainer.get(JustLootItKey.identity(), PersistentDataType.LONG).longValue());
+    }
 
-        UUID container = getContainerUuid(entity.getPersistentDataContainer(), (Lootable) entity);
-        if (container != null) {
-            // TODO open the custom container
+    private void accessContainer(PersistentDataContainer data, Cancellable event, Player bukkitPlayer, World world, long id) {
+        WorldEntry entryId = new WorldEntry(world, id);
+        PlayerAdapter player = versionHandler.getPlayer(bukkitPlayer);
+        UUID playerId = bukkitPlayer.getUniqueId();
+        versionHandler.getLevel(world).getCapability(StorageCapability.class).ifPresentOrElse(capability -> {
+            Container dataContainer = (Container) capability.storage().read(id);
+            if (dataContainer == null) {
+                data.remove(JustLootItKey.identity());
+                return;
+            }
             event.setCancelled(true);
-        }
+            player.getCapability(StorageCapability.class).ifPresentOrElse(playerCapability -> {
+                IStorage<Storable> playerStorage = playerCapability.storage();
+                CacheLookupTable lookupTable = CacheLookupTable.retrieve(playerStorage);
+                if (!dataContainer.access(playerId)) {
+                    if (lookupTable.access(entryId)) {
+                        long playerCacheId = lookupTable.getEntryIdByMapped(entryId);
+                        // TODO: Open cached inventory
+                        // TODO: Save container after use
+                        return;
+                    }
+                    Duration duration = dataContainer.durationUntilNextAccess(playerId);
+                    if (duration.isNegative()) {
+                        // TODO: Send message, can never be accessed again
+                        return;
+                    }
+                    // TODO: Send message, not accessible yet
+                    return;
+                }
+                // TODO: Access container
+                long playerCacheId = lookupTable.acquire(entryId);
+                // TODO: Save container after use
+            }, () -> {
+                // TODO: No storage available for some reason?
+            });
+        }, () -> {
+            event.setCancelled(true);
+            // TODO: Send message, storage not available for some reason?
+        });
     }
 
-    private UUID getContainerUuid(PersistentDataContainer container, Lootable lootable) {
-        if (container.has(JustLootItKey.IDENTITY, UUIDTagType.TYPE)) {
-            return container.get(JustLootItKey.IDENTITY, UUIDTagType.TYPE);
-        }
-
-        if (lootable.getLootTable() == null) {
-            return null;
-        }
-
-        // mark this chest as a JustLootIt container
-        UUID random = UUID.randomUUID();
-        container.set(JustLootItKey.IDENTITY, UUIDTagType.TYPE, random);
-        return random;
-    }
 }

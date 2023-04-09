@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Random;
 
-import me.lauriichan.spigot.justlootit.storage.Storage;
+import me.lauriichan.spigot.justlootit.storage.AbstractStorage;
 import me.lauriichan.spigot.justlootlit.storage.test.BaseTest;
 import me.lauriichan.spigot.justlootlit.storage.test.simple.model.SimpleObject;
 import me.lauriichan.spigot.justlootlit.storage.test.simple.model.SimpleObjectAdapter;
@@ -20,7 +20,7 @@ public class WriteReadDeleteTest extends BaseTest<SimpleObject> {
     }
 
     @Override
-    protected void executeTest(String storageName, Storage<SimpleObject> storage, Random random) {
+    protected void executeTest(String storageName, AbstractStorage<SimpleObject> storage, Random random) {
         if(amount == 0) {
             return;
         }
@@ -41,7 +41,7 @@ public class WriteReadDeleteTest extends BaseTest<SimpleObject> {
     }
 
     @Override
-    protected void setup(Storage<SimpleObject> storage) {
+    protected void setup(AbstractStorage<SimpleObject> storage) {
         storage.register(SimpleObjectAdapter.INSTANCE);
     }
 

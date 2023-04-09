@@ -78,7 +78,7 @@ public abstract class VersionHandler {
             return null;
         }
         PlayerAdapter adapter = createAdapter(player);
-        players.put(playerId, adapter);
+        players.put(playerId, applyCapabilities(adapter));
         return adapter;
     }
 
@@ -91,7 +91,7 @@ public abstract class VersionHandler {
             return players.get(playerId);
         }
         PlayerAdapter adapter = createAdapter(player);
-        players.put(playerId, adapter);
+        players.put(playerId, applyCapabilities(adapter));
         return adapter;
     }
 
@@ -99,7 +99,7 @@ public abstract class VersionHandler {
         if (players.containsKey(player.getUniqueId())) {
             return;
         }
-        players.put(player.getUniqueId(), createAdapter(player));
+        players.put(player.getUniqueId(), applyCapabilities(createAdapter(player)));
     }
 
     final void quit(Player player) {
@@ -128,7 +128,7 @@ public abstract class VersionHandler {
             return null;
         }
         LevelAdapter adapter = createAdapter(world);
-        levels.put(levelId, adapter);
+        levels.put(levelId, applyCapabilities(adapter));
         return adapter;
     }
 
@@ -141,7 +141,7 @@ public abstract class VersionHandler {
             return levels.get(levelId);
         }
         LevelAdapter adapter = createAdapter(world);
-        levels.put(levelId, adapter);
+        levels.put(levelId, applyCapabilities(adapter));
         return adapter;
     }
 
@@ -149,7 +149,7 @@ public abstract class VersionHandler {
         if (levels.containsKey(world.getUID())) {
             return;
         }
-        levels.put(world.getUID(), createAdapter(world));
+        levels.put(world.getUID(), applyCapabilities(createAdapter(world)));
     }
 
     final void unload(World world) {
@@ -169,6 +169,11 @@ public abstract class VersionHandler {
      * Capabilities
      */
 
+    private final <T extends Capable<?>> T applyCapabilities(T capable) {
+        capabilityManager.forEach(provider -> capable.addCapabilities(this, provider));
+        return capable;
+    }
+
     private final void terminateCapabilities(Capable<?> capable) {
         for (ICapability capability : capable.getCapabilities()) {
             capability.terminate();
@@ -184,7 +189,7 @@ public abstract class VersionHandler {
     public abstract VersionHelper versionHelper();
 
     public final CapabilityManager capabilities() {
-        return capabilities();
+        return capabilityManager;
     }
 
     public final IOProvider io() {
@@ -194,7 +199,7 @@ public abstract class VersionHandler {
     public final Plugin plugin() {
         return serviceProvider.plugin();
     }
-    
+
     public final ISimpleLogger logger() {
         return serviceProvider.logger();
     }

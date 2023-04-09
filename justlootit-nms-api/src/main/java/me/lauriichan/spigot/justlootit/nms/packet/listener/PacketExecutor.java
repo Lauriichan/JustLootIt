@@ -69,7 +69,7 @@ public final class PacketExecutor {
         try {
             return sanitize(executor.execute(method, container, player, packet));
         } catch (Throwable e) {
-            // TODO: Log if debug enabled otherwise ignore
+            container.logger().debug("Failed to execute packet listener for packet '{0}' and player '{1}'", e, packet.getClass().getSimpleName(), player.getName());
             return false; // Do not cancel the packet
         }
     }

@@ -22,10 +22,10 @@ public final class JustLootItCapabilityProvider implements ICapabilityProvider {
 
     @Override
     public <C extends Capable<C>> void provide(VersionHandler handler, Class<C> type, C value, List<ICapability> capabilities) {
-        if (type == LevelAdapter.class) {
+        if (LevelAdapter.class.isAssignableFrom(type)) {
             provideLevel(handler, (LevelAdapter) value, capabilities);
         }
-        if (type == PlayerAdapter.class) {
+        if (PlayerAdapter.class.isAssignableFrom(type)) {
             providePlayer(handler, (PlayerAdapter) value, capabilities);
         }
     }

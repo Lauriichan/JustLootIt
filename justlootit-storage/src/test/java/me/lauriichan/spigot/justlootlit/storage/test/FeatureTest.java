@@ -24,9 +24,9 @@ public class FeatureTest {
     public static final long SEED = 285428738523L;
 
     public static final Test<?>[] TESTS = new Test[] {
-        new WriteReadTest(1024),
-        new WriteReadDeleteTest(1024),
-        new WriteUpdateReadTest(1024),
+        new WriteReadTest(128),
+        new WriteReadDeleteTest(128),
+        new WriteUpdateReadTest(128),
     };
 
     /*

@@ -2,9 +2,10 @@ package me.lauriichan.spigot.justlootit.storage;
 
 import java.util.function.Function;
 
+import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.spigot.justlootit.storage.util.cache.Long2ObjectMapCache;
 
-public class CachedStorage<S extends Storable> extends Storage<S> {
+public class CachedStorage<S extends Storable> implements IStorage<S> {
 
     private static final class CacheObject<S extends Storable> {
 
@@ -25,31 +26,28 @@ public class CachedStorage<S extends Storable> extends Storage<S> {
             return this;
         }
 
-        public CacheObject<S> setDirty() {
-            this.dirty = true;
-            return this;
-        }
-
         public boolean isDirty() {
             return dirty;
         }
 
     }
 
-    private final Storage<S> delegate;
+    private final IStorage<S> delegate;
     private final Long2ObjectMapCache<CacheObject<S>> cache;
 
-    public CachedStorage(Storage<S> delegate) {
-        super(delegate.logger, delegate.baseType);
+    private final ISimpleLogger logger;
+
+    public CachedStorage(IStorage<S> delegate) {
         this.delegate = delegate;
+        this.logger = delegate.logger();
         this.cache = new Long2ObjectMapCache<>(logger, this::invalidate);
     }
 
     private void invalidate(Long key, CacheObject<S> cached) {
-        if (!cached.isDirty()) {
+        S storable = cached.storable();
+        if (!cached.isDirty() && (storable != null && storable instanceof IModifiable modifable && !modifable.isDirty())) {
             return;
         }
-        S storable = cached.storable();
         if (storable == null) {
             try {
                 delegate.delete(key.longValue());
@@ -66,6 +64,41 @@ public class CachedStorage<S extends Storable> extends Storage<S> {
     }
 
     @Override
+    public ISimpleLogger logger() {
+        return delegate.logger();
+    }
+
+    @Override
+    public Class<S> baseType() {
+        return delegate.baseType();
+    }
+
+    @Override
+    public void register(StorageAdapter<? extends S> adapter) throws StorageException {
+        delegate.register(adapter);
+    }
+
+    @Override
+    public boolean unregister(Class<? extends S> type) {
+        return delegate.unregister(type);
+    }
+
+    @Override
+    public StorageAdapter<? extends S> findAdapterFor(Class<? extends S> type) {
+        return delegate.findAdapterFor(type);
+    }
+
+    @Override
+    public StorageAdapter<? extends S> findAdapterFor(short typeId) {
+        return delegate.findAdapterFor(typeId);
+    }
+
+    @Override
+    public boolean isSupported(long id) {
+        return delegate.isSupported(id);
+    }
+
+    @Override
     public void close() throws StorageException {
         cache.clear();
         delegate.close();
@@ -75,6 +108,11 @@ public class CachedStorage<S extends Storable> extends Storage<S> {
     public void clear() throws StorageException {
         cache.clear();
         delegate.clear();
+    }
+
+    @Override
+    public boolean has(long id) throws StorageException {
+        return cache.has(id) || delegate.has(id);
     }
 
     @Override
@@ -98,7 +136,9 @@ public class CachedStorage<S extends Storable> extends Storage<S> {
             cached.storable(storable);
             return;
         }
-        cache.set(storable.id(), new CacheObject<>(storable).setDirty());
+        cache.set(storable.id(), new CacheObject<>(storable));
+        // Do write on first save
+        delegate.write(storable);
     }
 
     @Override

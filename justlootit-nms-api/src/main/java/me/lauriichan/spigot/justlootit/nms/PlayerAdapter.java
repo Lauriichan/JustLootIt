@@ -20,6 +20,10 @@ public abstract class PlayerAdapter extends Capable<PlayerAdapter> {
     }
     
     public abstract Object asMinecraft();
+    
+    public String getName() {
+        return asBukkit().getName();
+    }
 
     public final UUID getUniqueId() {
         return uniqueId;

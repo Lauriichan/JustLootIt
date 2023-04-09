@@ -14,6 +14,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.command.SimpleCommandMap;
 import org.bukkit.command.TabCompleter;
+import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.Plugin;
 
 import me.lauriichan.laylib.command.Actor;
@@ -90,6 +91,8 @@ public final class BukkitCommandInjectedBridge implements CommandExecutor, TabCo
     private final MessageManager messageManager;
     
     private final CommandDefinition definition;
+    
+    private final BukkitCommandListener listener;
 
     private volatile String fallbackCommand = "help";
     private volatile boolean injected = false;
@@ -101,6 +104,7 @@ public final class BukkitCommandInjectedBridge implements CommandExecutor, TabCo
         this.commandManager = commandManager;
         this.messageManager = messageManager;
         this.definition = definition;
+        this.listener = new BukkitCommandListener(versionHelper, commandManager, messageManager);
     }
 
     @Override
@@ -156,6 +160,7 @@ public final class BukkitCommandInjectedBridge implements CommandExecutor, TabCo
         if (injected) {
             return this;
         }
+        plugin.getServer().getPluginManager().registerEvents(listener, plugin);
         final SimpleCommandMap commandMap = (SimpleCommandMap) JavaAccess.invoke(Bukkit.getServer(),
             BukkitCommandInjector.craftServerGetCommandMap);
         final PluginCommand pluginCommand = (PluginCommand) JavaAccess.instance(BukkitCommandInjector.pluginCommandConstructor,
@@ -173,6 +178,7 @@ public final class BukkitCommandInjectedBridge implements CommandExecutor, TabCo
         if (!injected) {
             return this;
         }
+        HandlerList.unregisterAll(listener);
         final SimpleCommandMap commandMap = (SimpleCommandMap) JavaAccess.invoke(Bukkit.getServer(),
             BukkitCommandInjector.craftServerGetCommandMap);
         final Map<String, org.bukkit.command.Command> map = (Map<String, org.bukkit.command.Command>) JavaAccess.invoke(commandMap,

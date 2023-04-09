@@ -21,7 +21,7 @@ public class LevelAdapter1_19_R2 extends LevelAdapter {
 
     @Override
     public org.bukkit.entity.Entity getBukkitEntityById(int id) {
-        Entity entity = level.getEntity(id);
+        Entity entity = level.entityManager.getEntityGetter().get(id);
         if(entity == null) {
             return null;
         }
