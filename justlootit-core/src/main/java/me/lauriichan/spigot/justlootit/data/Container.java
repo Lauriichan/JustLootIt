@@ -103,6 +103,12 @@ public abstract class Container extends Storable implements IModifiable {
     public boolean hasAccessed(UUID id) {
         return data.playerAccess.containsKey(id);
     }
+    
+    public boolean canAccess(UUID id) {
+        OffsetDateTime time = data.playerAccess.get(id);
+        OffsetDateTime now = OffsetDateTime.now();
+        return time == null || (data.refreshInterval != 0 && time.plus(data.refreshInterval, ChronoUnit.MILLIS).isBefore(now));
+    }
 
     public boolean access(UUID id) {
         OffsetDateTime time = data.playerAccess.get(id);

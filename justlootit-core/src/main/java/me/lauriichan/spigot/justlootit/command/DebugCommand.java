@@ -1,14 +1,16 @@
 package me.lauriichan.spigot.justlootit.command;
 
 import java.util.Random;
-import java.util.concurrent.CompletableFuture;
 
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Container;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.ItemFrame;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.loot.LootTable;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.RayTraceResult;
@@ -21,6 +23,7 @@ import me.lauriichan.laylib.localization.Key;
 import me.lauriichan.spigot.justlootit.JustLootItKey;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.capability.StorageCapability;
+import me.lauriichan.spigot.justlootit.data.FrameContainer;
 import me.lauriichan.spigot.justlootit.data.StaticContainer;
 import me.lauriichan.spigot.justlootit.data.VanillaContainer;
 import me.lauriichan.spigot.justlootit.message.Messages;
@@ -51,10 +54,37 @@ public class DebugCommand {
         Player player = playerActor.getHandle();
         RayTraceResult result = player.getWorld().rayTraceEntities(player.getEyeLocation(), player.getEyeLocation().getDirection(), 5);
         if (result == null) {
-            actor.sendMessage("&cYou have to look at a entity!");
+            actor.sendMessage("&cYou have to look at an item frame!");
             return;
         }
-        // TODO: Create item frame container
+        plugin.mainService().submit(() -> {
+            Entity entity = result.getHitEntity();
+            if(!(entity instanceof ItemFrame)) {
+                actor.sendMessage("&cYou have to look at an item frame!");
+                return;
+            }
+            ItemFrame itemFrame = (ItemFrame) entity;
+            if(!itemFrame.getPersistentDataContainer().has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+                actor.sendMessage("&cIs already a JustLootIt item frame");
+                return;
+            }
+            ItemStack item = itemFrame.getItem();
+            if(item == null || item.getType().isAir()) {
+                actor.sendMessage("&cItem frame is empty.");
+                return;
+            }
+            LevelAdapter level = plugin.versionHandler().getLevel(itemFrame.getWorld());
+            level.getCapability(StorageCapability.class).ifPresentOrElse(capability -> {
+                IStorage<Storable> storage = capability.storage();
+                long id = newId(storage);
+                itemFrame.getPersistentDataContainer().set(JustLootItKey.identity(), PersistentDataType.LONG, id);
+                itemFrame.setItem(null);
+                storage.write(new FrameContainer(id, item.clone()));
+                actor.sendMessage("&aCreated item frame with id '" + Long.toHexString(id) + "'!");
+            }, () -> {
+                actor.sendMessage("&cNo storage available!");
+            });
+        });
     }
 
     @Action("container vanilla")

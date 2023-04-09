@@ -167,7 +167,7 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
 
     private void registerListeners(PluginManager pluginManager) {
         // Construct listener used for events and packets
-        ItemFrameListener itemFrameListener = new ItemFrameListener();
+        ItemFrameListener itemFrameListener = new ItemFrameListener(versionHandler);
 
         // Register event listener
         pluginManager.registerEvents(itemFrameListener, this);
