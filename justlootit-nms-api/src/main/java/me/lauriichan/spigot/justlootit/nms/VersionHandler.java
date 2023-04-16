@@ -16,6 +16,7 @@ import me.lauriichan.spigot.justlootit.nms.capability.CapabilityManager;
 import me.lauriichan.spigot.justlootit.nms.capability.Capable;
 import me.lauriichan.spigot.justlootit.nms.capability.ICapability;
 import me.lauriichan.spigot.justlootit.nms.io.IOProvider;
+import me.lauriichan.spigot.justlootit.nms.packet.AbstractPacketOut;
 import me.lauriichan.spigot.justlootit.nms.packet.listener.PacketManager;
 
 public abstract class VersionHandler {
@@ -68,6 +69,13 @@ public abstract class VersionHandler {
     /*
      * Player management
      */
+
+    public final void broadcast(AbstractPacketOut... packets) {
+        PlayerAdapter[] adapters = players.values().toArray(PlayerAdapter[]::new);
+        for(PlayerAdapter adapter : adapters) {
+            adapter.send(packets);
+        }
+    }
 
     public final PlayerAdapter getPlayer(UUID playerId) {
         if (players.containsKey(playerId)) {
