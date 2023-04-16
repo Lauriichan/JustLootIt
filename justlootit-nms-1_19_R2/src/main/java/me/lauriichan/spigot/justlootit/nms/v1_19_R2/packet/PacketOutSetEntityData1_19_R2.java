@@ -1,11 +1,17 @@
 package me.lauriichan.spigot.justlootit.nms.v1_19_R2.packet;
 
+import java.lang.invoke.MethodHandle;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
+import org.bukkit.craftbukkit.v1_19_R2.entity.CraftEntity;
 import org.bukkit.entity.Entity;
 import org.bukkit.inventory.ItemStack;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import me.lauriichan.laylib.reflection.ClassUtil;
+import me.lauriichan.laylib.reflection.JavaAccess;
 import me.lauriichan.spigot.justlootit.nms.model.IEntityData;
 import me.lauriichan.spigot.justlootit.nms.model.IItemEntityData;
 import me.lauriichan.spigot.justlootit.nms.packet.PacketOutSetEntityData;
@@ -13,9 +19,25 @@ import me.lauriichan.spigot.justlootit.nms.util.argument.ArgumentMap;
 import me.lauriichan.spigot.justlootit.nms.v1_19_R2.model.EntityData1_19_R2;
 import me.lauriichan.spigot.justlootit.nms.v1_19_R2.model.ItemEntityData1_19_R2;
 import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.network.syncher.SynchedEntityData.DataItem;
 import net.minecraft.network.syncher.SynchedEntityData.DataValue;
 
 public class PacketOutSetEntityData1_19_R2 extends PacketOutSetEntityData {
+    
+    private static final MethodHandle EntityData_map = JavaAccess.accessFieldGetter(ClassUtil.getField(SynchedEntityData.class, false, Int2ObjectMap.class));
+    
+    private static List<DataValue<?>> extractValues(SynchedEntityData data) {
+        Int2ObjectMap<DataItem<?>> map;
+        try {
+            map = (Int2ObjectMap<DataItem<?>>) EntityData_map.invokeExact(data);
+        } catch (Throwable e) {
+            return Collections.emptyList();
+        }
+        ArrayList<DataValue<?>> values = new ArrayList<>();
+        map.values().stream().map(item -> item.value()).forEach(values::add);
+        return values;
+    }
 
     private final ClientboundSetEntityDataPacket packet;
     private final EntityDataPack data;
@@ -26,13 +48,8 @@ public class PacketOutSetEntityData1_19_R2 extends PacketOutSetEntityData {
     }
 
     public PacketOutSetEntityData1_19_R2(final ArgumentMap map) {
-        int entityId;
-        if (map.has("entity")) {
-            entityId = map.require("entity", Entity.class).getEntityId();
-        } else {
-            entityId = map.require("entityId", int.class);
-        }
-        this.packet = new ClientboundSetEntityDataPacket(entityId, new ArrayList<>());
+        CraftEntity entity = (CraftEntity) map.require("entity", Entity.class);
+        this.packet = new ClientboundSetEntityDataPacket(entity.getEntityId(), extractValues(entity.getHandle().getEntityData()));
         this.data = new EntityDataPack(packet.packedItems());
     }
 

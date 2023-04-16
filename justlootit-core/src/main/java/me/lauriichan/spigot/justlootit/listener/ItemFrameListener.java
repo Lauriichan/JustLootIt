@@ -1,11 +1,17 @@
 package me.lauriichan.spigot.justlootit.listener;
 
+import java.time.OffsetDateTime;
+import java.util.Objects;
+
+import org.bukkit.Sound;
+import org.bukkit.SoundCategory;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.hanging.HangingBreakByEntityEvent;
 import org.bukkit.event.hanging.HangingBreakEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.inventory.ItemStack;
@@ -25,6 +31,7 @@ import me.lauriichan.spigot.justlootit.nms.packet.listener.IPacketListener;
 import me.lauriichan.spigot.justlootit.nms.packet.listener.PacketHandler;
 import me.lauriichan.spigot.justlootit.nms.util.argument.ArgumentMap;
 import me.lauriichan.spigot.justlootit.storage.Storable;
+import me.lauriichan.spigot.justlootit.util.persistence.BreakData;
 
 public class ItemFrameListener implements IPacketListener, Listener {
 
@@ -78,33 +85,20 @@ public class ItemFrameListener implements IPacketListener, Listener {
             return;
         }
         event.setCancelled(true);
-        Player player = event.getPlayer();
-        long id = container.get(JustLootItKey.identity(), PersistentDataType.LONG);
-        versionHandler.getLevel(entity.getWorld()).getCapability(StorageCapability.class).ifPresent(capability -> {
-            Storable storable = capability.storage().read(id);
-            if (storable instanceof FrameContainer frame) {
-                if (!frame.access(player.getUniqueId())) {
-                    return;
-                }
-                ItemStack itemStack = frame.getItem().clone();
-                if (!player.getInventory().addItem(itemStack).isEmpty()) {
-                    player.getWorld().dropItemNaturally(entity.getLocation(), itemStack);
-                }
-                PacketOutSetEntityData packet = versionHandler.packetManager().createPacket(new ArgumentMap().set("entity", entity), PacketOutSetEntityData.class);
-                if(packet != null) {
-                    IEntityDataPack pack = packet.getData();
-                    IEntityData data = pack.getById(8);
-                    if (data instanceof IItemEntityData itemData) {
-                        itemData.setItem(null);
-                        versionHandler.getPlayer(player).send(packet);
-                    }
-                }
-            }
-        });
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onHangingBreak(HangingBreakEvent event) {
+        Entity entity = event.getEntity();
+        EntityType type;
+        if (entity == null || ((type = entity.getType()) != EntityType.ITEM_FRAME && type != EntityType.GLOW_ITEM_FRAME)) {
+            return;
+        }
+        event.setCancelled(entity.getPersistentDataContainer().has(JustLootItKey.identity(), PersistentDataType.LONG));
     }
 
     @EventHandler(ignoreCancelled = true)
-    public void onHitEvent(EntityDamageByEntityEvent event) {
+    public void onHangingBreakByEntity(HangingBreakByEntityEvent event) {
         Entity entity = event.getEntity();
         EntityType type;
         if (entity == null || ((type = entity.getType()) != EntityType.ITEM_FRAME && type != EntityType.GLOW_ITEM_FRAME)) {
@@ -115,11 +109,36 @@ public class ItemFrameListener implements IPacketListener, Listener {
             return;
         }
         event.setCancelled(true);
-        Entity damager = event.getDamager();
-        if (damager.getType() != EntityType.PLAYER) {
+        Entity remover = event.getRemover();
+        if (remover.getType() != EntityType.PLAYER) {
             return;
         }
-        Player player = (Player) damager;
+        Player player = (Player) remover;
+        if (player.hasPermission("" /* TODO: Add permission here */) && player.isSneaking()) {
+            BreakData data = container.getOrDefault(JustLootItKey.breakData(), BreakData.BREAK_DATA_TYPE, null);
+            if (data == null || !data.playerId().equals(player.getUniqueId()) || data.time().isBefore(OffsetDateTime.now())) {
+                // TODO: Send message to repeat
+                container.set(JustLootItKey.breakData(), BreakData.BREAK_DATA_TYPE,
+                    new BreakData(player.getUniqueId(), OffsetDateTime.now().plusMinutes(2)));
+                player.sendMessage("Hit again in 2 mins!");
+                return;
+            }
+            long id = container.get(JustLootItKey.identity(), PersistentDataType.LONG);
+            versionHandler.getLevel(entity.getWorld()).getCapability(StorageCapability.class).ifPresent(capability -> {
+                if (!capability.storage().delete(id)) {
+                    // TODO: Send info that container wasn't available
+                    player.sendMessage("No container removed");
+                }
+                container.remove(JustLootItKey.identity());
+                container.remove(JustLootItKey.breakData());
+                // TODO: Send successfully removed message
+                player.sendMessage("Removed");
+                PacketOutSetEntityData packet = versionHandler.packetManager().createPacket(new ArgumentMap().set("entity", entity),
+                    PacketOutSetEntityData.class);
+                versionHandler.broadcast(packet);
+            });
+            return;
+        }
         long id = container.get(JustLootItKey.identity(), PersistentDataType.LONG);
         versionHandler.getLevel(entity.getWorld()).getCapability(StorageCapability.class).ifPresent(capability -> {
             Storable storable = capability.storage().read(id);
@@ -131,18 +150,21 @@ public class ItemFrameListener implements IPacketListener, Listener {
                 if (!player.getInventory().addItem(itemStack).isEmpty()) {
                     player.getWorld().dropItemNaturally(entity.getLocation(), itemStack);
                 }
+                player.playSound(entity.getLocation(),
+                    type == EntityType.GLOW_ITEM_FRAME ? Sound.ENTITY_GLOW_ITEM_FRAME_REMOVE_ITEM : Sound.ENTITY_ITEM_FRAME_REMOVE_ITEM,
+                    SoundCategory.NEUTRAL, 1f, 1f);
+                PacketOutSetEntityData packet = versionHandler.packetManager().createPacket(new ArgumentMap().set("entity", entity),
+                    PacketOutSetEntityData.class);
+                if (packet != null) {
+                    IEntityDataPack pack = packet.getData();
+                    IEntityData data = pack.getById(8);
+                    if (data instanceof IItemEntityData itemData) {
+                        itemData.setItem(null);
+                        versionHandler.getPlayer(player).send(packet);
+                    }
+                }
             }
         });
-    }
-
-    @EventHandler(ignoreCancelled = true)
-    public void onHangingBreak(HangingBreakEvent event) {
-        Entity entity = event.getEntity();
-        EntityType type;
-        if (entity == null || ((type = entity.getType()) != EntityType.ITEM_FRAME && type != EntityType.GLOW_ITEM_FRAME)) {
-            return;
-        }
-        event.setCancelled(entity.getPersistentDataContainer().has(JustLootItKey.identity(), PersistentDataType.LONG));
     }
 
 }

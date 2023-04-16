@@ -29,7 +29,7 @@ import net.minecraft.world.inventory.AnvilMenu;
 
 public final class PlayerAdapter1_19_R3 extends PlayerAdapter {
     
-    private static final MethodHandle PlayerConnection_connection = JavaAccess.accessFieldGetter(ClassUtil.getField(ServerGamePacketListenerImpl.class, "h"));
+    private static final MethodHandle PlayerConnection_connection = JavaAccess.accessFieldGetter(ClassUtil.getField(ServerGamePacketListenerImpl.class, false, Connection.class));
 
     private final VersionHandler1_19_R3 versionHandler;
     private final PlayerNetwork1_19_R3 network;
@@ -100,6 +100,9 @@ public final class PlayerAdapter1_19_R3 extends PlayerAdapter {
 
     @Override
     public void send(AbstractPacketOut... packets) {
+        if (minecraft.connection.isDisconnected()) {
+            return;
+        }
         for (AbstractPacketOut packet : packets) {
             if (!(packet.asMinecraft() instanceof Packet)) {
                 continue;
@@ -114,11 +117,13 @@ public final class PlayerAdapter1_19_R3 extends PlayerAdapter {
     }
 
     public Channel getChannel() {
-        Connection connection = (Connection) JavaAccess.invoke(minecraft.connection, PlayerConnection_connection);
-        if(connection != null) {
-            return connection.channel;
+        Connection connection;
+        try {
+            connection = (Connection) PlayerConnection_connection.invokeExact(minecraft.connection);
+        } catch (Throwable e) {
+            throw new IllegalStateException("Unable to get player channel", e);
         }
-        return null;
+        return connection.channel;
     }
 
 }

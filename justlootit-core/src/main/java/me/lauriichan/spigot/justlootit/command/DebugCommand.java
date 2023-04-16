@@ -52,7 +52,7 @@ public class DebugCommand {
             return;
         }
         Player player = playerActor.getHandle();
-        RayTraceResult result = player.getWorld().rayTraceEntities(player.getEyeLocation(), player.getEyeLocation().getDirection(), 5);
+        RayTraceResult result = player.getWorld().rayTraceEntities(player.getEyeLocation(), player.getLocation().getDirection(), 5);
         if (result == null) {
             actor.sendMessage("&cYou have to look at an item frame!");
             return;
@@ -64,7 +64,7 @@ public class DebugCommand {
                 return;
             }
             ItemFrame itemFrame = (ItemFrame) entity;
-            if(!itemFrame.getPersistentDataContainer().has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+            if(itemFrame.getPersistentDataContainer().has(JustLootItKey.identity(), PersistentDataType.LONG)) {
                 actor.sendMessage("&cIs already a JustLootIt item frame");
                 return;
             }
@@ -106,7 +106,7 @@ public class DebugCommand {
             return;
         }
         Player player = playerActor.getHandle();
-        RayTraceResult result = player.getWorld().rayTraceBlocks(player.getEyeLocation(), player.getEyeLocation().getDirection(), 5);
+        RayTraceResult result = player.getWorld().rayTraceBlocks(player.getEyeLocation(), player.getLocation().getDirection(), 5);
         if (result == null) {
             actor.sendMessage("&cYou have to look at a block!");
             return;
@@ -147,7 +147,7 @@ public class DebugCommand {
             return;
         }
         Player player = playerActor.getHandle();
-        RayTraceResult result = player.getWorld().rayTraceBlocks(player.getEyeLocation(), player.getEyeLocation().getDirection(), 5);
+        RayTraceResult result = player.getWorld().rayTraceBlocks(player.getEyeLocation(), player.getLocation().getDirection(), 5);
         if (result == null) {
             actor.sendMessage("&cYou have to look at a block!");
             return;

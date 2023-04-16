@@ -10,12 +10,19 @@ public final class JustLootItKey {
     
     private static NamespacedKey identity;
     
+    private static NamespacedKey breakData;
+    
     public static void setup(JustLootItPlugin plugin) {
         identity = plugin.key("id");
+        breakData = plugin.key("break");
     }
     
     public static NamespacedKey identity() {
         return identity;
+    }
+    
+    public static NamespacedKey breakData() {
+        return breakData;
     }
     
 }

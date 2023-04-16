@@ -93,6 +93,9 @@ public final class PlayerAdapter1_19_R2 extends PlayerAdapter {
 
     @Override
     public void send(AbstractPacketOut... packets) {
+        if (minecraft.connection.isDisconnected()) {
+            return;
+        }
         for (AbstractPacketOut packet : packets) {
             if (!(packet.asMinecraft() instanceof Packet)) {
                 continue;
