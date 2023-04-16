@@ -49,6 +49,7 @@ public class PacketOutSetEntityData1_19_R2 extends PacketOutSetEntityData {
 
     public PacketOutSetEntityData1_19_R2(final ArgumentMap map) {
         CraftEntity entity = (CraftEntity) map.require("entity", Entity.class);
+        map.throwIfMissing();
         this.packet = new ClientboundSetEntityDataPacket(entity.getEntityId(), extractValues(entity.getHandle().getEntityData()));
         this.data = new EntityDataPack(packet.packedItems());
     }
