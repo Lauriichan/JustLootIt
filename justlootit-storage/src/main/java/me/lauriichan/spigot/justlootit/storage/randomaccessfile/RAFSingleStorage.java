@@ -255,10 +255,6 @@ public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
                 buffer.readBytes(file.getChannel(), bufferSize);
                 return;
             }
-            file.seek(0);
-            short amount = file.readShort();
-            file.seek(0);
-            file.writeShort(amount + 1);
             long headerOffset = LOOKUP_AMOUNT_SIZE + LOOKUP_ENTRY_SIZE * valueId;
             file.seek(headerOffset);
             long lookupPosition = file.readLong();
@@ -285,6 +281,10 @@ public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
                 buffer.readBytes(file.getChannel(), bufferSize);
                 return;
             }
+            file.seek(0);
+            short amount = file.readShort();
+            file.seek(0);
+            file.writeShort(amount + 1);
             file.setLength(fileSize + bufferSize + VALUE_HEADER_SIZE);
             file.seek(headerOffset);
             file.writeLong(lookupPosition = fileSize);
