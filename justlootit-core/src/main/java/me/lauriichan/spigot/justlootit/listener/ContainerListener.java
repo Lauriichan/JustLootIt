@@ -2,17 +2,14 @@ package me.lauriichan.spigot.justlootit.listener;
 
 import me.lauriichan.spigot.justlootit.JustLootItKey;
 import me.lauriichan.spigot.justlootit.capability.StorageCapability;
-import me.lauriichan.spigot.justlootit.data.CacheLookupTable;
+import me.lauriichan.spigot.justlootit.data.*;
 import me.lauriichan.spigot.justlootit.data.CacheLookupTable.WorldEntry;
-import me.lauriichan.spigot.justlootit.data.Container;
+import me.lauriichan.spigot.justlootit.inventory.JustLootItInventory;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
-import me.lauriichan.spigot.justlootit.storage.Storable;
 import me.lauriichan.spigot.justlootit.storage.IStorage;
-
-import java.time.Duration;
-import java.util.UUID;
-
+import me.lauriichan.spigot.justlootit.storage.Storable;
+import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
@@ -26,8 +23,15 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.loot.LootContext;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
+
+import java.time.Duration;
+import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class ContainerListener implements Listener {
 
@@ -52,7 +56,7 @@ public class ContainerListener implements Listener {
         if(!dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
             return;
         }
-        accessContainer(dataContainer, event, event.getPlayer(), block.getWorld(), dataContainer.get(JustLootItKey.identity(), PersistentDataType.LONG).longValue());
+        accessContainer(block.getLocation(), dataContainer, event, event.getPlayer(), block.getWorld(), dataContainer.get(JustLootItKey.identity(), PersistentDataType.LONG).longValue());
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
@@ -66,10 +70,10 @@ public class ContainerListener implements Listener {
         if(!dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
             return;
         }
-        accessContainer(dataContainer, event, event.getPlayer(), entity.getWorld(), dataContainer.get(JustLootItKey.identity(), PersistentDataType.LONG).longValue());
+        accessContainer(entity.getLocation(), dataContainer, event, event.getPlayer(), entity.getWorld(), dataContainer.get(JustLootItKey.identity(), PersistentDataType.LONG).longValue());
     }
 
-    private void accessContainer(PersistentDataContainer data, Cancellable event, Player bukkitPlayer, World world, long id) {
+    private void accessContainer(Location location, PersistentDataContainer data, Cancellable event, Player bukkitPlayer, World world, long id) {
         WorldEntry entryId = new WorldEntry(world, id);
         PlayerAdapter player = versionHandler.getPlayer(bukkitPlayer);
         UUID playerId = bukkitPlayer.getUniqueId();
@@ -86,10 +90,16 @@ public class ContainerListener implements Listener {
                 if (!dataContainer.access(playerId)) {
                     if (lookupTable.access(entryId)) {
                         long playerCacheId = lookupTable.getEntryIdByMapped(entryId);
-                        // TODO: Open cached inventory
-                        // TODO: Save container after use
+                        CachedInventory cachedInventory = (CachedInventory) playerStorage.read(playerCacheId);
+
+                        // TODO: Change the inventory titles
+                        JustLootItInventory inventory = new JustLootItInventory("Chest", 27);
+                        inventory.getInventory().setContents(cachedInventory.getItems());
+                        inventory.setCloseAction(closeEvent -> playerStorage.write(new CachedInventory(playerCacheId, inventory.getInventory())));
+                        inventory.open(bukkitPlayer);
                         return;
                     }
+
                     Duration duration = dataContainer.durationUntilNextAccess(playerId);
                     if (duration.isNegative()) {
                         // TODO: Send message, can never be accessed again
@@ -98,9 +108,25 @@ public class ContainerListener implements Listener {
                     // TODO: Send message, not accessible yet
                     return;
                 }
-                // TODO: Access container
+
+                JustLootItInventory inventory = new JustLootItInventory("Chest", 27);
+                if (dataContainer instanceof VanillaContainer vanillaContainer) {
+                    PotionEffect effect = bukkitPlayer.getPotionEffect(PotionEffectType.LUCK);
+                    int luck = effect == null ? LootContext.DEFAULT_LOOT_MODIFIER : effect.getAmplifier();
+
+                    vanillaContainer.getLootTable().fillInventory(inventory.getInventory(), ThreadLocalRandom.current(),
+                            new LootContext.Builder(location)
+                                    .luck(luck)
+                                    .build());
+                }
+
+                if (dataContainer instanceof StaticContainer staticContainer) {
+                    staticContainer.loadTo(inventory.getInventory());
+                }
+
                 long playerCacheId = lookupTable.acquire(entryId);
-                // TODO: Save container after use
+                inventory.setCloseAction(closeEvent -> playerStorage.write(new CachedInventory(playerCacheId, inventory.getInventory())));
+                inventory.open(bukkitPlayer);
             }, () -> {
                 // TODO: No storage available for some reason?
             });
