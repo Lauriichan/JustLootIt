@@ -13,7 +13,7 @@ public abstract class SimpleDataType<P, C> implements PersistentDataType<P, C> {
 
         @Override
         public Boolean fromPrimitive(final Byte primitive, final PersistentDataAdapterContext context) {
-            return (primitive == 1) == true;
+            return primitive == 1;
         }
     };
 

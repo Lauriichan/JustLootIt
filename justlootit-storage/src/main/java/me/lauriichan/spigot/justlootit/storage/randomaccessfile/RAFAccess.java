@@ -35,7 +35,7 @@ final class RAFAccess<S extends Storable> implements Closeable {
     RAFAccess(final File file) {
         this.id = 0;
         this.hexId = "0";
-        this.file = file;
+        this.file = file.isDirectory() ? new File(file, "rafstorage.jli") : file;
     }
 
     public int id() {

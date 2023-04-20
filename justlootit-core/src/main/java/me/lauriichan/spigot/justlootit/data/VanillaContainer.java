@@ -69,7 +69,7 @@ public final class VanillaContainer extends Container implements IInventoryConta
 
     @Override
     public void fill(final PlayerAdapter player, final Location location, final Inventory inventory) {
-
+        player.versionHandler().versionHelper().fill(inventory, player.asBukkit(), location, getLootTable(), seed);
     }
 
 }
