@@ -3,14 +3,17 @@ package me.lauriichan.spigot.justlootit.data;
 import java.util.Objects;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.loot.LootTable;
 
 import io.netty.buffer.ByteBuf;
 import me.lauriichan.spigot.justlootit.data.io.DataIO;
+import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapter;
 
-public final class VanillaContainer extends Container {
+public final class VanillaContainer extends Container implements IInventoryContainer {
 
     public static final StorageAdapter<VanillaContainer> ADAPTER = new BaseAdapter<>(VanillaContainer.class, 16) {
         @Override
@@ -62,6 +65,11 @@ public final class VanillaContainer extends Container {
     public void setSeed(long seed) {
         this.seed = seed;
         setDirty();
+    }
+
+    @Override
+    public void fill(PlayerAdapter player, Location location, Inventory inventory) {
+        
     }
 
 }

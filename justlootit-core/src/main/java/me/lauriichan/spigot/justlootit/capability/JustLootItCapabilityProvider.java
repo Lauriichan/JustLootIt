@@ -36,6 +36,7 @@ public final class JustLootItCapabilityProvider implements ICapabilityProvider {
 
     private void providePlayer(VersionHandler handler, PlayerAdapter adapter, List<ICapability> capabilities) {
         capabilities.add(new StorageCapability.PlayerImpl(handler, adapter));
+        capabilities.add(new PlayerGUICapability(handler));
     }
 
 }

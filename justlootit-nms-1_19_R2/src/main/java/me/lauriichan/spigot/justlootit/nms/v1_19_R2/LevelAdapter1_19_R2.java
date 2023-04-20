@@ -9,9 +9,16 @@ import net.minecraft.world.entity.Entity;
 public class LevelAdapter1_19_R2 extends LevelAdapter {
     
     private final ServerLevel level;
+    private final VersionHandler1_19_R2 versionHandler;
     
-    public LevelAdapter1_19_R2(final ServerLevel level) {
+    public LevelAdapter1_19_R2(final VersionHandler1_19_R2 versionHandler, final ServerLevel level) {
         this.level = level;
+        this.versionHandler = versionHandler;
+    }
+    
+    @Override
+    public VersionHandler1_19_R2 versionHandler() {
+        return versionHandler;
     }
 
     @Override
