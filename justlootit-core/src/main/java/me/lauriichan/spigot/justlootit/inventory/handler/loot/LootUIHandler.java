@@ -20,11 +20,11 @@ public final class LootUIHandler implements IHandler {
     @Override
     public boolean onEventClose(HumanEntity entity, IGuiInventory inventory, VersionHandler versionHandler) {
         Long id = inventory.attrUnset(ATTR_ID, Long.class);
-        if(id == null) {
+        if (id == null) {
             return false;
         }
         PlayerAdapter player = versionHandler.getPlayer(entity.getUniqueId());
-        if(player == null) {
+        if (player == null) {
             return false;
         }
         player.getCapability(StorageCapability.class).ifPresent(capability -> {

@@ -1,9 +1,11 @@
 package me.lauriichan.spigot.justlootit.data;
 
+import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 import io.netty.buffer.ByteBuf;
+import me.lauriichan.spigot.justlootit.data.io.BufIO;
 import me.lauriichan.spigot.justlootit.data.io.DataIO;
 import me.lauriichan.spigot.justlootit.nms.io.IOHandler;
 import me.lauriichan.spigot.justlootit.storage.Storable;
@@ -16,30 +18,62 @@ public final class CachedInventory extends Storable {
 
         @Override
         public void serialize(CachedInventory storable, ByteBuf buffer) {
+            BufIO.writeString(buffer, storable.type.name());
             itemIO.serializeArray(buffer, storable.items);
         }
 
         @Override
         public CachedInventory deserialize(long id, ByteBuf buffer) {
-            return new CachedInventory(id, itemIO.deserializeArray(buffer));
+           InventoryType type = fromString(BufIO.readString(buffer));
+            ItemStack[] items = itemIO.deserializeArray(buffer);
+            return new CachedInventory(id, items, type);
+        }
+        
+        private InventoryType fromString(String string) {
+            try {
+                return InventoryType.valueOf(string);
+            } catch(IllegalArgumentException exception) {
+                return InventoryType.CHEST;
+            }
         }
 
     };
 
     private final ItemStack[] items;
+    private final InventoryType type;
 
     public CachedInventory(long id, Inventory inventory) {
         super(id);
-        this.items = inventory.getContents();
+        ItemStack[] contents = inventory.getContents();
+        int index = 0;
+        ItemStack[] items = new ItemStack[contents.length];
+        for(ItemStack item : contents) {
+            if(item == null || item.getType().isAir()) {
+                items[index++] = null;
+                continue;
+            }
+            items[index++] = item.clone();
+        }
+        this.items = items;
+        this.type = inventory.getType();
     }
 
-    private CachedInventory(long id, ItemStack[] items) {
+    private CachedInventory(long id, ItemStack[] items, InventoryType type) {
         super(id);
         this.items = items;
+        this.type = type;
+    }
+    
+    public InventoryType getType() {
+        return type;
     }
 
     public ItemStack[] getItems() {
         return items;
+    }
+    
+    public int size() {
+        return items.length;
     }
 
 }
