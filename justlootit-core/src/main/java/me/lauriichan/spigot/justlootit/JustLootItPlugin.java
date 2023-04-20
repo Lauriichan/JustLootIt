@@ -174,7 +174,7 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
         pluginManager.registerEvents(new ContainerListener(versionHandler), this);
         pluginManager.registerEvents(new StructureListener(versionHandler), this);
         pluginManager.registerEvents(new GuiListener(this), this);
-
+        
         // Register packet listener
         itemFrameContainer = packetManager.register(itemFrameListener).setGlobal(true);
     }
