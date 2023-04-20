@@ -48,11 +48,18 @@ public final class PlayerAdapter1_19_R3 extends PlayerAdapter {
     final void terminate() {
         network.setActive(false);
     }
+    
+    @Override
+    public VersionHandler1_19_R3 versionHandler() {
+        return versionHandler;
+    }
 
+    @Override
     public PlayerNetwork1_19_R3 getNetwork() {
         return network;
     }
 
+    @Override
     public ServerPlayer asMinecraft() {
         return minecraft;
     }

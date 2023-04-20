@@ -1,7 +1,6 @@
 package me.lauriichan.spigot.justlootit.listener;
 
 import java.time.OffsetDateTime;
-import java.util.Objects;
 
 import org.bukkit.Sound;
 import org.bukkit.SoundCategory;
@@ -34,8 +33,6 @@ import me.lauriichan.spigot.justlootit.storage.Storable;
 import me.lauriichan.spigot.justlootit.util.persistence.BreakData;
 
 public class ItemFrameListener implements IPacketListener, Listener {
-
-    // TODO: Make item frame containers breakable
 
     private final VersionHandler versionHandler;
 

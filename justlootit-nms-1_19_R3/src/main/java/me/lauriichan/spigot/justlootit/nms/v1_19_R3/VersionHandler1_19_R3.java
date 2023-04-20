@@ -74,7 +74,7 @@ public final class VersionHandler1_19_R3 extends VersionHandler implements IServ
         if(!(world instanceof CraftWorld)) {
             return null;
         }
-        return new LevelAdapter1_19_R3(((CraftWorld) world).getHandle());
+        return new LevelAdapter1_19_R3(this, ((CraftWorld) world).getHandle());
     }
 
     @Override

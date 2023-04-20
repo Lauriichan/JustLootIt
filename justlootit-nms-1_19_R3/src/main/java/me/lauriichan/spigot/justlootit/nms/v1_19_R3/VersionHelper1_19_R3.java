@@ -1,6 +1,12 @@
 package me.lauriichan.spigot.justlootit.nms.v1_19_R3;
 
+import org.bukkit.Location;
 import org.bukkit.craftbukkit.v1_19_R3.entity.CraftEntity;
+import org.bukkit.craftbukkit.v1_19_R3.entity.CraftPlayer;
+import org.bukkit.craftbukkit.v1_19_R3.inventory.CraftInventory;
+import org.bukkit.craftbukkit.v1_19_R3.util.CraftNamespacedKey;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
 
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.nms.VersionHelper;
@@ -9,11 +15,20 @@ import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ItemTag;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.chat.ComponentSerializer;
+import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.storage.loot.LootContext;
+import net.minecraft.world.level.storage.loot.LootTable;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
+import net.minecraft.world.phys.Vec3;
 
 public class VersionHelper1_19_R3 extends VersionHelper {
+
     private final VersionHandler1_19_R3 handler;
 
     public VersionHelper1_19_R3(final VersionHandler1_19_R3 handler) {
@@ -43,6 +58,25 @@ public class VersionHelper1_19_R3 extends VersionHelper {
             return new net.md_5.bungee.api.chat.hover.content.Entity(type, id, array[0]);
         }
         return new net.md_5.bungee.api.chat.hover.content.Entity(type, id, new TextComponent(array));
+    }
+
+    @Override
+    public void fill(Inventory inventory, Player player, Location location, org.bukkit.loot.LootTable lootTable, long seed) {
+        ServerPlayer minecraftPlayer = ((CraftPlayer) player).getHandle();
+        ServerLevel level = minecraftPlayer.getLevel();
+        if (level.getServer() == null) {
+            return;
+        }
+        LootTable table = level.getServer().getLootTables().get(CraftNamespacedKey.toMinecraft(lootTable.getKey()));
+        if (table == null) {
+            return;
+        }
+        table.fill(((CraftInventory) inventory).getInventory(),
+            new LootContext.Builder(minecraftPlayer.getLevel())
+                .withParameter(LootContextParams.ORIGIN,
+                    Vec3.atCenterOf(new Vec3i(location.getBlockX(), location.getBlockY(), location.getBlockZ())))
+                .withOptionalRandomSeed(seed).withLuck(minecraftPlayer.getLuck())
+                .withParameter(LootContextParams.THIS_ENTITY, minecraftPlayer).create(LootContextParamSets.CHEST));
     }
 
 }
