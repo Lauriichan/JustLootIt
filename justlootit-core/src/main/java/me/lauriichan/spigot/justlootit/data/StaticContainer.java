@@ -63,7 +63,7 @@ public final class StaticContainer extends Container implements IInventoryContai
                 items[index] = null;
                 continue;
             }
-            contents[index] = item.clone();
+            items[index] = item.clone();
         }
         this.items = items;
         setDirty();
