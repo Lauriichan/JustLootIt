@@ -4,9 +4,9 @@ import me.lauriichan.laylib.logger.ISimpleLogger;
 
 public abstract class SingletonCache<V> extends Cache {
 
-    public static interface ICallback<V> {
+    public interface ICallback<V> {
 
-        default void onInvalidate(V value) throws Exception {
+        default void onInvalidate(final V value) throws Exception {
             onRemove(value);
         }
 
@@ -15,7 +15,7 @@ public abstract class SingletonCache<V> extends Cache {
     }
 
     @SuppressWarnings("rawtypes")
-    private static final ICallback NOP_CALLBACK = (a) -> {
+    private static final ICallback NOP_CALLBACK = a -> {
     };
 
     @SuppressWarnings("unchecked")
@@ -26,11 +26,11 @@ public abstract class SingletonCache<V> extends Cache {
     protected final ISimpleLogger logger;
     protected final ICallback<V> callback;
 
-    public SingletonCache(ISimpleLogger logger) {
+    public SingletonCache(final ISimpleLogger logger) {
         this(logger, nopCallback());
     }
 
-    public SingletonCache(ISimpleLogger logger, ICallback<V> callback) {
+    public SingletonCache(final ISimpleLogger logger, final ICallback<V> callback) {
         this.logger = logger;
         this.callback = callback;
     }
@@ -44,7 +44,7 @@ public abstract class SingletonCache<V> extends Cache {
     protected abstract void clearValue();
 
     public final V get() {
-        CachedValue<V> cached = getValue();
+        final CachedValue<V> cached = getValue();
         if (cached != null) {
             return cached.value();
         }
@@ -52,16 +52,16 @@ public abstract class SingletonCache<V> extends Cache {
     }
 
     public final V peek() {
-        CachedValue<V> cached = getValue();
+        final CachedValue<V> cached = getValue();
         if (cached != null) {
             return cached.peekValue();
         }
         return null;
     }
-    
-    public final void set(V value) {
-        CachedValue<V> cached = getValue();
-        if(cached == null) {
+
+    public final void set(final V value) {
+        final CachedValue<V> cached = getValue();
+        if (cached == null) {
             setValue(new CachedValue<>(value));
             return;
         }
@@ -69,15 +69,15 @@ public abstract class SingletonCache<V> extends Cache {
     }
 
     public final V remove() {
-        CachedValue<V> cached = getValue();
+        final CachedValue<V> cached = getValue();
         if (cached == null) {
             return null;
         }
         clearValue();
-        V value = cached.peekValue();
+        final V value = cached.peekValue();
         try {
             callback.onRemove(value);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             logger.warning("Couldn't run remove callback for resource", e);
         }
         return value;
@@ -97,22 +97,22 @@ public abstract class SingletonCache<V> extends Cache {
     }
 
     @Override
-    protected void onTick(long cacheTime) {
-        CachedValue<V> cached = getValue();
+    protected void onTick(final long cacheTime) {
+        final CachedValue<V> cached = getValue();
         if (cached.tick() < cacheTime) {
             return;
         }
         clearValue();
-        V value = cached.peekValue();
+        final V value = cached.peekValue();
         try {
             callback.onInvalidate(value);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             logger.warning("Couldn't run invalidate callback for resource", e);
         }
         if (value instanceof AutoCloseable) {
             try {
                 ((AutoCloseable) value).close();
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 logger.warning("Couldn't close cached resource", e);
             }
         }

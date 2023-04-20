@@ -10,11 +10,11 @@ public class ThreadSafeMapCache<K, V> extends MapCache<K, V> {
     private final Lock readLock = lock.readLock();
     private final Lock writeLock = lock.writeLock();
 
-    public ThreadSafeMapCache(MapCache<K, V> delegate) {
+    public ThreadSafeMapCache(final MapCache<K, V> delegate) {
         super(delegate.logger);
         this.delegate = delegate;
     }
-    
+
     @Override
     protected int entryCount() {
         readLock.lock();
@@ -26,7 +26,7 @@ public class ThreadSafeMapCache<K, V> extends MapCache<K, V> {
     }
 
     @Override
-    protected boolean hasEntry(K key) {
+    protected boolean hasEntry(final K key) {
         readLock.lock();
         try {
             return delegate.hasEntry(key);
@@ -36,7 +36,7 @@ public class ThreadSafeMapCache<K, V> extends MapCache<K, V> {
     }
 
     @Override
-    protected CachedValue<V> getEntry(K key) {
+    protected CachedValue<V> getEntry(final K key) {
         readLock.lock();
         try {
             return delegate.getEntry(key);
@@ -46,7 +46,7 @@ public class ThreadSafeMapCache<K, V> extends MapCache<K, V> {
     }
 
     @Override
-    protected void putEntry(K key, CachedValue<V> value) {
+    protected void putEntry(final K key, final CachedValue<V> value) {
         writeLock.lock();
         try {
             delegate.putEntry(key, value);
@@ -56,7 +56,7 @@ public class ThreadSafeMapCache<K, V> extends MapCache<K, V> {
     }
 
     @Override
-    protected CachedValue<V> removeEntry(K key) {
+    protected CachedValue<V> removeEntry(final K key) {
         writeLock.lock();
         try {
             return delegate.removeEntry(key);

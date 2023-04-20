@@ -38,21 +38,21 @@ public enum CommandManagerMessage implements IMessageDefinition {
         "$#plugin.prefix An error occured while executing command '&c$command&7'!",
         "$#plugin.prefix &4Error: &c$error"
     }),
-    
+
     NOT$PERMITTED("$#plugin.prefix You are lacking the permission &c$permission &7to do this.");
 
     private final String id;
     private final String fallback;
 
-    private CommandManagerMessage() {
+    CommandManagerMessage() {
         this("");
     }
 
-    private CommandManagerMessage(String[] fallback) {
+    CommandManagerMessage(final String[] fallback) {
         this(Arrays.stream(fallback).collect(Collectors.joining("\n")));
     }
 
-    private CommandManagerMessage(String fallback) {
+    CommandManagerMessage(final String fallback) {
         this.id = "command.process." + name().replace('$', '-').toLowerCase().replace('_', '.');
         this.fallback = fallback;
     }

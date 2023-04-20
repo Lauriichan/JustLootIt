@@ -20,17 +20,17 @@ public enum Horizontal {
     NORTH_NORTH_WEST(0);
 
     private static final Horizontal[] VALUES = values();
-    
+
     private final int normalization;
 
-    private Horizontal() {
+    Horizontal() {
         this.normalization = ordinal();
     }
 
-    private Horizontal(int normalization) {
+    Horizontal(final int normalization) {
         this.normalization = normalization;
     }
-    
+
     public Horizontal normalize() {
         return VALUES[normalization];
     }

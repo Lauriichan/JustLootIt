@@ -24,18 +24,19 @@ import net.minecraft.network.syncher.SynchedEntityData.DataItem;
 import net.minecraft.network.syncher.SynchedEntityData.DataValue;
 
 public class PacketOutSetEntityData1_19_R3 extends PacketOutSetEntityData {
-    
-    private static final MethodHandle EntityData_map = JavaAccess.accessFieldGetter(ClassUtil.getField(SynchedEntityData.class, false, Int2ObjectMap.class));
-    
-    private static List<DataValue<?>> extractValues(SynchedEntityData data) {
+
+    private static final MethodHandle EntityData_map = JavaAccess
+        .accessFieldGetter(ClassUtil.getField(SynchedEntityData.class, false, Int2ObjectMap.class));
+
+    private static List<DataValue<?>> extractValues(final SynchedEntityData data) {
         Int2ObjectMap<DataItem<?>> map;
         try {
             map = (Int2ObjectMap<DataItem<?>>) EntityData_map.invokeExact(data);
-        } catch (Throwable e) {
+        } catch (final Throwable e) {
             return Collections.emptyList();
         }
-        ArrayList<DataValue<?>> values = new ArrayList<>();
-        map.values().stream().map(item -> item.value()).forEach(values::add);
+        final ArrayList<DataValue<?>> values = new ArrayList<>();
+        map.values().stream().map(DataItem::value).forEach(values::add);
         return values;
     }
 
@@ -48,7 +49,7 @@ public class PacketOutSetEntityData1_19_R3 extends PacketOutSetEntityData {
     }
 
     public PacketOutSetEntityData1_19_R3(final ArgumentMap map) {
-        CraftEntity entity = (CraftEntity) map.require("entity", Entity.class);
+        final CraftEntity entity = (CraftEntity) map.require("entity", Entity.class);
         map.throwIfMissing();
         this.packet = new ClientboundSetEntityDataPacket(entity.getEntityId(), extractValues(entity.getHandle().getEntityData()));
         this.data = new EntityDataPack(packet.packedItems());
@@ -74,10 +75,10 @@ public class PacketOutSetEntityData1_19_R3 extends PacketOutSetEntityData {
         private final List<DataValue<?>> values;
         private final List<IEntityData> dataValues = new ArrayList<>();
 
-        public EntityDataPack(List<DataValue<?>> values) {
+        public EntityDataPack(final List<DataValue<?>> values) {
             this.values = values;
-            for (DataValue<?> value : values) {
-                EntityData1_19_R3 data = EntityData1_19_R3.create(value);
+            for (final DataValue<?> value : values) {
+                final EntityData1_19_R3 data = EntityData1_19_R3.create(value);
                 if (data instanceof ItemEntityData1_19_R3) {
                     dataValues.add(new ItemData(this, (ItemEntityData1_19_R3) data));
                     continue;
@@ -87,7 +88,7 @@ public class PacketOutSetEntityData1_19_R3 extends PacketOutSetEntityData {
         }
 
         @Override
-        public IEntityData get(int index) {
+        public IEntityData get(final int index) {
             if (index >= values.size() || index < 0) {
                 return null;
             }
@@ -120,7 +121,7 @@ public class PacketOutSetEntityData1_19_R3 extends PacketOutSetEntityData {
             }
 
             @Override
-            public void setItem(ItemStack itemStack) {
+            public void setItem(final ItemStack itemStack) {
                 data.setItem(itemStack);
                 if (data.isDirty()) {
                     pack.values.set(pack.indexOf(data.getId()), data.build());

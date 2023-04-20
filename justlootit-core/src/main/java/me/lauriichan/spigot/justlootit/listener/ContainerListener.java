@@ -1,17 +1,8 @@
 package me.lauriichan.spigot.justlootit.listener;
 
-import me.lauriichan.spigot.justlootit.JustLootItKey;
-import me.lauriichan.spigot.justlootit.capability.PlayerGUICapability;
-import me.lauriichan.spigot.justlootit.capability.StorageCapability;
-import me.lauriichan.spigot.justlootit.data.*;
-import me.lauriichan.spigot.justlootit.data.CacheLookupTable.WorldEntry;
-import me.lauriichan.spigot.justlootit.inventory.ChestSize;
-import me.lauriichan.spigot.justlootit.inventory.IGuiInventory;
-import me.lauriichan.spigot.justlootit.inventory.handler.loot.LootUIHandler;
-import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
-import me.lauriichan.spigot.justlootit.nms.VersionHandler;
-import me.lauriichan.spigot.justlootit.storage.IStorage;
-import me.lauriichan.spigot.justlootit.storage.Storable;
+import java.time.Duration;
+import java.util.UUID;
+
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
@@ -28,8 +19,21 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 
-import java.time.Duration;
-import java.util.UUID;
+import me.lauriichan.spigot.justlootit.JustLootItKey;
+import me.lauriichan.spigot.justlootit.capability.PlayerGUICapability;
+import me.lauriichan.spigot.justlootit.capability.StorageCapability;
+import me.lauriichan.spigot.justlootit.data.CacheLookupTable;
+import me.lauriichan.spigot.justlootit.data.CacheLookupTable.WorldEntry;
+import me.lauriichan.spigot.justlootit.data.CachedInventory;
+import me.lauriichan.spigot.justlootit.data.Container;
+import me.lauriichan.spigot.justlootit.data.IInventoryContainer;
+import me.lauriichan.spigot.justlootit.inventory.ChestSize;
+import me.lauriichan.spigot.justlootit.inventory.IGuiInventory;
+import me.lauriichan.spigot.justlootit.inventory.handler.loot.LootUIHandler;
+import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
+import me.lauriichan.spigot.justlootit.nms.VersionHandler;
+import me.lauriichan.spigot.justlootit.storage.IStorage;
+import me.lauriichan.spigot.justlootit.storage.Storable;
 
 public class ContainerListener implements Listener {
 
@@ -40,62 +44,64 @@ public class ContainerListener implements Listener {
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
-    public void onInteract(PlayerInteractEvent event) {
+    public void onInteract(final PlayerInteractEvent event) {
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK) {
             return;
         }
-        Block block = event.getClickedBlock();
-        BlockState state = block.getState();
+        final Block block = event.getClickedBlock();
+        final BlockState state = block.getState();
         if (!(state instanceof org.bukkit.block.Container)) {
             return;
         }
-        org.bukkit.block.Container container = (org.bukkit.block.Container) state;
-        PersistentDataContainer dataContainer = container.getPersistentDataContainer();
+        final org.bukkit.block.Container container = (org.bukkit.block.Container) state;
+        final PersistentDataContainer dataContainer = container.getPersistentDataContainer();
         if (!dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
             return;
         }
         accessContainer(block.getLocation(), dataContainer, event, event.getPlayer(),
-            dataContainer.get(JustLootItKey.identity(), PersistentDataType.LONG).longValue());
+            dataContainer.get(JustLootItKey.identity(), PersistentDataType.LONG));
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
-    public void onInteractEntity(PlayerInteractAtEntityEvent event) {
-        Entity entity = event.getRightClicked();
-        EntityType type = entity.getType();
+    public void onInteractEntity(final PlayerInteractAtEntityEvent event) {
+        final Entity entity = event.getRightClicked();
+        final EntityType type = entity.getType();
         if (type != EntityType.MINECART_CHEST && type != EntityType.MINECART_HOPPER && type != EntityType.CHEST_BOAT) {
             return;
         }
-        PersistentDataContainer dataContainer = entity.getPersistentDataContainer();
+        final PersistentDataContainer dataContainer = entity.getPersistentDataContainer();
         if (!dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
             return;
         }
         accessContainer(entity.getLocation(), dataContainer, event, event.getPlayer(),
-            dataContainer.get(JustLootItKey.identity(), PersistentDataType.LONG).longValue());
+            dataContainer.get(JustLootItKey.identity(), PersistentDataType.LONG));
     }
 
-    private void accessContainer(Location location, PersistentDataContainer data, Cancellable event, Player bukkitPlayer, long id) {
-        WorldEntry entryId = new WorldEntry(location.getWorld(), id);
-        PlayerAdapter player = versionHandler.getPlayer(bukkitPlayer);
-        UUID playerId = bukkitPlayer.getUniqueId();
+    private void accessContainer(final Location location, final PersistentDataContainer data, final Cancellable event,
+        final Player bukkitPlayer, final long id) {
+        final WorldEntry entryId = new WorldEntry(location.getWorld(), id);
+        final PlayerAdapter player = versionHandler.getPlayer(bukkitPlayer);
+        final UUID playerId = bukkitPlayer.getUniqueId();
         versionHandler.getLevel(location.getWorld()).getCapability(StorageCapability.class).ifPresentOrElse(capability -> {
-            Container dataContainer = (Container) capability.storage().read(id);
+            final Container dataContainer = (Container) capability.storage().read(id);
             if (dataContainer == null) {
                 data.remove(JustLootItKey.identity());
                 return;
             }
             event.setCancelled(true);
             player.getCapability(StorageCapability.class).ifPresent(playerCapability -> {
-                IStorage<Storable> playerStorage = playerCapability.storage();
-                CacheLookupTable lookupTable = CacheLookupTable.retrieve(playerStorage);
+                final IStorage<Storable> playerStorage = playerCapability.storage();
+                final CacheLookupTable lookupTable = CacheLookupTable.retrieve(playerStorage);
                 if (!dataContainer.access(playerId)) {
                     if (lookupTable.access(entryId)) {
-                        CachedInventory cachedInventory = (CachedInventory) playerStorage.read(lookupTable.getEntryIdByMapped(entryId));
-                        int rowSize = IGuiInventory.getRowSize(cachedInventory.getType());
+                        final CachedInventory cachedInventory = (CachedInventory) playerStorage
+                            .read(lookupTable.getEntryIdByMapped(entryId));
+                        final int rowSize = IGuiInventory.getRowSize(cachedInventory.getType());
                         if (cachedInventory.size() % rowSize == 0) {
-                            int columnAmount = cachedInventory.size() / rowSize;
-                            if (!(rowSize == 9 && (columnAmount > 6 || columnAmount < 1))) {
+                            final int columnAmount = cachedInventory.size() / rowSize;
+                            if (((rowSize != 9) || ((columnAmount <= 6) && (columnAmount >= 1)))) {
                                 player.getCapability(PlayerGUICapability.class).ifPresent(guiCapability -> {
-                                    IGuiInventory inventory = guiCapability.gui();
+                                    final IGuiInventory inventory = guiCapability.gui();
                                     if (rowSize == 9) {
                                         inventory.setChestSize(ChestSize.values()[columnAmount - 1]);
                                     } else {
@@ -112,23 +118,20 @@ public class ContainerListener implements Listener {
                         playerStorage.delete(cachedInventory.id());
                     }
 
-                    Duration duration = dataContainer.durationUntilNextAccess(playerId);
+                    final Duration duration = dataContainer.durationUntilNextAccess(playerId);
                     if (duration.isNegative()) {
-                        // TODO: Send message, can never be accessed again
-                        return;
                     }
                     // TODO: Send message, not accessible yet
                     return;
                 }
 
                 player.getCapability(PlayerGUICapability.class).ifPresent(guiCapability -> {
-                    IGuiInventory inventory = guiCapability.gui();
-                    if (dataContainer instanceof IInventoryContainer container) {
-                        container.fill(player, location, inventory.getInventory());
-                    } else {
+                    final IGuiInventory inventory = guiCapability.gui();
+                    if (!(dataContainer instanceof final IInventoryContainer container)) {
                         // Do nothing, no need to allocate anything if we have no inventory
                         return;
                     }
+                    container.fill(player, location, inventory.getInventory());
                     inventory.attrSet(LootUIHandler.ATTR_ID, lookupTable.acquire(entryId));
                     inventory.setHandler(LootUIHandler.LOOT_HANDLER);
                     inventory.open(bukkitPlayer);

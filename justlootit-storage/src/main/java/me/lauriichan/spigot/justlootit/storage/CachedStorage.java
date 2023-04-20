@@ -12,7 +12,7 @@ public class CachedStorage<S extends Storable> implements IStorage<S> {
         private boolean dirty = false;
         private S storable;
 
-        public CacheObject(S storable) {
+        public CacheObject(final S storable) {
             this.storable = storable;
         }
 
@@ -20,7 +20,7 @@ public class CachedStorage<S extends Storable> implements IStorage<S> {
             return storable;
         }
 
-        public CacheObject<S> storable(S storable) {
+        public CacheObject<S> storable(final S storable) {
             this.dirty = true;
             this.storable = storable;
             return this;
@@ -37,28 +37,28 @@ public class CachedStorage<S extends Storable> implements IStorage<S> {
 
     private final ISimpleLogger logger;
 
-    public CachedStorage(IStorage<S> delegate) {
+    public CachedStorage(final IStorage<S> delegate) {
         this.delegate = delegate;
         this.logger = delegate.logger();
         this.cache = new Long2ObjectMapCache<>(logger, this::invalidate);
     }
 
-    private void invalidate(Long key, CacheObject<S> cached) {
-        S storable = cached.storable();
-        if (!cached.isDirty() && (storable != null && storable instanceof IModifiable modifable && !modifable.isDirty())) {
+    private void invalidate(final Long key, final CacheObject<S> cached) {
+        final S storable = cached.storable();
+        if (!cached.isDirty() && storable != null && storable instanceof final IModifiable modifable && !modifable.isDirty()) {
             return;
         }
         if (storable == null) {
             try {
-                delegate.delete(key.longValue());
-            } catch (StorageException exp) {
+                delegate.delete(key);
+            } catch (final StorageException exp) {
                 logger.warning("Couldn't delete resource with id '" + Long.toHexString(key) + "'!", exp);
             }
             return;
         }
         try {
             delegate.write(storable);
-        } catch (StorageException exp) {
+        } catch (final StorageException exp) {
             logger.warning("Couldn't save resource with id '" + Long.toHexString(key) + "'!", exp);
         }
     }
@@ -74,27 +74,27 @@ public class CachedStorage<S extends Storable> implements IStorage<S> {
     }
 
     @Override
-    public void register(StorageAdapter<? extends S> adapter) throws StorageException {
+    public void register(final StorageAdapter<? extends S> adapter) throws StorageException {
         delegate.register(adapter);
     }
 
     @Override
-    public boolean unregister(Class<? extends S> type) {
+    public boolean unregister(final Class<? extends S> type) {
         return delegate.unregister(type);
     }
 
     @Override
-    public StorageAdapter<? extends S> findAdapterFor(Class<? extends S> type) {
+    public StorageAdapter<? extends S> findAdapterFor(final Class<? extends S> type) {
         return delegate.findAdapterFor(type);
     }
 
     @Override
-    public StorageAdapter<? extends S> findAdapterFor(short typeId) {
+    public StorageAdapter<? extends S> findAdapterFor(final short typeId) {
         return delegate.findAdapterFor(typeId);
     }
 
     @Override
-    public boolean isSupported(long id) {
+    public boolean isSupported(final long id) {
         return delegate.isSupported(id);
     }
 
@@ -111,17 +111,17 @@ public class CachedStorage<S extends Storable> implements IStorage<S> {
     }
 
     @Override
-    public boolean has(long id) throws StorageException {
+    public boolean has(final long id) throws StorageException {
         return cache.has(id) || delegate.has(id);
     }
 
     @Override
-    public S read(long id) throws StorageException {
-        CacheObject<S> cached = cache.get(id);
+    public S read(final long id) throws StorageException {
+        final CacheObject<S> cached = cache.get(id);
         if (cached != null) {
             return cached.storable();
         }
-        S storable = delegate.read(id);
+        final S storable = delegate.read(id);
         if (storable == null) {
             return storable;
         }
@@ -130,8 +130,8 @@ public class CachedStorage<S extends Storable> implements IStorage<S> {
     }
 
     @Override
-    public void write(S storable) throws StorageException {
-        CacheObject<S> cached = cache.get(storable.id());
+    public void write(final S storable) throws StorageException {
+        final CacheObject<S> cached = cache.get(storable.id());
         if (cached != null) {
             cached.storable(storable);
             return;
@@ -142,8 +142,8 @@ public class CachedStorage<S extends Storable> implements IStorage<S> {
     }
 
     @Override
-    public boolean delete(long id) throws StorageException {
-        CacheObject<S> cached = cache.peek(id);
+    public boolean delete(final long id) throws StorageException {
+        final CacheObject<S> cached = cache.peek(id);
         if (cached != null) {
             cached.storable(null);
         }
@@ -151,7 +151,7 @@ public class CachedStorage<S extends Storable> implements IStorage<S> {
     }
 
     @Override
-    public void updateEach(Function<S, UpdateInfo<S>> updater) throws StorageException {
+    public void updateEach(final Function<S, UpdateInfo<S>> updater) throws StorageException {
         cache.clear();
         updateEach(updater);
     }

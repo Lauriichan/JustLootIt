@@ -1,6 +1,7 @@
 package me.lauriichan.spigot.justlootit.data.io;
 
-import static me.lauriichan.spigot.justlootit.data.io.BufIO.*;
+import static me.lauriichan.spigot.justlootit.data.io.BufIO.readString;
+import static me.lauriichan.spigot.justlootit.data.io.BufIO.writeString;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -19,15 +20,15 @@ public final class DataIO {
 
     public static final IOHandler<NamespacedKey> NAMESPACED_KEY = new IOHandler<>(NamespacedKey.class) {
         @Override
-        public void serialize(ByteBuf buffer, NamespacedKey value) {
+        public void serialize(final ByteBuf buffer, final NamespacedKey value) {
             writeString(buffer, value.getNamespace());
             writeString(buffer, value.getKey());
         }
 
         @Override
-        public NamespacedKey deserialize(ByteBuf buffer) {
-            String namespace = readString(buffer);
-            String key = readString(buffer);
+        public NamespacedKey deserialize(final ByteBuf buffer) {
+            final String namespace = readString(buffer);
+            final String key = readString(buffer);
             // Use fromString to prevent deprecation
             return NamespacedKey.fromString(namespace + ':' + key);
         }
@@ -35,22 +36,22 @@ public final class DataIO {
 
     public static final IOHandler<java.util.UUID> UUID = new IOHandler<>(java.util.UUID.class) {
         @Override
-        public void serialize(ByteBuf buffer, java.util.UUID value) {
+        public void serialize(final ByteBuf buffer, final java.util.UUID value) {
             buffer.writeLong(value.getMostSignificantBits());
             buffer.writeLong(value.getLeastSignificantBits());
         }
 
         @Override
-        public java.util.UUID deserialize(ByteBuf buffer) {
-            long most = buffer.readLong();
-            long least = buffer.readLong();
+        public java.util.UUID deserialize(final ByteBuf buffer) {
+            final long most = buffer.readLong();
+            final long least = buffer.readLong();
             return new java.util.UUID(most, least);
         }
     };
 
     public static final IOHandler<OffsetDateTime> OFFSET_DATE_TIME = new IOHandler<>(OffsetDateTime.class) {
         @Override
-        public void serialize(ByteBuf buffer, OffsetDateTime value) {
+        public void serialize(final ByteBuf buffer, final OffsetDateTime value) {
             buffer.writeInt(value.getOffset().getTotalSeconds());
             buffer.writeInt(value.getYear());
             buffer.writeByte(value.getMonthValue());
@@ -62,29 +63,29 @@ public final class DataIO {
         }
 
         @Override
-        public OffsetDateTime deserialize(ByteBuf buffer) {
-            ZoneOffset offset = ZoneOffset.ofTotalSeconds(buffer.readInt());
-            int year = buffer.readInt();
-            int month = buffer.readByte();
-            int dayOfMonth = buffer.readByte();
-            int hour = buffer.readByte();
-            int minute = buffer.readByte();
-            int second = buffer.readByte();
-            int nanoOfSecond = buffer.readInt();
+        public OffsetDateTime deserialize(final ByteBuf buffer) {
+            final ZoneOffset offset = ZoneOffset.ofTotalSeconds(buffer.readInt());
+            final int year = buffer.readInt();
+            final int month = buffer.readByte();
+            final int dayOfMonth = buffer.readByte();
+            final int hour = buffer.readByte();
+            final int minute = buffer.readByte();
+            final int second = buffer.readByte();
+            final int nanoOfSecond = buffer.readInt();
             return OffsetDateTime.of(year, month, dayOfMonth, hour, minute, second, nanoOfSecond, offset);
         }
     };
 
     private static IOProvider IO;
 
-    public static void setup(IOProvider io) {
+    public static void setup(final IOProvider io) {
         if (IO != null || io == null) {
             return;
         }
         IO = io;
         register();
     }
-    
+
     private static void register() {
         IO.register(NAMESPACED_KEY);
         IO.register(OFFSET_DATE_TIME);
@@ -92,8 +93,8 @@ public final class DataIO {
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> IOHandler<T> find(Class<T> type) {
-        IOHandler<?> handler = IO.handlerOf(type);
+    public static <T> IOHandler<T> find(final Class<T> type) {
+        final IOHandler<?> handler = IO.handlerOf(type);
         if (handler == null) {
             return null;
         }

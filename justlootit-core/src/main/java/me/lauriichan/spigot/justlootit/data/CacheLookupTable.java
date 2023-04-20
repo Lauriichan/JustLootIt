@@ -21,17 +21,17 @@ public class CacheLookupTable extends Storable implements IModifiable {
 
     public static final long MIN_ENTRY_ID = ID + 1;
     public static final long MAX_ENTRY_ID = MIN_ENTRY_ID + SIZE;
-    
+
     public static final int DEFAULT_DAYS = 7;
 
     public static final StorageAdapter<CacheLookupTable> ADAPTER = new StorageAdapter<>(CacheLookupTable.class, 1) {
         @Override
-        public void serialize(CacheLookupTable storable, ByteBuf buffer) {
-            int size = storable.tableToMapped.size();
+        public void serialize(final CacheLookupTable storable, final ByteBuf buffer) {
+            final int size = storable.tableToMapped.size();
             buffer.writeInt(storable.cacheDays);
             buffer.writeByte(size);
             for (int index = 0; index < size; index++) {
-                LookupEntry entry = storable.tableToMapped.get(index);
+                final LookupEntry entry = storable.tableToMapped.get(index);
                 DataIO.UUID.serialize(buffer, entry.mappedId.worldId());
                 buffer.writeLong(entry.mappedId.containerId());
                 DataIO.OFFSET_DATE_TIME.serialize(buffer, entry.cached);
@@ -39,14 +39,14 @@ public class CacheLookupTable extends Storable implements IModifiable {
         }
 
         @Override
-        public CacheLookupTable deserialize(long id, ByteBuf buffer) {
-            CacheLookupTable table = new CacheLookupTable(buffer.readInt());
-            int size = buffer.readByte();
+        public CacheLookupTable deserialize(final long id, final ByteBuf buffer) {
+            final CacheLookupTable table = new CacheLookupTable(buffer.readInt());
+            final int size = buffer.readByte();
             for (int index = 0; index < size; index++) {
-                LookupEntry entry = new LookupEntry();
+                final LookupEntry entry = new LookupEntry();
                 entry.tableId = index;
-                UUID worldId = DataIO.UUID.deserialize(buffer);
-                long containerId = buffer.readLong();
+                final UUID worldId = DataIO.UUID.deserialize(buffer);
+                final long containerId = buffer.readLong();
                 entry.mappedId = new WorldEntry(worldId, containerId);
                 entry.cached = DataIO.OFFSET_DATE_TIME.deserialize(buffer);
                 table.tableToMapped.put(entry.tableId, entry);
@@ -56,12 +56,14 @@ public class CacheLookupTable extends Storable implements IModifiable {
             return table;
         }
     };
-    
+
     public static final record WorldEntry(UUID worldId, long containerId) {
+
         public static final WorldEntry INVALID = new WorldEntry((UUID) null, -1);
-        public WorldEntry(World world, long containerId) {
+        public WorldEntry(final World world, final long containerId) {
             this(world.getUID(), containerId);
         }
+
         public boolean isValid() {
             return worldId != null && containerId >= 0;
         }
@@ -87,7 +89,7 @@ public class CacheLookupTable extends Storable implements IModifiable {
         this(DEFAULT_DAYS);
     }
 
-    public CacheLookupTable(int cacheDays) {
+    public CacheLookupTable(final int cacheDays) {
         super(ID);
         this.cacheDays = Math.max(cacheDays, 0);
     }
@@ -99,9 +101,9 @@ public class CacheLookupTable extends Storable implements IModifiable {
 
     public void update() {
         int offset = 0;
-        OffsetDateTime now = OffsetDateTime.now();
+        final OffsetDateTime now = OffsetDateTime.now();
         for (int index = 0; index < SIZE; index++) {
-            LookupEntry entry = tableToMapped.remove(index);
+            final LookupEntry entry = tableToMapped.remove(index);
             if (entry == null) {
                 // Null means we're done
                 break;
@@ -113,7 +115,7 @@ public class CacheLookupTable extends Storable implements IModifiable {
             }
             tableToMapped.put(index - offset, entry);
         }
-        if(offset != 0) {
+        if (offset != 0) {
             setDirty();
         }
     }
@@ -126,50 +128,50 @@ public class CacheLookupTable extends Storable implements IModifiable {
         return cacheDays;
     }
 
-    public void setCacheDays(int cacheDays) {
+    public void setCacheDays(final int cacheDays) {
         this.cacheDays = Math.max(cacheDays, 0);
         setDirty();
     }
 
-    public boolean hasTable(int tableId) {
+    public boolean hasTable(final int tableId) {
         return tableToMapped.containsKey(tableId);
     }
 
-    public boolean hasMapped(WorldEntry mappedId) {
+    public boolean hasMapped(final WorldEntry mappedId) {
         return mappedToTable.containsKey(mappedId);
     }
 
-    public int getTableId(WorldEntry mappedId) {
+    public int getTableId(final WorldEntry mappedId) {
         if (!mappedToTable.containsKey(mappedId)) {
             return -1;
         }
         return mappedToTable.get(mappedId).tableId;
     }
 
-    public WorldEntry getMappedId(int tableId) {
+    public WorldEntry getMappedId(final int tableId) {
         if (!tableToMapped.containsKey(tableId)) {
             return WorldEntry.INVALID;
         }
         return tableToMapped.get(tableId).mappedId;
     }
 
-    public long getEntryIdByTable(int tableId) {
+    public long getEntryIdByTable(final int tableId) {
         if (!tableToMapped.containsKey(tableId)) {
             return -1;
         }
         return tableToMapped.get(tableId).tableId + MIN_ENTRY_ID;
     }
 
-    public long getEntryIdByMapped(WorldEntry mappedId) {
+    public long getEntryIdByMapped(final WorldEntry mappedId) {
         if (!mappedToTable.containsKey(mappedId)) {
             return -1;
         }
         return mappedToTable.get(mappedId).tableId + MIN_ENTRY_ID;
     }
 
-    public boolean access(WorldEntry mappedId) {
+    public boolean access(final WorldEntry mappedId) {
         update();
-        LookupEntry entry = mappedToTable.get(mappedId);
+        final LookupEntry entry = mappedToTable.get(mappedId);
         if (entry == null) {
             return false;
         }
@@ -177,7 +179,7 @@ public class CacheLookupTable extends Storable implements IModifiable {
             // Push to top
             tableToMapped.remove(entry.tableId);
             for (int index = entry.tableId + 1; index < tableToMapped.size(); index++) {
-                LookupEntry current = tableToMapped.remove(index);
+                final LookupEntry current = tableToMapped.remove(index);
                 tableToMapped.put(--current.tableId, current);
             }
             entry.tableId = tableToMapped.size() - 1;
@@ -187,25 +189,25 @@ public class CacheLookupTable extends Storable implements IModifiable {
         return true;
     }
 
-    public long acquire(WorldEntry mappedId) {
+    public long acquire(final WorldEntry mappedId) {
         update();
-        LookupEntry entry = mappedToTable.get(mappedId);
+        final LookupEntry entry = mappedToTable.get(mappedId);
         if (entry != null) {
             return entry.tableId;
         }
         return newEntry(mappedId) + MIN_ENTRY_ID;
     }
 
-    private int newEntry(WorldEntry mappedId) {
-        LookupEntry entry = new LookupEntry();
+    private int newEntry(final WorldEntry mappedId) {
+        final LookupEntry entry = new LookupEntry();
         entry.cached = OffsetDateTime.now();
         entry.mappedId = mappedId;
         if (tableToMapped.size() == SIZE) {
             entry.tableId = SIZE - 1;
-            LookupEntry first = tableToMapped.remove(0);
+            final LookupEntry first = tableToMapped.remove(0);
             mappedToTable.remove(first.mappedId);
             for (int index = 1; index < SIZE; index++) {
-                LookupEntry current = tableToMapped.remove(index);
+                final LookupEntry current = tableToMapped.remove(index);
                 tableToMapped.put(--current.tableId, current);
             }
         } else {
@@ -217,16 +219,16 @@ public class CacheLookupTable extends Storable implements IModifiable {
         return entry.tableId;
     }
 
-    public static CacheLookupTable retrieve(IStorage<Storable> storage) {
-        Storable entry = storage.read(ID);
+    public static CacheLookupTable retrieve(final IStorage<Storable> storage) {
+        final Storable entry = storage.read(ID);
         if (entry != null) {
-            if (entry instanceof CacheLookupTable table) {
+            if (entry instanceof final CacheLookupTable table) {
                 return table;
             }
             throw new IllegalStateException("Storage has unknown object at id " + ID);
         }
         // TODO: Customize how many days this table should have
-        CacheLookupTable table = new CacheLookupTable();
+        final CacheLookupTable table = new CacheLookupTable();
         storage.write(table);
         return table;
     }

@@ -40,23 +40,23 @@ public abstract class VersionHandler {
      */
 
     public final void enable() {
-        PluginManager pluginManager = Bukkit.getPluginManager();
+        final PluginManager pluginManager = Bukkit.getPluginManager();
         onEnable(pluginManager);
         pluginManager.registerEvents(bukkitListener, serviceProvider.plugin());
-        for (World world : Bukkit.getWorlds()) {
+        for (final World world : Bukkit.getWorlds()) {
             load(world);
         }
-        for (Player player : Bukkit.getOnlinePlayers()) {
+        for (final Player player : Bukkit.getOnlinePlayers()) {
             join(player);
         }
     }
 
     public final void disable() {
         HandlerList.unregisterAll(bukkitListener);
-        for (Player player : Bukkit.getOnlinePlayers()) {
+        for (final Player player : Bukkit.getOnlinePlayers()) {
             quit(player);
         }
-        for (World world : Bukkit.getWorlds()) {
+        for (final World world : Bukkit.getWorlds()) {
             unload(world);
         }
         onDisable();
@@ -70,48 +70,48 @@ public abstract class VersionHandler {
      * Player management
      */
 
-    public final void broadcast(AbstractPacketOut... packets) {
-        PlayerAdapter[] adapters = players.values().toArray(PlayerAdapter[]::new);
-        for(PlayerAdapter adapter : adapters) {
+    public final void broadcast(final AbstractPacketOut... packets) {
+        final PlayerAdapter[] adapters = players.values().toArray(PlayerAdapter[]::new);
+        for (final PlayerAdapter adapter : adapters) {
             adapter.send(packets);
         }
     }
 
-    public final PlayerAdapter getPlayer(UUID playerId) {
+    public final PlayerAdapter getPlayer(final UUID playerId) {
         if (players.containsKey(playerId)) {
             return players.get(playerId);
         }
-        Player player = Bukkit.getPlayer(playerId);
+        final Player player = Bukkit.getPlayer(playerId);
         if (player == null) {
             return null;
         }
-        PlayerAdapter adapter = createAdapter(player);
+        final PlayerAdapter adapter = createAdapter(player);
         players.put(playerId, applyCapabilities(adapter));
         return adapter;
     }
 
-    public final PlayerAdapter getPlayer(Player player) {
+    public final PlayerAdapter getPlayer(final Player player) {
         if (player == null) {
             return null;
         }
-        UUID playerId = player.getUniqueId();
+        final UUID playerId = player.getUniqueId();
         if (players.containsKey(playerId)) {
             return players.get(playerId);
         }
-        PlayerAdapter adapter = createAdapter(player);
+        final PlayerAdapter adapter = createAdapter(player);
         players.put(playerId, applyCapabilities(adapter));
         return adapter;
     }
 
-    final void join(Player player) {
+    final void join(final Player player) {
         if (players.containsKey(player.getUniqueId())) {
             return;
         }
         players.put(player.getUniqueId(), applyCapabilities(createAdapter(player)));
     }
 
-    final void quit(Player player) {
-        PlayerAdapter adapter = players.remove(player.getUniqueId());
+    final void quit(final Player player) {
+        final PlayerAdapter adapter = players.remove(player.getUniqueId());
         if (adapter == null) {
             return;
         }
@@ -127,41 +127,41 @@ public abstract class VersionHandler {
      * Level management
      */
 
-    public final LevelAdapter getLevel(UUID levelId) {
+    public final LevelAdapter getLevel(final UUID levelId) {
         if (levels.containsKey(levelId)) {
             return levels.get(levelId);
         }
-        World world = Bukkit.getWorld(levelId);
+        final World world = Bukkit.getWorld(levelId);
         if (world == null) {
             return null;
         }
-        LevelAdapter adapter = createAdapter(world);
+        final LevelAdapter adapter = createAdapter(world);
         levels.put(levelId, applyCapabilities(adapter));
         return adapter;
     }
 
-    public final LevelAdapter getLevel(World world) {
+    public final LevelAdapter getLevel(final World world) {
         if (world == null) {
             return null;
         }
-        UUID levelId = world.getUID();
+        final UUID levelId = world.getUID();
         if (levels.containsKey(levelId)) {
             return levels.get(levelId);
         }
-        LevelAdapter adapter = createAdapter(world);
+        final LevelAdapter adapter = createAdapter(world);
         levels.put(levelId, applyCapabilities(adapter));
         return adapter;
     }
 
-    final void load(World world) {
+    final void load(final World world) {
         if (levels.containsKey(world.getUID())) {
             return;
         }
         levels.put(world.getUID(), applyCapabilities(createAdapter(world)));
     }
 
-    final void unload(World world) {
-        LevelAdapter adapter = levels.remove(world.getUID());
+    final void unload(final World world) {
+        final LevelAdapter adapter = levels.remove(world.getUID());
         if (adapter == null) {
             return;
         }
@@ -177,13 +177,13 @@ public abstract class VersionHandler {
      * Capabilities
      */
 
-    private final <T extends Capable<?>> T applyCapabilities(T capable) {
+    private final <T extends Capable<?>> T applyCapabilities(final T capable) {
         capabilityManager.forEach(provider -> capable.addCapabilities(this, provider));
         return capable;
     }
 
-    private final void terminateCapabilities(Capable<?> capable) {
-        for (ICapability capability : capable.getCapabilities()) {
+    private final void terminateCapabilities(final Capable<?> capable) {
+        for (final ICapability capability : capable.getCapabilities()) {
             capability.terminate();
         }
     }

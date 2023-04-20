@@ -16,35 +16,35 @@ public abstract class PacketManager {
 
     private final ArrayList<PacketContainer> listeners = new ArrayList<>();
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-    
+
     private final ISimpleLogger logger;
-    
+
     private final ExecutorService mainService;
     private final ExecutorService asyncService;
-    
+
     public PacketManager(final VersionHandler handler) {
         this.logger = handler.logger();
         this.mainService = handler.mainService();
         this.asyncService = handler.asyncService();
     }
-    
+
     public final ISimpleLogger logger() {
         return logger;
     }
-    
+
     public final ExecutorService mainService() {
         return mainService;
     }
-    
+
     public final ExecutorService asyncService() {
         return asyncService;
     }
 
-    public final PacketContainer register(IPacketListener listener) {
+    public final PacketContainer register(final IPacketListener listener) {
         lock.readLock().lock();
         try {
             for (int index = 0; index < listeners.size(); index++) {
-                PacketContainer container = listeners.get(index);
+                final PacketContainer container = listeners.get(index);
                 if (container.getInstance() == listener) {
                     return container;
                 }
@@ -52,7 +52,7 @@ public abstract class PacketManager {
         } finally {
             lock.readLock().unlock();
         }
-        PacketContainer container = new PacketContainer(logger, mainService, asyncService, listener);
+        final PacketContainer container = new PacketContainer(logger, mainService, asyncService, listener);
         lock.writeLock().lock();
         try {
             listeners.add(container);
@@ -62,7 +62,7 @@ public abstract class PacketManager {
         return container;
     }
 
-    public final boolean unregister(PacketContainer container) {
+    public final boolean unregister(final PacketContainer container) {
         lock.readLock().lock();
         try {
             if (!listeners.contains(container)) {
@@ -79,7 +79,7 @@ public abstract class PacketManager {
         }
     }
 
-    public final boolean call(PlayerAdapter player, AbstractPacket packet) {
+    public final boolean call(final PlayerAdapter player, final AbstractPacket packet) {
         lock.readLock().lock();
         try {
             if (listeners.isEmpty()) {

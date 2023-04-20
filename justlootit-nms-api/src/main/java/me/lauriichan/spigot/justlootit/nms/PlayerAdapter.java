@@ -18,11 +18,11 @@ public abstract class PlayerAdapter extends Capable<PlayerAdapter> {
     public PlayerAdapter(final UUID uniqueId) {
         this.uniqueId = uniqueId;
     }
-    
+
     public abstract VersionHandler versionHandler();
-    
+
     public abstract Object asMinecraft();
-    
+
     public String getName() {
         return asBukkit().getName();
     }
@@ -31,65 +31,65 @@ public abstract class PlayerAdapter extends Capable<PlayerAdapter> {
         return uniqueId;
     }
 
-    public final void removeData(String key) {
+    public final void removeData(final String key) {
         this.data.remove(key);
     }
 
-    public final boolean hasData(String key) {
+    public final boolean hasData(final String key) {
         return data.containsKey(key);
     }
 
-    public final boolean hasData(String key, Class<?> type) {
-        Object value = data.get(key);
+    public final boolean hasData(final String key, final Class<?> type) {
+        final Object value = data.get(key);
         return value != null && type.isAssignableFrom(value.getClass());
     }
 
-    public final Object getData(String key) {
+    public final Object getData(final String key) {
         return data.get(key);
     }
 
-    public final Object getDataOrFallback(String key, Object fallback) {
-        Object value = data.get(key);
+    public final Object getDataOrFallback(final String key, final Object fallback) {
+        final Object value = data.get(key);
         if (value == null) {
             return fallback;
         }
         return value;
     }
 
-    public final <E> E getData(String key, Class<E> type) {
-        Object value = this.data.get(key);
+    public final <E> E getData(final String key, final Class<E> type) {
+        final Object value = this.data.get(key);
         if (value == null || !type.isAssignableFrom(value.getClass())) {
             return null;
         }
         return type.cast(value);
     }
 
-    public final <E> E getDataOrFallback(String key, E fallback, Class<E> type) {
-        Object value = this.data.get(key);
+    public final <E> E getDataOrFallback(final String key, final E fallback, final Class<E> type) {
+        final Object value = this.data.get(key);
         if (value == null || !type.isAssignableFrom(value.getClass())) {
             return fallback;
         }
         return type.cast(value);
     }
 
-    public final void setData(String key, Object data) {
+    public final void setData(final String key, final Object data) {
         this.data.put(key, data);
     }
-    
-    public final int createAnvilMenu(String name) {
+
+    public final int createAnvilMenu(final String name) {
         return createAnvilMenu(name, new ItemStack(Material.PAPER));
     }
-    
+
     public abstract int createAnvilMenu(String name, ItemStack placeholderItem);
 
     public abstract void reopenMenu();
-    
+
     public abstract void closeMenu();
-    
+
     public abstract LevelAdapter getLevel();
 
     public abstract IPlayerNetwork getNetwork();
-    
+
     public abstract Player asBukkit();
 
     public abstract int getPermissionLevel();
@@ -97,6 +97,5 @@ public abstract class PlayerAdapter extends Capable<PlayerAdapter> {
     public abstract void acknowledgeBlockChangesUpTo(int sequence);
 
     public abstract void send(AbstractPacketOut... packets);
-
 
 }

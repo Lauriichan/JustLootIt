@@ -5,27 +5,35 @@ import org.bukkit.craftbukkit.v1_19_R3.CraftWorld;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
 
-import me.lauriichan.spigot.justlootit.nms.*;
-import me.lauriichan.spigot.justlootit.nms.packet.*;
-import me.lauriichan.spigot.justlootit.nms.v1_19_R3.io.*;
-import me.lauriichan.spigot.justlootit.nms.v1_19_R3.network.*;
-import me.lauriichan.spigot.justlootit.nms.v1_19_R3.packet.*;
-
-import net.minecraft.network.protocol.game.*;
+import me.lauriichan.spigot.justlootit.nms.IServiceProvider;
+import me.lauriichan.spigot.justlootit.nms.LevelAdapter;
+import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
+import me.lauriichan.spigot.justlootit.nms.VersionHandler;
+import me.lauriichan.spigot.justlootit.nms.packet.PacketOutSetEntityData;
+import me.lauriichan.spigot.justlootit.nms.v1_19_R3.io.ItemStackIO1_19_R3;
+import me.lauriichan.spigot.justlootit.nms.v1_19_R3.network.PacketManager1_19_R3;
+import me.lauriichan.spigot.justlootit.nms.v1_19_R3.packet.PacketInContainerClick1_19_R3;
+import me.lauriichan.spigot.justlootit.nms.v1_19_R3.packet.PacketInSwingArm1_19_R3;
+import me.lauriichan.spigot.justlootit.nms.v1_19_R3.packet.PacketInUseItemOn1_19_R3;
+import me.lauriichan.spigot.justlootit.nms.v1_19_R3.packet.PacketOutSetEntityData1_19_R3;
+import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket;
+import net.minecraft.network.protocol.game.ServerboundContainerClickPacket;
+import net.minecraft.network.protocol.game.ServerboundSwingPacket;
+import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
 
 public final class VersionHandler1_19_R3 extends VersionHandler implements IServiceProvider {
 
     private final PacketManager1_19_R3 packetManager;
     private final VersionHelper1_19_R3 versionHelper;
 
-    public VersionHandler1_19_R3(IServiceProvider provider) {
+    public VersionHandler1_19_R3(final IServiceProvider provider) {
         super(provider);
         this.packetManager = new PacketManager1_19_R3(this);
         this.versionHelper = new VersionHelper1_19_R3(this);
     }
 
     @Override
-    protected void onEnable(PluginManager pluginManager) {
+    protected void onEnable(final PluginManager pluginManager) {
         registerPackets();
         packetManager.finish();
         registerIO();
@@ -41,7 +49,7 @@ public final class VersionHandler1_19_R3 extends VersionHandler implements IServ
         // Outgoing packets (adapter)
         packetManager.registerAdapter(PacketOutSetEntityData.class, PacketOutSetEntityData1_19_R3::new);
     }
-    
+
     private void registerIO() {
         io.register(ItemStackIO1_19_R3.ITEM_STACK);
     }
@@ -55,14 +63,14 @@ public final class VersionHandler1_19_R3 extends VersionHandler implements IServ
     public VersionHelper1_19_R3 versionHelper() {
         return versionHelper;
     }
-    
+
     @Override
-    protected PlayerAdapter createAdapter(Player player) {
+    protected PlayerAdapter createAdapter(final Player player) {
         return new PlayerAdapter1_19_R3(this, player);
     }
 
     @Override
-    protected void terminateAdapter(PlayerAdapter adapter) {
+    protected void terminateAdapter(final PlayerAdapter adapter) {
         if (!(adapter instanceof PlayerAdapter1_19_R3)) {
             return;
         }
@@ -70,14 +78,14 @@ public final class VersionHandler1_19_R3 extends VersionHandler implements IServ
     }
 
     @Override
-    protected LevelAdapter createAdapter(World world) {
-        if(!(world instanceof CraftWorld)) {
+    protected LevelAdapter createAdapter(final World world) {
+        if (!(world instanceof CraftWorld)) {
             return null;
         }
         return new LevelAdapter1_19_R3(this, ((CraftWorld) world).getHandle());
     }
 
     @Override
-    protected void terminateAdapter(LevelAdapter adapter) {}
+    protected void terminateAdapter(final LevelAdapter adapter) {}
 
 }

@@ -16,24 +16,24 @@ public final class StaticContainer extends Container implements IInventoryContai
         private final IOHandler<ItemStack> itemIO = DataIO.find(ItemStack.class);
 
         @Override
-        protected void serializeSpecial(StaticContainer storable, ByteBuf buffer) {
+        protected void serializeSpecial(final StaticContainer storable, final ByteBuf buffer) {
             itemIO.serializeArray(buffer, storable.items);
         }
 
         @Override
-        protected StaticContainer deserializeSpecial(long id, ContainerData data, ByteBuf buffer) {
+        protected StaticContainer deserializeSpecial(final long id, final ContainerData data, final ByteBuf buffer) {
             return new StaticContainer(id, data, itemIO.deserializeArray(buffer));
         }
     };
 
     private ItemStack[] items;
 
-    public StaticContainer(long id, final Inventory inventory) {
+    public StaticContainer(final long id, final Inventory inventory) {
         super(id);
         saveFrom(inventory);
     }
 
-    private StaticContainer(long id, ContainerData data, final ItemStack[] items) {
+    private StaticContainer(final long id, final ContainerData data, final ItemStack[] items) {
         super(id, data);
         this.items = items;
     }
@@ -42,10 +42,10 @@ public final class StaticContainer extends Container implements IInventoryContai
         return items;
     }
 
-    public void loadTo(Inventory inventory) {
-        int size = Math.min(inventory.getSize(), items.length);
+    public void loadTo(final Inventory inventory) {
+        final int size = Math.min(inventory.getSize(), items.length);
         for (int index = 0; index < size; index++) {
-            ItemStack item = items[index];
+            final ItemStack item = items[index];
             if (item == null) {
                 inventory.clear(index);
                 continue;
@@ -54,11 +54,11 @@ public final class StaticContainer extends Container implements IInventoryContai
         }
     }
 
-    public void saveFrom(Inventory inventory) {
-        ItemStack[] contents = inventory.getContents();
-        ItemStack[] items = new ItemStack[contents.length];
+    public void saveFrom(final Inventory inventory) {
+        final ItemStack[] contents = inventory.getContents();
+        final ItemStack[] items = new ItemStack[contents.length];
         for (int index = 0; index < contents.length; index++) {
-            ItemStack item = contents[index];
+            final ItemStack item = contents[index];
             if (item == null || item.getType().isAir()) {
                 items[index] = null;
                 continue;
@@ -70,7 +70,7 @@ public final class StaticContainer extends Container implements IInventoryContai
     }
 
     @Override
-    public void fill(PlayerAdapter player, Location location, Inventory inventory) {
+    public void fill(final PlayerAdapter player, final Location location, final Inventory inventory) {
         loadTo(inventory);
     }
 

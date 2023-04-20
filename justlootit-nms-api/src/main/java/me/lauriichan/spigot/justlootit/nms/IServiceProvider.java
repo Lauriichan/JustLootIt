@@ -7,13 +7,13 @@ import org.bukkit.plugin.Plugin;
 import me.lauriichan.laylib.logger.ISimpleLogger;
 
 public interface IServiceProvider {
-    
+
     Plugin plugin();
-    
+
     ISimpleLogger logger();
-    
+
     ExecutorService mainService();
-    
+
     ExecutorService asyncService();
 
 }

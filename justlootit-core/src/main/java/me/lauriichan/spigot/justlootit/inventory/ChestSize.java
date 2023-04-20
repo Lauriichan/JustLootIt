@@ -1,7 +1,7 @@
 package me.lauriichan.spigot.justlootit.inventory;
 
 public enum ChestSize {
-    
+
     GRID_1x9(1),
     GRID_2x9(2),
     GRID_3x9(3),
@@ -11,7 +11,7 @@ public enum ChestSize {
 
     private final int inventorySize;
 
-    private ChestSize(final int gridSize) {
+    ChestSize(final int gridSize) {
         this.inventorySize = gridSize * 9;
     }
 

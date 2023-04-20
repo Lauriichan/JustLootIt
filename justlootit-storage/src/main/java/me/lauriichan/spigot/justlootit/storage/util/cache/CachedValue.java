@@ -18,7 +18,7 @@ public final class CachedValue<V> {
         return value;
     }
 
-    public void value(V value) {
+    public void value(final V value) {
         time = 0;
         this.value = value;
     }

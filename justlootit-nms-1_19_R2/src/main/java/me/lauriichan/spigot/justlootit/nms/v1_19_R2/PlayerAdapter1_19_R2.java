@@ -12,8 +12,8 @@ import io.netty.channel.Channel;
 import me.lauriichan.spigot.justlootit.nms.LevelAdapter;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.nms.packet.AbstractPacketOut;
-import me.lauriichan.spigot.justlootit.nms.v1_19_R2.network.*;
-import me.lauriichan.spigot.justlootit.nms.v1_19_R2.util.*;
+import me.lauriichan.spigot.justlootit.nms.v1_19_R2.network.PlayerNetwork1_19_R2;
+import me.lauriichan.spigot.justlootit.nms.v1_19_R2.util.MinecraftConstant1_19_R2;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientboundContainerClosePacket;
@@ -30,7 +30,7 @@ public final class PlayerAdapter1_19_R2 extends PlayerAdapter {
     private final CraftPlayer bukkit;
     private final ServerPlayer minecraft;
 
-    public PlayerAdapter1_19_R2(VersionHandler1_19_R2 versionHandler, Player player) {
+    public PlayerAdapter1_19_R2(final VersionHandler1_19_R2 versionHandler, final Player player) {
         super(player.getUniqueId());
         this.bukkit = (CraftPlayer) player;
         this.minecraft = bukkit.getHandle();
@@ -38,10 +38,10 @@ public final class PlayerAdapter1_19_R2 extends PlayerAdapter {
         this.versionHandler = versionHandler;
     }
 
-    final void terminate() {
+    void terminate() {
         network.setActive(false);
     }
-    
+
     @Override
     public VersionHandler1_19_R2 versionHandler() {
         return versionHandler;
@@ -58,11 +58,12 @@ public final class PlayerAdapter1_19_R2 extends PlayerAdapter {
     }
 
     @Override
-    public int createAnvilMenu(String name, ItemStack itemStack) {
-        if(!Bukkit.isPrimaryThread()) {
+    public int createAnvilMenu(final String name, final ItemStack itemStack) {
+        if (!Bukkit.isPrimaryThread()) {
             return CompletableFuture.supplyAsync(() -> createAnvilMenu(name, itemStack), network.packetManager().mainService()).join();
         }
-        AnvilMenu menu = new AnvilMenu(minecraft.nextContainerCounter(), minecraft.getInventory(), MinecraftConstant1_19_R2.BETTER_NULL);
+        final AnvilMenu menu = new AnvilMenu(minecraft.nextContainerCounter(), minecraft.getInventory(),
+            MinecraftConstant1_19_R2.BETTER_NULL);
         menu.getSlot(0).set(CraftItemStack.asNMSCopy(itemStack));
         menu.setTitle(Component.literal(name));
         minecraft.containerMenu = menu;
@@ -73,7 +74,7 @@ public final class PlayerAdapter1_19_R2 extends PlayerAdapter {
 
     @Override
     public void reopenMenu() {
-        AbstractContainerMenu menu = minecraft.containerMenu;
+        final AbstractContainerMenu menu = minecraft.containerMenu;
         minecraft.connection.send(new ClientboundOpenScreenPacket(menu.containerId, menu.getType(), menu.getTitle()));
     }
 
@@ -87,7 +88,7 @@ public final class PlayerAdapter1_19_R2 extends PlayerAdapter {
     public CraftPlayer asBukkit() {
         return bukkit;
     }
-    
+
     @Override
     public LevelAdapter getLevel() {
         return versionHandler.getLevel(minecraft.getLevel().getWorld());
@@ -99,11 +100,11 @@ public final class PlayerAdapter1_19_R2 extends PlayerAdapter {
     }
 
     @Override
-    public void send(AbstractPacketOut... packets) {
+    public void send(final AbstractPacketOut... packets) {
         if (minecraft.connection.isDisconnected()) {
             return;
         }
-        for (AbstractPacketOut packet : packets) {
+        for (final AbstractPacketOut packet : packets) {
             if (!(packet.asMinecraft() instanceof Packet)) {
                 continue;
             }
@@ -112,7 +113,7 @@ public final class PlayerAdapter1_19_R2 extends PlayerAdapter {
     }
 
     @Override
-    public void acknowledgeBlockChangesUpTo(int sequence) {
+    public void acknowledgeBlockChangesUpTo(final int sequence) {
         minecraft.connection.ackBlockChangesUpTo(sequence);
     }
 

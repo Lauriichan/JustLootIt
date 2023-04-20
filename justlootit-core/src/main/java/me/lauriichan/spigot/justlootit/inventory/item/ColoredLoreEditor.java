@@ -4,10 +4,10 @@ import java.util.List;
 
 public final class ColoredLoreEditor extends ColoredStringEditor<ColoredLoreEditor> {
 
-    public ColoredLoreEditor(ItemEditor editor) {
+    public ColoredLoreEditor(final ItemEditor editor) {
         super(editor);
     }
-    
+
     public List<String> asPlainList() {
         return content.asPlainList();
     }

@@ -13,7 +13,7 @@ public final class PluginProvider implements IProviderArgumentType<JustLootItPlu
     }
 
     @Override
-    public JustLootItPlugin provide(Actor<?> actor) {
+    public JustLootItPlugin provide(final Actor<?> actor) {
         return plugin;
     }
 

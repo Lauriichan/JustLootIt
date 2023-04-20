@@ -14,7 +14,7 @@ import me.lauriichan.spigot.justlootit.util.attribute.IAttributable;
 
 public interface IGuiInventory extends IAttributable {
 
-    static int getRowSize(InventoryType type) {
+    static int getRowSize(final InventoryType type) {
         switch (type) {
         case DISPENSER:
         case DROPPER:
@@ -42,7 +42,7 @@ public interface IGuiInventory extends IAttributable {
      * 
      * @param entity the entity to open the inventory for
      */
-    default void open(HumanEntity entity) {
+    default void open(final HumanEntity entity) {
         entity.openInventory(getInventory());
     }
 
@@ -178,7 +178,7 @@ public interface IGuiInventory extends IAttributable {
      * 
      * @throws IndexOutOfBoundsException if slot index is out of bounds
      */
-    default ItemStack getItemStack(int index) throws IndexOutOfBoundsException {
+    default ItemStack getItemStack(final int index) throws IndexOutOfBoundsException {
         return get(index);
     }
 
@@ -194,7 +194,7 @@ public interface IGuiInventory extends IAttributable {
      * @throws IndexOutOfBoundsException if converted slot index would be out of
      *                                   bounds
      */
-    default ItemStack getItemStack(int row, int column) throws IndexOutOfBoundsException {
+    default ItemStack getItemStack(final int row, final int column) throws IndexOutOfBoundsException {
         return getItemStack(GridMath.checkSlot(row, column, getRowSize(), getColumnAmount()));
     }
 
@@ -208,7 +208,7 @@ public interface IGuiInventory extends IAttributable {
      * 
      * @throws IndexOutOfBoundsException if slot index is out of bounds
      */
-    default ItemEditor getItemEditor(int index) throws IndexOutOfBoundsException {
+    default ItemEditor getItemEditor(final int index) throws IndexOutOfBoundsException {
         return ItemEditor.ofNullable(getItemStack(index));
     }
 
@@ -224,7 +224,7 @@ public interface IGuiInventory extends IAttributable {
      * @throws IndexOutOfBoundsException if converted slot index would be out of
      *                                   bounds
      */
-    default ItemEditor getItemEditor(int row, int column) throws IndexOutOfBoundsException {
+    default ItemEditor getItemEditor(final int row, final int column) throws IndexOutOfBoundsException {
         return ItemEditor.ofNullable(getItemStack(row, column));
     }
 
@@ -246,7 +246,7 @@ public interface IGuiInventory extends IAttributable {
      * 
      * @throws IndexOutOfBoundsException if slot index is out of bounds
      */
-    default void setItemStack(int index, ItemStack itemStack) throws IndexOutOfBoundsException {
+    default void setItemStack(final int index, final ItemStack itemStack) throws IndexOutOfBoundsException {
         set(index, itemStack);
     }
 
@@ -260,7 +260,7 @@ public interface IGuiInventory extends IAttributable {
      * @throws IndexOutOfBoundsException if converted slot index would be out of
      *                                   bounds
      */
-    default void setItemStack(int row, int column, ItemStack itemStack) throws IndexOutOfBoundsException {
+    default void setItemStack(final int row, final int column, final ItemStack itemStack) throws IndexOutOfBoundsException {
         setItemStack(GridMath.checkSlot(row, column, getRowSize(), getColumnAmount()), itemStack);
     }
 
@@ -273,7 +273,7 @@ public interface IGuiInventory extends IAttributable {
      * 
      * @throws IndexOutOfBoundsException if slot index is out of bounds
      */
-    default void setItemEditor(int index, ItemEditor editor) throws IndexOutOfBoundsException {
+    default void setItemEditor(final int index, final ItemEditor editor) throws IndexOutOfBoundsException {
         if (editor == null) {
             setItemStack(index, null);
             return;
@@ -292,7 +292,7 @@ public interface IGuiInventory extends IAttributable {
      * @throws IndexOutOfBoundsException if converted slot index would be out of
      *                                   bounds
      */
-    default void setItemEditor(int row, int column, ItemEditor editor) throws IndexOutOfBoundsException {
+    default void setItemEditor(final int row, final int column, final ItemEditor editor) throws IndexOutOfBoundsException {
         if (editor == null) {
             setItemStack(row, column, null);
             return;

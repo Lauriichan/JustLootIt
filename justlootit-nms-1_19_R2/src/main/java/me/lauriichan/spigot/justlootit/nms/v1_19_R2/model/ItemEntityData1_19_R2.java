@@ -15,7 +15,7 @@ public class ItemEntityData1_19_R2 extends EntityData1_19_R2 implements IItemEnt
     private boolean changed = false;
     private boolean dirty = false;
 
-    ItemEntityData1_19_R2(DataValue<ItemStack> value) {
+    ItemEntityData1_19_R2(final DataValue<ItemStack> value) {
         this.value = value;
         this.itemStack = CraftItemStack.asCraftMirror(value.value());
     }
@@ -31,7 +31,7 @@ public class ItemEntityData1_19_R2 extends EntityData1_19_R2 implements IItemEnt
     }
 
     @Override
-    public void setItem(org.bukkit.inventory.ItemStack itemStack) {
+    public void setItem(final org.bukkit.inventory.ItemStack itemStack) {
         if (Objects.equals(this.itemStack, itemStack)) {
             return;
         }

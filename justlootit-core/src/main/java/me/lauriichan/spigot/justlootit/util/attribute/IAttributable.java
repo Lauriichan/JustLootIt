@@ -5,37 +5,37 @@ import java.util.Set;
 
 public interface IAttributable {
 
-    default Object attr(String key) {
+    default Object attr(final String key) {
         return null;
     }
 
-    default <T> T attr(String key, Class<T> type) {
+    default <T> T attr(final String key, final Class<T> type) {
         return null;
     }
 
-    default <T> T attrOrDefault(String key, Class<T> type, T fallback) {
+    default <T> T attrOrDefault(final String key, final Class<T> type, final T fallback) {
         return fallback;
     }
 
-    default boolean attrHas(String key) {
+    default boolean attrHas(final String key) {
         return false;
     }
 
-    default boolean attrHas(String key, Class<?> type) {
+    default boolean attrHas(final String key, final Class<?> type) {
         return false;
     }
 
-    default void attrSet(String key, Object object) {}
+    default void attrSet(final String key, final Object object) {}
 
-    default Object attrUnset(String key) {
+    default Object attrUnset(final String key) {
         return null;
     }
-    
-    default <T> T attrUnset(String key, Class<T> type) {
+
+    default <T> T attrUnset(final String key, final Class<T> type) {
         return null;
     }
-    
-    default <T> T attrUnsetOrDefault(String key, Class<T> type, T fallback) {
+
+    default <T> T attrUnsetOrDefault(final String key, final Class<T> type, final T fallback) {
         return null;
     }
 

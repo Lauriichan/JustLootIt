@@ -7,12 +7,14 @@ import java.util.Objects;
 import java.util.function.Function;
 
 import me.lauriichan.laylib.reflection.ClassUtil;
-import me.lauriichan.spigot.justlootit.nms.packet.*;
+import me.lauriichan.spigot.justlootit.nms.packet.AbstractPacket;
+import me.lauriichan.spigot.justlootit.nms.packet.AbstractPacketOut;
 import me.lauriichan.spigot.justlootit.nms.packet.listener.PacketManager;
 import me.lauriichan.spigot.justlootit.nms.util.Ref;
 import me.lauriichan.spigot.justlootit.nms.util.argument.ArgumentMap;
 import me.lauriichan.spigot.justlootit.nms.util.argument.NotEnoughArgumentsException;
-import me.lauriichan.spigot.justlootit.nms.v1_19_R3.*;
+import me.lauriichan.spigot.justlootit.nms.v1_19_R3.PlayerAdapter1_19_R3;
+import me.lauriichan.spigot.justlootit.nms.v1_19_R3.VersionHandler1_19_R3;
 import net.minecraft.network.protocol.Packet;
 
 public final class PacketManager1_19_R3 extends PacketManager {
@@ -28,7 +30,7 @@ public final class PacketManager1_19_R3 extends PacketManager {
         }
 
         // We are sure that this is the correct packet type
-        AbstractPacket build(Packet<?> packet) {
+        AbstractPacket build(final Packet<?> packet) {
             return creator.apply(packetType.cast(packet));
         }
 
@@ -37,11 +39,11 @@ public final class PacketManager1_19_R3 extends PacketManager {
     private Map<Class<?>, NmsPacketBuilder<?>> nmsBuilders = new HashMap<>();
     private Map<Class<?>, Function<ArgumentMap, ? extends AbstractPacketOut>> adapterBuilders = new HashMap<>();
 
-    public PacketManager1_19_R3(VersionHandler1_19_R3 handler) {
+    public PacketManager1_19_R3(final VersionHandler1_19_R3 handler) {
         super(handler);
     }
 
-    public final <P extends Packet<?>> void register(Class<P> packetType, Function<P, AbstractPacket> function) {
+    public <P extends Packet<?>> void register(final Class<P> packetType, final Function<P, AbstractPacket> function) {
         if (!(nmsBuilders instanceof HashMap)) {
             return;
         }
@@ -53,7 +55,8 @@ public final class PacketManager1_19_R3 extends PacketManager {
         nmsBuilders.put(packetType, new NmsPacketBuilder<>(packetType, function));
     }
 
-    public final <P extends AbstractPacketOut> void registerAdapter(Class<P> packetType, Function<ArgumentMap, ? extends P> function) {
+    public <P extends AbstractPacketOut> void registerAdapter(final Class<P> packetType,
+        final Function<ArgumentMap, ? extends P> function) {
         if (!(adapterBuilders instanceof HashMap)) {
             return;
         }
@@ -65,19 +68,19 @@ public final class PacketManager1_19_R3 extends PacketManager {
         adapterBuilders.put(packetType, function);
     }
 
-    final boolean call(PlayerAdapter1_19_R3 player, Ref<Packet<?>> nmsPacket) {
-        NmsPacketBuilder<?> builder = nmsBuilders.get(nmsPacket.get().getClass());
+    boolean call(final PlayerAdapter1_19_R3 player, final Ref<Packet<?>> nmsPacket) {
+        final NmsPacketBuilder<?> builder = nmsBuilders.get(nmsPacket.get().getClass());
         if (builder == null) {
             return false;
         }
-        AbstractPacket packet = builder.build(nmsPacket.get());
+        final AbstractPacket packet = builder.build(nmsPacket.get());
         if (packet == null) {
             return false;
         }
         try {
             return call(player, packet);
         } finally {
-            Packet<?> minecraftPacket = (Packet<?>) packet.asMinecraft();
+            final Packet<?> minecraftPacket = (Packet<?>) packet.asMinecraft();
             if (minecraftPacket != nmsPacket.get()) {
                 nmsPacket.set(minecraftPacket);
             }
@@ -85,13 +88,13 @@ public final class PacketManager1_19_R3 extends PacketManager {
     }
 
     @Override
-    public <P extends AbstractPacketOut> P createPacket(ArgumentMap map, Class<P> packetType)
+    public <P extends AbstractPacketOut> P createPacket(final ArgumentMap map, final Class<P> packetType)
         throws NotEnoughArgumentsException, IllegalStateException, IllegalArgumentException {
-        Function<ArgumentMap, ? extends AbstractPacket> function = adapterBuilders.get(packetType);
+        final Function<ArgumentMap, ? extends AbstractPacket> function = adapterBuilders.get(packetType);
         if (function == null) {
             return null;
         }
-        AbstractPacket packet = function.apply(map);
+        final AbstractPacket packet = function.apply(map);
         if (packet == null || !packetType.isAssignableFrom(packet.getClass())) {
             throw new IllegalStateException("Invalid packet of type '" + ClassUtil.getClassName(packetType) + "'!");
         }

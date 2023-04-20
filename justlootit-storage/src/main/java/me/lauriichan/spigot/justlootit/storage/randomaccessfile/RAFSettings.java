@@ -27,7 +27,7 @@ public final class RAFSettings {
          *
          * @return               the same builder
          */
-        public Builder valuesPerFile(int valuesPerFile) {
+        public Builder valuesPerFile(final int valuesPerFile) {
             this.valuesPerFile = valuesPerFile;
             return this;
         }
@@ -40,7 +40,7 @@ public final class RAFSettings {
          *
          * @return                 the same builder
          */
-        public Builder copyBufferBytes(int copyBufferBytes) {
+        public Builder copyBufferBytes(final int copyBufferBytes) {
             this.copyBufferBytes = copyBufferBytes;
             return this;
         }
@@ -53,7 +53,7 @@ public final class RAFSettings {
          *
          * @return                the same builder
          */
-        public Builder fileCacheTicks(long fileCacheTicks) {
+        public Builder fileCacheTicks(final long fileCacheTicks) {
             this.fileCacheTicks = fileCacheTicks;
             return this;
         }
@@ -67,7 +67,7 @@ public final class RAFSettings {
          *
          * @return                    the same builder
          */
-        public Builder fileCachePurgeStep(long fileCachePurgeStep) {
+        public Builder fileCachePurgeStep(final long fileCachePurgeStep) {
             this.fileCachePurgeStep = fileCachePurgeStep;
             return this;
         }
@@ -79,7 +79,7 @@ public final class RAFSettings {
          *
          * @return                    the same builder
          */
-        public Builder fileCacheMaxAmount(int fileCacheMaxAmount) {
+        public Builder fileCacheMaxAmount(final int fileCacheMaxAmount) {
             this.fileCacheMaxAmount = fileCacheMaxAmount;
             return this;
         }
@@ -90,7 +90,7 @@ public final class RAFSettings {
 
     }
 
-    public static final Builder builder() {
+    public static Builder builder() {
         return new Builder();
     }
 
@@ -127,10 +127,11 @@ public final class RAFSettings {
 
     public final int fileCacheMaxAmount;
 
-    private RAFSettings(int valuesPerFile, int copyBufferBytes, long fileCacheTicks, long fileCachePurgeStep, int fileCacheMaxAmount) {
+    private RAFSettings(final int valuesPerFile, final int copyBufferBytes, final long fileCacheTicks, final long fileCachePurgeStep,
+        final int fileCacheMaxAmount) {
         this.copyBufferSize = Math.max(copyBufferBytes * 1024, 1024);
-        this.valueIdBits = Math.max(Integer.bitCount((valuesPerFile - 1) & 0xFFFF), 1);
-        this.valueIdMask = 0xFFFF >>> (Short.SIZE - valueIdBits);
+        this.valueIdBits = Math.max(Integer.bitCount(valuesPerFile - 1 & 0xFFFF), 1);
+        this.valueIdMask = 0xFFFF >>> Short.SIZE - valueIdBits;
         this.valueIdAmount = valueIdMask + 1;
         this.lookupHeaderSize = valueIdAmount * LOOKUP_ENTRY_SIZE + LOOKUP_AMOUNT_SIZE;
         this.fileCacheTicks = Math.max(fileCacheTicks, 30);

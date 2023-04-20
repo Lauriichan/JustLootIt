@@ -17,22 +17,22 @@ final class VersionListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
-    public void onJoin(PlayerJoinEvent event) {
+    public void onJoin(final PlayerJoinEvent event) {
         handler.join(event.getPlayer());
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
-    public void onQuit(PlayerQuitEvent event) {
+    public void onQuit(final PlayerQuitEvent event) {
         handler.quit(event.getPlayer());
     }
-    
+
     @EventHandler(priority = EventPriority.LOWEST)
-    public void onWorldLoad(WorldLoadEvent event) {
+    public void onWorldLoad(final WorldLoadEvent event) {
         handler.load(event.getWorld());
     }
-    
+
     @EventHandler(priority = EventPriority.LOWEST)
-    public void onWorldUnload(WorldUnloadEvent event) {
+    public void onWorldUnload(final WorldUnloadEvent event) {
         handler.unload(event.getWorld());
     }
 

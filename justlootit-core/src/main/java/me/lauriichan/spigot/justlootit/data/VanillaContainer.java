@@ -17,15 +17,15 @@ public final class VanillaContainer extends Container implements IInventoryConta
 
     public static final StorageAdapter<VanillaContainer> ADAPTER = new BaseAdapter<>(VanillaContainer.class, 16) {
         @Override
-        protected void serializeSpecial(VanillaContainer storable, ByteBuf buffer) {
+        protected void serializeSpecial(final VanillaContainer storable, final ByteBuf buffer) {
             DataIO.NAMESPACED_KEY.serialize(buffer, storable.lootTableKey);
             buffer.writeLong(storable.seed);
         }
 
         @Override
-        protected VanillaContainer deserializeSpecial(long id, ContainerData data, ByteBuf buffer) {
-            NamespacedKey key = DataIO.NAMESPACED_KEY.deserialize(buffer);
-            long seed = buffer.readLong();
+        protected VanillaContainer deserializeSpecial(final long id, final ContainerData data, final ByteBuf buffer) {
+            final NamespacedKey key = DataIO.NAMESPACED_KEY.deserialize(buffer);
+            final long seed = buffer.readLong();
             return new VanillaContainer(id, data, key, seed);
         }
     };
@@ -33,13 +33,13 @@ public final class VanillaContainer extends Container implements IInventoryConta
     private NamespacedKey lootTableKey;
     private long seed;
 
-    public VanillaContainer(long id, LootTable lootTable, long seed) {
+    public VanillaContainer(final long id, final LootTable lootTable, final long seed) {
         super(id);
         this.lootTableKey = lootTable.getKey();
         this.seed = seed;
     }
 
-    private VanillaContainer(long id, ContainerData data, NamespacedKey lootTableKey, long seed) {
+    private VanillaContainer(final long id, final ContainerData data, final NamespacedKey lootTableKey, final long seed) {
         super(id, data);
         this.lootTableKey = lootTableKey;
         this.seed = seed;
@@ -53,7 +53,7 @@ public final class VanillaContainer extends Container implements IInventoryConta
         return Bukkit.getLootTable(lootTableKey);
     }
 
-    public void setLootTable(LootTable lootTable) {
+    public void setLootTable(final LootTable lootTable) {
         this.lootTableKey = Objects.requireNonNull(lootTable, "LootTable can't be null").getKey();
         setDirty();
     }
@@ -62,14 +62,14 @@ public final class VanillaContainer extends Container implements IInventoryConta
         return seed;
     }
 
-    public void setSeed(long seed) {
+    public void setSeed(final long seed) {
         this.seed = seed;
         setDirty();
     }
 
     @Override
-    public void fill(PlayerAdapter player, Location location, Inventory inventory) {
-        
+    public void fill(final PlayerAdapter player, final Location location, final Inventory inventory) {
+
     }
 
 }

@@ -2,7 +2,7 @@ package me.lauriichan.spigot.justlootit.inventory.item;
 
 public final class ColoredNameEditor extends ColoredStringEditor<ColoredNameEditor> {
 
-    public ColoredNameEditor(ItemEditor editor) {
+    public ColoredNameEditor(final ItemEditor editor) {
         super(editor);
     }
 

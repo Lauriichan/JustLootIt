@@ -15,22 +15,22 @@ import net.md_5.bungee.api.chat.hover.content.Entity;
 
 public final class Component extends SendableComponent {
 
-    public static Component of(MessageProvider provider, String language) {
+    public static Component of(final MessageProvider provider, final String language) {
         return of(provider.getMessage(language));
     }
 
-    public static Component of(MessageProvider provider) {
+    public static Component of(final MessageProvider provider) {
         return of(provider.getMessage(Actor.DEFAULT_LANGUAGE));
     }
 
-    public static Component of(IMessage message) {
+    public static Component of(final IMessage message) {
         if (message == null) {
             return new Component("");
         }
         return new Component(message.value());
     }
 
-    public static Component of(String message) {
+    public static Component of(final String message) {
         return new Component(message);
     }
 
@@ -64,43 +64,43 @@ public final class Component extends SendableComponent {
         return this;
     }
 
-    public Component clickUrl(String url, Object... format) {
+    public Component clickUrl(final String url, final Object... format) {
         return clickUrl(StringUtil.format(url, format));
     }
 
-    public Component clickFile(String file, Object... format) {
+    public Component clickFile(final String file, final Object... format) {
         return clickFile(StringUtil.format(file, format));
     }
 
-    public Component clickCopy(String copy, Object... format) {
+    public Component clickCopy(final String copy, final Object... format) {
         return clickCopy(StringUtil.format(copy, format));
     }
 
-    public Component clickSuggest(String suggest, Object... format) {
+    public Component clickSuggest(final String suggest, final Object... format) {
         return clickSuggest(StringUtil.format(suggest, format));
     }
 
-    public Component clickRun(String run, Object... format) {
+    public Component clickRun(final String run, final Object... format) {
         return clickRun(StringUtil.format(run, format));
     }
 
-    public Component clickUrl(String url) {
+    public Component clickUrl(final String url) {
         return click(new ClickEvent(ClickEvent.Action.OPEN_URL, url));
     }
 
-    public Component clickFile(String file) {
+    public Component clickFile(final String file) {
         return click(new ClickEvent(ClickEvent.Action.OPEN_FILE, file));
     }
 
-    public Component clickCopy(String copy) {
+    public Component clickCopy(final String copy) {
         return click(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, copy));
     }
 
-    public Component clickSuggest(String suggest) {
+    public Component clickSuggest(final String suggest) {
         return click(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, suggest));
     }
 
-    public Component clickRun(String run) {
+    public Component clickRun(final String run) {
         return click(new ClickEvent(ClickEvent.Action.RUN_COMMAND, run));
     }
 
@@ -117,7 +117,7 @@ public final class Component extends SendableComponent {
         if (entity == null) {
             return this;
         }
-        TextComponent component = new TextComponent();
+        final TextComponent component = new TextComponent();
         component
             .setExtra(Arrays.asList(ComponentParser.parse(entity.getCustomName() == null ? entity.getName() : entity.getCustomName())));
         return hover(new HoverEvent(HoverEvent.Action.SHOW_ENTITY,
@@ -160,7 +160,7 @@ public final class Component extends SendableComponent {
             new net.md_5.bungee.api.chat.hover.content.Text(ComponentParser.parse(string, defaultColor))));
     }
 
-    public Component hover(HoverEvent hover) {
+    public Component hover(final HoverEvent hover) {
         if (this.hover == hover) {
             return this;
         }
@@ -182,13 +182,13 @@ public final class Component extends SendableComponent {
         }
         changed = false;
         if (componentMessage == EMPTY) {
-            BaseComponent[] components = ComponentParser.parse(message, defaultColor, click, hover);
+            final BaseComponent[] components = ComponentParser.parse(message, defaultColor, click, hover);
             if (components == null) {
                 return componentMessage;
             }
-            return (componentMessage = components);
+            return componentMessage = components;
         }
-        for (BaseComponent component : componentMessage) {
+        for (final BaseComponent component : componentMessage) {
             component.setClickEvent(click);
             component.setHoverEvent(hover);
         }

@@ -9,21 +9,21 @@ public enum CommandDescription implements IMessageDefinition {
 
     JUSTLOOTIT_PARENT("Main command for all JustLootIt commands"),
     JUSTLOOTIT_HELP("Gives all information available about a command (without arguments)"),
-    
+
     ;
 
     private final String id;
     private final String fallback;
 
-    private CommandDescription() {
+    CommandDescription() {
         this("");
     }
 
-    private CommandDescription(String[] fallback) {
+    CommandDescription(final String[] fallback) {
         this(Arrays.stream(fallback).collect(Collectors.joining("\n")));
     }
 
-    private CommandDescription(String fallback) {
+    CommandDescription(final String fallback) {
         this.id = "command.description." + name().replace('$', '-').toLowerCase().replace('_', '.');
         this.fallback = fallback;
     }

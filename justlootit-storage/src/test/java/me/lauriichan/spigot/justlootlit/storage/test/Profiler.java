@@ -6,7 +6,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class Profiler {
-    
+
     public static final class Result {
 
         private final List<Long> durations;
@@ -17,7 +17,7 @@ public class Profiler {
         private long min = 0;
         private long max = 0;
 
-        public Result(List<Long> durations) {
+        public Result(final List<Long> durations) {
             this.durations = Collections.unmodifiableList(new ArrayList<>(durations));
             this.amount = durations.size();
         }
@@ -42,7 +42,7 @@ public class Profiler {
             long min = Long.MAX_VALUE;
             long max = 0;
             for (int index = 0; index < amount; index++) {
-                long duration = durations.get(index);
+                final long duration = durations.get(index);
                 if (duration > max) {
                     max = duration;
                 }
@@ -76,7 +76,7 @@ public class Profiler {
     }
 
     public void time() {
-        long time = System.nanoTime();
+        final long time = System.nanoTime();
         if (locked) {
             return;
         }
@@ -92,7 +92,7 @@ public class Profiler {
         if (locked) {
             throw new IllegalStateException("Unsupported when locked");
         }
-        Result result = new Result(durations);
+        final Result result = new Result(durations);
         durations.clear();
         return result;
     }

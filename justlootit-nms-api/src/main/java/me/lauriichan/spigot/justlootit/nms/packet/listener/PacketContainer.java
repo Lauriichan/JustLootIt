@@ -16,7 +16,7 @@ import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.nms.packet.AbstractPacket;
 
 public final class PacketContainer {
-    
+
     private final ISimpleLogger logger;
 
     private final ExecutorService mainService;
@@ -31,24 +31,25 @@ public final class PacketContainer {
 
     private final boolean acceptCancelled;
 
-    public PacketContainer(final ISimpleLogger logger, final ExecutorService mainService, final ExecutorService asyncService, final IPacketListener instance) {
+    public PacketContainer(final ISimpleLogger logger, final ExecutorService mainService, final ExecutorService asyncService,
+        final IPacketListener instance) {
         this.logger = Objects.requireNonNull(logger);
         this.mainService = Objects.requireNonNull(mainService);
         this.asyncService = Objects.requireNonNull(asyncService);
         this.instance = Objects.requireNonNull(instance);
-        ArrayList<PacketExecutor> executors = new ArrayList<>();
-        Method[] methods = ClassUtil.getMethods(instance.getClass());
+        final ArrayList<PacketExecutor> executors = new ArrayList<>();
+        final Method[] methods = ClassUtil.getMethods(instance.getClass());
         boolean acceptCancelled = false;
-        for (Method method : methods) {
+        for (final Method method : methods) {
             if (Modifier.isStatic(method.getModifiers())) {
                 continue;
             }
-            PacketHandler handler = ClassUtil.getAnnotation(method, PacketHandler.class);
+            final PacketHandler handler = ClassUtil.getAnnotation(method, PacketHandler.class);
             if (handler == null) {
                 continue;
             }
-            boolean receiveCancelled = handler.value();
-            PacketExecutor executor = PacketExecutor.analyze(method, receiveCancelled);
+            final boolean receiveCancelled = handler.value();
+            final PacketExecutor executor = PacketExecutor.analyze(method, receiveCancelled);
             if (executor == null) {
                 continue;
             }
@@ -67,7 +68,7 @@ public final class PacketContainer {
     public ISimpleLogger logger() {
         return logger;
     }
-    
+
     public ExecutorService mainService() {
         return mainService;
     }
@@ -93,7 +94,7 @@ public final class PacketContainer {
         }
     }
 
-    public boolean hasUser(UUID id) {
+    public boolean hasUser(final UUID id) {
         lock.readLock().lock();
         try {
             return users.contains(id);
@@ -102,7 +103,7 @@ public final class PacketContainer {
         }
     }
 
-    public boolean addUser(UUID id) {
+    public boolean addUser(final UUID id) {
         if (hasUser(id)) {
             return false;
         }
@@ -114,7 +115,7 @@ public final class PacketContainer {
         }
     }
 
-    public boolean removeUser(UUID id) {
+    public boolean removeUser(final UUID id) {
         if (!hasUser(id)) {
             return false;
         }
@@ -126,7 +127,7 @@ public final class PacketContainer {
         }
     }
 
-    public PacketContainer setGlobal(boolean global) {
+    public PacketContainer setGlobal(final boolean global) {
         this.global = global;
         return this;
     }
@@ -135,13 +136,13 @@ public final class PacketContainer {
         return global;
     }
 
-    final boolean onPacket(PlayerAdapter player, AbstractPacket adapter, boolean cancelled) {
+    boolean onPacket(final PlayerAdapter player, final AbstractPacket adapter, final boolean cancelled) {
         if (!global && !hasUser(player.getUniqueId())) {
             return false;
         }
-        Class<?> packetType = adapter.getClass();
-        for (PacketExecutor executor : executors) {
-            if (!executor.getPacketType().isAssignableFrom(packetType) || (cancelled && !executor.doesAllowCancelled())) {
+        final Class<?> packetType = adapter.getClass();
+        for (final PacketExecutor executor : executors) {
+            if (!executor.getPacketType().isAssignableFrom(packetType) || cancelled && !executor.doesAllowCancelled()) {
                 continue;
             }
             return executor.execute(this, player, adapter);

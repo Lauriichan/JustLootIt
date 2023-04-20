@@ -30,14 +30,14 @@ public final class BukkitCommandInjectedBridge implements CommandExecutor, TabCo
 
     public static record CommandDefinition(String prefix, String name, List<String> aliases, String description) {
 
-        public CommandDefinition(String prefix, String name, List<String> aliases, String description) {
+        public CommandDefinition(final String prefix, final String name, final List<String> aliases, final String description) {
             this.prefix = prefix;
             this.name = name;
             this.aliases = Collections.unmodifiableList(aliases);
             this.description = description;
         }
 
-        public static final Builder of(String name) {
+        public static final Builder of(final String name) {
             return new Builder(name);
         }
 
@@ -48,16 +48,16 @@ public final class BukkitCommandInjectedBridge implements CommandExecutor, TabCo
             private String description;
             private String prefix;
 
-            private Builder(String name) {
+            private Builder(final String name) {
                 this.name = name;
             }
 
-            public Builder prefix(String prefix) {
+            public Builder prefix(final String prefix) {
                 this.prefix = prefix;
                 return this;
             }
 
-            public Builder alias(String alias) {
+            public Builder alias(final String alias) {
                 if (aliases.contains(alias)) {
                     return this;
                 }
@@ -65,12 +65,12 @@ public final class BukkitCommandInjectedBridge implements CommandExecutor, TabCo
                 return this;
             }
 
-            public Builder description(String description) {
+            public Builder description(final String description) {
                 this.description = description;
                 return this;
             }
 
-            public CommandDefinition build(Plugin plugin) {
+            public CommandDefinition build(final Plugin plugin) {
                 String prefix = this.prefix;
                 if (prefix == null || prefix.isBlank()) {
                     prefix = plugin.getName();
@@ -82,7 +82,7 @@ public final class BukkitCommandInjectedBridge implements CommandExecutor, TabCo
 
     }
 
-    private static final String[] EMPTY_ARGS = new String[0];
+    private static final String[] EMPTY_ARGS = {};
 
     private final Plugin plugin;
     private final VersionHelper versionHelper;
@@ -107,9 +107,9 @@ public final class BukkitCommandInjectedBridge implements CommandExecutor, TabCo
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        String commandName = args.length == 0 ? fallbackCommand : args[0];
-        String[] newArgs = args.length <= 1 ? EMPTY_ARGS : new String[args.length - 1];
+    public boolean onCommand(final CommandSender sender, final Command command, final String label, final String[] args) {
+        final String commandName = args.length == 0 ? fallbackCommand : args[0];
+        final String[] newArgs = args.length <= 1 ? EMPTY_ARGS : new String[args.length - 1];
         if (newArgs.length != 0) {
             System.arraycopy(args, 1, newArgs, 0, newArgs.length);
         }
@@ -118,13 +118,13 @@ public final class BukkitCommandInjectedBridge implements CommandExecutor, TabCo
     }
 
     @Override
-    public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
-        String commandName = args.length == 0 ? "" : args[0];
-        String[] newArgs = args.length <= 1 ? EMPTY_ARGS : new String[args.length - 1];
+    public List<String> onTabComplete(final CommandSender sender, final Command command, final String label, final String[] args) {
+        final String commandName = args.length == 0 ? "" : args[0];
+        final String[] newArgs = args.length <= 1 ? EMPTY_ARGS : new String[args.length - 1];
         if (newArgs.length != 0) {
             System.arraycopy(args, 1, newArgs, 0, newArgs.length);
         }
-        Triple<NodeCommand, Node, String> triple = commandManager.findNode(commandName, newArgs);
+        final Triple<NodeCommand, Node, String> triple = commandManager.findNode(commandName, newArgs);
         if (triple == null) {
             if (newArgs.length == 1) {
                 return Arrays.asList(commandManager.getCommands());
@@ -141,7 +141,7 @@ public final class BukkitCommandInjectedBridge implements CommandExecutor, TabCo
      * Management
      */
 
-    public BukkitCommandInjectedBridge fallbackCommand(String fallbackCommand) {
+    public BukkitCommandInjectedBridge fallbackCommand(final String fallbackCommand) {
         this.fallbackCommand = fallbackCommand;
         return this;
     }
@@ -185,7 +185,7 @@ public final class BukkitCommandInjectedBridge implements CommandExecutor, TabCo
             BukkitCommandInjector.craftServerGetCommandMap);
         final Map<String, org.bukkit.command.Command> map = (Map<String, org.bukkit.command.Command>) JavaAccess.invoke(commandMap,
             BukkitCommandInjector.commandMapGetCommands);
-        ArrayList<String> names = new ArrayList<>();
+        final ArrayList<String> names = new ArrayList<>();
         names.addAll(definition.aliases());
         names.add(definition.name());
         for (final String name : names) {

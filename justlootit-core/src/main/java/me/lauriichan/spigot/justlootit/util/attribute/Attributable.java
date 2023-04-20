@@ -9,18 +9,18 @@ public abstract class Attributable implements IAttributable {
     private final Object2ObjectArrayMap<String, Object> attributes = new Object2ObjectArrayMap<>();
 
     @Override
-    public final Object attr(String key) {
+    public final Object attr(final String key) {
         return attributes.get(key);
     }
 
     @Override
-    public final <T> T attr(String key, Class<T> type) {
+    public final <T> T attr(final String key, final Class<T> type) {
         return attrOrDefault(key, type, null);
     }
 
     @Override
-    public final <T> T attrOrDefault(String key, Class<T> type, T fallback) {
-        Object obj = attributes.get(key);
+    public final <T> T attrOrDefault(final String key, final Class<T> type, final T fallback) {
+        final Object obj = attributes.get(key);
         if (obj == null || !type.isAssignableFrom(obj.getClass())) {
             return fallback;
         }
@@ -28,18 +28,18 @@ public abstract class Attributable implements IAttributable {
     }
 
     @Override
-    public final boolean attrHas(String key) {
+    public final boolean attrHas(final String key) {
         return attributes.containsKey(key);
     }
 
     @Override
-    public final boolean attrHas(String key, Class<?> type) {
-        Object obj = attributes.get(key);
+    public final boolean attrHas(final String key, final Class<?> type) {
+        final Object obj = attributes.get(key);
         return obj != null && type.isAssignableFrom(obj.getClass());
     }
 
     @Override
-    public final void attrSet(String key, Object object) {
+    public final void attrSet(final String key, final Object object) {
         if (object == null) {
             attributes.remove(key);
             return;
@@ -48,18 +48,18 @@ public abstract class Attributable implements IAttributable {
     }
 
     @Override
-    public final Object attrUnset(String key) {
+    public final Object attrUnset(final String key) {
         return attributes.remove(key);
     }
 
     @Override
-    public <T> T attrUnset(String key, Class<T> type) {
+    public <T> T attrUnset(final String key, final Class<T> type) {
         return attrUnsetOrDefault(key, type, null);
     }
 
     @Override
-    public <T> T attrUnsetOrDefault(String key, Class<T> type, T fallback) {
-        Object obj = attributes.remove(key);
+    public <T> T attrUnsetOrDefault(final String key, final Class<T> type, final T fallback) {
+        final Object obj = attributes.remove(key);
         if (obj == null || !type.isAssignableFrom(obj.getClass())) {
             return fallback;
         }

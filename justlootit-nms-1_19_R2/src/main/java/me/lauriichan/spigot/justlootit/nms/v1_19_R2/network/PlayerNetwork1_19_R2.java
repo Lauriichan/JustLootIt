@@ -2,9 +2,9 @@ package me.lauriichan.spigot.justlootit.nms.v1_19_R2.network;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelPipeline;
-import me.lauriichan.spigot.justlootit.nms.*;
+import me.lauriichan.spigot.justlootit.nms.IPlayerNetwork;
 import me.lauriichan.spigot.justlootit.nms.util.Ref;
-import me.lauriichan.spigot.justlootit.nms.v1_19_R2.*;
+import me.lauriichan.spigot.justlootit.nms.v1_19_R2.PlayerAdapter1_19_R2;
 import net.minecraft.network.protocol.Packet;
 
 public class PlayerNetwork1_19_R2 implements IPlayerNetwork {
@@ -28,8 +28,8 @@ public class PlayerNetwork1_19_R2 implements IPlayerNetwork {
         return packetManager;
     }
 
-    private void remove(Channel channel) {
-        ChannelPipeline pipeline = channel.pipeline();
+    private void remove(final Channel channel) {
+        final ChannelPipeline pipeline = channel.pipeline();
         if (pipeline.get("bi:in") != null) {
             pipeline.remove("bi:in");
         }
@@ -38,8 +38,8 @@ public class PlayerNetwork1_19_R2 implements IPlayerNetwork {
         }
     }
 
-    private void add(Channel channel) {
-        ChannelPipeline pipeline = channel.pipeline();
+    private void add(final Channel channel) {
+        final ChannelPipeline pipeline = channel.pipeline();
         if (pipeline.get("bi:in") == null) {
             pipeline.addAfter("decoder", "bi:in", packetIn);
         }
@@ -54,7 +54,7 @@ public class PlayerNetwork1_19_R2 implements IPlayerNetwork {
     }
 
     @Override
-    public void setActive(boolean active) {
+    public void setActive(final boolean active) {
         if (this.active == active) {
             return;
         }
@@ -62,11 +62,10 @@ public class PlayerNetwork1_19_R2 implements IPlayerNetwork {
         remove(player.getChannel());
         if (active) {
             add(player.getChannel());
-            return;
         }
     }
 
-    boolean call(Ref<Packet<?>> nmsPacket) {
+    boolean call(final Ref<Packet<?>> nmsPacket) {
         return packetManager.call(player, nmsPacket);
     }
 

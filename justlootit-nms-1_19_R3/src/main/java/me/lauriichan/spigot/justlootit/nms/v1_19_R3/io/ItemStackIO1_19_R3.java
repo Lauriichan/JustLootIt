@@ -12,7 +12,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
 public final class ItemStackIO1_19_R3 extends NbtIO1_19_R3<org.bukkit.inventory.ItemStack, CompoundTag> {
-    
+
     public static final ItemStackIO1_19_R3 ITEM_STACK = new ItemStackIO1_19_R3();
 
     private final MethodHandle CraftItemStack_handle = JavaAccess.accessFieldGetter(ClassUtil.getField(CraftItemStack.class, "handle"));
@@ -22,26 +22,26 @@ public final class ItemStackIO1_19_R3 extends NbtIO1_19_R3<org.bukkit.inventory.
     }
 
     @Override
-    public CompoundTag asNbt(org.bukkit.inventory.ItemStack value) {
-        ItemStack itemStack = asMinecraftStack(value);
-        CompoundTag tag = new CompoundTag();
-        if(itemStack == ItemStack.EMPTY) {
+    public CompoundTag asNbt(final org.bukkit.inventory.ItemStack value) {
+        final ItemStack itemStack = asMinecraftStack(value);
+        final CompoundTag tag = new CompoundTag();
+        if (itemStack == ItemStack.EMPTY) {
             return tag;
         }
         return itemStack.save(tag);
     }
 
     @Override
-    public org.bukkit.inventory.ItemStack fromNbt(CompoundTag tag) {
+    public org.bukkit.inventory.ItemStack fromNbt(final CompoundTag tag) {
         return CraftItemStack.asCraftMirror(tag.isEmpty() ? ItemStack.EMPTY : ItemStack.of(tag));
     }
 
-    private ItemStack asMinecraftStack(org.bukkit.inventory.ItemStack itemStack) {
+    private ItemStack asMinecraftStack(final org.bukkit.inventory.ItemStack itemStack) {
         if (itemStack == null) {
             return ItemStack.EMPTY;
         }
         if (itemStack instanceof CraftItemStack) {
-            Object handle = JavaAccess.invoke(itemStack, CraftItemStack_handle);
+            final Object handle = JavaAccess.invoke(itemStack, CraftItemStack_handle);
             if (handle == null) {
                 return ItemStack.EMPTY;
             }
@@ -51,11 +51,11 @@ public final class ItemStackIO1_19_R3 extends NbtIO1_19_R3<org.bukkit.inventory.
             return ItemStack.EMPTY;
         }
         @SuppressWarnings("deprecation")
-        Item item = CraftMagicNumbers.getItem(itemStack.getType(), itemStack.getDurability());
+        final Item item = CraftMagicNumbers.getItem(itemStack.getType(), itemStack.getDurability());
         if (item == null) {
             return ItemStack.EMPTY;
         }
-        ItemStack stack = new ItemStack(item, itemStack.getAmount());
+        final ItemStack stack = new ItemStack(item, itemStack.getAmount());
         if (itemStack.hasItemMeta()) {
             CraftItemStack.setItemMeta(stack, itemStack.getItemMeta());
         }

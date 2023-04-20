@@ -13,14 +13,16 @@ import org.junit.jupiter.api.TestFactory;
 
 import me.lauriichan.spigot.justlootit.storage.Storable;
 import me.lauriichan.spigot.justlootlit.storage.test.Test.StorageProvider;
-import me.lauriichan.spigot.justlootlit.storage.test.simple.*;
+import me.lauriichan.spigot.justlootlit.storage.test.simple.WriteReadDeleteTest;
+import me.lauriichan.spigot.justlootlit.storage.test.simple.WriteReadTest;
+import me.lauriichan.spigot.justlootlit.storage.test.simple.WriteUpdateReadTest;
 
 public class FeatureTest {
 
     /*
      * ONLY MODIFY PUBLIC FIELDS
      */
-    
+
     public static final long SEED = 285428738523L;
 
     public static final Test<?>[] TESTS = new Test[] {
@@ -35,37 +37,38 @@ public class FeatureTest {
 
     @TestFactory
     public Collection<DynamicTest> featureTests() {
-        ArrayList<DynamicTest> tests = new ArrayList<>(TESTS.length);
+        final ArrayList<DynamicTest> tests = new ArrayList<>(TESTS.length);
         if (TESTS.length == 0) {
             return tests;
         }
-        for (Test<?> test : TESTS) {
+        for (final Test<?> test : TESTS) {
             createTests(tests, test);
         }
         return tests;
     }
 
     @SuppressWarnings("unchecked")
-    private static <T extends Storable> void createTests(ArrayList<DynamicTest> collection, Test<T> test) {
-        ArrayList<StorageProvider<T>> providerList = new ArrayList<>();
+    private static <T extends Storable> void createTests(final ArrayList<DynamicTest> collection, final Test<T> test) {
+        final ArrayList<StorageProvider<T>> providerList = new ArrayList<>();
         test.createProviders(providerList);
-        StorageProvider<T>[] providers = providerList.toArray(StorageProvider[]::new);
+        final StorageProvider<T>[] providers = providerList.toArray(StorageProvider[]::new);
         providerList.clear();
-        File workingDir = new File("tests/features", test.name);
+        final File workingDir = new File("tests/features", test.name);
         if (workingDir.exists()) {
             try {
                 FileUtils.forceDelete(workingDir);
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 fail(e);
             }
         }
         workingDir.mkdirs();
-        Profiler profiler = new Profiler(0);
+        final Profiler profiler = new Profiler(0);
         profiler.lock();
-        for (StorageProvider<T> provider : providers) {
-            File storageDir = new File(workingDir, provider.name);
+        for (final StorageProvider<T> provider : providers) {
+            final File storageDir = new File(workingDir, provider.name);
             storageDir.mkdirs();
-            collection.add(DynamicTest.dynamicTest(test.name + " [" + provider.name + "]", () -> test.executeTest(storageDir, provider, profiler, SEED)));
+            collection.add(DynamicTest.dynamicTest(test.name + " [" + provider.name + "]",
+                () -> test.executeTest(storageDir, provider, profiler, SEED)));
         }
         profiler.unlock();
     }

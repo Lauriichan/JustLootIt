@@ -10,7 +10,7 @@ public final class CacheTickTimer extends AbstractTickTimer {
     private final ArrayList<Cache> caches = new ArrayList<>();
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
-    public final void add(Cache cache) {
+    public void add(final Cache cache) {
         lock.readLock().lock();
         try {
             if (caches.contains(cache)) {
@@ -27,7 +27,7 @@ public final class CacheTickTimer extends AbstractTickTimer {
         }
     }
 
-    public final boolean has(Cache cache) {
+    public boolean has(final Cache cache) {
         lock.readLock().lock();
         try {
             return caches.contains(cache);
@@ -36,7 +36,7 @@ public final class CacheTickTimer extends AbstractTickTimer {
         }
     }
 
-    public final void remove(Cache cache) {
+    public void remove(final Cache cache) {
         lock.readLock().lock();
         try {
             if (!caches.contains(cache)) {
@@ -54,7 +54,7 @@ public final class CacheTickTimer extends AbstractTickTimer {
     }
 
     @Override
-    protected void tick(long delta) {
+    protected void tick(final long delta) {
         lock.readLock().lock();
         Cache[] caches;
         try {
@@ -62,7 +62,7 @@ public final class CacheTickTimer extends AbstractTickTimer {
         } finally {
             lock.readLock().unlock();
         }
-        for (Cache cache : caches) {
+        for (final Cache cache : caches) {
             cache.tick();
         }
     }

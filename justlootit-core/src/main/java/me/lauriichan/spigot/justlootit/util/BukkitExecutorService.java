@@ -16,7 +16,7 @@ public final class BukkitExecutorService extends AbstractExecutorService {
 
     private final boolean async;
 
-    public BukkitExecutorService(Plugin plugin, boolean async) {
+    public BukkitExecutorService(final Plugin plugin, final boolean async) {
         this.plugin = plugin;
         this.async = async;
     }
@@ -44,12 +44,12 @@ public final class BukkitExecutorService extends AbstractExecutorService {
     }
 
     @Override
-    public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
+    public boolean awaitTermination(final long timeout, final TimeUnit unit) throws InterruptedException {
         return false;
     }
 
     @Override
-    public void execute(Runnable command) {
+    public void execute(final Runnable command) {
         if (!plugin.isEnabled()) {
             return;
         }

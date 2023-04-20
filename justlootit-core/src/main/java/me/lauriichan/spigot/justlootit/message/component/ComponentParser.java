@@ -73,13 +73,13 @@ public final class ComponentParser {
         }
         final ArrayList<BaseComponent> array = new ArrayList<>();
         TextComponent component = new TextComponent();
-        ChatColor colorDefault = ChatColor.of(defaultColor);
+        final ChatColor colorDefault = ChatColor.of(defaultColor);
         ChatColor color = colorDefault;
         component.setColor(color);
         component.setClickEvent(click);
         component.setHoverEvent(hover);
         StringBuilder builder = new StringBuilder();
-        int length = richString.length();
+        final int length = richString.length();
         for (int index = 0; index < length; index++) {
             final char chr = richString.charAt(index);
             if (chr == '&') {
@@ -136,7 +136,7 @@ public final class ComponentParser {
                     component.setColor(format);
                     continue;
                 }
-                StringBuilder hex = new StringBuilder();
+                final StringBuilder hex = new StringBuilder();
                 for (int idx = index + 2; idx <= index + 7; idx++) {
                     final char hch = richString.charAt(idx);
                     if (hch >= 'A' && hch <= 'Z') {
@@ -149,7 +149,7 @@ public final class ComponentParser {
                     }
                     break;
                 }
-                if (!(hex.length() == 6 || hex.length() == 3)) {
+                if (((hex.length() != 6) && (hex.length() != 3))) {
                     builder.append(chr);
                     continue;
                 }

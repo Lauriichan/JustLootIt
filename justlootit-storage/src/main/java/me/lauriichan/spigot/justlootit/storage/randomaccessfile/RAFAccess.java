@@ -31,7 +31,7 @@ final class RAFAccess<S extends Storable> implements Closeable {
         this.hexId = Integer.toHexString(id);
         this.file = new File(directory, hexId + ".jli");
     }
-    
+
     RAFAccess(final File file) {
         this.id = 0;
         this.hexId = "0";
@@ -41,7 +41,7 @@ final class RAFAccess<S extends Storable> implements Closeable {
     public int id() {
         return id;
     }
-    
+
     public String hexId() {
         return hexId;
     }
@@ -65,7 +65,7 @@ final class RAFAccess<S extends Storable> implements Closeable {
     public void readUnlock() {
         lock.readLock().unlock();
     }
-    
+
     public boolean exists() {
         return file.exists();
     }
@@ -78,9 +78,9 @@ final class RAFAccess<S extends Storable> implements Closeable {
         if (access != null) {
             return access;
         }
-        if(!file.exists()) {
-            File parentFile = file.getParentFile();
-            if(parentFile != null && !parentFile.exists()) {
+        if (!file.exists()) {
+            final File parentFile = file.getParentFile();
+            if (parentFile != null && !parentFile.exists()) {
                 parentFile.mkdirs();
             }
             file.createNewFile();

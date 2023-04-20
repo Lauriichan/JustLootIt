@@ -1,10 +1,10 @@
 package me.lauriichan.spigot.justlootit.nms.v1_19_R2;
 
 import org.bukkit.Location;
-import org.bukkit.craftbukkit.v1_19_R2.inventory.CraftInventory;
-import org.bukkit.craftbukkit.v1_19_R2.util.CraftNamespacedKey;
 import org.bukkit.craftbukkit.v1_19_R2.entity.CraftEntity;
 import org.bukkit.craftbukkit.v1_19_R2.entity.CraftPlayer;
+import org.bukkit.craftbukkit.v1_19_R2.inventory.CraftInventory;
+import org.bukkit.craftbukkit.v1_19_R2.util.CraftNamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 
@@ -40,19 +40,19 @@ public class VersionHelper1_19_R2 extends VersionHelper {
     }
 
     @Override
-    public ItemTag asItemTag(org.bukkit.inventory.ItemStack itemStack) {
+    public ItemTag asItemTag(final org.bukkit.inventory.ItemStack itemStack) {
         return ItemTag.ofNbt(ItemStackIO1_19_R2.ITEM_STACK.asNbt(itemStack).getAsString());
     }
 
     @Override
-    public net.md_5.bungee.api.chat.hover.content.Entity createEntityHover(org.bukkit.entity.Entity entity) {
-        Entity minecraftEntity = ((CraftEntity) entity).getHandle();
-        String type = BuiltInRegistries.ENTITY_TYPE.getKey(minecraftEntity.getType()).toString();
-        String id = minecraftEntity.getStringUUID();
+    public net.md_5.bungee.api.chat.hover.content.Entity createEntityHover(final org.bukkit.entity.Entity entity) {
+        final Entity minecraftEntity = ((CraftEntity) entity).getHandle();
+        final String type = BuiltInRegistries.ENTITY_TYPE.getKey(minecraftEntity.getType()).toString();
+        final String id = minecraftEntity.getStringUUID();
         if (minecraftEntity.getCustomName() == null) {
             return new net.md_5.bungee.api.chat.hover.content.Entity(type, id, null);
         }
-        BaseComponent[] array = ComponentSerializer.parse(Component.Serializer.toJson(minecraftEntity.getCustomName()));
+        final BaseComponent[] array = ComponentSerializer.parse(Component.Serializer.toJson(minecraftEntity.getCustomName()));
         if (array.length == 1) {
             return new net.md_5.bungee.api.chat.hover.content.Entity(type, id, array[0]);
         }
@@ -60,13 +60,14 @@ public class VersionHelper1_19_R2 extends VersionHelper {
     }
 
     @Override
-    public void fill(Inventory inventory, Player player, Location location, org.bukkit.loot.LootTable lootTable, long seed) {
-        ServerPlayer minecraftPlayer = ((CraftPlayer) player).getHandle();
-        ServerLevel level = minecraftPlayer.getLevel();
+    public void fill(final Inventory inventory, final Player player, final Location location, final org.bukkit.loot.LootTable lootTable,
+        final long seed) {
+        final ServerPlayer minecraftPlayer = ((CraftPlayer) player).getHandle();
+        final ServerLevel level = minecraftPlayer.getLevel();
         if (level.getServer() == null) {
             return;
         }
-        LootTable table = level.getServer().getLootTables().get(CraftNamespacedKey.toMinecraft(lootTable.getKey()));
+        final LootTable table = level.getServer().getLootTables().get(CraftNamespacedKey.toMinecraft(lootTable.getKey()));
         if (table == null) {
             return;
         }

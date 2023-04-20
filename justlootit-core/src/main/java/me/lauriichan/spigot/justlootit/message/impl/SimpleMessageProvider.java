@@ -9,13 +9,13 @@ public final class SimpleMessageProvider extends MessageProvider {
     private final ConcurrentHashMap<String, SimpleMessage> messages = new ConcurrentHashMap<>();
     private final String fallback;
 
-    public SimpleMessageProvider(String id, String fallback) {
+    public SimpleMessageProvider(final String id, final String fallback) {
         super(id);
         this.fallback = fallback;
     }
 
     @Override
-    public SimpleMessage getMessage(String language) {
+    public SimpleMessage getMessage(final String language) {
         SimpleMessage message = messages.get(language);
         if (message != null) {
             return message;
@@ -30,5 +30,5 @@ public final class SimpleMessageProvider extends MessageProvider {
     public String getFallback() {
         return fallback;
     }
-    
+
 }

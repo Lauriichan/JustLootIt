@@ -29,7 +29,7 @@ public final class BukkitActor<P extends CommandSender> extends Actor<P> {
 
     @Override
     public UUID getId() {
-        Actor<Entity> actor = as(Entity.class);
+        final Actor<Entity> actor = as(Entity.class);
         if (actor.isValid()) {
             return actor.getHandle().getUniqueId();
         }
@@ -38,9 +38,9 @@ public final class BukkitActor<P extends CommandSender> extends Actor<P> {
 
     @Override
     public String getName() {
-        Actor<Entity> actor = as(Entity.class);
+        final Actor<Entity> actor = as(Entity.class);
         if (actor.isValid()) {
-            Entity entity = actor.getHandle();
+            final Entity entity = actor.getHandle();
             if (entity.getCustomName() == null) {
                 return entity.getName();
             }
@@ -50,16 +50,16 @@ public final class BukkitActor<P extends CommandSender> extends Actor<P> {
     }
 
     @Override
-    public void sendMessage(String message) {
+    public void sendMessage(final String message) {
         handle.sendMessage(BukkitColor.apply(message));
     }
 
     @Override
-    public void sendActionMessage(ActionMessage message) {
+    public void sendActionMessage(final ActionMessage message) {
         if (message == null) {
             return;
         }
-        String content = message.message();
+        final String content = message.message();
         if (content == null || content.isBlank()) {
             handle.sendMessage("");
             return;
@@ -67,12 +67,12 @@ public final class BukkitActor<P extends CommandSender> extends Actor<P> {
         ClickEvent click = null;
         HoverEvent hover = null;
         if (message.clickAction() != null) {
-            Action clickAction = message.clickAction();
+            final Action clickAction = message.clickAction();
             switch (clickAction.getType()) {
             case CLICK_COPY:
                 try {
                     click = new ClickEvent(ClickEvent.Action.valueOf("COPY_TO_CLIPBOARD"), clickAction.getValueAsString());
-                } catch (IllegalArgumentException exp) {
+                } catch (final IllegalArgumentException exp) {
                 }
                 break;
             case CLICK_FILE:
@@ -92,16 +92,16 @@ public final class BukkitActor<P extends CommandSender> extends Actor<P> {
             }
         }
         if (message.hoverAction() != null) {
-            Action hoverAction = message.hoverAction();
+            final Action hoverAction = message.hoverAction();
             switch (hoverAction.getType()) {
             case HOVER_SHOW:
                 if (versionHelper == null) {
                     break;
                 }
-                if (hoverAction.getValue() instanceof ItemStack item) {
+                if (hoverAction.getValue() instanceof final ItemStack item) {
                     hover = new HoverEvent(HoverEvent.Action.SHOW_ITEM,
                         new Item(item.getType().getKey().toString(), item.getAmount(), versionHelper.asItemTag(item)));
-                } else if (hoverAction.getValue() instanceof Entity entity) {
+                } else if (hoverAction.getValue() instanceof final Entity entity) {
                     hover = new HoverEvent(HoverEvent.Action.SHOW_ENTITY, versionHelper.createEntityHover(entity));
                 }
                 break;
@@ -116,7 +116,7 @@ public final class BukkitActor<P extends CommandSender> extends Actor<P> {
     }
 
     @Override
-    public boolean hasPermission(String permission) {
+    public boolean hasPermission(final String permission) {
         return handle.hasPermission(permission);
     }
 

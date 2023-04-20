@@ -7,44 +7,44 @@ public final class Long2ObjectMapCache<V> extends MapCache<Long, V> {
 
     private final Long2ObjectOpenHashMap<CachedValue<V>> map = new Long2ObjectOpenHashMap<>();
 
-    public Long2ObjectMapCache(ISimpleLogger logger) {
+    public Long2ObjectMapCache(final ISimpleLogger logger) {
         super(logger);
     }
 
-    public Long2ObjectMapCache(ISimpleLogger logger, ICallback<Long, V> callback) {
+    public Long2ObjectMapCache(final ISimpleLogger logger, final ICallback<Long, V> callback) {
         super(logger, callback);
     }
-    
+
     @Override
     protected int entryCount() {
         return map.size();
     }
 
     @Override
-    protected boolean hasEntry(Long key) {
+    protected boolean hasEntry(final Long key) {
         return map.containsKey(key.longValue());
     }
 
     @Override
-    protected CachedValue<V> getEntry(Long key) {
-        return map.get(key.longValue());
+    protected CachedValue<V> getEntry(final Long key) {
+        return map.get(key);
     }
 
     @Override
-    protected void putEntry(Long key, CachedValue<V> value) {
-        map.put(key.longValue(), value);
+    protected void putEntry(final Long key, final CachedValue<V> value) {
+        map.put(key, value);
     }
 
     @Override
-    protected CachedValue<V> removeEntry(Long key) {
-        return map.remove(key.longValue());
+    protected CachedValue<V> removeEntry(final Long key) {
+        return map.remove(key);
     }
 
     @Override
     protected Long[] entryKeys() {
         return map.keySet().toArray(Long[]::new);
     }
-    
+
     @Override
     protected boolean hasNoEntries() {
         return map.isEmpty();

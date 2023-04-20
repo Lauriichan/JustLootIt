@@ -23,16 +23,19 @@ public abstract class AbstractStorage<S extends Storable> implements IStorage<S>
         this.logger = logger;
         this.baseType = baseType;
     }
-    
+
+    @Override
     public final ISimpleLogger logger() {
         return logger;
     }
 
+    @Override
     public final Class<S> baseType() {
         return baseType;
     }
 
-    public final void register(StorageAdapter<? extends S> adapter) throws StorageException {
+    @Override
+    public final void register(final StorageAdapter<? extends S> adapter) throws StorageException {
         if (classToAdapter.containsKey(adapter.type())) {
             throw new StorageException("There is already an adapter for the type '" + adapter.type().getName() + "'!");
         }
@@ -48,11 +51,12 @@ public abstract class AbstractStorage<S extends Storable> implements IStorage<S>
         }
     }
 
-    public final boolean unregister(Class<? extends S> type) {
+    @Override
+    public final boolean unregister(final Class<? extends S> type) {
         lock.writeLock().lock();
         try {
-            StorageAdapter<?> adapter = classToAdapter.remove(type);
-            if(adapter == null) {
+            final StorageAdapter<?> adapter = classToAdapter.remove(type);
+            if (adapter == null) {
                 return false;
             }
             idToAdapter.remove(adapter.typeId());
@@ -62,11 +66,11 @@ public abstract class AbstractStorage<S extends Storable> implements IStorage<S>
         }
     }
 
-    public final boolean unregister(short typeId) {
+    public final boolean unregister(final short typeId) {
         lock.writeLock().lock();
         try {
-            StorageAdapter<?> adapter = idToAdapter.remove(typeId);
-            if(adapter == null) {
+            final StorageAdapter<?> adapter = idToAdapter.remove(typeId);
+            if (adapter == null) {
                 return false;
             }
             classToAdapter.remove(adapter.type());
@@ -76,14 +80,15 @@ public abstract class AbstractStorage<S extends Storable> implements IStorage<S>
         }
     }
 
-    public final StorageAdapter<? extends S> findAdapterFor(Class<? extends S> type) {
+    @Override
+    public final StorageAdapter<? extends S> findAdapterFor(final Class<? extends S> type) {
         lock.readLock().lock();
         try {
-            StorageAdapter<? extends S> adapter = classToAdapter.get(type);
+            final StorageAdapter<? extends S> adapter = classToAdapter.get(type);
             if (adapter != null) {
                 return adapter;
             }
-            Optional<StorageAdapter<? extends S>> adapterOption = classToAdapter.entrySet().stream()
+            final Optional<StorageAdapter<? extends S>> adapterOption = classToAdapter.entrySet().stream()
                 .filter(entry -> entry.getKey().isAssignableFrom(type)).findFirst().map(Map.Entry::getValue);
             if (adapterOption.isEmpty()) {
                 return null;
@@ -94,7 +99,8 @@ public abstract class AbstractStorage<S extends Storable> implements IStorage<S>
         }
     }
 
-    public final StorageAdapter<? extends S> findAdapterFor(short typeId) {
+    @Override
+    public final StorageAdapter<? extends S> findAdapterFor(final short typeId) {
         lock.readLock().lock();
         try {
             return idToAdapter.get(typeId);
@@ -102,21 +108,29 @@ public abstract class AbstractStorage<S extends Storable> implements IStorage<S>
             lock.readLock().unlock();
         }
     }
-    
+
+    @Override
     public abstract boolean isSupported(long id);
-    
+
+    @Override
     public abstract void close() throws StorageException;
-    
+
+    @Override
     public abstract void clear() throws StorageException;
-    
+
+    @Override
     public abstract boolean has(long id) throws StorageException;
 
+    @Override
     public abstract S read(long id) throws StorageException;
 
+    @Override
     public abstract void write(S storable) throws StorageException;
 
+    @Override
     public abstract boolean delete(long id) throws StorageException;
 
+    @Override
     public abstract void updateEach(Function<S, UpdateInfo<S>> updater) throws StorageException;
 
 }

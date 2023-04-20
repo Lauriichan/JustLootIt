@@ -7,20 +7,20 @@ public abstract class SimpleDataType<P, C> implements PersistentDataType<P, C> {
 
     public static final SimpleDataType<Byte, Boolean> BOOLEAN = new SimpleDataType<>(Byte.class, Boolean.class) {
         @Override
-        public Byte toPrimitive(Boolean complex, PersistentDataAdapterContext context) {
+        public Byte toPrimitive(final Boolean complex, final PersistentDataAdapterContext context) {
             return complex ? (byte) 1 : (byte) 0;
         }
 
         @Override
-        public Boolean fromPrimitive(Byte primitive, PersistentDataAdapterContext context) {
-            return primitive == 1 ? true : false;
+        public Boolean fromPrimitive(final Byte primitive, final PersistentDataAdapterContext context) {
+            return (primitive == 1) == true;
         }
     };
 
     private final Class<P> primitiveType;
     private final Class<C> complexType;
 
-    public SimpleDataType(Class<P> primitiveType, Class<C> complexType) {
+    public SimpleDataType(final Class<P> primitiveType, final Class<C> complexType) {
         this.primitiveType = primitiveType;
         this.complexType = complexType;
     }

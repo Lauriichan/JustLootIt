@@ -5,8 +5,8 @@ import static me.lauriichan.spigot.justlootlit.storage.test.Test.StorageProvider
 import java.util.List;
 
 import me.lauriichan.laylib.logger.ISimpleLogger;
-import me.lauriichan.spigot.justlootit.storage.Storable;
 import me.lauriichan.spigot.justlootit.storage.AbstractStorage;
+import me.lauriichan.spigot.justlootit.storage.Storable;
 import me.lauriichan.spigot.justlootit.storage.randomaccessfile.RAFMultiStorage;
 import me.lauriichan.spigot.justlootit.storage.util.SystemSimpleLogger;
 
@@ -22,11 +22,11 @@ public abstract class BaseTest<T extends Storable> extends Test<T> {
     }
 
     @Override
-    public void createProviders(List<StorageProvider<T>> list) {
-        list.add(provider("RandomAccessFile", (file) -> apply(new RAFMultiStorage<>(SYSOUT_LOGGER, type, file))));
+    public void createProviders(final List<StorageProvider<T>> list) {
+        list.add(provider("RandomAccessFile", file -> apply(new RAFMultiStorage<>(SYSOUT_LOGGER, type, file))));
     }
 
-    private AbstractStorage<T> apply(AbstractStorage<T> storage) {
+    private AbstractStorage<T> apply(final AbstractStorage<T> storage) {
         setup(storage);
         return storage;
     }

@@ -3,9 +3,9 @@ package me.lauriichan.spigot.justlootit.nms.packet;
 import org.bukkit.inventory.ItemStack;
 
 public abstract class PacketInContainerClick extends AbstractPacketIn {
-    
-    public static enum ClickAction {
-        
+
+    public enum ClickAction {
+
         PICKUP,
         QUICK_MOVE,
         SWAP,
@@ -13,15 +13,15 @@ public abstract class PacketInContainerClick extends AbstractPacketIn {
         THROW,
         QUICK_CRAFT,
         PICKUP_ALL;
-        
+
     }
-    
+
     public abstract int getContainerId();
-    
+
     public abstract int getSlot();
-    
+
     public abstract ClickAction getAction();
-    
+
     public abstract ItemStack getItemStack();
-    
+
 }

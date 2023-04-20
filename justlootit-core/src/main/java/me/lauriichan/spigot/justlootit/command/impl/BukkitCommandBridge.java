@@ -22,7 +22,8 @@ public final class BukkitCommandBridge implements CommandExecutor, TabCompleter 
     private final MessageManager messageManager;
     private final String prefix;
 
-    public BukkitCommandBridge(final VersionHelper versionHelper, final CommandManager commandManager, final MessageManager messageManager, final String prefix) {
+    public BukkitCommandBridge(final VersionHelper versionHelper, final CommandManager commandManager, final MessageManager messageManager,
+        final String prefix) {
         this.versionHelper = versionHelper;
         this.commandManager = commandManager;
         this.messageManager = messageManager;
@@ -30,7 +31,7 @@ public final class BukkitCommandBridge implements CommandExecutor, TabCompleter 
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+    public boolean onCommand(final CommandSender sender, final Command command, String label, final String[] args) {
         while (label.startsWith("/")) {
             label = label.substring(1);
         }
@@ -42,16 +43,16 @@ public final class BukkitCommandBridge implements CommandExecutor, TabCompleter 
     }
 
     @Override
-    public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
+    public List<String> onTabComplete(final CommandSender sender, final Command command, String label, final String[] args) {
         while (label.startsWith("/")) {
             label = label.substring(1);
         }
         if (label.startsWith(prefix)) {
             label = label.substring(prefix.length());
         }
-        Triple<NodeCommand, Node, String> triple = commandManager.findNode(label, args);
+        final Triple<NodeCommand, Node, String> triple = commandManager.findNode(label, args);
         if (triple == null) {
-            if(args.length == 1) {
+            if (args.length == 1) {
                 return Arrays.asList(commandManager.getCommands());
             }
             return null;

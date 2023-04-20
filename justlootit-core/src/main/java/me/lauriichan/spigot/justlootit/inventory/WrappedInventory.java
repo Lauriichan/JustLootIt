@@ -7,21 +7,21 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 public final class WrappedInventory implements IGuiInventory {
-    
+
     private final Inventory inventory;
-    
+
     private final ChestSize chestSize;
-    
+
     private final int rowSize;
     private final int columnAmount;
-    
+
     public WrappedInventory(final Inventory inventory) {
         this.inventory = Objects.requireNonNull(inventory);
         this.rowSize = IGuiInventory.getRowSize(inventory.getType());
         this.columnAmount = inventory.getSize() / rowSize;
         this.chestSize = rowSize == 9 && columnAmount < 7 ? ChestSize.values()[columnAmount - 1] : null;
     }
-    
+
     @Override
     public Inventory getInventory() {
         return inventory;
@@ -33,12 +33,12 @@ public final class WrappedInventory implements IGuiInventory {
     }
 
     @Override
-    public boolean setHandler(IHandler handler) {
+    public boolean setHandler(final IHandler handler) {
         return false;
     }
 
     @Override
-    public boolean setTitle(String title) {
+    public boolean setTitle(final String title) {
         return false;
     }
 
@@ -48,7 +48,7 @@ public final class WrappedInventory implements IGuiInventory {
     }
 
     @Override
-    public boolean setChestSize(ChestSize chestSize) {
+    public boolean setChestSize(final ChestSize chestSize) {
         return false;
     }
 
@@ -58,7 +58,7 @@ public final class WrappedInventory implements IGuiInventory {
     }
 
     @Override
-    public boolean setType(InventoryType type) {
+    public boolean setType(final InventoryType type) {
         return false;
     }
 
@@ -91,11 +91,11 @@ public final class WrappedInventory implements IGuiInventory {
     }
 
     @Override
-    public ItemStack get(int index) {
+    public ItemStack get(final int index) {
         if (index < 0 || index >= inventory.getSize()) {
             throw new IndexOutOfBoundsException(index);
         }
-        ItemStack stack = inventory.getItem(index);
+        final ItemStack stack = inventory.getItem(index);
         if (stack != null && stack.getType().isAir()) {
             return null;
         }
@@ -103,7 +103,7 @@ public final class WrappedInventory implements IGuiInventory {
     }
 
     @Override
-    public void set(int index, ItemStack itemStack) {
+    public void set(final int index, final ItemStack itemStack) {
         if (index < 0 || index >= inventory.getSize()) {
             throw new IndexOutOfBoundsException(index);
         }

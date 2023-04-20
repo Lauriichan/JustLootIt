@@ -8,15 +8,15 @@ public final class GridMath {
         throw new UnsupportedOperationException();
     }
 
-    public static int toSlot(int row, int column) {
+    public static int toSlot(final int row, final int column) {
         return toSlot(row, column, DEFAULT_ROW_SIZE);
     }
 
-    public static int toSlot(int row, int column, int rowSize) {
+    public static int toSlot(final int row, final int column, final int rowSize) {
         return row * rowSize + column;
     }
 
-    public static int checkSlot(int row, int column, int rowSize, int columnAmount) throws IndexOutOfBoundsException {
+    public static int checkSlot(int row, int column, final int rowSize, final int columnAmount) throws IndexOutOfBoundsException {
         while (row >= rowSize) {
             column++;
             row -= rowSize;
@@ -27,11 +27,11 @@ public final class GridMath {
         return row * rowSize + column;
     }
 
-    public static int[] fromSlot(int slot) {
+    public static int[] fromSlot(final int slot) {
         return fromSlot(slot, DEFAULT_ROW_SIZE);
     }
 
-    public static int[] fromSlot(int slot, int rowSize) {
+    public static int[] fromSlot(final int slot, final int rowSize) {
         final int[] output = new int[2];
         output[1] = slot % rowSize;
         output[0] = (slot - output[1]) / rowSize;

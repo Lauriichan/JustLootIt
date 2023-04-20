@@ -7,15 +7,15 @@ public class NotEnoughArgumentsException extends RuntimeException {
 
     private static final long serialVersionUID = 1746623008020755421L;
 
-    public NotEnoughArgumentsException(ArgumentStack missing) {
+    public NotEnoughArgumentsException(final ArgumentStack missing) {
         super(buildMessage(missing));
     }
 
-    private static String buildMessage(ArgumentStack missing) {
-        StringBuilder builder = new StringBuilder("Missing elements (").append(missing.size()).append("): ");
-        Iterator<Entry<String, Class<?>>> iterator = missing.iterator();
+    private static String buildMessage(final ArgumentStack missing) {
+        final StringBuilder builder = new StringBuilder("Missing elements (").append(missing.size()).append("): ");
+        final Iterator<Entry<String, Class<?>>> iterator = missing.iterator();
         while (iterator.hasNext()) {
-            Entry<String, Class<?>> entry = iterator.next();
+            final Entry<String, Class<?>> entry = iterator.next();
             builder.append('"').append(entry.getKey()).append("\"(").append(entry.getValue().getTypeName()).append("), ");
         }
         return builder.substring(0, builder.length() - 2);

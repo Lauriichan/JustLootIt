@@ -15,48 +15,48 @@ public final class ArgumentMap {
         stack.throwIfPresent();
     }
 
-    private String test(String key) {
+    private String test(final String key) {
         if (key == null || key.isBlank()) {
             throw new IllegalArgumentException("String key can't be null or empty!");
         }
         return key;
     }
 
-    public boolean has(String key) {
+    public boolean has(final String key) {
         return map.containsKey(test(key));
     }
 
-    public boolean has(String key, Class<?> type) {
+    public boolean has(final String key, final Class<?> type) {
         Objects.requireNonNull(type, "Class type can't be null");
-        Object object = map.get(test(key));
+        final Object object = map.get(test(key));
         return object != null && type.isInstance(object);
     }
 
-    public Option<Object> get(String key) {
+    public Option<Object> get(final String key) {
         return Option.of(map.get(test(key)));
     }
 
-    public <E> Option<E> get(String key, Class<E> type) {
+    public <E> Option<E> get(final String key, final Class<E> type) {
         Objects.requireNonNull(type, "Class type can't be null");
         return get(key).filter(object -> type.isAssignableFrom(ClassUtil.toComplexType(object.getClass()))).map(type::cast);
     }
 
-    public Option<Class<?>> getClass(String key) {
+    public Option<Class<?>> getClass(final String key) {
         return Option.of(map.get(test(key))).filter(val -> val instanceof Class).map(val -> (Class<?>) val);
     }
 
-    public <E> Option<Class<? extends E>> getClass(String key, Class<E> abstraction) {
+    public <E> Option<Class<? extends E>> getClass(final String key, final Class<E> abstraction) {
         Objects.requireNonNull(abstraction, "Class abstraction can't be null");
         return getClass(key).filter(clazz -> abstraction.isAssignableFrom(ClassUtil.toComplexType(clazz)))
             .map(clazz -> clazz.asSubclass(abstraction));
     }
 
-    public ArgumentMap set(String key, Object value) {
+    public ArgumentMap set(final String key, final Object value) {
         map.put(test(key), Objects.requireNonNull(value));
         return this;
     }
 
-    public ArgumentMap remove(String key) {
+    public ArgumentMap remove(final String key) {
         map.remove(test(key));
         return this;
     }
@@ -66,13 +66,14 @@ public final class ArgumentMap {
         return this;
     }
 
+    @Override
     public ArgumentMap clone() {
-        ArgumentMap clone = new ArgumentMap();
+        final ArgumentMap clone = new ArgumentMap();
         map.putAll(map);
         return clone;
     }
 
-    public void copyFrom(ArgumentMap map) {
+    public void copyFrom(final ArgumentMap map) {
         if (map == null) {
             this.map.clear();
             return;
@@ -88,19 +89,19 @@ public final class ArgumentMap {
         return map.size();
     }
 
-    public Object require(String key) {
+    public Object require(final String key) {
         return get(key).orElseRun(() -> stack.push(key, Object.class));
     }
 
-    public <E> E require(String key, Class<E> type) {
+    public <E> E require(final String key, final Class<E> type) {
         return get(key, type).orElseRun(() -> stack.push(key, type));
     }
 
-    public Class<?> requireClass(String key) {
+    public Class<?> requireClass(final String key) {
         return getClass(key).orElseRun(() -> stack.push(key, Class.class));
     }
 
-    public <E> Class<? extends E> requireClass(String key, Class<E> abstraction) {
+    public <E> Class<? extends E> requireClass(final String key, final Class<E> abstraction) {
         return getClass(key, abstraction).orElseRun(() -> stack.push(key, abstraction.getClass()));
     }
 

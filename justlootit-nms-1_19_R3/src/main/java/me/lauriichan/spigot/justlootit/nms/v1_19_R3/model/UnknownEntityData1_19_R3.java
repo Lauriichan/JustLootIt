@@ -6,7 +6,7 @@ public class UnknownEntityData1_19_R3 extends EntityData1_19_R3 {
 
     private final DataValue<?> value;
 
-    UnknownEntityData1_19_R3(DataValue<?> value) {
+    UnknownEntityData1_19_R3(final DataValue<?> value) {
         this.value = value;
     }
 

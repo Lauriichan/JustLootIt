@@ -7,8 +7,8 @@ import net.minecraft.world.item.ItemStack;
 public abstract class EntityData1_19_R3 implements IEntityData {
 
     @SuppressWarnings("unchecked")
-    public static EntityData1_19_R3 create(DataValue<?> value) {
-        Object object = value.value();
+    public static EntityData1_19_R3 create(final DataValue<?> value) {
+        final Object object = value.value();
         if (object instanceof ItemStack) {
             return new ItemEntityData1_19_R3((DataValue<ItemStack>) value);
         }

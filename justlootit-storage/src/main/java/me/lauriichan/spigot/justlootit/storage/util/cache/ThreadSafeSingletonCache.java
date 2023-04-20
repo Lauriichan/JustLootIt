@@ -6,11 +6,11 @@ public final class ThreadSafeSingletonCache<V> extends SingletonCache<V> {
 
     private volatile CachedValue<V> value;
 
-    public ThreadSafeSingletonCache(ISimpleLogger logger) {
+    public ThreadSafeSingletonCache(final ISimpleLogger logger) {
         super(logger);
     }
 
-    public ThreadSafeSingletonCache(ISimpleLogger logger, ICallback<V> callback) {
+    public ThreadSafeSingletonCache(final ISimpleLogger logger, final ICallback<V> callback) {
         super(logger, callback);
     }
 
@@ -20,7 +20,7 @@ public final class ThreadSafeSingletonCache<V> extends SingletonCache<V> {
     }
 
     @Override
-    protected void setValue(CachedValue<V> value) {
+    protected void setValue(final CachedValue<V> value) {
         this.value = value;
     }
 

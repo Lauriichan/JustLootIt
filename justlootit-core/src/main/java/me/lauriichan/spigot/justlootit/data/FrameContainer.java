@@ -13,24 +13,24 @@ public final class FrameContainer extends Container {
         private final IOHandler<ItemStack> itemIO = DataIO.find(ItemStack.class);
 
         @Override
-        protected void serializeSpecial(FrameContainer storable, ByteBuf buffer) {
+        protected void serializeSpecial(final FrameContainer storable, final ByteBuf buffer) {
             itemIO.serialize(buffer, storable.item);
         }
 
         @Override
-        protected FrameContainer deserializeSpecial(long id, ContainerData data, ByteBuf buffer) {
+        protected FrameContainer deserializeSpecial(final long id, final ContainerData data, final ByteBuf buffer) {
             return new FrameContainer(id, data, itemIO.deserialize(buffer));
         }
     };
 
-    private ItemStack item;
+    private final ItemStack item;
 
-    public FrameContainer(long id, final ItemStack item) {
+    public FrameContainer(final long id, final ItemStack item) {
         super(id);
         this.item = item == null ? null : item.clone();
     }
 
-    private FrameContainer(long id, final ContainerData data, final ItemStack item) {
+    private FrameContainer(final long id, final ContainerData data, final ItemStack item) {
         super(id, data);
         this.item = item;
     }

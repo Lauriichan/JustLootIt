@@ -13,7 +13,7 @@ public final class StringUtil {
             if (index != 0) {
                 builder.append(' ');
             }
-            String part = parts[index];
+            final String part = parts[index];
             builder.append(Character.toUpperCase(part.charAt(0))).append(part.substring(1).toLowerCase());
         }
         return builder.toString();

@@ -22,9 +22,9 @@ public class PerformanceTest {
     /*
      * ONLY MODIFY PUBLIC FIELDS
      */
-    
+
     public static final boolean DO_PERFORMANCE_TEST = false;
-    
+
     public static final long SEED = 285428738523L;
 
     public static final int RUNS_PER_ROUND = 50;
@@ -47,33 +47,33 @@ public class PerformanceTest {
 
     @TestFactory
     public Collection<DynamicTest> performanceTests() {
-        if(!DO_PERFORMANCE_TEST) {
+        if (!DO_PERFORMANCE_TEST) {
             return Collections.emptyList();
         }
-        ArrayList<DynamicTest> tests = new ArrayList<>(TESTS.length);
+        final ArrayList<DynamicTest> tests = new ArrayList<>(TESTS.length);
         if (TESTS.length == 0) {
             return tests;
         }
-        for (Test<?> test : TESTS) {
+        for (final Test<?> test : TESTS) {
             tests.add(DynamicTest.dynamicTest(test.name, () -> runTest(test)));
         }
         return tests;
     }
 
     @SuppressWarnings("unchecked")
-    private static <T extends Storable> void runTest(Test<T> test) throws Throwable {
-        ArrayList<StorageProvider<T>> providerList = new ArrayList<>();
+    private static <T extends Storable> void runTest(final Test<T> test) throws Throwable {
+        final ArrayList<StorageProvider<T>> providerList = new ArrayList<>();
         test.createProviders(providerList);
-        StorageProvider<T>[] providers = providerList.toArray(StorageProvider[]::new);
+        final StorageProvider<T>[] providers = providerList.toArray(StorageProvider[]::new);
         providerList.clear();
-        File workingDir = new File("tests", test.name);
+        final File workingDir = new File("tests", test.name);
         if (workingDir.exists()) {
             FileUtils.forceDelete(workingDir);
         }
         workingDir.mkdirs();
-        File warmupDir = new File(workingDir, "warmup");
-        for (StorageProvider<T> provider : providers) {
-            Profiler profiler = new Profiler(RUNS_PER_ROUND);
+        final File warmupDir = new File(workingDir, "warmup");
+        for (final StorageProvider<T> provider : providers) {
+            final Profiler profiler = new Profiler(RUNS_PER_ROUND);
             profiler.lock();
             for (int index = 0; index < WARMUP_RUNS; index++) {
                 warmupDir.mkdirs();
@@ -81,14 +81,14 @@ public class PerformanceTest {
                 FileUtils.forceDelete(warmupDir);
             }
             profiler.unlock();
-            Random seedRandom = new Random(SEED);
-            Profiler.Result[] results = new Profiler.Result[SAMPLE_ROUNDS];
+            final Random seedRandom = new Random(SEED);
+            final Profiler.Result[] results = new Profiler.Result[SAMPLE_ROUNDS];
             for (int index = 0; index < SAMPLE_ROUNDS; index++) {
-                File roundDir = new File(workingDir, "round" + index);
+                final File roundDir = new File(workingDir, "round" + index);
                 roundDir.mkdirs();
-                long roundSeed = seedRandom.nextLong();
+                final long roundSeed = seedRandom.nextLong();
                 for (int idx = 0; idx < RUNS_PER_ROUND; idx++) {
-                    File runDir = new File(roundDir, "run" + idx);
+                    final File runDir = new File(roundDir, "run" + idx);
                     runDir.mkdirs();
                     test.executeTest(runDir, provider, profiler, roundSeed);
                 }
@@ -99,7 +99,7 @@ public class PerformanceTest {
             long min = Long.MAX_VALUE;
             long max = 0;
             for (int index = 0; index < SAMPLE_ROUNDS; index++) {
-                Profiler.Result result = results[index];
+                final Profiler.Result result = results[index];
                 result.evaluate();
                 if (min > result.min()) {
                     min = result.min();
@@ -119,13 +119,13 @@ public class PerformanceTest {
         }
     }
 
-    private static void printResult(long min, long max, long average) {
+    private static void printResult(final long min, final long max, final long average) {
         printValue("Minimum", min);
         printValue("Maximum", max);
         printValue("Average", average);
     }
 
-    private static void printValue(String name, long value) {
+    private static void printValue(final String name, final long value) {
         System.out.println(name + ": " + FORMAT.format(value / MILLI_IN_NANOS) + "ms");
     }
 

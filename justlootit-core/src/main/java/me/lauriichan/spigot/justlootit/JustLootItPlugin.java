@@ -3,8 +3,6 @@ package me.lauriichan.spigot.justlootit;
 import java.lang.reflect.Constructor;
 import java.util.concurrent.ExecutorService;
 
-import me.lauriichan.spigot.justlootit.listener.ContainerListener;
-import me.lauriichan.spigot.justlootit.listener.GuiListener;
 import org.bukkit.NamespacedKey;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
@@ -19,12 +17,16 @@ import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.laylib.reflection.ClassUtil;
 import me.lauriichan.laylib.reflection.JavaAccess;
 import me.lauriichan.spigot.justlootit.capability.JustLootItCapabilityProvider;
-import me.lauriichan.spigot.justlootit.command.*;
+import me.lauriichan.spigot.justlootit.command.DebugCommand;
+import me.lauriichan.spigot.justlootit.command.HelpCommand;
 import me.lauriichan.spigot.justlootit.command.impl.BukkitCommandInjectedBridge;
 import me.lauriichan.spigot.justlootit.command.impl.BukkitCommandInjectedBridge.CommandDefinition;
-import me.lauriichan.spigot.justlootit.command.provider.*;
+import me.lauriichan.spigot.justlootit.command.provider.LoggerProvider;
+import me.lauriichan.spigot.justlootit.command.provider.PluginProvider;
 import me.lauriichan.spigot.justlootit.data.io.DataIO;
 import me.lauriichan.spigot.justlootit.inventory.item.HeadProfileProvider;
+import me.lauriichan.spigot.justlootit.listener.ContainerListener;
+import me.lauriichan.spigot.justlootit.listener.GuiListener;
 import me.lauriichan.spigot.justlootit.listener.ItemFrameListener;
 import me.lauriichan.spigot.justlootit.message.CommandDescription;
 import me.lauriichan.spigot.justlootit.message.CommandManagerMessage;
@@ -52,7 +54,7 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
      *  - Add automatic detection for vanilla containers and item frames (using new AsyncStructureGenerateEvent possibly?)
      * 
      */
-    
+
     public static JustLootItPlugin get() {
         return getPlugin(JustLootItPlugin.class);
     }
@@ -70,9 +72,9 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
     private ISimpleLogger logger;
     private CommandManager commandManager;
     private MessageManager messageManager;
-    
+
     private BukkitCommandInjectedBridge commandBridge;
-    
+
     private boolean disabled = false;
 
     /*
@@ -104,7 +106,7 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
             packetManager = versionHandler.packetManager();
             getLogger().info("Initialized version support for " + coreVersion);
             return true;
-        } catch (Exception exp) {
+        } catch (final Exception exp) {
             getLogger().severe("Failed to initialize version support for " + coreVersion);
             getLogger().severe("Reason: '" + exp.getMessage() + "'");
             getLogger().severe("");
@@ -118,9 +120,9 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
         messageManager = new MessageManager();
         commandManager = new CommandManager(logger);
     }
-    
+
     private void setupCapabilities() {
-        CapabilityManager capabilities = versionHandler.capabilities();
+        final CapabilityManager capabilities = versionHandler.capabilities();
         capabilities.add(JustLootItCapabilityProvider.CAPABILITY_PROVIDER);
     }
 
@@ -130,7 +132,7 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
 
     @Override
     public void onEnable() {
-        if(disabled) {
+        if (disabled) {
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
@@ -147,14 +149,14 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
         registerListeners(getServer().getPluginManager());
     }
 
-    private void registerMessages(MessageManager manager) {
+    private void registerMessages(final MessageManager manager) {
         final SimpleMessageProviderFactory factory = new SimpleMessageProviderFactory();
         manager.register(new EnumMessageSource(CommandManagerMessage.class, factory));
         manager.register(new EnumMessageSource(CommandDescription.class, factory));
         manager.register(new AnnotationMessageSource(Messages.class, factory));
     }
 
-    private void registerArgumentTypes(ArgumentRegistry registry) {
+    private void registerArgumentTypes(final ArgumentRegistry registry) {
         // Register argument types
 
         // Register providers
@@ -162,20 +164,20 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
         registry.setProvider(new LoggerProvider(logger));
     }
 
-    private void registerCommands(CommandManager manager) {
+    private void registerCommands(final CommandManager manager) {
         manager.register(HelpCommand.class);
         manager.register(DebugCommand.class);
     }
 
-    private void registerListeners(PluginManager pluginManager) {
+    private void registerListeners(final PluginManager pluginManager) {
         // Construct listener used for events and packets
-        ItemFrameListener itemFrameListener = new ItemFrameListener(versionHandler);
+        final ItemFrameListener itemFrameListener = new ItemFrameListener(versionHandler);
 
         // Register event listener
         pluginManager.registerEvents(itemFrameListener, this);
         pluginManager.registerEvents(new ContainerListener(versionHandler), this);
         pluginManager.registerEvents(new GuiListener(this), this);
-        
+
         // Register packet listener
         itemFrameContainer = packetManager.register(itemFrameListener).setGlobal(true);
     }
@@ -186,7 +188,7 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
 
     @Override
     public void onDisable() {
-        if(disabled) {
+        if (disabled) {
             return;
         }
         if (versionHandler != null) {
@@ -227,7 +229,7 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
     public Plugin plugin() {
         return this;
     }
-    
+
     @Override
     public ISimpleLogger logger() {
         return logger;
@@ -242,12 +244,12 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
     public ExecutorService asyncService() {
         return asyncService;
     }
-    
+
     /*
      * Utility
      */
 
-    public NamespacedKey key(String name) {
+    public NamespacedKey key(final String name) {
         return new NamespacedKey(this, name);
     }
 
@@ -256,13 +258,13 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
      */
 
     private VersionHandler initVersionHandler() {
-        String path = String.format(VERSION_PATH, VersionConstant.PACKAGE_VERSION,
-            (coreVersion = VersionConstant.PACKAGE_VERSION.substring(1)));
-        Class<?> clazz = ClassUtil.findClass(path);
+        final String path = String.format(VERSION_PATH, VersionConstant.PACKAGE_VERSION,
+            coreVersion = VersionConstant.PACKAGE_VERSION.substring(1));
+        final Class<?> clazz = ClassUtil.findClass(path);
         if (clazz == null || !VersionHandler.class.isAssignableFrom(clazz)) {
             throw new IllegalStateException("Couldn't find class '" + path + "'!");
         }
-        Constructor<?> constructor = ClassUtil.getConstructor(clazz, IServiceProvider.class);
+        final Constructor<?> constructor = ClassUtil.getConstructor(clazz, IServiceProvider.class);
         if (constructor == null) {
             throw new IllegalStateException("Couldn't find valid constructor for class '" + path + "'!");
         }

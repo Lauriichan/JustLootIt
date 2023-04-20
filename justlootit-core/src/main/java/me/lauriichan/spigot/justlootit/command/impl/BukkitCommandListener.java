@@ -9,9 +9,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.server.ServerCommandEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.server.ServerCommandEvent;
 
 import me.lauriichan.laylib.command.Actor;
 import me.lauriichan.laylib.command.CommandManager;
@@ -25,16 +25,17 @@ public final class BukkitCommandListener implements Listener {
     private final CommandManager commandManager;
     private final MessageManager messageManager;
 
-    public BukkitCommandListener(final VersionHelper versionHelper, final CommandManager commandManager, final MessageManager messageManager) {
+    public BukkitCommandListener(final VersionHelper versionHelper, final CommandManager commandManager,
+        final MessageManager messageManager) {
         this.versionHelper = versionHelper;
         this.commandManager = commandManager;
         this.messageManager = messageManager;
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
-    public void onChat(AsyncPlayerChatEvent event) {
-        Player player = event.getPlayer();
-        CommandProcess process = commandManager.getProcess(player.getUniqueId());
+    public void onChat(final AsyncPlayerChatEvent event) {
+        final Player player = event.getPlayer();
+        final CommandProcess process = commandManager.getProcess(player.getUniqueId());
         if (process == null) {
             return;
         }
@@ -43,24 +44,24 @@ public final class BukkitCommandListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
-    public void onPreProcess(PlayerCommandPreprocessEvent event) {
-        Player player = event.getPlayer();
-        CommandProcess process = commandManager.getProcess(player.getUniqueId());
+    public void onPreProcess(final PlayerCommandPreprocessEvent event) {
+        final Player player = event.getPlayer();
+        final CommandProcess process = commandManager.getProcess(player.getUniqueId());
         if (process == null) {
             return;
         }
         event.setCancelled(true);
-        BukkitActor<Player> actor = new BukkitActor<>(player, messageManager, versionHelper);
-        String[] args = event.getMessage().split(" ");
-        if (args[0].equalsIgnoreCase("/cancel")) {
+        final BukkitActor<Player> actor = new BukkitActor<>(player, messageManager, versionHelper);
+        final String[] args = event.getMessage().split(" ");
+        if ("/cancel".equalsIgnoreCase(args[0])) {
             commandManager.cancelProcess(actor);
             return;
         }
-        if (args[0].equalsIgnoreCase("/skip")) {
+        if ("/skip".equalsIgnoreCase(args[0])) {
             commandManager.handleProcessSkip(actor, process);
             return;
         }
-        if (args.length > 1 && args[0].equalsIgnoreCase("/suggestion")) {
+        if (args.length > 1 && "/suggestion".equalsIgnoreCase(args[0])) {
             commandManager.handleProcessInput(actor, process,
                 Arrays.stream(args).skip(1).filter(Predicate.not(String::isBlank)).collect(Collectors.joining(" ")), true);
             return;
@@ -69,23 +70,23 @@ public final class BukkitCommandListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
-    public void onServerCommand(ServerCommandEvent event) {
-        CommandProcess process = commandManager.getProcess(Actor.IMPL_ID);
+    public void onServerCommand(final ServerCommandEvent event) {
+        final CommandProcess process = commandManager.getProcess(Actor.IMPL_ID);
         if (process == null) {
             return;
         }
-        BukkitActor<CommandSender> actor = new BukkitActor<>(event.getSender(), messageManager, versionHelper);
+        final BukkitActor<CommandSender> actor = new BukkitActor<>(event.getSender(), messageManager, versionHelper);
         event.setCancelled(true);
-        String[] args = event.getCommand().split(" ");
-        if (args[0].equalsIgnoreCase("/cancel")) {
+        final String[] args = event.getCommand().split(" ");
+        if ("/cancel".equalsIgnoreCase(args[0])) {
             commandManager.cancelProcess(actor);
             return;
         }
-        if (args[0].equalsIgnoreCase("/skip")) {
+        if ("/skip".equalsIgnoreCase(args[0])) {
             commandManager.handleProcessSkip(actor, process);
             return;
         }
-        if (args.length > 1 && args[0].equalsIgnoreCase("/suggestion")) {
+        if (args.length > 1 && "/suggestion".equalsIgnoreCase(args[0])) {
             commandManager.handleProcessInput(actor, process,
                 Arrays.stream(args).skip(1).filter(Predicate.not(String::isBlank)).collect(Collectors.joining(" ")), true);
             return;

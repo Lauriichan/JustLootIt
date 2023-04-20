@@ -35,7 +35,7 @@ public interface IHandler {
     }
 
     default boolean onEventClick(final HumanEntity entity, final IGuiInventory inventory, final VersionHandler versionHandler,
-        InventoryClickEvent event) {
+        final InventoryClickEvent event) {
         final InventoryAction action = event.getAction();
         final int slot = event.getSlot();
         ItemStack stack;

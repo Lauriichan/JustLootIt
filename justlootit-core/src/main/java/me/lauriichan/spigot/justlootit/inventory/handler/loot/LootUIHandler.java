@@ -18,23 +18,24 @@ public final class LootUIHandler implements IHandler {
     private LootUIHandler() {}
 
     @Override
-    public boolean onEventClose(HumanEntity entity, IGuiInventory inventory, VersionHandler versionHandler) {
-        Long id = inventory.attrUnset(ATTR_ID, Long.class);
+    public boolean onEventClose(final HumanEntity entity, final IGuiInventory inventory, final VersionHandler versionHandler) {
+        final Long id = inventory.attrUnset(ATTR_ID, Long.class);
         if (id == null) {
             return false;
         }
-        PlayerAdapter player = versionHandler.getPlayer(entity.getUniqueId());
+        final PlayerAdapter player = versionHandler.getPlayer(entity.getUniqueId());
         if (player == null) {
             return false;
         }
         player.getCapability(StorageCapability.class).ifPresent(capability -> {
-            capability.storage().write(new CachedInventory(id.longValue(), inventory.getInventory()));
+            capability.storage().write(new CachedInventory(id, inventory.getInventory()));
         });
         return false;
     }
 
     @Override
-    public boolean onEventClick(HumanEntity entity, IGuiInventory inventory, VersionHandler versionHandler, InventoryClickEvent event) {
+    public boolean onEventClick(final HumanEntity entity, final IGuiInventory inventory, final VersionHandler versionHandler,
+        final InventoryClickEvent event) {
         return false;
     }
 

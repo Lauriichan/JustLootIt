@@ -9,8 +9,8 @@ public final class CapabilityManager {
 
     private final ObjectArrayList<ICapabilityProvider> list = new ObjectArrayList<>();
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-    
-    public final void forEach(Consumer<ICapabilityProvider> consumer) {
+
+    public void forEach(final Consumer<ICapabilityProvider> consumer) {
         lock.readLock().lock();
         try {
             list.forEach(consumer);
@@ -18,8 +18,8 @@ public final class CapabilityManager {
             lock.readLock().unlock();
         }
     }
-    
-    public final ICapabilityProvider[] array() {
+
+    public ICapabilityProvider[] array() {
         lock.readLock().lock();
         try {
             return list.toArray(ICapabilityProvider[]::new);
@@ -28,7 +28,7 @@ public final class CapabilityManager {
         }
     }
 
-    public final ICapabilityProvider get(int index) {
+    public ICapabilityProvider get(final int index) {
         lock.readLock().lock();
         try {
             return list.get(index);
@@ -37,7 +37,7 @@ public final class CapabilityManager {
         }
     }
 
-    public final boolean add(ICapabilityProvider provider) {
+    public boolean add(final ICapabilityProvider provider) {
         lock.readLock().lock();
         try {
             if (list.contains(provider)) {
@@ -54,7 +54,7 @@ public final class CapabilityManager {
         }
     }
 
-    public final boolean remove(ICapabilityProvider provider) {
+    public boolean remove(final ICapabilityProvider provider) {
         lock.writeLock().lock();
         try {
             return list.remove(provider);
@@ -63,7 +63,7 @@ public final class CapabilityManager {
         }
     }
 
-    public final int amount() {
+    public int amount() {
         lock.readLock().lock();
         try {
             return list.size();

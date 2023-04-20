@@ -27,8 +27,8 @@ public final class BukkitColor {
     }
 
     public static String apply(final String string) {
-        StringBuilder output = new StringBuilder();
-        int length = string.length();
+        final StringBuilder output = new StringBuilder();
+        final int length = string.length();
         for (int index = 0; index < length; index++) {
             final char chr = string.charAt(index);
             if (chr == REPLACEMENT_CHAR) {
@@ -45,7 +45,7 @@ public final class BukkitColor {
                     output.append(format.toString().toLowerCase());
                     continue;
                 }
-                StringBuilder hex = new StringBuilder();
+                final StringBuilder hex = new StringBuilder();
                 for (int idx = index + 2; idx <= index + 7; idx++) {
                     final char hch = string.charAt(idx);
                     if (hch >= 'A' && hch <= 'Z') {
@@ -58,7 +58,7 @@ public final class BukkitColor {
                     }
                     break;
                 }
-                if (!(hex.length() == 6 || hex.length() == 3)) {
+                if (((hex.length() != 6) && (hex.length() != 3))) {
                     output.append(chr);
                     continue;
                 }
@@ -75,8 +75,8 @@ public final class BukkitColor {
     }
 
     public static String unapply(final String string) {
-        StringBuilder output = new StringBuilder();
-        int length = string.length();
+        final StringBuilder output = new StringBuilder();
+        final int length = string.length();
         for (int index = 0; index < length; index++) {
             final char chr = string.charAt(index);
             if (chr == COLOR_CHAR) {
@@ -93,7 +93,7 @@ public final class BukkitColor {
                     output.append(REPLACEMENT_CHAR).append(next);
                     continue;
                 }
-                StringBuilder hex = new StringBuilder();
+                final StringBuilder hex = new StringBuilder();
                 boolean colChar = false;
                 for (int idx = index + 2; idx <= index + 13; idx++) {
                     final char hch = string.charAt(idx);
@@ -114,7 +114,7 @@ public final class BukkitColor {
                     }
                     break;
                 }
-                if (!(hex.length() == 6 || hex.length() == 3)) {
+                if (((hex.length() != 6) && (hex.length() != 3))) {
                     output.append(chr);
                     continue;
                 }

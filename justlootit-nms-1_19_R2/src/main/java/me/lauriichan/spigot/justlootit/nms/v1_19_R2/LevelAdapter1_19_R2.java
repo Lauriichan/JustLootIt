@@ -7,15 +7,15 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 
 public class LevelAdapter1_19_R2 extends LevelAdapter {
-    
+
     private final ServerLevel level;
     private final VersionHandler1_19_R2 versionHandler;
-    
+
     public LevelAdapter1_19_R2(final VersionHandler1_19_R2 versionHandler, final ServerLevel level) {
         this.level = level;
         this.versionHandler = versionHandler;
     }
-    
+
     @Override
     public VersionHandler1_19_R2 versionHandler() {
         return versionHandler;
@@ -27,9 +27,9 @@ public class LevelAdapter1_19_R2 extends LevelAdapter {
     }
 
     @Override
-    public org.bukkit.entity.Entity getBukkitEntityById(int id) {
-        Entity entity = level.entityManager.getEntityGetter().get(id);
-        if(entity == null) {
+    public org.bukkit.entity.Entity getBukkitEntityById(final int id) {
+        final Entity entity = level.entityManager.getEntityGetter().get(id);
+        if (entity == null) {
             return null;
         }
         return entity.getBukkitEntity();

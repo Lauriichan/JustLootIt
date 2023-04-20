@@ -11,39 +11,39 @@ import net.md_5.bungee.api.chat.BaseComponent;
 
 public abstract class SendableComponent {
 
-    public static final BaseComponent[] EMPTY = new BaseComponent[0];
+    public static final BaseComponent[] EMPTY = {};
 
-    public void send(Actor<?> actor) {
-        Actor<CommandSender> sender = actor.as(CommandSender.class);
+    public void send(final Actor<?> actor) {
+        final Actor<CommandSender> sender = actor.as(CommandSender.class);
         if (!actor.isValid()) {
             return;
         }
         send(sender.getHandle());
     }
 
-    public void send(Actor<?> actor, ChatMessageType type) {
-        Actor<Player> sender = actor.as(Player.class);
+    public void send(final Actor<?> actor, final ChatMessageType type) {
+        final Actor<Player> sender = actor.as(Player.class);
         if (!actor.isValid()) {
             return;
         }
         send(sender.getHandle(), type);
     }
 
-    public void send(CommandSender sender) {
+    public void send(final CommandSender sender) {
         sender.spigot().sendMessage(build());
     }
 
-    public void send(Player player, ChatMessageType type) {
+    public void send(final Player player, final ChatMessageType type) {
         player.spigot().sendMessage(type, build());
     }
 
-    public void broadcast(World world) {
+    public void broadcast(final World world) {
         broadcast(world, ChatMessageType.CHAT);
     }
 
-    public void broadcast(World world, ChatMessageType type) {
-        BaseComponent[] message = build();
-        for (Player player : world.getPlayers()) {
+    public void broadcast(final World world, final ChatMessageType type) {
+        final BaseComponent[] message = build();
+        for (final Player player : world.getPlayers()) {
             player.spigot().sendMessage(type, message);
         }
     }

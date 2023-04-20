@@ -6,7 +6,7 @@ public final class IOProvider {
 
     private final Object2ObjectOpenHashMap<Class<?>, IOHandler<?>> handlers = new Object2ObjectOpenHashMap<>();
 
-    public final boolean register(IOHandler<?> handler) {
+    public boolean register(final IOHandler<?> handler) {
         if (handler.type() == null || handlers.containsKey(handler.type())) {
             return false;
         }
@@ -14,7 +14,7 @@ public final class IOProvider {
         return true;
     }
 
-    public final boolean unregister(Class<?> type) {
+    public boolean unregister(final Class<?> type) {
         if (type == null || !handlers.containsKey(type)) {
             return false;
         }
@@ -22,15 +22,15 @@ public final class IOProvider {
         return true;
     }
 
-    public final void unregisterAll() {
+    public void unregisterAll() {
         handlers.clear();
     }
 
-    public final Class<?>[] handlerTypes() {
+    public Class<?>[] handlerTypes() {
         return handlers.keySet().toArray(Class[]::new);
     }
 
-    public final IOHandler<?> handlerOf(Class<?> type) {
+    public IOHandler<?> handlerOf(final Class<?> type) {
         if (type == null) {
             return null;
         }
@@ -40,13 +40,13 @@ public final class IOProvider {
         return searchFor(type);
     }
 
-    private final IOHandler<?> searchFor(Class<?> type) {
-        IOHandler<?> handler = handlers.get(type);
+    private IOHandler<?> searchFor(final Class<?> type) {
+        final IOHandler<?> handler = handlers.get(type);
         if (handler != null) {
             return handler;
         }
-        for (Class<?> current : handlers.keySet()) {
-            if(type.isAssignableFrom(current)) {
+        for (final Class<?> current : handlers.keySet()) {
+            if (type.isAssignableFrom(current)) {
                 return handler;
             }
         }

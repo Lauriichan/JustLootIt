@@ -11,10 +11,9 @@ import me.lauriichan.spigot.justlootit.nms.packet.AbstractPacket;
 public final class PacketExecutor {
 
     @FunctionalInterface
-    private static interface MethodExecutor {
+    private interface MethodExecutor {
 
-        Object execute(MethodHandle method, PacketContainer container, PlayerAdapter player, AbstractPacket packet)
-            throws Throwable;
+        Object execute(MethodHandle method, PacketContainer container, PlayerAdapter player, AbstractPacket packet) throws Throwable;
 
     }
 
@@ -65,41 +64,43 @@ public final class PacketExecutor {
         return packetType;
     }
 
-    public boolean execute(PacketContainer container, PlayerAdapter player, AbstractPacket packet) {
+    public boolean execute(final PacketContainer container, final PlayerAdapter player, final AbstractPacket packet) {
         try {
             return sanitize(executor.execute(method, container, player, packet));
-        } catch (Throwable e) {
-            container.logger().debug("Failed to execute packet listener for packet '{0}' and player '{1}'", e, packet.getClass().getSimpleName(), player.getName());
+        } catch (final Throwable e) {
+            container.logger().debug("Failed to execute packet listener for packet '{0}' and player '{1}'", e,
+                packet.getClass().getSimpleName(), player.getName());
             return false; // Do not cancel the packet
         }
     }
 
-    private final boolean sanitize(Object object) {
+    private boolean sanitize(final Object object) {
         if (object == null || !(object instanceof Boolean)) {
             return false;
         }
-        return ((Boolean) object).booleanValue();
+        return ((Boolean) object);
     }
 
-    static PacketExecutor analyze(Method method, boolean allowCancelled) {
+    static PacketExecutor analyze(final Method method, final boolean allowCancelled) {
         if (method.getParameterCount() > 3 || method.getParameterCount() < 1) {
             return null;
         }
         MethodHandle methodHandle;
         try {
             methodHandle = MethodHandles.lookup().unreflect(method);
-        } catch (IllegalAccessException e) {
+        } catch (final IllegalAccessException e) {
             return null; // Couldn't retrieve MethodHandle
         }
-        Parameter[] parameters = method.getParameters();
+        final Parameter[] parameters = method.getParameters();
         switch (parameters.length) {
         case 2:
-            Class<?> param20 = parameters[0].getType();
-            Class<?> param21 = parameters[1].getType();
+            final Class<?> param20 = parameters[0].getType();
+            final Class<?> param21 = parameters[1].getType();
             if (AbstractPacket.class.isAssignableFrom(param20)) {
                 if (PlayerAdapter.class.isAssignableFrom(param21)) {
                     return new PacketExecutor(param20, methodHandle, PACKET_PLAYER, allowCancelled);
-                } else if (PacketContainer.class.isAssignableFrom(param21)) {
+                }
+                if (PacketContainer.class.isAssignableFrom(param21)) {
                     return new PacketExecutor(param20, methodHandle, PACKET_CONTAINER, allowCancelled);
                 }
                 return null; // Unsupported type
@@ -107,27 +108,28 @@ public final class PacketExecutor {
             if (AbstractPacket.class.isAssignableFrom(param21)) {
                 if (PlayerAdapter.class.isAssignableFrom(param20)) {
                     return new PacketExecutor(param21, methodHandle, PLAYER_PACKET, allowCancelled);
-                } else if (PacketContainer.class.isAssignableFrom(param20)) {
+                }
+                if (PacketContainer.class.isAssignableFrom(param20)) {
                     return new PacketExecutor(param21, methodHandle, CONTAINER_PACKET, allowCancelled);
                 }
                 return null; // Unsupported type
             }
             return null; // Unsupported type
         case 3:
-            Class<?> param30 = parameters[0].getType();
-            Class<?> param31 = parameters[1].getType();
-            Class<?> param32 = parameters[1].getType();
+            final Class<?> param30 = parameters[0].getType();
+            final Class<?> param31 = parameters[1].getType();
+            final Class<?> param32 = parameters[1].getType();
             if (AbstractPacket.class.isAssignableFrom(param30)) {
                 if (PlayerAdapter.class.isAssignableFrom(param31)) {
                     if (PacketContainer.class.isAssignableFrom(param32)) {
                         return new PacketExecutor(param30, methodHandle, PACKET_PLAYER_CONTAINER, allowCancelled);
                     }
                     return null; // Unsupported type
-                } else if (PacketContainer.class.isAssignableFrom(param31)) {
+                }
+                if (PacketContainer.class.isAssignableFrom(param31)) {
                     if (PlayerAdapter.class.isAssignableFrom(param32)) {
                         return new PacketExecutor(param30, methodHandle, PACKET_CONTAINER_PLAYER, allowCancelled);
                     }
-                    return null; // Unsupported type
                 }
                 return null; // Unsupported type
             }
@@ -137,11 +139,11 @@ public final class PacketExecutor {
                         return new PacketExecutor(param31, methodHandle, PLAYER_PACKET_CONTAINER, allowCancelled);
                     }
                     return null; // Unsupported type
-                } else if (PacketContainer.class.isAssignableFrom(param30)) {
+                }
+                if (PacketContainer.class.isAssignableFrom(param30)) {
                     if (PlayerAdapter.class.isAssignableFrom(param32)) {
                         return new PacketExecutor(param31, methodHandle, CONTAINER_PACKET_PLAYER, allowCancelled);
                     }
-                    return null; // Unsupported type
                 }
                 return null; // Unsupported type
             }
@@ -151,17 +153,17 @@ public final class PacketExecutor {
                         return new PacketExecutor(param31, methodHandle, PLAYER_CONTAINER_PACKET, allowCancelled);
                     }
                     return null; // Unsupported type
-                } else if (PacketContainer.class.isAssignableFrom(param30)) {
+                }
+                if (PacketContainer.class.isAssignableFrom(param30)) {
                     if (PlayerAdapter.class.isAssignableFrom(param31)) {
                         return new PacketExecutor(param31, methodHandle, CONTAINER_PLAYER_PACKET, allowCancelled);
                     }
-                    return null; // Unsupported type
                 }
                 return null; // Unsupported type
             }
             return null; // Unsupported type
         default:
-            Class<?> param10 = parameters[0].getType();
+            final Class<?> param10 = parameters[0].getType();
             if (AbstractPacket.class.isAssignableFrom(param10)) {
                 return new PacketExecutor(param10, methodHandle, PACKET, allowCancelled);
             }

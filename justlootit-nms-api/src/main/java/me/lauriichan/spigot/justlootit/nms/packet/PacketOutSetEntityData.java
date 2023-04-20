@@ -8,9 +8,9 @@ public abstract class PacketOutSetEntityData extends AbstractPacketOut {
 
         IEntityData get(int index);
 
-        default IEntityData getById(int id) {
+        default IEntityData getById(final int id) {
             for (int index = 0; index < size(); index++) {
-                IEntityData data = get(index);
+                final IEntityData data = get(index);
                 if (data.getId() == id) {
                     return data;
                 }
@@ -18,14 +18,14 @@ public abstract class PacketOutSetEntityData extends AbstractPacketOut {
             return null;
         }
 
-        default int indexOf(IEntityData data) {
+        default int indexOf(final IEntityData data) {
             if (data == null) {
                 return -1;
             }
             return indexOf(data.getId());
         }
 
-        default int indexOf(int id) {
+        default int indexOf(final int id) {
             for (int index = 0; index < size(); index++) {
                 if (get(index).getId() == id) {
                     return index;

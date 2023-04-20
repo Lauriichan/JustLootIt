@@ -5,14 +5,15 @@ import java.util.List;
 import java.util.Random;
 import java.util.function.Function;
 
-import me.lauriichan.spigot.justlootit.storage.Storable;
 import me.lauriichan.spigot.justlootit.storage.AbstractStorage;
+import me.lauriichan.spigot.justlootit.storage.Storable;
 
 public abstract class Test<T extends Storable> {
 
     public static final class StorageProvider<T extends Storable> {
 
-        public static <T extends Storable> StorageProvider<T> provider(final String name, final Function<File, AbstractStorage<T>> builder) {
+        public static <T extends Storable> StorageProvider<T> provider(final String name,
+            final Function<File, AbstractStorage<T>> builder) {
             return new StorageProvider<>(name, builder);
         }
 
@@ -34,9 +35,10 @@ public abstract class Test<T extends Storable> {
 
     public abstract void createProviders(List<StorageProvider<T>> list);
 
-    public final void executeTest(File workingDir, StorageProvider<T> provider, Profiler profiler, long seed) throws Throwable {
-        AbstractStorage<T> storage = provider.builder.apply(workingDir);
-        Random random = new Random(seed);
+    public final void executeTest(final File workingDir, final StorageProvider<T> provider, final Profiler profiler, final long seed)
+        throws Throwable {
+        final AbstractStorage<T> storage = provider.builder.apply(workingDir);
+        final Random random = new Random(seed);
         profiler.time();
         executeTest(provider.name, storage, random);
         profiler.time();

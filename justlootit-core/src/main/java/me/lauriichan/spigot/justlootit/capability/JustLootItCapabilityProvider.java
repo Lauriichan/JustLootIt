@@ -16,12 +16,13 @@ public final class JustLootItCapabilityProvider implements ICapabilityProvider {
     private JustLootItCapabilityProvider() {}
 
     @Override
-    public <C extends Capable<C>> boolean isSupported(Class<C> type) {
+    public <C extends Capable<C>> boolean isSupported(final Class<C> type) {
         return true;
     }
 
     @Override
-    public <C extends Capable<C>> void provide(VersionHandler handler, Class<C> type, C value, List<ICapability> capabilities) {
+    public <C extends Capable<C>> void provide(final VersionHandler handler, final Class<C> type, final C value,
+        final List<ICapability> capabilities) {
         if (LevelAdapter.class.isAssignableFrom(type)) {
             provideLevel(handler, (LevelAdapter) value, capabilities);
         }
@@ -30,11 +31,11 @@ public final class JustLootItCapabilityProvider implements ICapabilityProvider {
         }
     }
 
-    private void provideLevel(VersionHandler handler, LevelAdapter adapter, List<ICapability> capabilities) {
+    private void provideLevel(final VersionHandler handler, final LevelAdapter adapter, final List<ICapability> capabilities) {
         capabilities.add(new StorageCapability.LevelImpl(handler, adapter));
     }
 
-    private void providePlayer(VersionHandler handler, PlayerAdapter adapter, List<ICapability> capabilities) {
+    private void providePlayer(final VersionHandler handler, final PlayerAdapter adapter, final List<ICapability> capabilities) {
         capabilities.add(new StorageCapability.PlayerImpl(handler, adapter));
         capabilities.add(new PlayerGUICapability(handler));
     }

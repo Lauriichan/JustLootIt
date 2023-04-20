@@ -16,12 +16,12 @@ public final class ComponentBuilder extends SendableComponent {
 
     private ComponentBuilder() {}
 
-    public ComponentBuilder add(Component component) {
+    public ComponentBuilder add(final Component component) {
         components.add(Objects.requireNonNull(component));
         return this;
     }
 
-    public ComponentBuilder remove(int index) {
+    public ComponentBuilder remove(final int index) {
         if (index < 0 || index >= components.size()) {
             return this;
         }
@@ -29,7 +29,7 @@ public final class ComponentBuilder extends SendableComponent {
         return this;
     }
 
-    public Optional<Component> get(int index) {
+    public Optional<Component> get(final int index) {
         if (index < 0 || index >= components.size()) {
             return Optional.empty();
         }
@@ -42,16 +42,16 @@ public final class ComponentBuilder extends SendableComponent {
             return EMPTY;
         }
         int length = 0;
-        Component[] components = this.components.toArray(Component[]::new);
-        ArrayList<BaseComponent[]> messages = new ArrayList<>();
+        final Component[] components = this.components.toArray(Component[]::new);
+        final ArrayList<BaseComponent[]> messages = new ArrayList<>();
         for (int index = 0; index < components.length; index++) {
-            BaseComponent[] message = components[index].build();
+            final BaseComponent[] message = components[index].build();
             messages.add(message);
             length += message.length;
         }
-        BaseComponent[] output = new BaseComponent[length];
+        final BaseComponent[] output = new BaseComponent[length];
         int index = 0;
-        for (BaseComponent[] message : messages) {
+        for (final BaseComponent[] message : messages) {
             System.arraycopy(message, 0, output, index, message.length);
             index += message.length;
         }

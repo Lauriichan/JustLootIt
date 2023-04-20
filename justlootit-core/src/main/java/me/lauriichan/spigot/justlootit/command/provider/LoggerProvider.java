@@ -13,7 +13,7 @@ public final class LoggerProvider implements IProviderArgumentType<ISimpleLogger
     }
 
     @Override
-    public ISimpleLogger provide(Actor<?> actor) {
+    public ISimpleLogger provide(final Actor<?> actor) {
         return logger;
     }
 

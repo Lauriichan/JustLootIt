@@ -16,10 +16,10 @@ public final class PacketInSwingArm1_19_R2 extends PacketInSwingArm {
     public Object asMinecraft() {
         return packet;
     }
-    
+
     @Override
     public Hand getHand() {
         return packet.getHand() == InteractionHand.MAIN_HAND ? Hand.MAIN_HAND : Hand.OFF_HAND;
     }
-    
+
 }

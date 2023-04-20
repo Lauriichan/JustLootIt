@@ -13,27 +13,27 @@ public final class BukkitSimpleLogger extends AbstractSimpleLogger {
     }
 
     @Override
-    protected void info(String message) {
+    protected void info(final String message) {
         logger.info(message);
     }
 
     @Override
-    protected void warning(String message) {
+    protected void warning(final String message) {
         logger.warning(message);
     }
 
     @Override
-    protected void error(String message) {
+    protected void error(final String message) {
         logger.severe(message);
     }
 
     @Override
-    protected void track(String message) {
+    protected void track(final String message) {
         logger.fine(message);
     }
 
     @Override
-    protected void debug(String message) {
+    protected void debug(final String message) {
         logger.info("[DEBUG] " + message);
     }
 

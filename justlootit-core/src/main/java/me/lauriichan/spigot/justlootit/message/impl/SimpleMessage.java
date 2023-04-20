@@ -14,7 +14,7 @@ public final class SimpleMessage implements IMessage {
         this.language = language;
     }
 
-    public void translation(String translation) {
+    public void translation(final String translation) {
         if (translation == null || translation.isBlank()) {
             this.translation = null;
             return;

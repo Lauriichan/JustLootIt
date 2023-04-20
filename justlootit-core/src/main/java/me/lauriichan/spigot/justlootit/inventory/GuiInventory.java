@@ -64,7 +64,7 @@ public final class GuiInventory extends Attributable implements InventoryHolder,
     }
 
     @Override
-    public boolean setHandler(IHandler handler) {
+    public boolean setHandler(final IHandler handler) {
         if (handler == null || this.handler == handler) {
             return false;
         }
@@ -74,7 +74,7 @@ public final class GuiInventory extends Attributable implements InventoryHolder,
     }
 
     @Override
-    public boolean setType(InventoryType type) {
+    public boolean setType(final InventoryType type) {
         if (type == null || this.type == type || !type.isCreatable()) {
             return false;
         }
@@ -93,7 +93,7 @@ public final class GuiInventory extends Attributable implements InventoryHolder,
     }
 
     @Override
-    public boolean setChestSize(ChestSize chestSize) {
+    public boolean setChestSize(final ChestSize chestSize) {
         if (chestSize == null || this.chestSize == chestSize) {
             return false;
         }
@@ -111,7 +111,7 @@ public final class GuiInventory extends Attributable implements InventoryHolder,
     }
 
     @Override
-    public boolean setTitle(String title) {
+    public boolean setTitle(final String title) {
         if (title == null || this.title.equals(title)) {
             return false;
         }
@@ -161,11 +161,11 @@ public final class GuiInventory extends Attributable implements InventoryHolder,
     }
 
     @Override
-    public ItemStack get(int index) {
+    public ItemStack get(final int index) {
         if (index < 0 || index >= size) {
             throw new IndexOutOfBoundsException(index);
         }
-        ItemStack stack = inventory.getItem(index);
+        final ItemStack stack = inventory.getItem(index);
         if (stack != null && stack.getType().isAir()) {
             return null;
         }
@@ -173,7 +173,7 @@ public final class GuiInventory extends Attributable implements InventoryHolder,
     }
 
     @Override
-    public void set(int index, ItemStack itemStack) {
+    public void set(final int index, final ItemStack itemStack) {
         if (index < 0 || index >= size) {
             throw new IndexOutOfBoundsException(index);
         }

@@ -18,15 +18,15 @@ public abstract class Container extends Storable implements IModifiable {
 
     protected static abstract class BaseAdapter<C extends Container> extends StorageAdapter<C> {
 
-        public BaseAdapter(Class<C> type, int typeId) {
+        public BaseAdapter(final Class<C> type, final int typeId) {
             super(type, typeId);
         }
 
         @Override
-        public final void serialize(C storable, ByteBuf buffer) {
-            ContainerData data = storable.data;
+        public final void serialize(final C storable, final ByteBuf buffer) {
+            final ContainerData data = storable.data;
             buffer.writeInt(data.playerAccess.size());
-            for (Entry<UUID, OffsetDateTime> entry : data.playerAccess.entrySet()) {
+            for (final Entry<UUID, OffsetDateTime> entry : data.playerAccess.entrySet()) {
                 DataIO.UUID.serialize(buffer, entry.getKey());
                 DataIO.OFFSET_DATE_TIME.serialize(buffer, entry.getValue());
             }
@@ -35,12 +35,12 @@ public abstract class Container extends Storable implements IModifiable {
         }
 
         @Override
-        public final C deserialize(long id, ByteBuf buffer) {
-            ContainerData data = new ContainerData();
-            int amount = buffer.readInt();
+        public final C deserialize(final long id, final ByteBuf buffer) {
+            final ContainerData data = new ContainerData();
+            final int amount = buffer.readInt();
             for (int index = 0; index < amount; index++) {
-                UUID uuid = DataIO.UUID.deserialize(buffer);
-                OffsetDateTime time = DataIO.OFFSET_DATE_TIME.deserialize(buffer);
+                final UUID uuid = DataIO.UUID.deserialize(buffer);
+                final OffsetDateTime time = DataIO.OFFSET_DATE_TIME.deserialize(buffer);
                 data.playerAccess.put(uuid, time);
             }
             data.refreshInterval = Math.max(buffer.readLong(), 0);
@@ -63,57 +63,57 @@ public abstract class Container extends Storable implements IModifiable {
     final ContainerData data;
     private boolean dirty = false;
 
-    public Container(long id) {
+    public Container(final long id) {
         this(id, new ContainerData());
     }
 
-    public Container(long id, ContainerData data) {
+    public Container(final long id, final ContainerData data) {
         super(id);
         this.data = data;
     }
-    
+
     @Override
     public final boolean isDirty() {
         return dirty;
     }
-    
+
     protected final void setDirty() {
         this.dirty = true;
     }
 
-    public OffsetDateTime getAccessTime(UUID id) {
+    public OffsetDateTime getAccessTime(final UUID id) {
         return data.playerAccess.get(id);
     }
 
-    public Duration durationUntilNextAccess(UUID id) {
-        if(data.refreshInterval == 0) {
+    public Duration durationUntilNextAccess(final UUID id) {
+        if (data.refreshInterval == 0) {
             return Duration.ofSeconds(-1);
         }
-        OffsetDateTime time = data.playerAccess.get(id);
+        final OffsetDateTime time = data.playerAccess.get(id);
         if (time == null) {
             return Duration.ZERO;
         }
-        Duration duration = Duration.between(OffsetDateTime.now(), time.plus(data.refreshInterval, ChronoUnit.MILLIS));
+        final Duration duration = Duration.between(OffsetDateTime.now(), time.plus(data.refreshInterval, ChronoUnit.MILLIS));
         if (duration.isNegative()) {
             return Duration.ZERO;
         }
         return duration;
     }
 
-    public boolean hasAccessed(UUID id) {
+    public boolean hasAccessed(final UUID id) {
         return data.playerAccess.containsKey(id);
     }
-    
-    public boolean canAccess(UUID id) {
-        OffsetDateTime time = data.playerAccess.get(id);
-        OffsetDateTime now = OffsetDateTime.now();
-        return time == null || (data.refreshInterval != 0 && time.plus(data.refreshInterval, ChronoUnit.MILLIS).isBefore(now));
+
+    public boolean canAccess(final UUID id) {
+        final OffsetDateTime time = data.playerAccess.get(id);
+        final OffsetDateTime now = OffsetDateTime.now();
+        return time == null || data.refreshInterval != 0 && time.plus(data.refreshInterval, ChronoUnit.MILLIS).isBefore(now);
     }
 
-    public boolean access(UUID id) {
-        OffsetDateTime time = data.playerAccess.get(id);
-        OffsetDateTime now = OffsetDateTime.now();
-        if (time == null || (data.refreshInterval != 0 && time.plus(data.refreshInterval, ChronoUnit.MILLIS).isBefore(now))) {
+    public boolean access(final UUID id) {
+        final OffsetDateTime time = data.playerAccess.get(id);
+        final OffsetDateTime now = OffsetDateTime.now();
+        if (time == null || data.refreshInterval != 0 && time.plus(data.refreshInterval, ChronoUnit.MILLIS).isBefore(now)) {
             data.playerAccess.put(id, now);
             setDirty();
             return true;
@@ -121,12 +121,12 @@ public abstract class Container extends Storable implements IModifiable {
         return false;
     }
 
-    public long getRefreshInterval(TimeUnit unit) {
+    public long getRefreshInterval(final TimeUnit unit) {
         return unit.convert(data.refreshInterval, TimeUnit.MILLISECONDS);
     }
 
-    public void setRefreshInterval(long interval, TimeUnit unit) {
-        long value = unit.toMillis(interval);
+    public void setRefreshInterval(final long interval, final TimeUnit unit) {
+        final long value = unit.toMillis(interval);
         if (value < 0) {
             throw new IllegalArgumentException("Interval can't be lower than 0 in milliseconds!");
         }

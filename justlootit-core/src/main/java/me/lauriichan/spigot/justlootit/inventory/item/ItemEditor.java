@@ -17,22 +17,22 @@ import me.lauriichan.spigot.justlootit.util.StringUtil;
 
 public class ItemEditor {
 
-    public static ItemEditor ofTexture(String texture) {
+    public static ItemEditor ofTexture(final String texture) {
         return new ItemEditor(Material.PLAYER_HEAD).setHeadTexture(texture);
     }
 
-    public static ItemEditor ofNullable(ItemStack itemStack) {
+    public static ItemEditor ofNullable(final ItemStack itemStack) {
         if (itemStack == null) {
             return null;
         }
         return new ItemEditor(itemStack);
     }
 
-    public static ItemEditor of(ItemStack itemStack) {
+    public static ItemEditor of(final ItemStack itemStack) {
         return new ItemEditor(itemStack);
     }
 
-    public static ItemEditor of(Material material) {
+    public static ItemEditor of(final Material material) {
         return new ItemEditor(material);
     }
 
@@ -60,7 +60,7 @@ public class ItemEditor {
         return itemMeta;
     }
 
-    public ItemEditor applyItemMeta(Consumer<ItemMeta> consumer) {
+    public ItemEditor applyItemMeta(final Consumer<ItemMeta> consumer) {
         if (itemMeta != null) {
             consumer.accept(itemMeta);
             itemStack.setItemMeta(itemMeta);
@@ -80,7 +80,7 @@ public class ItemEditor {
         return name().asPlainString();
     }
 
-    public ItemEditor setName(String name) {
+    public ItemEditor setName(final String name) {
         return name().set(name).apply();
     }
 
@@ -92,17 +92,17 @@ public class ItemEditor {
         return lore().asPlainList();
     }
 
-    public ItemEditor setLore(Collection<String> lines) {
+    public ItemEditor setLore(final Collection<String> lines) {
         return lore().set(lines).apply();
     }
 
-    public ItemEditor setLore(String... lines) {
+    public ItemEditor setLore(final String... lines) {
         return lore().set(lines).apply();
     }
 
     // Durability
     public boolean isDamageable() {
-        return itemMeta != null && itemMeta instanceof Damageable;
+        return itemMeta instanceof Damageable;
     }
 
     public boolean isUnbreakable() {
@@ -130,28 +130,26 @@ public class ItemEditor {
         return -1;
     }
 
-    public ItemEditor setDamage(int damage) {
+    public ItemEditor setDamage(final int damage) {
         if (isDamageable()) {
             ((Damageable) itemMeta).setDamage(Math.max(Math.min(damage, 0), itemStack.getType().getMaxDurability()));
-            return this;
         }
         return this;
     }
 
-    public ItemEditor setDurability(int durability) {
+    public ItemEditor setDurability(final int durability) {
         if (isDamageable()) {
             ((Damageable) itemMeta).setDamage(Math.max(itemStack.getType().getMaxDurability() - Math.min(durability, 0), 0));
-            return this;
         }
         return this;
     }
 
     // Texture
     public boolean isHead() {
-        return itemMeta != null && itemMeta instanceof SkullMeta;
+        return itemMeta instanceof SkullMeta;
     }
 
-    public ItemEditor setHeadTexture(String texture) {
+    public ItemEditor setHeadTexture(final String texture) {
         if (!isHead()) {
             return this;
         }
@@ -178,7 +176,7 @@ public class ItemEditor {
         return 0;
     }
 
-    public ItemEditor setModel(int model) {
+    public ItemEditor setModel(final int model) {
         if (itemMeta != null) {
             itemMeta.setCustomModelData(Math.max(model, 0));
         }
@@ -235,7 +233,7 @@ public class ItemEditor {
         return itemStack.getType();
     }
 
-    public ItemEditor setMaterial(Material material) {
+    public ItemEditor setMaterial(final Material material) {
         if (material == null) {
             return this;
         }
@@ -257,7 +255,7 @@ public class ItemEditor {
         return setAmount(amount, false);
     }
 
-    public ItemEditor setAmount(int amount, final boolean ignoreRestriction) {
+    public ItemEditor setAmount(final int amount, final boolean ignoreRestriction) {
         if (ignoreRestriction) {
             itemStack.setAmount(Math.max(amount, 0));
             return this;
@@ -275,7 +273,7 @@ public class ItemEditor {
             if (lore != null) {
                 return lore;
             }
-            return (lore = new ColoredLoreEditor(this));
+            return lore = new ColoredLoreEditor(this);
         }
         if (lore != null) {
             return lore.set(itemMeta.getLore());
@@ -288,7 +286,7 @@ public class ItemEditor {
             if (name != null) {
                 return name;
             }
-            return (name = new ColoredNameEditor(this));
+            return name = new ColoredNameEditor(this);
         }
         if (name != null) {
             return name.set(itemMeta.getDisplayName());
@@ -313,5 +311,5 @@ public class ItemEditor {
         }
         return itemStack;
     }
-    
+
 }

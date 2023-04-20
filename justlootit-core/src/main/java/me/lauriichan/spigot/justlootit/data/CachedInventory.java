@@ -17,22 +17,22 @@ public final class CachedInventory extends Storable {
         private final IOHandler<ItemStack> itemIO = DataIO.find(ItemStack.class);
 
         @Override
-        public void serialize(CachedInventory storable, ByteBuf buffer) {
+        public void serialize(final CachedInventory storable, final ByteBuf buffer) {
             BufIO.writeString(buffer, storable.type.name());
             itemIO.serializeArray(buffer, storable.items);
         }
 
         @Override
-        public CachedInventory deserialize(long id, ByteBuf buffer) {
-           InventoryType type = fromString(BufIO.readString(buffer));
-            ItemStack[] items = itemIO.deserializeArray(buffer);
+        public CachedInventory deserialize(final long id, final ByteBuf buffer) {
+            final InventoryType type = fromString(BufIO.readString(buffer));
+            final ItemStack[] items = itemIO.deserializeArray(buffer);
             return new CachedInventory(id, items, type);
         }
-        
-        private InventoryType fromString(String string) {
+
+        private InventoryType fromString(final String string) {
             try {
                 return InventoryType.valueOf(string);
-            } catch(IllegalArgumentException exception) {
+            } catch (final IllegalArgumentException exception) {
                 return InventoryType.CHEST;
             }
         }
@@ -42,13 +42,13 @@ public final class CachedInventory extends Storable {
     private final ItemStack[] items;
     private final InventoryType type;
 
-    public CachedInventory(long id, Inventory inventory) {
+    public CachedInventory(final long id, final Inventory inventory) {
         super(id);
-        ItemStack[] contents = inventory.getContents();
+        final ItemStack[] contents = inventory.getContents();
         int index = 0;
-        ItemStack[] items = new ItemStack[contents.length];
-        for(ItemStack item : contents) {
-            if(item == null || item.getType().isAir()) {
+        final ItemStack[] items = new ItemStack[contents.length];
+        for (final ItemStack item : contents) {
+            if (item == null || item.getType().isAir()) {
                 items[index++] = null;
                 continue;
             }
@@ -58,12 +58,12 @@ public final class CachedInventory extends Storable {
         this.type = inventory.getType();
     }
 
-    private CachedInventory(long id, ItemStack[] items, InventoryType type) {
+    private CachedInventory(final long id, final ItemStack[] items, final InventoryType type) {
         super(id);
         this.items = items;
         this.type = type;
     }
-    
+
     public InventoryType getType() {
         return type;
     }
@@ -71,7 +71,7 @@ public final class CachedInventory extends Storable {
     public ItemStack[] getItems() {
         return items;
     }
-    
+
     public int size() {
         return items.length;
     }

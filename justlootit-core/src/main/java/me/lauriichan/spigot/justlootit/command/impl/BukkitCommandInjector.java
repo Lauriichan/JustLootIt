@@ -24,7 +24,8 @@ import me.lauriichan.spigot.justlootit.util.VersionConstant;
 public final class BukkitCommandInjector implements ICommandInjector {
 
     final static Constructor<?> pluginCommandConstructor = ClassUtil.getConstructor(PluginCommand.class, String.class, Plugin.class);
-    final static Method craftServerGetCommandMap = ClassUtil.getMethod(ClassUtil.findClass(VersionConstant.craftClassPath("CraftServer")), "getCommandMap");
+    final static Method craftServerGetCommandMap = ClassUtil.getMethod(ClassUtil.findClass(VersionConstant.craftClassPath("CraftServer")),
+        "getCommandMap");
     final static Method commandMapGetCommands = ClassUtil.getMethod(SimpleCommandMap.class, "knownCommands");
 
     private final Plugin plugin;
@@ -50,7 +51,7 @@ public final class BukkitCommandInjector implements ICommandInjector {
     }
 
     @Override
-    public void inject(NodeCommand nodeCommand) {
+    public void inject(final NodeCommand nodeCommand) {
         final SimpleCommandMap commandMap = (SimpleCommandMap) JavaAccess.invoke(Bukkit.getServer(), craftServerGetCommandMap);
         final PluginCommand pluginCommand = (PluginCommand) JavaAccess.instance(pluginCommandConstructor, nodeCommand.getName(), plugin);
         pluginCommand.setAliases(new ArrayList<>(nodeCommand.getAliases()));
@@ -62,11 +63,11 @@ public final class BukkitCommandInjector implements ICommandInjector {
 
     @SuppressWarnings("unchecked")
     @Override
-    public void uninject(NodeCommand nodeCommand) {
+    public void uninject(final NodeCommand nodeCommand) {
         final SimpleCommandMap commandMap = (SimpleCommandMap) JavaAccess.invoke(Bukkit.getServer(), craftServerGetCommandMap);
         final Map<String, org.bukkit.command.Command> map = (Map<String, org.bukkit.command.Command>) JavaAccess.invoke(commandMap,
             commandMapGetCommands);
-        ArrayList<String> names = new ArrayList<>();
+        final ArrayList<String> names = new ArrayList<>();
         names.addAll(nodeCommand.getAliases());
         names.add(nodeCommand.getName());
         for (final String name : names) {

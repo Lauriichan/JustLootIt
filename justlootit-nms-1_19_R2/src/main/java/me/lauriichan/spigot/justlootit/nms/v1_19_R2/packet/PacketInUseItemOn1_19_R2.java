@@ -21,7 +21,7 @@ public final class PacketInUseItemOn1_19_R2 extends PacketInUseItemOn {
 
     @Override
     public Location getHitLocation() {
-        BlockPos pos = packet.getHitResult().getBlockPos();
+        final BlockPos pos = packet.getHitResult().getBlockPos();
         return new Location(null, pos.getX(), pos.getY(), pos.getZ());
     }
 

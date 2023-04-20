@@ -18,10 +18,11 @@ public final class MinecraftConstant1_19_R2 {
     public static final ContainerLevelAccess BETTER_NULL = new ContainerLevelAccess() {
 
         @Override
-        public final <T> Optional<T> evaluate(BiFunction<Level, BlockPos, T> var1) {
+        public final <T> Optional<T> evaluate(final BiFunction<Level, BlockPos, T> var1) {
             return Optional.empty();
         }
 
+        @Override
         public final Location getLocation() {
             return new Location(null, 0, 0, 0);
         }

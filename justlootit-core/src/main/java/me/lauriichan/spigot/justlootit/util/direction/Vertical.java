@@ -12,11 +12,11 @@ public enum Vertical {
 
     private final int normalization;
 
-    private Vertical() {
+    Vertical() {
         this.normalization = ordinal();
     }
 
-    private Vertical(int normalization) {
+    Vertical(final int normalization) {
         this.normalization = normalization;
     }
 

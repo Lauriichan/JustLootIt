@@ -13,34 +13,34 @@ public abstract class AbstractTickTimer {
     private volatile Thread timerThread;
     private volatile int tps;
     private volatile int tpm;
-    
+
     private volatile long length = MILLI_IN_NANOS * 50L;
     private volatile long pauseLength = MILLI_IN_NANOS * 250L;
-    
-    public final void setPauseLength(long pauseLength, TimeUnit unit) {
+
+    public final void setPauseLength(final long pauseLength, final TimeUnit unit) {
         this.pauseLength = Math.max(unit.toNanos(pauseLength), MILLI_IN_NANOS * 10L);
     }
-    
+
     public final long getPauseLength() {
         return pauseLength;
     }
 
-    public final void setLength(long length, TimeUnit unit) {
+    public final void setLength(final long length, final TimeUnit unit) {
         this.length = Math.max(unit.toNanos(length), MILLI_IN_NANOS);
     }
-    
+
     public final long getLength() {
         return length;
     }
-    
+
     public final int getTicksPerMinute() {
         return tpm;
     }
-    
+
     public final int getTicksPerSecond() {
         return tps;
     }
-    
+
     public final boolean isAlive() {
         return timerThread != null;
     }
@@ -102,12 +102,12 @@ public abstract class AbstractTickTimer {
                 delta = nanoTime - prevNanoTime;
                 elapsed += delta;
                 tick(delta);
-                if(elapsed >= SEC_IN_NANOS) {
+                if (elapsed >= SEC_IN_NANOS) {
                     elapsed = SEC_IN_NANOS - elapsed;
                     this.tps = counter;
                     secondCounter += counter;
                     counter = 0;
-                    if(++secondTick == 60) {
+                    if (++secondTick == 60) {
                         this.tpm = secondCounter;
                         secondCounter = 0;
                         secondTick = 0;
@@ -124,7 +124,7 @@ public abstract class AbstractTickTimer {
                 while (cycles-- >= 0) {
                     Thread.yield();
                 }
-            } catch (InterruptedException e) {
+            } catch (final InterruptedException e) {
                 continue;
             }
         }
