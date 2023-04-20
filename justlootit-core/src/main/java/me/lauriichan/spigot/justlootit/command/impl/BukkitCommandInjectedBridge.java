@@ -72,11 +72,10 @@ public final class BukkitCommandInjectedBridge implements CommandExecutor, TabCo
 
             public CommandDefinition build(Plugin plugin) {
                 String prefix = this.prefix;
-                if(prefix == null || prefix.isBlank()) {
+                if (prefix == null || prefix.isBlank()) {
                     prefix = plugin.getName();
                 }
-                return new CommandDefinition(prefix.toLowerCase(Locale.ROOT), name, aliases,
-                    description);
+                return new CommandDefinition(prefix.toLowerCase(Locale.ROOT), name, aliases, description);
             }
 
         }
@@ -89,9 +88,9 @@ public final class BukkitCommandInjectedBridge implements CommandExecutor, TabCo
     private final VersionHelper versionHelper;
     private final CommandManager commandManager;
     private final MessageManager messageManager;
-    
+
     private final CommandDefinition definition;
-    
+
     private final BukkitCommandListener listener;
 
     private volatile String fallbackCommand = "help";
@@ -127,6 +126,9 @@ public final class BukkitCommandInjectedBridge implements CommandExecutor, TabCo
         }
         Triple<NodeCommand, Node, String> triple = commandManager.findNode(commandName, newArgs);
         if (triple == null) {
+            if (args.length == 1) {
+                return Arrays.asList(commandManager.getCommands());
+            }
             return null;
         }
         if (!triple.getB().hasChildren()) {
