@@ -6,8 +6,8 @@ import java.util.UUID;
 import org.bukkit.World;
 
 import io.netty.buffer.ByteBuf;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import me.lauriichan.spigot.justlootit.data.io.DataIO;
 import me.lauriichan.spigot.justlootit.storage.IModifiable;
 import me.lauriichan.spigot.justlootit.storage.IStorage;
@@ -76,8 +76,8 @@ public class CacheLookupTable extends Storable implements IModifiable {
 
     }
 
-    private final Int2ObjectOpenHashMap<LookupEntry> tableToMapped = new Int2ObjectOpenHashMap<>(SIZE);
-    private final Object2ObjectOpenHashMap<WorldEntry, LookupEntry> mappedToTable = new Object2ObjectOpenHashMap<>(SIZE);
+    private final Int2ObjectArrayMap<LookupEntry> tableToMapped = new Int2ObjectArrayMap<>(SIZE);
+    private final Object2ObjectArrayMap<WorldEntry, LookupEntry> mappedToTable = new Object2ObjectArrayMap<>(SIZE);
 
     private int cacheDays;
 

@@ -5,8 +5,8 @@ import me.lauriichan.spigot.justlootit.capability.PlayerGUICapability;
 import me.lauriichan.spigot.justlootit.capability.StorageCapability;
 import me.lauriichan.spigot.justlootit.data.*;
 import me.lauriichan.spigot.justlootit.data.CacheLookupTable.WorldEntry;
+import me.lauriichan.spigot.justlootit.inventory.ChestSize;
 import me.lauriichan.spigot.justlootit.inventory.IGuiInventory;
-import me.lauriichan.spigot.justlootit.inventory.container.JustLootItInventory;
 import me.lauriichan.spigot.justlootit.inventory.handler.loot.LootUIHandler;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
@@ -89,16 +89,27 @@ public class ContainerListener implements Listener {
                 CacheLookupTable lookupTable = CacheLookupTable.retrieve(playerStorage);
                 if (!dataContainer.access(playerId)) {
                     if (lookupTable.access(entryId)) {
-                        long playerCacheId = lookupTable.getEntryIdByMapped(entryId);
-                        CachedInventory cachedInventory = (CachedInventory) playerStorage.read(playerCacheId);
-
-                        // TODO: Change the inventory titles
-                        JustLootItInventory inventory = new JustLootItInventory("Chest", 27);
-                        inventory.getInventory().setContents(cachedInventory.getItems());
-                        inventory.setCloseAction(
-                            closeEvent -> playerStorage.write(new CachedInventory(playerCacheId, inventory.getInventory())));
-                        inventory.open(bukkitPlayer);
-                        return;
+                        CachedInventory cachedInventory = (CachedInventory) playerStorage.read(lookupTable.getEntryIdByMapped(entryId));
+                        int rowSize = IGuiInventory.getRowSize(cachedInventory.getType());
+                        if (cachedInventory.size() % rowSize == 0) {
+                            int columnAmount = cachedInventory.size() / rowSize;
+                            if (!(rowSize == 9 && (columnAmount > 6 || columnAmount < 1))) {
+                                player.getCapability(PlayerGUICapability.class).ifPresent(guiCapability -> {
+                                    IGuiInventory inventory = guiCapability.gui();
+                                    if (rowSize == 9) {
+                                        inventory.setChestSize(ChestSize.values()[columnAmount - 1]);
+                                    } else {
+                                        inventory.setType(cachedInventory.getType());
+                                    }
+                                    inventory.getInventory().setContents(cachedInventory.getItems());
+                                    inventory.attrSet(LootUIHandler.ATTR_ID, cachedInventory.id());
+                                    inventory.setHandler(LootUIHandler.LOOT_HANDLER);
+                                    inventory.open(bukkitPlayer);
+                                });
+                                return;
+                            }
+                        }
+                        playerStorage.delete(cachedInventory.id());
                     }
 
                     Duration duration = dataContainer.durationUntilNextAccess(playerId);
@@ -109,7 +120,7 @@ public class ContainerListener implements Listener {
                     // TODO: Send message, not accessible yet
                     return;
                 }
-                
+
                 player.getCapability(PlayerGUICapability.class).ifPresent(guiCapability -> {
                     IGuiInventory inventory = guiCapability.gui();
                     if (dataContainer instanceof IInventoryContainer container) {
