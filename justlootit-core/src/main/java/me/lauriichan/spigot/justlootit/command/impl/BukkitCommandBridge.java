@@ -51,6 +51,9 @@ public final class BukkitCommandBridge implements CommandExecutor, TabCompleter 
         }
         Triple<NodeCommand, Node, String> triple = commandManager.findNode(label, args);
         if (triple == null) {
+            if(args.length == 1) {
+                return Arrays.asList(commandManager.getCommands());
+            }
             return null;
         }
         if (!triple.getB().hasChildren()) {
