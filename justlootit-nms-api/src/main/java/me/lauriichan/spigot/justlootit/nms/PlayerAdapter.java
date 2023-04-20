@@ -19,6 +19,8 @@ public abstract class PlayerAdapter extends Capable<PlayerAdapter> {
         this.uniqueId = uniqueId;
     }
     
+    public abstract VersionHandler versionHandler();
+    
     public abstract Object asMinecraft();
     
     public String getName() {

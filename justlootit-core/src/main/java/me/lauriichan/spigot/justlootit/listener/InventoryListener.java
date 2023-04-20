@@ -1,9 +1,10 @@
 package me.lauriichan.spigot.justlootit.listener;
 
-import me.lauriichan.spigot.justlootit.inventory.JustLootItInventory;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+
+import me.lauriichan.spigot.justlootit.inventory.container.JustLootItInventory;
 
 public class InventoryListener implements Listener {
 

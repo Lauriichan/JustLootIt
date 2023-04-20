@@ -106,7 +106,7 @@ public class CacheLookupTable extends Storable implements IModifiable {
                 // Null means we're done
                 break;
             }
-            if (entry.cached.plusDays(cacheDays).isBefore(now)) {
+            if (now.isAfter(entry.cached.plusDays(cacheDays))) {
                 mappedToTable.remove(entry.mappedId);
                 offset++;
                 continue;

@@ -1,14 +1,16 @@
 package me.lauriichan.spigot.justlootit.data;
 
+import org.bukkit.Location;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 import io.netty.buffer.ByteBuf;
 import me.lauriichan.spigot.justlootit.data.io.DataIO;
+import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.nms.io.IOHandler;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapter;
 
-public final class StaticContainer extends Container {
+public final class StaticContainer extends Container implements IInventoryContainer {
 
     public static final StorageAdapter<StaticContainer> ADAPTER = new BaseAdapter<>(StaticContainer.class, 15) {
         private final IOHandler<ItemStack> itemIO = DataIO.find(ItemStack.class);
@@ -65,6 +67,11 @@ public final class StaticContainer extends Container {
         }
         this.items = items;
         setDirty();
+    }
+
+    @Override
+    public void fill(PlayerAdapter player, Location location, Inventory inventory) {
+        loadTo(inventory);
     }
 
 }

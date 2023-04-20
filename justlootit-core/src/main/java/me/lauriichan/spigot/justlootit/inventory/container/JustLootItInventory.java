@@ -1,4 +1,4 @@
-package me.lauriichan.spigot.justlootit.inventory;
+package me.lauriichan.spigot.justlootit.inventory.container;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
