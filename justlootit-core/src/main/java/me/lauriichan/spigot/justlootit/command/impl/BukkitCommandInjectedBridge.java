@@ -126,7 +126,7 @@ public final class BukkitCommandInjectedBridge implements CommandExecutor, TabCo
         }
         Triple<NodeCommand, Node, String> triple = commandManager.findNode(commandName, newArgs);
         if (triple == null) {
-            if (args.length == 1) {
+            if (newArgs.length == 1) {
                 return Arrays.asList(commandManager.getCommands());
             }
             return null;
