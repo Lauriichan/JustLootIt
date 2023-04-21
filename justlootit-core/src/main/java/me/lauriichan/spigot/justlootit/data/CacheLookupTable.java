@@ -229,6 +229,7 @@ public class CacheLookupTable extends Storable implements IModifiable {
         } else {
             entry.tableId = tableToMapped.size();
             entry.entryId = findEntryId();
+            entryIds.add(entry.entryId);
         }
         tableToMapped.put(entry.tableId, entry);
         mappedToTable.put(mappedId, entry);
