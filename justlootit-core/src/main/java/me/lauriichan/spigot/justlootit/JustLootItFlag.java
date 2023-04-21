@@ -21,6 +21,7 @@ public final class JustLootItFlag {
     private JustLootItFlag(final String name, final Supplier<Boolean> supplier) {
         this.name = name;
         this.supplier = supplier;
+        update();
     }
 
     public final String name() {
