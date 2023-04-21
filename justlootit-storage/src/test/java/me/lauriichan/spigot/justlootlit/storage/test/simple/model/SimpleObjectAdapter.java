@@ -13,12 +13,19 @@ public class SimpleObjectAdapter extends StorageAdapter<SimpleObject> {
 
     @Override
     public void serialize(final SimpleObject storable, final ByteBuf buffer) {
-        buffer.writeInt(storable.number);
+        buffer.writeInt(storable.numbers.length);
+        for(int index = 0; index < storable.numbers.length; index++) {
+            buffer.writeInt(storable.numbers[index]);
+        }
     }
 
     @Override
     public SimpleObject deserialize(final long id, final ByteBuf buffer) {
-        return new SimpleObject(id, buffer.readInt());
+        int[] numbers = new int[buffer.readInt()];
+        for(int index = 0; index < numbers.length; index++) {
+            numbers[index] = buffer.readInt();
+        }
+        return new SimpleObject(id, numbers);
     }
 
 }

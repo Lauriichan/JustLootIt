@@ -13,6 +13,8 @@ import org.junit.jupiter.api.TestFactory;
 
 import me.lauriichan.spigot.justlootit.storage.Storable;
 import me.lauriichan.spigot.justlootlit.storage.test.Test.StorageProvider;
+import me.lauriichan.spigot.justlootlit.storage.test.simple.ShuffledWriteReadTest;
+import me.lauriichan.spigot.justlootlit.storage.test.simple.WriteOverwriteReadTest;
 import me.lauriichan.spigot.justlootlit.storage.test.simple.WriteReadDeleteTest;
 import me.lauriichan.spigot.justlootlit.storage.test.simple.WriteReadTest;
 import me.lauriichan.spigot.justlootlit.storage.test.simple.WriteUpdateReadTest;
@@ -29,6 +31,8 @@ public class FeatureTest {
         new WriteReadTest(128),
         new WriteReadDeleteTest(128),
         new WriteUpdateReadTest(128),
+        new ShuffledWriteReadTest(128),
+        new WriteOverwriteReadTest(128)
     };
 
     /*

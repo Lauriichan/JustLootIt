@@ -1,8 +1,8 @@
 package me.lauriichan.spigot.justlootlit.storage.test.simple;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static me.lauriichan.spigot.justlootlit.storage.test.junit.AssertArrayNotEquals.*;
 
 import java.util.Random;
 
@@ -52,10 +52,10 @@ public class WriteUpdateReadTest extends BaseTest<SimpleObject> {
                 continue;
             }
             if (mod == 0) {
-                assertEquals(objects[id].number, loaded.number, "Invalid entry " + id);
+                assertArrayEquals(objects[id].numbers, loaded.numbers, "Invalid entry " + id);
                 continue;
             }
-            assertNotEquals(objects[id].number, loaded.number, "Invalid entry " + id);
+            assertArrayNotEquals(objects[id].numbers, loaded.numbers, "Invalid entry " + id);
         }
     }
 

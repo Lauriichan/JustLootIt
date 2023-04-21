@@ -1,7 +1,6 @@
 package me.lauriichan.spigot.justlootlit.storage.test.simple;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Random;
 
@@ -10,12 +9,12 @@ import me.lauriichan.spigot.justlootlit.storage.test.BaseTest;
 import me.lauriichan.spigot.justlootlit.storage.test.simple.model.SimpleObject;
 import me.lauriichan.spigot.justlootlit.storage.test.simple.model.SimpleObjectAdapter;
 
-public class WriteReadDeleteTest extends BaseTest<SimpleObject> {
+public class WriteOverwriteReadTest extends BaseTest<SimpleObject> {
 
     private final int amount;
 
-    public WriteReadDeleteTest(final int amount) {
-        super("WriteReadDelete (" + Math.abs(amount) + "x)", SimpleObject.class);
+    public WriteOverwriteReadTest(final int amount) {
+        super("WriteOverwriteRead (" + Math.abs(amount) + "x)", SimpleObject.class);
         this.amount = Math.abs(amount);
     }
 
@@ -30,13 +29,16 @@ public class WriteReadDeleteTest extends BaseTest<SimpleObject> {
             objects[id] = object;
             storage.write(object);
         }
-
+        
+        for(int id = 0; id < amount; id++) {
+            SimpleObject object = objects[id];
+            objects[id] = (object = object.withNumbers(object.numbers[0], random.nextInt(Integer.MAX_VALUE)));
+            storage.write(object);
+        }
+        
         for (int id = 0; id < amount; id++) {
             final SimpleObject loaded = storage.read(id);
             assertArrayEquals(objects[id].numbers, loaded.numbers, "Invalid entry " + id);
-            if (id % 2 == 0) {
-                assertTrue(storage.delete(id), "Invalid entry " + id);
-            }
         }
     }
 

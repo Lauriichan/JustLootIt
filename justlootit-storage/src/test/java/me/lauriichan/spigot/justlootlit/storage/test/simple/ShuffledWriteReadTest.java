@@ -1,8 +1,9 @@
 package me.lauriichan.spigot.justlootlit.storage.test.simple;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Random;
 
 import me.lauriichan.spigot.justlootit.storage.AbstractStorage;
@@ -10,12 +11,12 @@ import me.lauriichan.spigot.justlootlit.storage.test.BaseTest;
 import me.lauriichan.spigot.justlootlit.storage.test.simple.model.SimpleObject;
 import me.lauriichan.spigot.justlootlit.storage.test.simple.model.SimpleObjectAdapter;
 
-public class WriteReadDeleteTest extends BaseTest<SimpleObject> {
+public class ShuffledWriteReadTest extends BaseTest<SimpleObject> {
 
     private final int amount;
 
-    public WriteReadDeleteTest(final int amount) {
-        super("WriteReadDelete (" + Math.abs(amount) + "x)", SimpleObject.class);
+    public ShuffledWriteReadTest(final int amount) {
+        super("ShuffledWriteRead (" + Math.abs(amount) + "x)", SimpleObject.class);
         this.amount = Math.abs(amount);
     }
 
@@ -24,19 +25,22 @@ public class WriteReadDeleteTest extends BaseTest<SimpleObject> {
         if (amount == 0) {
             return;
         }
+        final ArrayList<SimpleObject> list = new ArrayList<>();
         final SimpleObject[] objects = new SimpleObject[amount];
         for (int id = 0; id < amount; id++) {
-            final SimpleObject object = new SimpleObject(id, random.nextInt(Integer.MAX_VALUE));
+            SimpleObject object = new SimpleObject(id, random.nextInt(Integer.MAX_VALUE));
+            list.add(object);
             objects[id] = object;
+        }
+        
+        Collections.shuffle(list, random);
+        for(SimpleObject object : list) {
             storage.write(object);
         }
 
         for (int id = 0; id < amount; id++) {
             final SimpleObject loaded = storage.read(id);
             assertArrayEquals(objects[id].numbers, loaded.numbers, "Invalid entry " + id);
-            if (id % 2 == 0) {
-                assertTrue(storage.delete(id), "Invalid entry " + id);
-            }
         }
     }
 

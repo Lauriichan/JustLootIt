@@ -261,6 +261,7 @@ public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
             final long headerOffset = LOOKUP_AMOUNT_SIZE + LOOKUP_ENTRY_SIZE * valueId;
             file.seek(headerOffset);
             long lookupPosition = file.readLong();
+            buffer.resetReaderIndex();
             final int bufferSize = buffer.readableBytes();
             if (lookupPosition != INVALID_HEADER_OFFSET) {
                 file.seek(lookupPosition + VALUE_HEADER_ID_SIZE);
@@ -268,10 +269,10 @@ public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
                 final long offset = updateFileSize(file, lookupPosition, dataSize, bufferSize);
                 if (offset != 0) {
                     file.seek(LOOKUP_AMOUNT_SIZE);
-                    final long newDataEnd = lookupPosition + bufferSize + VALUE_HEADER_SIZE;
+                    final long oldDataEnd = lookupPosition + dataSize + VALUE_HEADER_SIZE;
                     while (file.getFilePointer() != settings.lookupHeaderSize) {
                         final long entryOffset = file.readLong();
-                        if (entryOffset < newDataEnd) {
+                        if (entryOffset < oldDataEnd) {
                             continue;
                         }
                         file.seek(file.getFilePointer() - LOOKUP_ENTRY_SIZE);
@@ -281,7 +282,7 @@ public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
                 file.seek(lookupPosition);
                 file.writeShort(adapter.typeId());
                 file.writeInt(bufferSize);
-                buffer.readBytes(file.getChannel(), bufferSize);
+                buffer.readBytes(file.getChannel(), file.getFilePointer(), bufferSize);
                 return;
             }
             file.seek(0);
@@ -294,7 +295,7 @@ public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
             file.seek(lookupPosition);
             file.writeShort(adapter.typeId());
             file.writeInt(bufferSize);
-            buffer.readBytes(file.getChannel(), bufferSize);
+            buffer.readBytes(file.getChannel(), file.getFilePointer(), bufferSize);
         } catch (final IOException e) {
             throw new StorageException("Failed to write value with id '" + Long.toHexString(storable.id()) + "' to file!", e);
         } finally {
