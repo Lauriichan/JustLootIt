@@ -121,18 +121,17 @@ public final class BukkitCommandInjectedBridge implements CommandExecutor, TabCo
     public List<String> onTabComplete(final CommandSender sender, final Command command, final String label, final String[] args) {
         final String commandName = args.length == 0 ? "" : args[0];
         final String[] newArgs = args.length <= 1 ? EMPTY_ARGS : new String[args.length - 1];
-        if (newArgs.length != 0) {
-            System.arraycopy(args, 1, newArgs, 0, newArgs.length);
+        if (newArgs.length == 0) {
+            return Arrays.asList(commandManager.getCommands());
         }
+        System.arraycopy(args, 1, newArgs, 0, newArgs.length);
         final Triple<NodeCommand, Node, String> triple = commandManager.findNode(commandName, newArgs);
-        if (triple == null) {
-            if (newArgs.length == 1) {
-                return Arrays.asList(commandManager.getCommands());
-            }
-            return null;
+        if (triple == null || !triple.getB().hasChildren()) {
+            return Collections.emptyList();
         }
-        if (!triple.getB().hasChildren()) {
-            return null;
+        String[] path = triple.getC().split(" ");
+        if (path.length == args.length) {
+            return Collections.singletonList(path[path.length - 1]);
         }
         return Arrays.asList(triple.getB().getNames());
     }
