@@ -109,7 +109,7 @@ public abstract class NbtIO1_19_R2<E, N extends Tag> extends IOHandler<E> {
         }
         final ListTag listTag = new ListTag();
         for (int index = 0; index < array.length; index++) {
-            listTag.addTag(index, asNbt(array[index]));
+            listTag.add(asNbt(array[index]));
         }
         final FastByteArrayOutputStream output = new FastByteArrayOutputStream();
         try (DataOutputStream stream = new DataOutputStream(new FastBufferedOutputStream(new GZIPOutputStream(output)))) {
