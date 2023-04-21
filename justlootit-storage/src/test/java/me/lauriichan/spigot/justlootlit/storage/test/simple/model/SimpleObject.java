@@ -4,15 +4,26 @@ import me.lauriichan.spigot.justlootit.storage.Storable;
 
 public class SimpleObject extends Storable {
 
-    public final int number;
+    public final int[] numbers;
 
     public SimpleObject(final long id, final int number) {
         super(id);
-        this.number = number;
+        this.numbers = new int[] {
+            number
+        };
+    }
+
+    public SimpleObject(final long id, final int... numbers) {
+        super(id);
+        this.numbers = numbers;
     }
 
     public SimpleObject withNumber(final int number) {
         return new SimpleObject(id, number);
+    }
+
+    public SimpleObject withNumbers(final int... numbers) {
+        return new SimpleObject(id, numbers);
     }
 
 }

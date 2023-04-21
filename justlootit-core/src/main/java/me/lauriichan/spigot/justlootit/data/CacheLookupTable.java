@@ -238,7 +238,7 @@ public class CacheLookupTable extends Storable implements IModifiable {
 
     private long findEntryId() {
         for (long id = MIN_ENTRY_ID; id < MAX_ENTRY_ID; id++) {
-            if (!entryIds.contains(id)) {
+            if (entryIds.contains(id)) {
                 continue;
             }
             return id;
