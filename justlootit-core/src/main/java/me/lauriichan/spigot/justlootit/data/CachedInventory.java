@@ -26,7 +26,7 @@ public final class CachedInventory extends Storable {
         public CachedInventory deserialize(final long id, final ByteBuf buffer) {
             final InventoryType type = fromString(BufIO.readString(buffer));
             final ItemStack[] items = itemIO.deserializeArray(buffer);
-            return new CachedInventory(id, items, type);
+            return new CachedInventory(id, type, items);
         }
 
         private InventoryType fromString(final String string) {
@@ -45,23 +45,23 @@ public final class CachedInventory extends Storable {
     public CachedInventory(final long id, final Inventory inventory) {
         super(id);
         final ItemStack[] contents = inventory.getContents();
-        int index = 0;
         final ItemStack[] items = new ItemStack[contents.length];
-        for (final ItemStack item : contents) {
+        for (int index = 0; index < contents.length; index++) {
+            ItemStack item = contents[index];
             if (item == null || item.getType().isAir()) {
                 items[index++] = null;
                 continue;
             }
             items[index++] = item.clone();
         }
-        this.items = items;
         this.type = inventory.getType();
+        this.items = items;
     }
 
-    private CachedInventory(final long id, final ItemStack[] items, final InventoryType type) {
+    private CachedInventory(final long id, final InventoryType type, final ItemStack[] items) {
         super(id);
-        this.items = items;
         this.type = type;
+        this.items = items;
     }
 
     public InventoryType getType() {
