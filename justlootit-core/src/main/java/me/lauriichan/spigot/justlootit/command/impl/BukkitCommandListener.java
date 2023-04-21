@@ -32,7 +32,7 @@ public final class BukkitCommandListener implements Listener {
         this.messageManager = messageManager;
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onChat(final AsyncPlayerChatEvent event) {
         final Player player = event.getPlayer();
         final CommandProcess process = commandManager.getProcess(player.getUniqueId());
@@ -43,7 +43,7 @@ public final class BukkitCommandListener implements Listener {
         commandManager.handleProcessInput(new BukkitActor<>(player, messageManager, versionHelper), process, event.getMessage(), false);
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onPreProcess(final PlayerCommandPreprocessEvent event) {
         final Player player = event.getPlayer();
         final CommandProcess process = commandManager.getProcess(player.getUniqueId());
@@ -69,7 +69,7 @@ public final class BukkitCommandListener implements Listener {
         commandManager.handleProcessInput(actor, process, event.getMessage());
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onServerCommand(final ServerCommandEvent event) {
         final CommandProcess process = commandManager.getProcess(Actor.IMPL_ID);
         if (process == null) {
