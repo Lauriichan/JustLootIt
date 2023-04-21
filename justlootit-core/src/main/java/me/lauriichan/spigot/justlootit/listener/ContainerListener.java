@@ -21,6 +21,8 @@ import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 
+import me.lauriichan.spigot.justlootit.JustLootItConstant;
+import me.lauriichan.spigot.justlootit.JustLootItFlag;
 import me.lauriichan.spigot.justlootit.JustLootItKey;
 import me.lauriichan.spigot.justlootit.capability.PlayerGUICapability;
 import me.lauriichan.spigot.justlootit.capability.StorageCapability;
@@ -57,7 +59,8 @@ public class ContainerListener implements Listener {
         }
         final org.bukkit.block.Container container = (org.bukkit.block.Container) state;
         final PersistentDataContainer dataContainer = container.getPersistentDataContainer();
-        if (!dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+        if (!dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG) || !JustLootItFlag.TILE_ENTITY_CONTAINERS.isSet()
+            && JustLootItConstant.UNSUPPORTED_CONTAINER_TYPES.contains(container.getInventory().getType())) {
             return;
         }
         accessContainer(block.getLocation(), container, dataContainer, event, event.getPlayer(),
@@ -68,7 +71,8 @@ public class ContainerListener implements Listener {
     public void onInteractEntity(final PlayerInteractAtEntityEvent event) {
         final Entity entity = event.getRightClicked();
         final EntityType type = entity.getType();
-        if (type != EntityType.MINECART_CHEST && type != EntityType.MINECART_HOPPER && type != EntityType.CHEST_BOAT) {
+        if (type != EntityType.MINECART_CHEST && type != EntityType.MINECART_HOPPER && type != EntityType.CHEST_BOAT
+            || !JustLootItFlag.TILE_ENTITY_CONTAINERS.isSet() && type == EntityType.MINECART_HOPPER) {
             return;
         }
         final PersistentDataContainer dataContainer = entity.getPersistentDataContainer();
@@ -79,8 +83,8 @@ public class ContainerListener implements Listener {
             dataContainer.get(JustLootItKey.identity(), PersistentDataType.LONG));
     }
 
-    private void accessContainer(final Location location, final InventoryHolder inventoryHolder, final PersistentDataContainer data, final Cancellable event,
-        final Player bukkitPlayer, final long id) {
+    private void accessContainer(final Location location, final InventoryHolder inventoryHolder, final PersistentDataContainer data,
+        final Cancellable event, final Player bukkitPlayer, final long id) {
         final WorldEntry entryId = new WorldEntry(location.getWorld(), id);
         final PlayerAdapter player = versionHandler.getPlayer(bukkitPlayer);
         final UUID playerId = bukkitPlayer.getUniqueId();
@@ -135,7 +139,7 @@ public class ContainerListener implements Listener {
                     }
                     final Inventory holderInventory = inventoryHolder.getInventory();
                     int rowSize = IGuiInventory.getRowSize(holderInventory.getType());
-                    if(rowSize == 9) {
+                    if (rowSize == 9) {
                         inventory.setChestSize(ChestSize.values()[(holderInventory.getSize() / rowSize) - 1]);
                     } else {
                         inventory.setType(holderInventory.getType());
