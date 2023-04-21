@@ -1,6 +1,7 @@
 package me.lauriichan.spigot.justlootit.command.impl;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.bukkit.command.Command;
@@ -51,14 +52,12 @@ public final class BukkitCommandBridge implements CommandExecutor, TabCompleter 
             label = label.substring(prefix.length());
         }
         final Triple<NodeCommand, Node, String> triple = commandManager.findNode(label, args);
-        if (triple == null) {
-            if (args.length == 1) {
-                return Arrays.asList(commandManager.getCommands());
-            }
-            return null;
+        if (triple == null || !triple.getB().hasChildren()) {
+            return Collections.emptyList();
         }
-        if (!triple.getB().hasChildren()) {
-            return null;
+        String[] path = triple.getC().split(" ");
+        if (path.length == args.length) {
+            return Collections.singletonList(path[path.length - 1]);
         }
         return Arrays.asList(triple.getB().getNames());
     }
