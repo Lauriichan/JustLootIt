@@ -28,7 +28,12 @@ public final class LootUIHandler implements IHandler {
             return false;
         }
         player.getCapability(StorageCapability.class).ifPresent(capability -> {
-            capability.storage().write(new CachedInventory(id, inventory.getInventory()));
+            System.out.println("SAVING: " + id);
+            try {
+                capability.storage().write(new CachedInventory(id, inventory.getInventory()));
+            } catch (Throwable throwable) {
+                throwable.printStackTrace();
+            }
         });
         return false;
     }
