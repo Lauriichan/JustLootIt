@@ -30,21 +30,21 @@ public class PlayerNetwork1_19_R2 implements IPlayerNetwork {
 
     private void remove(final Channel channel) {
         final ChannelPipeline pipeline = channel.pipeline();
-        if (pipeline.get("bi:in") != null) {
-            pipeline.remove("bi:in");
+        if (pipeline.get(DECODER) != null) {
+            pipeline.remove(DECODER);
         }
-        if (pipeline.get("bi:out") != null) {
-            pipeline.remove("bi:out");
+        if (pipeline.get(ENCODER) != null) {
+            pipeline.remove(ENCODER);
         }
     }
 
     private void add(final Channel channel) {
         final ChannelPipeline pipeline = channel.pipeline();
-        if (pipeline.get("bi:in") == null) {
-            pipeline.addAfter("decoder", "bi:in", packetIn);
+        if (pipeline.get(ENCODER) == null) {
+            pipeline.addAfter("decoder", ENCODER, packetIn);
         }
-        if (pipeline.get("bi:out") == null) {
-            pipeline.addAfter("encoder", "bi:out", packetOut);
+        if (pipeline.get(DECODER) == null) {
+            pipeline.addAfter("encoder", DECODER, packetOut);
         }
     }
 
