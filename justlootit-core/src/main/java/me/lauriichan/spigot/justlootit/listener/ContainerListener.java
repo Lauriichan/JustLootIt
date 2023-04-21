@@ -16,6 +16,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 
@@ -58,7 +60,7 @@ public class ContainerListener implements Listener {
         if (!dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
             return;
         }
-        accessContainer(block.getLocation(), dataContainer, event, event.getPlayer(),
+        accessContainer(block.getLocation(), container, dataContainer, event, event.getPlayer(),
             dataContainer.get(JustLootItKey.identity(), PersistentDataType.LONG));
     }
 
@@ -73,11 +75,11 @@ public class ContainerListener implements Listener {
         if (!dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
             return;
         }
-        accessContainer(entity.getLocation(), dataContainer, event, event.getPlayer(),
+        accessContainer(entity.getLocation(), (InventoryHolder) entity, dataContainer, event, event.getPlayer(),
             dataContainer.get(JustLootItKey.identity(), PersistentDataType.LONG));
     }
 
-    private void accessContainer(final Location location, final PersistentDataContainer data, final Cancellable event,
+    private void accessContainer(final Location location, final InventoryHolder inventoryHolder, final PersistentDataContainer data, final Cancellable event,
         final Player bukkitPlayer, final long id) {
         final WorldEntry entryId = new WorldEntry(location.getWorld(), id);
         final PlayerAdapter player = versionHandler.getPlayer(bukkitPlayer);
@@ -130,6 +132,13 @@ public class ContainerListener implements Listener {
                     if (!(dataContainer instanceof final IInventoryContainer container)) {
                         // Do nothing, no need to allocate anything if we have no inventory
                         return;
+                    }
+                    final Inventory holderInventory = inventoryHolder.getInventory();
+                    int rowSize = IGuiInventory.getRowSize(holderInventory.getType());
+                    if(rowSize == 9) {
+                        inventory.setChestSize(ChestSize.values()[(holderInventory.getSize() / rowSize) - 1]);
+                    } else {
+                        inventory.setType(holderInventory.getType());
                     }
                     container.fill(player, location, inventory.getInventory());
                     inventory.attrSet(LootUIHandler.ATTR_ID, lookupTable.acquire(entryId));
