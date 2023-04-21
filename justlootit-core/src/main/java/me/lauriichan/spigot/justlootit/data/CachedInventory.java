@@ -49,10 +49,10 @@ public final class CachedInventory extends Storable {
         for (int index = 0; index < contents.length; index++) {
             ItemStack item = contents[index];
             if (item == null || item.getType().isAir()) {
-                items[index++] = null;
+                items[index] = null;
                 continue;
             }
-            items[index++] = item.clone();
+            items[index] = item.clone();
         }
         this.type = inventory.getType();
         this.items = items;
