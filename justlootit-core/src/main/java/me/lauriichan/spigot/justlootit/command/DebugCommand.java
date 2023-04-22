@@ -135,7 +135,6 @@ public class DebugCommand {
                             stateContainer.getLocation().toVector().subtract(otherContainer.getLocation().toVector()));
                         otherContainer.getPersistentDataContainer().set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR,
                             otherContainer.getLocation().toVector().subtract(stateContainer.getLocation().toVector()));
-                        otherContainer.update();
                     }
                 }
                 stateContainer.getInventory().clear();
@@ -195,7 +194,6 @@ public class DebugCommand {
                             stateContainer.getLocation().toVector().subtract(otherContainer.getLocation().toVector()));
                         otherContainer.getPersistentDataContainer().set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR,
                             otherContainer.getLocation().toVector().subtract(stateContainer.getLocation().toVector()));
-                        otherContainer.update();
                         inventory = inventory.getHolder().getInventory();
                     }
                 }
