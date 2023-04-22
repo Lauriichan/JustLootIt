@@ -34,11 +34,26 @@ public final class LootTableArgument implements IArgumentType<LootTable> {
         if (!(actor instanceof BukkitActor<?> bukkit)) {
             return;
         }
-        if (!(input = input.toLowerCase()).contains(":")) {
-            input = "minecraft:" + input;
+        String namespace;
+        String key;
+        if((input = input.toLowerCase()).contains(":")) {
+            String[] split = input.split(":", 2);
+            namespace = split[0];
+            key = split[1];
+        } else {
+            namespace = "minecraft";
+            key = input;
         }
-        List<Entry<String, Integer>> list = ImprovedLevenshteinDistance.rankByDistance(input,
-            bukkit.versionHelper().getLootTables().stream().map(NamespacedKey::toString).toList());
+        List<String> collectionList = bukkit.versionHelper().getLootTables().stream().map(NamespacedKey::toString).toList();
+        List<String> prefixList = collectionList.stream().filter(string -> string.startsWith(namespace)).toList();
+        if(prefixList.isEmpty()) {
+            prefixList = collectionList;
+        }
+        List<String> rankingList = prefixList.stream().filter(string -> string.contains(key)).toList();
+        if(rankingList.isEmpty()) {
+            rankingList = collectionList;
+        }
+        List<Entry<String, Integer>> list = ImprovedLevenshteinDistance.rankByDistance(namespace + ':' + key, collectionList);
         double max = list.stream().map(Entry::getValue).collect(Collectors.summingInt(Integer::intValue));
         for (int index = 0; index < list.size(); index++) {
             Entry<String, Integer> entry = list.get(index);
