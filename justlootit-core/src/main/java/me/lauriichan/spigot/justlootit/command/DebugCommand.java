@@ -11,6 +11,7 @@ import org.bukkit.block.data.type.Chest.Type;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.ItemFrame;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.loot.LootTable;
 import org.bukkit.persistence.PersistentDataContainer;
@@ -126,9 +127,10 @@ public class DebugCommand {
                 final long id = storage.newId();
                 stateDataContainer.set(JustLootItKey.identity(), PersistentDataType.LONG, id);
                 final BlockData data = state.getBlockData();
+                Inventory inventory = stateContainer.getInventory();
+                Container otherContainer = null;
                 if (data instanceof Chest chest && chest.getType() != Type.SINGLE) {
-                    Container otherContainer = BlockUtil.findChestAround(block.getWorld(), state.getLocation(), chest.getType(),
-                        chest.getFacing());
+                    otherContainer = BlockUtil.findChestAround(block.getWorld(), state.getLocation(), chest.getType(), chest.getFacing());
                     if (otherContainer != null) {
                         stateDataContainer.set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR,
                             stateContainer.getLocation().toVector().subtract(otherContainer.getLocation().toVector()));
@@ -136,9 +138,13 @@ public class DebugCommand {
                             otherContainer.getLocation().toVector().subtract(stateContainer.getLocation().toVector()));
                         otherContainer.update();
                     }
+                    inventory = inventory.getHolder().getInventory();
                 }
-                stateContainer.getInventory().clear();
+                inventory.clear();
                 stateContainer.update();
+                if (otherContainer != null) {
+                    otherContainer.update();
+                }
                 storage.write(new VanillaContainer(id, table, seed));
                 actor.sendMessage("&aCreated container with id '" + Long.toHexString(id) + "'!");
             }, () -> {
@@ -181,9 +187,10 @@ public class DebugCommand {
                 final long id = storage.newId();
                 stateDataContainer.set(JustLootItKey.identity(), PersistentDataType.LONG, id);
                 final BlockData data = state.getBlockData();
+                Inventory inventory = stateContainer.getInventory();
+                Container otherContainer = null;
                 if (data instanceof Chest chest && chest.getType() != Type.SINGLE) {
-                    Container otherContainer = BlockUtil.findChestAround(block.getWorld(), state.getLocation(), chest.getType(),
-                        chest.getFacing());
+                    otherContainer = BlockUtil.findChestAround(block.getWorld(), state.getLocation(), chest.getType(), chest.getFacing());
                     if (otherContainer != null) {
                         stateDataContainer.set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR,
                             stateContainer.getLocation().toVector().subtract(otherContainer.getLocation().toVector()));
@@ -191,10 +198,14 @@ public class DebugCommand {
                             otherContainer.getLocation().toVector().subtract(stateContainer.getLocation().toVector()));
                         otherContainer.update();
                     }
+                    inventory = inventory.getHolder().getInventory();
                 }
-                storage.write(new StaticContainer(id, stateContainer.getInventory()));
-                stateContainer.getInventory().clear();
+                inventory.clear();
                 stateContainer.update();
+                if (otherContainer != null) {
+                    otherContainer.update();
+                }
+                storage.write(new StaticContainer(id, inventory));
                 actor.sendMessage("&aCreated container with id '" + Long.toHexString(id) + "'!");
             }, () -> {
                 actor.sendMessage("&cNo storage available!");

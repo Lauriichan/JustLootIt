@@ -88,7 +88,7 @@ public class ContainerListener implements Listener {
                 return;
             }
             PersistentDataContainer accessDataContainer = accessContainer == container ? dataContainer : otherDataContainer;
-            accessContainer(accessContainer.getLocation(), accessContainer, accessDataContainer, event, event.getPlayer(),
+            accessContainer(accessContainer.getLocation(), accessContainer.getInventory().getHolder(), accessDataContainer, event, event.getPlayer(),
                 accessDataContainer.get(JustLootItKey.identity(), PersistentDataType.LONG));
             if (!accessDataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
                 otherDataContainer.remove(JustLootItKey.chestData());
