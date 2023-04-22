@@ -58,7 +58,7 @@ public final class StaticContainer extends Container implements IInventoryContai
 
     public void saveFrom(final Inventory inventory) {
         final ItemStack[] items;
-        if (inventory.getHolder() instanceof DoubleChestInventory doubleChest) {
+        if (inventory instanceof DoubleChestInventory doubleChest) {
             items = new ItemStack[ChestSize.GRID_6x9.inventorySize()];
             copyTo(doubleChest.getLeftSide().getContents(), items, 0);
             copyTo(doubleChest.getRightSide().getContents(), items, ChestSize.GRID_3x9.inventorySize());

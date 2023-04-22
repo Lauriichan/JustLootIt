@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
+import org.bukkit.block.DoubleChest;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.type.Chest;
 import org.bukkit.block.data.type.Chest.Type;
@@ -184,7 +185,7 @@ public class ContainerListener implements Listener {
                     final Inventory holderInventory = inventoryHolder.getInventory();
                     int rowSize = IGuiInventory.getRowSize(holderInventory.getType());
                     if (rowSize == 9) {
-                        inventory.setChestSize(ChestSize.values()[(holderInventory.getSize() / rowSize) - 1]);
+                        inventory.setChestSize(inventoryHolder instanceof DoubleChest ? ChestSize.GRID_6x9 : ChestSize.values()[(holderInventory.getSize() / rowSize) - 1]);
                     } else {
                         inventory.setType(holderInventory.getType());
                     }

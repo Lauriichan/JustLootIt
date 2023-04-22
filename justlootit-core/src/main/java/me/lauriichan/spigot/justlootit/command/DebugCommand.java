@@ -127,7 +127,6 @@ public class DebugCommand {
                 final long id = storage.newId();
                 stateDataContainer.set(JustLootItKey.identity(), PersistentDataType.LONG, id);
                 final BlockData data = state.getBlockData();
-                Inventory inventory = stateContainer.getInventory();
                 Container otherContainer = null;
                 if (data instanceof Chest chest && chest.getType() != Type.SINGLE) {
                     otherContainer = BlockUtil.findChestAround(block.getWorld(), state.getLocation(), chest.getType(), chest.getFacing());
@@ -138,11 +137,11 @@ public class DebugCommand {
                             otherContainer.getLocation().toVector().subtract(stateContainer.getLocation().toVector()));
                         otherContainer.update();
                     }
-                    inventory = inventory.getHolder().getInventory();
                 }
-                inventory.clear();
+                stateContainer.getInventory().clear();
                 stateContainer.update();
                 if (otherContainer != null) {
+                    otherContainer.getInventory().clear();
                     otherContainer.update();
                 }
                 storage.write(new VanillaContainer(id, table, seed));
@@ -197,15 +196,16 @@ public class DebugCommand {
                         otherContainer.getPersistentDataContainer().set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR,
                             otherContainer.getLocation().toVector().subtract(stateContainer.getLocation().toVector()));
                         otherContainer.update();
+                        inventory = inventory.getHolder().getInventory();
                     }
-                    inventory = inventory.getHolder().getInventory();
-                }
-                inventory.clear();
-                stateContainer.update();
-                if (otherContainer != null) {
-                    otherContainer.update();
                 }
                 storage.write(new StaticContainer(id, inventory));
+                stateContainer.getInventory().clear();
+                stateContainer.update();
+                if (otherContainer != null) {
+                    otherContainer.getInventory().clear();
+                    otherContainer.update();
+                }
                 actor.sendMessage("&aCreated container with id '" + Long.toHexString(id) + "'!");
             }, () -> {
                 actor.sendMessage("&cNo storage available!");
