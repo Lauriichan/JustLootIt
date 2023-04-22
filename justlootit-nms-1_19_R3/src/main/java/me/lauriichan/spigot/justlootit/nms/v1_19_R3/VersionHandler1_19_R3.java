@@ -74,7 +74,7 @@ public final class VersionHandler1_19_R3 extends VersionHandler implements IServ
         if (!(adapter instanceof PlayerAdapter1_19_R3)) {
             return;
         }
-        ((PlayerAdapter1_19_R3) adapter).terminate();
+        ((PlayerAdapter1_19_R3) adapter).terminateAdapter();
     }
 
     @Override

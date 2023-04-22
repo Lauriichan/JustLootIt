@@ -26,6 +26,8 @@ import me.lauriichan.spigot.justlootit.storage.StorageAdapter;
 import me.lauriichan.spigot.justlootit.storage.StorageException;
 import me.lauriichan.spigot.justlootit.storage.UpdateInfo;
 import me.lauriichan.spigot.justlootit.storage.UpdateInfo.UpdateState;
+import me.lauriichan.spigot.justlootit.storage.identifier.FileIdentifier;
+import me.lauriichan.spigot.justlootit.storage.identifier.IIdentifier;
 import me.lauriichan.spigot.justlootit.storage.util.cache.Int2ObjectMapCache;
 import me.lauriichan.spigot.justlootit.storage.util.cache.ThreadSafeMapCache;
 
@@ -36,6 +38,8 @@ public class RAFMultiStorage<S extends Storable> extends AbstractStorage<S> {
     private final File directory;
     private final ThreadSafeMapCache<Integer, RAFAccess<S>> accesses;
 
+    private final IIdentifier identifier;
+
     public RAFMultiStorage(final ISimpleLogger logger, final Class<S> baseType, final File directory) {
         this(logger, baseType, directory, RAFSettings.DEFAULT);
     }
@@ -45,11 +49,21 @@ public class RAFMultiStorage<S extends Storable> extends AbstractStorage<S> {
         this.settings = settings;
         this.accesses = new ThreadSafeMapCache<>(new Int2ObjectMapCache<>(logger));
         this.directory = directory;
+        this.identifier = new FileIdentifier(logger, directory);
     }
 
     @Override
     public boolean isSupported(final long id) {
         return Long.compareUnsigned(id >> settings.valueIdBits | 0xFFFFFFFF, 0xFFFFFFFF) <= 0;
+    }
+
+    @Override
+    public long newId() {
+        long id = identifier.nextId();
+        while (has(id)) {
+            id = identifier.nextId();
+        }
+        return id;
     }
 
     /*
@@ -93,6 +107,8 @@ public class RAFMultiStorage<S extends Storable> extends AbstractStorage<S> {
             }
             access.file().delete();
         }
+        identifier.reset();
+        identifier.save();
     }
 
     @Override
@@ -112,6 +128,7 @@ public class RAFMultiStorage<S extends Storable> extends AbstractStorage<S> {
                 access.writeUnlock();
             }
         }
+        identifier.save();
     }
 
     /*
