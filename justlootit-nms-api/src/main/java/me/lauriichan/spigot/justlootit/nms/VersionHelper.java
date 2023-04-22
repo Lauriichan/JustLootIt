@@ -21,6 +21,8 @@ public abstract class VersionHelper {
     public abstract net.md_5.bungee.api.chat.hover.content.Entity createEntityHover(Entity entity);
     
     public abstract List<NamespacedKey> getLootTables();
+    
+    public abstract LootTable getLootTable(NamespacedKey key);
 
     public abstract void fill(Inventory inventory, Player player, Location location, LootTable lootTable, long seed);
 

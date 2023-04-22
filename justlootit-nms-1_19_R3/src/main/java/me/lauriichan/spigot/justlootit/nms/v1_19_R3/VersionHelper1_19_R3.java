@@ -6,6 +6,7 @@ import java.util.List;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
+import org.bukkit.craftbukkit.v1_19_R3.CraftLootTable;
 import org.bukkit.craftbukkit.v1_19_R3.CraftServer;
 import org.bukkit.craftbukkit.v1_19_R3.entity.CraftEntity;
 import org.bukkit.craftbukkit.v1_19_R3.entity.CraftPlayer;
@@ -72,6 +73,15 @@ public class VersionHelper1_19_R3 extends VersionHelper {
         ((CraftServer) Bukkit.getServer()).getServer().getLootTables().getIds()
             .forEach(location -> lootTables.add(CraftNamespacedKey.fromMinecraft(location)));
         return lootTables;
+    }
+    
+    @Override
+    public org.bukkit.loot.LootTable getLootTable(NamespacedKey key) {
+        LootTable table = ((CraftServer) Bukkit.getServer()).getServer().getLootTables().get(CraftNamespacedKey.toMinecraft(key));
+        if(table == LootTable.EMPTY) {
+            return null;
+        }
+        return new CraftLootTable(key, table);
     }
 
     @Override

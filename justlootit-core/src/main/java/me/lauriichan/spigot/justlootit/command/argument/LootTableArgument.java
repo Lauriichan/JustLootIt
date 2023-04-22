@@ -22,7 +22,7 @@ public final class LootTableArgument implements IArgumentType<LootTable> {
         if (key == null) {
             throw new IllegalArgumentException("Key '" + input + "' is invalid!");
         }
-        LootTable table = Bukkit.getLootTable(key);
+        LootTable table = actor instanceof BukkitActor<?> bukkit ? bukkit.versionHelper().getLootTable(key) : Bukkit.getLootTable(key);
         if (table == null) {
             throw new IllegalArgumentException("Unknown loot table '" + input + "'!");
         }

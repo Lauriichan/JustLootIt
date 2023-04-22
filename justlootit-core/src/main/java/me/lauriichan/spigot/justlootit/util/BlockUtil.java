@@ -36,24 +36,18 @@ public final class BlockUtil {
     }
 
     public static void sendBlockOpen(Player player, Location location) {
-        System.out.println("OPEN!");
         BlockState state = player.getWorld().getBlockState(location);
         Material type = state.getType();
-        System.out.println("Got material and state of location: " + location.toString());
         if (type == Material.BARREL) {
-            System.out.println("BARREL");
             player.playSound(location, Sound.BLOCK_BARREL_OPEN, SoundCategory.BLOCKS, 0.5f, 1f);
             return;
         } else if (type == Material.CHEST) {
-            System.out.println("CHEST");
             player.playSound(location, Sound.BLOCK_CHEST_OPEN, SoundCategory.BLOCKS, 0.5f, 1f);
             return;
         } else if (type == Material.ENDER_CHEST) {
-            System.out.println("ENDER_CHEST");
             player.playSound(location, Sound.BLOCK_ENDER_CHEST_OPEN, SoundCategory.BLOCKS, 0.5f, 1f);
             return;
         } else if (state instanceof ShulkerBox shulker) {
-            System.out.println("SHULKER");
             player.playSound(location, Sound.BLOCK_SHULKER_BOX_OPEN, SoundCategory.BLOCKS, 0.5f, 1f);
             return;
         }
