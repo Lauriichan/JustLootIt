@@ -26,6 +26,10 @@ public final class BukkitActor<P extends CommandSender> extends Actor<P> {
         super(handle, messageManager);
         this.versionHelper = versionHelper;
     }
+    
+    public VersionHelper versionHelper() {
+        return versionHelper;
+    }
 
     @Override
     public UUID getId() {

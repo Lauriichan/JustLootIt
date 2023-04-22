@@ -1,7 +1,6 @@
 package me.lauriichan.spigot.justlootit.command;
 
 import org.bukkit.Bukkit;
-import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Container;
@@ -115,21 +114,11 @@ public class DebugCommand {
     }
 
     @Action("container vanilla")
-    public void vanillaContainer(final JustLootItPlugin plugin, final Actor<?> actor, @Argument(name = "loottable") final String loottable,
+    public void vanillaContainer(final JustLootItPlugin plugin, final Actor<?> actor, @Argument(name = "loottable") final LootTable loottable,
         @Argument(name = "seed") final long seed) {
         final Actor<Player> playerActor = actor.as(Player.class);
         if (!playerActor.isValid()) {
             actor.sendTranslatedMessage(Messages.COMMAND_SYSTEM_ACTOR_NOT$SUPPORTED, Key.of("actorType", "Player"));
-            return;
-        }
-        final NamespacedKey key = NamespacedKey.fromString(loottable);
-        if (key == null) {
-            actor.sendMessage("&cInvalid key '%s'!".formatted(loottable));
-            return;
-        }
-        final LootTable table = Bukkit.getLootTable(key);
-        if (table == null) {
-            actor.sendMessage("&cInvalid loottable '%s'!".formatted(key.toString()));
             return;
         }
         final Player player = playerActor.getHandle();
@@ -179,7 +168,7 @@ public class DebugCommand {
                         inv.clear();
                     }
                 }, 1);
-                storage.write(new VanillaContainer(id, table, seed));
+                storage.write(new VanillaContainer(id, loottable, seed));
                 actor.sendMessage("&aCreated container with id '" + Long.toHexString(id) + "'!");
             }, () -> {
                 actor.sendMessage("&cNo storage available!");

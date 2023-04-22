@@ -19,6 +19,7 @@ import me.lauriichan.laylib.reflection.JavaAccess;
 import me.lauriichan.spigot.justlootit.capability.JustLootItCapabilityProvider;
 import me.lauriichan.spigot.justlootit.command.DebugCommand;
 import me.lauriichan.spigot.justlootit.command.HelpCommand;
+import me.lauriichan.spigot.justlootit.command.argument.LootTableArgument;
 import me.lauriichan.spigot.justlootit.command.impl.BukkitCommandInjectedBridge;
 import me.lauriichan.spigot.justlootit.command.impl.BukkitCommandInjectedBridge.CommandDefinition;
 import me.lauriichan.spigot.justlootit.command.provider.LoggerProvider;
@@ -154,6 +155,7 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
 
     private void registerArgumentTypes(final ArgumentRegistry registry) {
         // Register argument types
+        registry.registerArgumentType(LootTableArgument.class);
 
         // Register providers
         registry.setProvider(new PluginProvider(this));

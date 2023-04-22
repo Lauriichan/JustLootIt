@@ -1,10 +1,16 @@
 package me.lauriichan.spigot.justlootit.nms.v1_19_R2;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.NamespacedKey;
 import org.bukkit.craftbukkit.v1_19_R2.entity.CraftEntity;
 import org.bukkit.craftbukkit.v1_19_R2.entity.CraftPlayer;
 import org.bukkit.craftbukkit.v1_19_R2.inventory.CraftInventory;
 import org.bukkit.craftbukkit.v1_19_R2.util.CraftNamespacedKey;
+import org.bukkit.craftbukkit.v1_19_R2.CraftServer;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 
@@ -57,6 +63,14 @@ public class VersionHelper1_19_R2 extends VersionHelper {
             return new net.md_5.bungee.api.chat.hover.content.Entity(type, id, array[0]);
         }
         return new net.md_5.bungee.api.chat.hover.content.Entity(type, id, new TextComponent(array));
+    }
+
+    @Override
+    public List<NamespacedKey> getLootTables() {
+        ArrayList<NamespacedKey> lootTables = new ArrayList<>();
+        ((CraftServer) Bukkit.getServer()).getServer().getLootTables().getIds()
+            .forEach(location -> lootTables.add(CraftNamespacedKey.fromMinecraft(location)));
+        return lootTables;
     }
 
     @Override
