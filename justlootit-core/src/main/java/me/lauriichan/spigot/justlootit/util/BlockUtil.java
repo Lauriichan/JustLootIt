@@ -19,7 +19,7 @@ public final class BlockUtil {
 
     public static Container findChestAround(RegionAccessor region, int x, int y, int z, Type chestType, BlockFace chestFace) {
         if (chestFace.getModZ() != 0) {
-            x += chestType == Type.LEFT ? chestFace.getModZ() : -chestFace.getModZ();
+            x += chestType == Type.LEFT ? -chestFace.getModZ() : chestFace.getModZ();
         } else {
             z += chestType == Type.LEFT ? chestFace.getModX() : -chestFace.getModX();
         }

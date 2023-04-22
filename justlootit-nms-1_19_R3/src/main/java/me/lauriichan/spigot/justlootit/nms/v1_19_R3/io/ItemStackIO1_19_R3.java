@@ -40,7 +40,7 @@ public final class ItemStackIO1_19_R3 extends NbtIO1_19_R3<org.bukkit.inventory.
         }
         if (itemStack instanceof CraftItemStack craftItem) {
             try {
-                ItemStack handle = (ItemStack) CraftItemStack_handle.invokeExact(craftItem);
+                ItemStack handle = (ItemStack) CraftItemStack_handle.invoke(craftItem);
                 if (handle == null) {
                     return ItemStack.EMPTY;
                 }

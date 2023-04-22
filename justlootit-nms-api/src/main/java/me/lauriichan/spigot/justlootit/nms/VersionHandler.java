@@ -14,6 +14,8 @@ import org.bukkit.plugin.PluginManager;
 import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.spigot.justlootit.nms.capability.CapabilityManager;
 import me.lauriichan.spigot.justlootit.nms.capability.Capable;
+import me.lauriichan.spigot.justlootit.nms.debug.DebugHelper;
+import me.lauriichan.spigot.justlootit.nms.debug.IDebugHelper;
 import me.lauriichan.spigot.justlootit.nms.io.IOProvider;
 import me.lauriichan.spigot.justlootit.nms.packet.AbstractPacketOut;
 import me.lauriichan.spigot.justlootit.nms.packet.listener.PacketManager;
@@ -29,9 +31,16 @@ public abstract class VersionHandler {
     protected final ConcurrentHashMap<UUID, LevelAdapter> levels = new ConcurrentHashMap<>();
 
     protected final IServiceProvider serviceProvider;
+    
+    protected final DebugHelper debugHelper;
 
     public VersionHandler(final IServiceProvider serviceProvider) {
+        this(serviceProvider, null);
+    }
+
+    public VersionHandler(final IServiceProvider serviceProvider, final IDebugHelper debugHelper) {
         this.serviceProvider = serviceProvider;
+        this.debugHelper = new DebugHelper(debugHelper);
     }
 
     /*
@@ -188,6 +197,10 @@ public abstract class VersionHandler {
     public abstract PacketManager packetManager();
 
     public abstract VersionHelper versionHelper();
+    
+    public final IDebugHelper debugHelper() {
+        return debugHelper;
+    }
 
     public final CapabilityManager capabilities() {
         return capabilityManager;

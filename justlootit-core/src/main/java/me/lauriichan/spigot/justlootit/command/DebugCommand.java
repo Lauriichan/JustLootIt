@@ -5,6 +5,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Container;
+import org.bukkit.block.DoubleChest;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.type.Chest;
 import org.bukkit.block.data.type.Chest.Type;
@@ -15,6 +16,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.loot.LootTable;
 import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataHolder;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.RayTraceResult;
 
@@ -38,6 +40,36 @@ import me.lauriichan.spigot.justlootit.util.SimpleDataType;
 
 @Command(name = "debug", description = "A debug command")
 public class DebugCommand {
+
+    @Action("info pdc")
+    public void infoPdc(final JustLootItPlugin plugin, final Actor<?> actor) {
+        final Actor<Player> playerActor = actor.as(Player.class);
+        if (!playerActor.isValid()) {
+            actor.sendTranslatedMessage(Messages.COMMAND_SYSTEM_ACTOR_NOT$SUPPORTED, Key.of("actorType", "Player"));
+            return;
+        }
+        final Player player = playerActor.getHandle();
+        final RayTraceResult result = player.getWorld().rayTraceBlocks(player.getEyeLocation(), player.getLocation().getDirection(), 5);
+        if (result == null) {
+            actor.sendMessage("&cYou have to look at a block!");
+            return;
+        }
+        plugin.mainService().submit(() -> {
+            // If a exception happens in this lambda it will not be detected.
+            final Block block = result.getHitBlock();
+            final BlockState state = block.getState();
+            if (!(state instanceof PersistentDataHolder holder)) {
+                actor.sendMessage("&cYou have to look at a persistent data holding block!");
+                return;
+            }
+            String data = plugin.versionHandler().debugHelper().persistentDataAsString(holder.getPersistentDataContainer());
+            if (data.isEmpty()) {
+                actor.sendMessage("&eBlock has no persistent data set");
+                return;
+            }
+            actor.sendMessage("&a" + data.replace("\r", ""));
+        });
+    }
 
     @Action("container frame")
     public void frameContainer(final JustLootItPlugin plugin, final Actor<?> actor) {
@@ -127,22 +159,26 @@ public class DebugCommand {
                 final long id = storage.newId();
                 stateDataContainer.set(JustLootItKey.identity(), PersistentDataType.LONG, id);
                 final BlockData data = state.getBlockData();
-                Container otherContainer = null;
                 if (data instanceof Chest chest && chest.getType() != Type.SINGLE) {
-                    otherContainer = BlockUtil.findChestAround(block.getWorld(), state.getLocation(), chest.getType(), chest.getFacing());
+                    final Container otherContainer = BlockUtil.findChestAround(block.getWorld(), state.getLocation(), chest.getType(), chest.getFacing());
                     if (otherContainer != null) {
                         stateDataContainer.set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR,
-                            stateContainer.getLocation().toVector().subtract(otherContainer.getLocation().toVector()));
-                        otherContainer.getPersistentDataContainer().set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR,
                             otherContainer.getLocation().toVector().subtract(stateContainer.getLocation().toVector()));
+                        otherContainer.getPersistentDataContainer().set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR,
+                            stateContainer.getLocation().toVector().subtract(otherContainer.getLocation().toVector()));
+                        otherContainer.update();
                     }
                 }
-                stateContainer.getInventory().clear();
                 stateContainer.update();
-                if (otherContainer != null) {
-                    otherContainer.getInventory().clear();
-                    otherContainer.update();
-                }
+                Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                    Inventory inv = ((Container) stateContainer.getBlock().getState()).getInventory();
+                    if(inv.getHolder() instanceof DoubleChest chest) {
+                        chest.getLeftSide().getInventory().clear();
+                        chest.getRightSide().getInventory().clear();
+                    } else {
+                        inv.clear();
+                    }
+                }, 1);
                 storage.write(new VanillaContainer(id, table, seed));
                 actor.sendMessage("&aCreated container with id '" + Long.toHexString(id) + "'!");
             }, () -> {
@@ -185,25 +221,28 @@ public class DebugCommand {
                 final long id = storage.newId();
                 stateDataContainer.set(JustLootItKey.identity(), PersistentDataType.LONG, id);
                 final BlockData data = state.getBlockData();
-                Inventory inventory = stateContainer.getInventory();
-                Container otherContainer = null;
                 if (data instanceof Chest chest && chest.getType() != Type.SINGLE) {
-                    otherContainer = BlockUtil.findChestAround(block.getWorld(), state.getLocation(), chest.getType(), chest.getFacing());
+                    final Container otherContainer = BlockUtil.findChestAround(block.getWorld(), state.getLocation(), chest.getType(), chest.getFacing());
                     if (otherContainer != null) {
                         stateDataContainer.set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR,
-                            stateContainer.getLocation().toVector().subtract(otherContainer.getLocation().toVector()));
-                        otherContainer.getPersistentDataContainer().set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR,
                             otherContainer.getLocation().toVector().subtract(stateContainer.getLocation().toVector()));
-                        inventory = inventory.getHolder().getInventory();
+                        otherContainer.getPersistentDataContainer().set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR,
+                            stateContainer.getLocation().toVector().subtract(otherContainer.getLocation().toVector()));
+                        otherContainer.update();
                     }
                 }
+                final Inventory inventory = stateContainer.getInventory();
                 storage.write(new StaticContainer(id, inventory));
-                stateContainer.getInventory().clear();
                 stateContainer.update();
-                if (otherContainer != null) {
-                    otherContainer.getInventory().clear();
-                    otherContainer.update();
-                }
+                Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                    Inventory inv = ((Container) stateContainer.getBlock().getState()).getInventory();
+                    if(inv.getHolder() instanceof DoubleChest chest) {
+                        chest.getLeftSide().getInventory().clear();
+                        chest.getRightSide().getInventory().clear();
+                    } else {
+                        inv.clear();
+                    }
+                }, 1);
                 actor.sendMessage("&aCreated container with id '" + Long.toHexString(id) + "'!");
             }, () -> {
                 actor.sendMessage("&cNo storage available!");

@@ -6,7 +6,6 @@ import java.util.UUID;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
-import org.bukkit.block.DoubleChest;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.type.Chest;
 import org.bukkit.block.data.type.Chest.Type;
@@ -43,6 +42,7 @@ import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.storage.IStorage;
 import me.lauriichan.spigot.justlootit.storage.Storable;
+import me.lauriichan.spigot.justlootit.util.InventoryUtil;
 import me.lauriichan.spigot.justlootit.util.SimpleDataType;
 
 public class ContainerListener implements Listener {
@@ -75,7 +75,7 @@ public class ContainerListener implements Listener {
                 .getBlockAt(block.getX() + offset.getBlockX(), block.getY(), block.getZ() + offset.getBlockZ()).getState();
             if (!(otherState instanceof org.bukkit.block.Container otherContainer)) {
                 dataContainer.remove(JustLootItKey.chestData());
-                state.update();
+                state.update(true);
                 return;
             }
             PersistentDataContainer otherDataContainer = otherContainer.getPersistentDataContainer();
@@ -84,19 +84,19 @@ public class ContainerListener implements Listener {
             if (accessContainer != container && !otherDataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
                 otherDataContainer.remove(JustLootItKey.chestData());
                 dataContainer.remove(JustLootItKey.chestData());
-                otherContainer.update();
-                container.update();
+                otherContainer.update(true);
+                container.update(true);
                 return;
             }
             PersistentDataContainer accessDataContainer = accessContainer == container ? dataContainer : otherDataContainer;
-            accessContainer(accessContainer.getLocation(), accessContainer.getInventory().getHolder(), accessDataContainer, event, event.getPlayer(),
+            accessContainer(accessContainer.getLocation(), accessContainer, accessDataContainer, event, event.getPlayer(),
                 accessDataContainer.get(JustLootItKey.identity(), PersistentDataType.LONG));
             if (!accessDataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
                 otherDataContainer.remove(JustLootItKey.chestData());
                 dataContainer.remove(JustLootItKey.chestData());
                 accessDataContainer.remove(JustLootItKey.identity());
-                otherContainer.update();
-                container.update();
+                otherContainer.update(true);
+                container.update(true);
             }
             return;
         }
@@ -185,7 +185,7 @@ public class ContainerListener implements Listener {
                     final Inventory holderInventory = inventoryHolder.getInventory();
                     int rowSize = IGuiInventory.getRowSize(holderInventory.getType());
                     if (rowSize == 9) {
-                        inventory.setChestSize(inventoryHolder instanceof DoubleChest ? ChestSize.GRID_6x9 : ChestSize.values()[(holderInventory.getSize() / rowSize) - 1]);
+                        inventory.setChestSize(ChestSize.values()[(InventoryUtil.getSize(holderInventory) / rowSize) - 1]);
                     } else {
                         inventory.setType(holderInventory.getType());
                     }

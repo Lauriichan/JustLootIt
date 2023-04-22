@@ -10,6 +10,7 @@ import me.lauriichan.spigot.justlootit.nms.LevelAdapter;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.nms.packet.PacketOutSetEntityData;
+import me.lauriichan.spigot.justlootit.nms.v1_19_R3.debug.Debug1_19_R3;
 import me.lauriichan.spigot.justlootit.nms.v1_19_R3.io.ItemStackIO1_19_R3;
 import me.lauriichan.spigot.justlootit.nms.v1_19_R3.network.PacketManager1_19_R3;
 import me.lauriichan.spigot.justlootit.nms.v1_19_R3.packet.PacketInContainerClick1_19_R3;
@@ -27,7 +28,7 @@ public final class VersionHandler1_19_R3 extends VersionHandler implements IServ
     private final VersionHelper1_19_R3 versionHelper;
 
     public VersionHandler1_19_R3(final IServiceProvider provider) {
-        super(provider);
+        super(provider, new Debug1_19_R3());
         this.packetManager = new PacketManager1_19_R3(this);
         this.versionHelper = new VersionHelper1_19_R3(this);
     }

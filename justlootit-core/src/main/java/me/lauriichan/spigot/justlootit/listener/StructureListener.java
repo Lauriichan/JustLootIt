@@ -103,9 +103,9 @@ public class StructureListener implements Listener {
                             if (otherContainer != null
                                 && otherContainer.getPersistentDataContainer().has(JustLootItKey.identity(), PersistentDataType.LONG)) {
                                 container.getPersistentDataContainer().set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR,
-                                    container.getLocation().toVector().subtract(otherContainer.getLocation().toVector()));
-                                otherContainer.getPersistentDataContainer().set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR,
                                     otherContainer.getLocation().toVector().subtract(container.getLocation().toVector()));
+                                otherContainer.getPersistentDataContainer().set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR,
+                                    container.getLocation().toVector().subtract(otherContainer.getLocation().toVector()));
                                 container.update();
                                 otherContainer.update();
                             }

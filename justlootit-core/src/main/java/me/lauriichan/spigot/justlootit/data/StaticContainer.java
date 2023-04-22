@@ -1,16 +1,15 @@
 package me.lauriichan.spigot.justlootit.data;
 
 import org.bukkit.Location;
-import org.bukkit.inventory.DoubleChestInventory;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 import io.netty.buffer.ByteBuf;
 import me.lauriichan.spigot.justlootit.data.io.DataIO;
-import me.lauriichan.spigot.justlootit.inventory.ChestSize;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.nms.io.IOHandler;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapter;
+import me.lauriichan.spigot.justlootit.util.InventoryUtil;
 
 public final class StaticContainer extends Container implements IInventoryContainer {
 
@@ -57,28 +56,18 @@ public final class StaticContainer extends Container implements IInventoryContai
     }
 
     public void saveFrom(final Inventory inventory) {
-        final ItemStack[] items;
-        if (inventory instanceof DoubleChestInventory doubleChest) {
-            items = new ItemStack[ChestSize.GRID_6x9.inventorySize()];
-            copyTo(doubleChest.getLeftSide().getContents(), items, 0);
-            copyTo(doubleChest.getRightSide().getContents(), items, ChestSize.GRID_3x9.inventorySize());
-        } else {
-            items = new ItemStack[inventory.getSize()];
-            copyTo(inventory.getContents(), items, 0);
+        final ItemStack[] contents = InventoryUtil.getContents(inventory);
+        final ItemStack[] items = new ItemStack[contents.length];
+        for (int index = 0; index < contents.length; index++) {
+            final ItemStack item = contents[index];
+            if (item == null || item.getType().isAir()) {
+                items[index] = null;
+                continue;
+            }
+            items[index] = item.clone();
         }
         this.items = items;
         setDirty();
-    }
-
-    private void copyTo(ItemStack[] from, ItemStack[] to, int offset) {
-        for (int index = 0; index < from.length; index++) {
-            final ItemStack item = from[index];
-            if (item == null || item.getType().isAir()) {
-                to[index + offset] = null;
-                continue;
-            }
-            to[index + offset] = item.clone();
-        }
     }
 
     @Override
