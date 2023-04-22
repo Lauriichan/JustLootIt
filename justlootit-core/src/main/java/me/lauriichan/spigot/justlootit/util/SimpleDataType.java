@@ -2,6 +2,7 @@ package me.lauriichan.spigot.justlootit.util;
 
 import org.bukkit.persistence.PersistentDataAdapterContext;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.util.Vector;
 
 public abstract class SimpleDataType<P, C> implements PersistentDataType<P, C> {
 
@@ -15,6 +16,22 @@ public abstract class SimpleDataType<P, C> implements PersistentDataType<P, C> {
         public Boolean fromPrimitive(final Byte primitive, final PersistentDataAdapterContext context) {
             return primitive == 1;
         }
+    };
+    public static final SimpleDataType<int[], Vector> OFFSET_VECTOR = new SimpleDataType<>(int[].class, Vector.class) {
+
+        @Override
+        public int[] toPrimitive(Vector complex, PersistentDataAdapterContext context) {
+            return new int[] {
+                complex.getBlockX(),
+                complex.getBlockZ()
+            };
+        }
+
+        @Override
+        public Vector fromPrimitive(int[] primitive, PersistentDataAdapterContext context) {
+            return new Vector(primitive[0], 0, primitive[1]);
+        }
+        
     };
 
     private final Class<P> primitiveType;

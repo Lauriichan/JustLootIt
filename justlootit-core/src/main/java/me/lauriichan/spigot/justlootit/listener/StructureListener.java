@@ -2,8 +2,12 @@ package me.lauriichan.spigot.justlootit.listener;
 
 import java.util.UUID;
 
+import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Container;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.type.Chest;
+import org.bukkit.block.data.type.Chest.Type;
 import org.bukkit.entity.ChestBoat;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -19,6 +23,7 @@ import org.bukkit.generator.LimitedRegion;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.loot.Lootable;
+import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -31,6 +36,8 @@ import me.lauriichan.spigot.justlootit.data.StaticContainer;
 import me.lauriichan.spigot.justlootit.data.VanillaContainer;
 import me.lauriichan.spigot.justlootit.nms.LevelAdapter;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
+import me.lauriichan.spigot.justlootit.storage.IStorage;
+import me.lauriichan.spigot.justlootit.util.SimpleDataType;
 
 public class StructureListener implements Listener {
 
@@ -76,31 +83,32 @@ public class StructureListener implements Listener {
             }
             if (current instanceof Container container) {
                 Inventory inventory = container.getInventory();
-                if (inventory.isEmpty() || !JustLootItFlag.TILE_ENTITY_CONTAINERS.isSet() && JustLootItConstant.UNSUPPORTED_CONTAINER_TYPES.contains(inventory.getType())) {
+                if (!JustLootItFlag.TILE_ENTITY_CONTAINERS.isSet()
+                    && JustLootItConstant.UNSUPPORTED_CONTAINER_TYPES.contains(inventory.getType())) {
                     return current;
                 }
                 level.getCapability(StorageCapability.class).ifPresent(capability -> {
                     if (current instanceof Lootable lootable && lootable.getLootTable() != null) {
-                        long id;
-                        if (container.getPersistentDataContainer().has(JustLootItKey.identity(), PersistentDataType.LONG)) {
-                            id = container.getPersistentDataContainer().get(JustLootItKey.identity(), PersistentDataType.LONG);
-                        } else {
-                            id = capability.storage().newId();
-                            container.getPersistentDataContainer().set(JustLootItKey.identity(), PersistentDataType.LONG, id);
-                        }
+                        long id = getIdOfBlockState(region, x, y, z, capability.storage(), container);
                         capability.storage().write(new VanillaContainer(id, lootable.getLootTable(), lootable.getSeed()));
                         lootable.setSeed(0L);
                         lootable.setLootTable(null);
                         container.update();
                         return;
                     }
-                    long id;
-                    if (container.getPersistentDataContainer().has(JustLootItKey.identity(), PersistentDataType.LONG)) {
-                        id = container.getPersistentDataContainer().get(JustLootItKey.identity(), PersistentDataType.LONG);
-                    } else {
-                        id = capability.storage().newId();
-                        container.getPersistentDataContainer().set(JustLootItKey.identity(), PersistentDataType.LONG, id);
+                    if (inventory.isEmpty()) {
+                        BlockData data = container.getBlockData();
+                        if (data instanceof Chest chest && chest.getType() != Type.SINGLE) {
+                            Container otherContainer = findChestAround(region, x, y, z, chest.getType(), chest.getFacing());
+                            if (otherContainer != null
+                                && otherContainer.getPersistentDataContainer().has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+                                container.getPersistentDataContainer().set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR,
+                                    container.getLocation().toVector().subtract(otherContainer.getLocation().toVector()));
+                            }
+                        }
+                        return;
                     }
+                    long id = getIdOfBlockState(region, x, y, z, capability.storage(), container);
                     container.getPersistentDataContainer().set(JustLootItKey.identity(), PersistentDataType.LONG, id);
                     capability.storage().write(new StaticContainer(id, inventory));
                     inventory.clear();
@@ -108,6 +116,47 @@ public class StructureListener implements Listener {
                 });
             }
             return current;
+        }
+
+        private long getIdOfBlockState(LimitedRegion region, int x, int y, int z, IStorage<?> storage, Container container) {
+            BlockData data = container.getBlockData();
+            if (data instanceof Chest chest && chest.getType() != Type.SINGLE) {
+                Container otherContainer = findChestAround(region, x, y, z, chest.getType(), chest.getFacing());
+                if (otherContainer != null) {
+                    if (otherContainer.getPersistentDataContainer().has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+                        container.getPersistentDataContainer().set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR,
+                            container.getLocation().toVector().subtract(otherContainer.getLocation().toVector()));
+                        return otherContainer.getPersistentDataContainer().get(JustLootItKey.identity(), PersistentDataType.LONG);
+                    }
+                    otherContainer.getPersistentDataContainer().set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR,
+                        otherContainer.getLocation().toVector().subtract(container.getLocation().toVector()));
+                    otherContainer.update();
+                    return idFromData(storage, container.getPersistentDataContainer());
+                }
+            }
+            return idFromData(storage, container.getPersistentDataContainer());
+        }
+
+        private long idFromData(IStorage<?> storage, PersistentDataContainer dataContainer) {
+            if (dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+                return dataContainer.get(JustLootItKey.identity(), PersistentDataType.LONG);
+            }
+            long id = storage.newId();
+            dataContainer.set(JustLootItKey.identity(), PersistentDataType.LONG, id);
+            return id;
+        }
+
+        private Container findChestAround(LimitedRegion region, int x, int y, int z, Type chestType, BlockFace chestFace) {
+            if (chestFace.getModZ() != 0) {
+                x += chestType == Type.LEFT ? chestFace.getModZ() : -chestFace.getModZ();
+            } else {
+                z += chestType == Type.LEFT ? chestFace.getModX() : -chestFace.getModX();
+            }
+            BlockState state = region.getBlockState(x, y, z);
+            if (state instanceof Container container) {
+                return container;
+            }
+            return null;
         }
 
         @Override
