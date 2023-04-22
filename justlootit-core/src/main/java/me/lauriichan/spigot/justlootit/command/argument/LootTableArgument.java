@@ -11,8 +11,8 @@ import org.bukkit.loot.LootTable;
 import me.lauriichan.laylib.command.Actor;
 import me.lauriichan.laylib.command.IArgumentType;
 import me.lauriichan.laylib.command.Suggestions;
-import me.lauriichan.laylib.command.util.LevenshteinDistance;
 import me.lauriichan.spigot.justlootit.command.impl.BukkitActor;
+import me.lauriichan.spigot.justlootit.util.ImprovedLevenshteinDistance;
 
 public final class LootTableArgument implements IArgumentType<LootTable> {
 
@@ -34,7 +34,10 @@ public final class LootTableArgument implements IArgumentType<LootTable> {
         if (!(actor instanceof BukkitActor<?> bukkit)) {
             return;
         }
-        List<Entry<String, Integer>> list = LevenshteinDistance.rankByDistance(input,
+        if (!(input = input.toLowerCase()).contains(":")) {
+            input = "minecraft:" + input;
+        }
+        List<Entry<String, Integer>> list = ImprovedLevenshteinDistance.rankByDistance(input,
             bukkit.versionHelper().getLootTables().stream().map(NamespacedKey::toString).toList());
         double max = list.stream().map(Entry::getValue).collect(Collectors.summingInt(Integer::intValue));
         for (int index = 0; index < list.size(); index++) {
