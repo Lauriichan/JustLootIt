@@ -35,9 +35,6 @@ public final class BlockUtil {
     }
 
     public static void sendBlockOpen(Player player, Location location) {
-        if (location.getWorld() != null && !location.getWorld().getUID().equals(player.getWorld().getUID())) {
-            return;
-        }
         BlockState state = (location.getWorld() != null ? location.getWorld() : player.getWorld()).getBlockState(location);
         Material type = state.getType();
         if (type == Material.BARREL) {
@@ -56,9 +53,6 @@ public final class BlockUtil {
     }
 
     public static void sendBlockClose(Player player, Location location) {
-        if (location.getWorld() != null && !location.getWorld().getUID().equals(player.getWorld().getUID())) {
-            return;
-        }
         BlockState state = (location.getWorld() != null ? location.getWorld() : player.getWorld()).getBlockState(location);
         Material type = state.getType();
         if (type == Material.BARREL) {

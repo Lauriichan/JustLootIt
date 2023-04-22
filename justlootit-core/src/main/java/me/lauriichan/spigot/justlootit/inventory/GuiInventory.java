@@ -38,7 +38,7 @@ public final class GuiInventory extends Attributable implements InventoryHolder,
         this.size = type.getDefaultSize();
         this.rowSize = IGuiInventory.getRowSize(type);
         this.columnAmount = size / rowSize;
-        this.chestSize = rowSize == 9 ? ChestSize.GRID_3x9 : null;
+        this.chestSize = rowSize == 9 ? ChestSize.values()[columnAmount - 1] : null;
         internalUpdate();
     }
 
@@ -82,7 +82,7 @@ public final class GuiInventory extends Attributable implements InventoryHolder,
         this.size = type.getDefaultSize();
         this.rowSize = IGuiInventory.getRowSize(type);
         this.columnAmount = size / rowSize;
-        this.chestSize = rowSize == 9 ? ChestSize.GRID_3x9 : null;
+        this.chestSize = rowSize == 9 ? ChestSize.values()[columnAmount - 1] : null;
         internalUpdate();
         return true;
     }
@@ -97,6 +97,7 @@ public final class GuiInventory extends Attributable implements InventoryHolder,
         if (chestSize == null || this.chestSize == chestSize) {
             return false;
         }
+        this.chestSize = chestSize;
         this.size = chestSize.inventorySize();
         this.rowSize = 9;
         this.columnAmount = size / rowSize;
@@ -126,7 +127,7 @@ public final class GuiInventory extends Attributable implements InventoryHolder,
     }
 
     private void internalUpdate() {
-        inventory = chestSize != null ? Bukkit.createInventory(this, size, BukkitColor.apply(title))
+        inventory = chestSize != null ? Bukkit.createInventory(this, chestSize.inventorySize(), BukkitColor.apply(title))
             : Bukkit.createInventory(this, type, BukkitColor.apply(title));
         if (handler != null) {
             handler.onUpdate(this, versionHandler, true);
