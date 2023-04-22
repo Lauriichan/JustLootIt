@@ -2,7 +2,6 @@ package me.lauriichan.spigot.justlootit.listener;
 
 import java.util.UUID;
 
-import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Container;
 import org.bukkit.block.data.BlockData;
@@ -37,6 +36,7 @@ import me.lauriichan.spigot.justlootit.data.VanillaContainer;
 import me.lauriichan.spigot.justlootit.nms.LevelAdapter;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.storage.IStorage;
+import me.lauriichan.spigot.justlootit.util.BlockUtil;
 import me.lauriichan.spigot.justlootit.util.SimpleDataType;
 
 public class StructureListener implements Listener {
@@ -99,11 +99,15 @@ public class StructureListener implements Listener {
                     if (inventory.isEmpty()) {
                         BlockData data = container.getBlockData();
                         if (data instanceof Chest chest && chest.getType() != Type.SINGLE) {
-                            Container otherContainer = findChestAround(region, x, y, z, chest.getType(), chest.getFacing());
+                            Container otherContainer = BlockUtil.findChestAround(region, x, y, z, chest.getType(), chest.getFacing());
                             if (otherContainer != null
                                 && otherContainer.getPersistentDataContainer().has(JustLootItKey.identity(), PersistentDataType.LONG)) {
                                 container.getPersistentDataContainer().set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR,
                                     container.getLocation().toVector().subtract(otherContainer.getLocation().toVector()));
+                                otherContainer.getPersistentDataContainer().set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR,
+                                    otherContainer.getLocation().toVector().subtract(container.getLocation().toVector()));
+                                container.update();
+                                otherContainer.update();
                             }
                         }
                         return;
@@ -121,16 +125,22 @@ public class StructureListener implements Listener {
         private long getIdOfBlockState(LimitedRegion region, int x, int y, int z, IStorage<?> storage, Container container) {
             BlockData data = container.getBlockData();
             if (data instanceof Chest chest && chest.getType() != Type.SINGLE) {
-                Container otherContainer = findChestAround(region, x, y, z, chest.getType(), chest.getFacing());
+                Container otherContainer = BlockUtil.findChestAround(region, x, y, z, chest.getType(), chest.getFacing());
                 if (otherContainer != null) {
                     if (otherContainer.getPersistentDataContainer().has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+                        otherContainer.getPersistentDataContainer().set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR,
+                            otherContainer.getLocation().toVector().subtract(container.getLocation().toVector()));
+                        otherContainer.update();
                         container.getPersistentDataContainer().set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR,
                             container.getLocation().toVector().subtract(otherContainer.getLocation().toVector()));
+                        container.getPersistentDataContainer().remove(JustLootItKey.identity());
                         return otherContainer.getPersistentDataContainer().get(JustLootItKey.identity(), PersistentDataType.LONG);
                     }
                     otherContainer.getPersistentDataContainer().set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR,
                         otherContainer.getLocation().toVector().subtract(container.getLocation().toVector()));
                     otherContainer.update();
+                    container.getPersistentDataContainer().set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR,
+                        container.getLocation().toVector().subtract(otherContainer.getLocation().toVector()));
                     return idFromData(storage, container.getPersistentDataContainer());
                 }
             }
@@ -144,19 +154,6 @@ public class StructureListener implements Listener {
             long id = storage.newId();
             dataContainer.set(JustLootItKey.identity(), PersistentDataType.LONG, id);
             return id;
-        }
-
-        private Container findChestAround(LimitedRegion region, int x, int y, int z, Type chestType, BlockFace chestFace) {
-            if (chestFace.getModZ() != 0) {
-                x += chestType == Type.LEFT ? chestFace.getModZ() : -chestFace.getModZ();
-            } else {
-                z += chestType == Type.LEFT ? chestFace.getModX() : -chestFace.getModX();
-            }
-            BlockState state = region.getBlockState(x, y, z);
-            if (state instanceof Container container) {
-                return container;
-            }
-            return null;
         }
 
         @Override

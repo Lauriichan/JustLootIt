@@ -6,6 +6,9 @@ import java.util.UUID;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.type.Chest;
+import org.bukkit.block.data.type.Chest.Type;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -20,6 +23,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.util.Vector;
 
 import me.lauriichan.spigot.justlootit.JustLootItConstant;
 import me.lauriichan.spigot.justlootit.JustLootItFlag;
@@ -38,6 +42,7 @@ import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.storage.IStorage;
 import me.lauriichan.spigot.justlootit.storage.Storable;
+import me.lauriichan.spigot.justlootit.util.SimpleDataType;
 
 public class ContainerListener implements Listener {
 
@@ -57,14 +62,53 @@ public class ContainerListener implements Listener {
         if (!(state instanceof org.bukkit.block.Container)) {
             return;
         }
+        final BlockData blockData = state.getBlockData();
         final org.bukkit.block.Container container = (org.bukkit.block.Container) state;
         final PersistentDataContainer dataContainer = container.getPersistentDataContainer();
+        if (blockData instanceof Chest chest && chest.getType() != Type.SINGLE) {
+            if (!dataContainer.has(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR)) {
+                return;
+            }
+            Vector offset = dataContainer.get(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR);
+            BlockState otherState = block.getWorld()
+                .getBlockAt(block.getX() + offset.getBlockX(), block.getY(), block.getZ() + offset.getBlockZ()).getState();
+            if (!(otherState instanceof org.bukkit.block.Container otherContainer)) {
+                dataContainer.remove(JustLootItKey.chestData());
+                state.update();
+                return;
+            }
+            PersistentDataContainer otherDataContainer = otherContainer.getPersistentDataContainer();
+            org.bukkit.block.Container accessContainer = dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG) ? container
+                : otherContainer;
+            if (accessContainer != container && !otherDataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+                otherDataContainer.remove(JustLootItKey.chestData());
+                dataContainer.remove(JustLootItKey.chestData());
+                otherContainer.update();
+                container.update();
+                return;
+            }
+            PersistentDataContainer accessDataContainer = accessContainer == container ? dataContainer : otherDataContainer;
+            accessContainer(accessContainer.getLocation(), accessContainer, accessDataContainer, event, event.getPlayer(),
+                accessDataContainer.get(JustLootItKey.identity(), PersistentDataType.LONG));
+            if (!accessDataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+                otherDataContainer.remove(JustLootItKey.chestData());
+                dataContainer.remove(JustLootItKey.chestData());
+                accessDataContainer.remove(JustLootItKey.identity());
+                otherContainer.update();
+                container.update();
+            }
+            return;
+        }
         if (!dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG) || !JustLootItFlag.TILE_ENTITY_CONTAINERS.isSet()
             && JustLootItConstant.UNSUPPORTED_CONTAINER_TYPES.contains(container.getInventory().getType())) {
             return;
         }
         accessContainer(block.getLocation(), container, dataContainer, event, event.getPlayer(),
             dataContainer.get(JustLootItKey.identity(), PersistentDataType.LONG));
+        if (!dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+            container.update();
+        }
+
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)

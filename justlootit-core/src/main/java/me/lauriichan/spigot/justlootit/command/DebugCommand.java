@@ -5,11 +5,15 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Container;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.type.Chest;
+import org.bukkit.block.data.type.Chest.Type;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.ItemFrame;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.loot.LootTable;
+import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.RayTraceResult;
 
@@ -28,6 +32,8 @@ import me.lauriichan.spigot.justlootit.message.Messages;
 import me.lauriichan.spigot.justlootit.nms.LevelAdapter;
 import me.lauriichan.spigot.justlootit.storage.IStorage;
 import me.lauriichan.spigot.justlootit.storage.Storable;
+import me.lauriichan.spigot.justlootit.util.BlockUtil;
+import me.lauriichan.spigot.justlootit.util.SimpleDataType;
 
 @Command(name = "debug", description = "A debug command")
 public class DebugCommand {
@@ -108,7 +114,9 @@ public class DebugCommand {
                 return;
             }
             final Container stateContainer = (Container) state;
-            if (stateContainer.getPersistentDataContainer().has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+            final PersistentDataContainer stateDataContainer = stateContainer.getPersistentDataContainer();
+            if (stateDataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)
+                || stateDataContainer.has(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR)) {
                 actor.sendMessage("&cIs already a JustLootIt container");
                 return;
             }
@@ -116,7 +124,19 @@ public class DebugCommand {
             level.getCapability(StorageCapability.class).ifPresentOrElse(capability -> {
                 final IStorage<Storable> storage = capability.storage();
                 final long id = storage.newId();
-                stateContainer.getPersistentDataContainer().set(JustLootItKey.identity(), PersistentDataType.LONG, id);
+                stateDataContainer.set(JustLootItKey.identity(), PersistentDataType.LONG, id);
+                final BlockData data = state.getBlockData();
+                if (data instanceof Chest chest && chest.getType() != Type.SINGLE) {
+                    Container otherContainer = BlockUtil.findChestAround(block.getWorld(), state.getLocation(), chest.getType(),
+                        chest.getFacing());
+                    if (otherContainer != null) {
+                        stateDataContainer.set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR,
+                            stateContainer.getLocation().toVector().subtract(otherContainer.getLocation().toVector()));
+                        otherContainer.getPersistentDataContainer().set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR,
+                            otherContainer.getLocation().toVector().subtract(stateContainer.getLocation().toVector()));
+                        otherContainer.update();
+                    }
+                }
                 stateContainer.getInventory().clear();
                 stateContainer.update();
                 storage.write(new VanillaContainer(id, table, seed));
@@ -149,7 +169,9 @@ public class DebugCommand {
                 return;
             }
             final Container stateContainer = (Container) state;
-            if (stateContainer.getPersistentDataContainer().has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+            final PersistentDataContainer stateDataContainer = stateContainer.getPersistentDataContainer();
+            if (stateDataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)
+                || stateDataContainer.has(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR)) {
                 actor.sendMessage("&cIs already a JustLootIt container");
                 return;
             }
@@ -157,7 +179,19 @@ public class DebugCommand {
             level.getCapability(StorageCapability.class).ifPresentOrElse(capability -> {
                 final IStorage<Storable> storage = capability.storage();
                 final long id = storage.newId();
-                stateContainer.getPersistentDataContainer().set(JustLootItKey.identity(), PersistentDataType.LONG, id);
+                stateDataContainer.set(JustLootItKey.identity(), PersistentDataType.LONG, id);
+                final BlockData data = state.getBlockData();
+                if (data instanceof Chest chest && chest.getType() != Type.SINGLE) {
+                    Container otherContainer = BlockUtil.findChestAround(block.getWorld(), state.getLocation(), chest.getType(),
+                        chest.getFacing());
+                    if (otherContainer != null) {
+                        stateDataContainer.set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR,
+                            stateContainer.getLocation().toVector().subtract(otherContainer.getLocation().toVector()));
+                        otherContainer.getPersistentDataContainer().set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR,
+                            otherContainer.getLocation().toVector().subtract(stateContainer.getLocation().toVector()));
+                        otherContainer.update();
+                    }
+                }
                 storage.write(new StaticContainer(id, stateContainer.getInventory()));
                 stateContainer.getInventory().clear();
                 stateContainer.update();
