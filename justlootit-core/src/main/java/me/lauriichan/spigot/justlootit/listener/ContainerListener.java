@@ -44,6 +44,7 @@ import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.storage.IStorage;
 import me.lauriichan.spigot.justlootit.storage.Storable;
+import me.lauriichan.spigot.justlootit.util.BlockUtil;
 import me.lauriichan.spigot.justlootit.util.InventoryUtil;
 import me.lauriichan.spigot.justlootit.util.SimpleDataType;
 
@@ -196,15 +197,9 @@ public class ContainerListener implements Listener {
                     inventory.attrSet(LootUIHandler.ATTR_ID, lookupTable.acquire(entryId));
                     inventory.setHandler(LootUIHandler.LOOT_HANDLER);
                     inventory.open(bukkitPlayer);
-                    if (inventoryHolder instanceof DoubleChest chest) {
-                        BlockState state = (BlockState) chest.getLeftSide();
-                        ((Lidded) state).open();
-                        state.update();
+                    if (inventoryHolder instanceof DoubleChest || inventoryHolder instanceof Lidded) {
                         inventory.attrSet(LootUIHandler.ATTR_LIDDED_LOCATION, location);
-                    } else if (inventoryHolder instanceof Lidded lidded) {
-                        lidded.open();
-                        ((BlockState) lidded).update();
-                        inventory.attrSet(LootUIHandler.ATTR_LIDDED_LOCATION, location);
+                        BlockUtil.sendBlockOpen(bukkitPlayer, location);
                     }
                 });
             });

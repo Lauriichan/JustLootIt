@@ -1,8 +1,6 @@
 package me.lauriichan.spigot.justlootit.inventory.handler.loot;
 
 import org.bukkit.Location;
-import org.bukkit.block.BlockState;
-import org.bukkit.block.Lidded;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.inventory.InventoryClickEvent;
 
@@ -12,6 +10,7 @@ import me.lauriichan.spigot.justlootit.inventory.IGuiInventory;
 import me.lauriichan.spigot.justlootit.inventory.IHandler;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
+import me.lauriichan.spigot.justlootit.util.BlockUtil;
 
 public final class LootUIHandler implements IHandler {
 
@@ -23,14 +22,6 @@ public final class LootUIHandler implements IHandler {
 
     @Override
     public boolean onEventClose(final HumanEntity entity, final IGuiInventory inventory, final VersionHandler versionHandler) {
-        final Location blockLocation = inventory.attrUnset(ATTR_LIDDED_LOCATION, Location.class);
-        if (blockLocation != null && blockLocation.getWorld() != null) {
-            BlockState state = blockLocation.getWorld().getBlockState(blockLocation);
-            if(state instanceof Lidded lidded) {
-                lidded.close();
-                state.update();
-            }
-        }
         final Long id = inventory.attrUnset(ATTR_ID, Long.class);
         if (id == null) {
             return false;
@@ -38,6 +29,10 @@ public final class LootUIHandler implements IHandler {
         final PlayerAdapter player = versionHandler.getPlayer(entity.getUniqueId());
         if (player == null) {
             return false;
+        }
+        final Location blockLocation = inventory.attrUnset(ATTR_LIDDED_LOCATION, Location.class);
+        if (blockLocation != null) {
+            BlockUtil.sendBlockClose(player.asBukkit(), blockLocation);
         }
         player.getCapability(StorageCapability.class).ifPresent(capability -> {
             try {
