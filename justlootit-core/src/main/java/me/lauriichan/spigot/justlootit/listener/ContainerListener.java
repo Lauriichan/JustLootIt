@@ -164,6 +164,10 @@ public class ContainerListener implements Listener {
                                     inventory.attrSet(LootUIHandler.ATTR_ID, cachedInventory.id());
                                     inventory.setHandler(LootUIHandler.LOOT_HANDLER);
                                     inventory.open(bukkitPlayer);
+                                    if (inventoryHolder instanceof DoubleChest || inventoryHolder instanceof Lidded) {
+                                        inventory.attrSet(LootUIHandler.ATTR_LIDDED_LOCATION, location);
+                                        BlockUtil.sendBlockOpen(bukkitPlayer, location);
+                                    }
                                 });
                                 return;
                             }

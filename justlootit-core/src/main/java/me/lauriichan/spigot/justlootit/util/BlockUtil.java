@@ -4,6 +4,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.RegionAccessor;
 import org.bukkit.Sound;
+import org.bukkit.SoundCategory;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Container;
@@ -35,37 +36,43 @@ public final class BlockUtil {
     }
 
     public static void sendBlockOpen(Player player, Location location) {
-        BlockState state = (location.getWorld() != null ? location.getWorld() : player.getWorld()).getBlockState(location);
+        System.out.println("OPEN!");
+        BlockState state = player.getWorld().getBlockState(location);
         Material type = state.getType();
+        System.out.println("Got material and state of location: " + location.toString());
         if (type == Material.BARREL) {
-            player.playSound(location, Sound.BLOCK_BARREL_OPEN, 0.5f, 1f);
+            System.out.println("BARREL");
+            player.playSound(location, Sound.BLOCK_BARREL_OPEN, SoundCategory.BLOCKS, 0.5f, 1f);
             return;
         } else if (type == Material.CHEST) {
-            player.playSound(location, Sound.BLOCK_CHEST_OPEN, 0.5f, 1f);
+            System.out.println("CHEST");
+            player.playSound(location, Sound.BLOCK_CHEST_OPEN, SoundCategory.BLOCKS, 0.5f, 1f);
             return;
         } else if (type == Material.ENDER_CHEST) {
-            player.playSound(location, Sound.BLOCK_ENDER_CHEST_OPEN, 0.5f, 1f);
+            System.out.println("ENDER_CHEST");
+            player.playSound(location, Sound.BLOCK_ENDER_CHEST_OPEN, SoundCategory.BLOCKS, 0.5f, 1f);
             return;
         } else if (state instanceof ShulkerBox shulker) {
-            player.playSound(location, Sound.BLOCK_SHULKER_BOX_OPEN, 0.5f, 1f);
+            System.out.println("SHULKER");
+            player.playSound(location, Sound.BLOCK_SHULKER_BOX_OPEN, SoundCategory.BLOCKS, 0.5f, 1f);
             return;
         }
     }
 
     public static void sendBlockClose(Player player, Location location) {
-        BlockState state = (location.getWorld() != null ? location.getWorld() : player.getWorld()).getBlockState(location);
+        BlockState state = player.getWorld().getBlockState(location);
         Material type = state.getType();
         if (type == Material.BARREL) {
-            player.playSound(location, Sound.BLOCK_BARREL_CLOSE, 0.5f, 1f);
+            player.playSound(location, Sound.BLOCK_BARREL_CLOSE, SoundCategory.BLOCKS, 0.5f, 1f);
             return;
         } else if (type == Material.CHEST) {
-            player.playSound(location, Sound.BLOCK_CHEST_CLOSE, 0.5f, 1f);
+            player.playSound(location, Sound.BLOCK_CHEST_CLOSE, SoundCategory.BLOCKS, 0.5f, 1f);
             return;
         } else if (type == Material.ENDER_CHEST) {
-            player.playSound(location, Sound.BLOCK_ENDER_CHEST_CLOSE, 0.5f, 1f);
+            player.playSound(location, Sound.BLOCK_ENDER_CHEST_CLOSE, SoundCategory.BLOCKS, 0.5f, 1f);
             return;
         } else if (state instanceof ShulkerBox shulker) {
-            player.playSound(location, Sound.BLOCK_SHULKER_BOX_CLOSE, 0.5f, 1f);
+            player.playSound(location, Sound.BLOCK_SHULKER_BOX_CLOSE, SoundCategory.BLOCKS, 0.5f, 1f);
             return;
         }
     }
