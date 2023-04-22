@@ -28,6 +28,7 @@ public final class LootUIHandler implements IHandler {
             BlockState state = blockLocation.getWorld().getBlockState(blockLocation);
             if(state instanceof Lidded lidded) {
                 lidded.close();
+                state.update();
             }
         }
         final Long id = inventory.attrUnset(ATTR_ID, Long.class);

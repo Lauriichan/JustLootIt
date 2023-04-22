@@ -197,10 +197,13 @@ public class ContainerListener implements Listener {
                     inventory.setHandler(LootUIHandler.LOOT_HANDLER);
                     inventory.open(bukkitPlayer);
                     if (inventoryHolder instanceof DoubleChest chest) {
-                        ((Lidded) chest.getLeftSide()).open();
+                        BlockState state = (BlockState) chest.getLeftSide();
+                        ((Lidded) state).open();
+                        state.update();
                         inventory.attrSet(LootUIHandler.ATTR_LIDDED_LOCATION, location);
                     } else if (inventoryHolder instanceof Lidded lidded) {
                         lidded.open();
+                        ((BlockState) lidded).update();
                         inventory.attrSet(LootUIHandler.ATTR_LIDDED_LOCATION, location);
                     }
                 });
