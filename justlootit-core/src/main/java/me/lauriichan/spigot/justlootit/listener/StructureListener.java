@@ -4,7 +4,9 @@ import java.util.UUID;
 
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Container;
+import org.bukkit.entity.ChestBoat;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.ItemFrame;
 import org.bukkit.entity.Minecart;
 import org.bukkit.event.EventHandler;
@@ -15,12 +17,13 @@ import org.bukkit.event.world.AsyncStructureGenerateEvent.BlockTransformer;
 import org.bukkit.event.world.AsyncStructureGenerateEvent.EntityTransformer;
 import org.bukkit.generator.LimitedRegion;
 import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.loot.Lootable;
 import org.bukkit.persistence.PersistentDataType;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import me.lauriichan.spigot.justlootit.JustLootItConstant;
+import me.lauriichan.spigot.justlootit.JustLootItFlag;
 import me.lauriichan.spigot.justlootit.JustLootItKey;
 import me.lauriichan.spigot.justlootit.capability.StorageCapability;
 import me.lauriichan.spigot.justlootit.data.FrameContainer;
@@ -48,7 +51,7 @@ public class StructureListener implements Listener {
         event.setBlockTransformer(JustLootItKey.identity(), transformer);
         event.setEntityTransformer(JustLootItKey.identity(), transformer);
     }
-    
+
     @EventHandler
     public void onWorldUnload(WorldUnloadEvent event) {
         transformers.remove(event.getWorld().getUID());
@@ -61,7 +64,7 @@ public class StructureListener implements Listener {
         public StructureTransformer(final LevelAdapter level) {
             this.level = level;
         }
-        
+
         public boolean isTerminated() {
             return level.isTerminated();
         }
@@ -72,10 +75,14 @@ public class StructureListener implements Listener {
                 return current;
             }
             if (current instanceof Container container) {
+                Inventory inventory = container.getInventory();
+                if (inventory.isEmpty() || !JustLootItFlag.TILE_ENTITY_CONTAINERS.isSet() && JustLootItConstant.UNSUPPORTED_CONTAINER_TYPES.contains(inventory.getType())) {
+                    return current;
+                }
                 level.getCapability(StorageCapability.class).ifPresent(capability -> {
                     if (current instanceof Lootable lootable && lootable.getLootTable() != null) {
                         long id;
-                        if(container.getPersistentDataContainer().has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+                        if (container.getPersistentDataContainer().has(JustLootItKey.identity(), PersistentDataType.LONG)) {
                             id = container.getPersistentDataContainer().get(JustLootItKey.identity(), PersistentDataType.LONG);
                         } else {
                             id = capability.storage().newId();
@@ -87,12 +94,8 @@ public class StructureListener implements Listener {
                         container.update();
                         return;
                     }
-                    Inventory inventory = container.getInventory();
-                    if(inventory.isEmpty()) {
-                        return;
-                    }
                     long id;
-                    if(container.getPersistentDataContainer().has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+                    if (container.getPersistentDataContainer().has(JustLootItKey.identity(), PersistentDataType.LONG)) {
                         id = container.getPersistentDataContainer().get(JustLootItKey.identity(), PersistentDataType.LONG);
                     } else {
                         id = capability.storage().newId();
@@ -123,6 +126,9 @@ public class StructureListener implements Listener {
                     });
                 }
             } else if (entity instanceof Minecart && entity instanceof Lootable lootable) {
+                if (!JustLootItFlag.TILE_ENTITY_CONTAINERS.isSet() && entity.getType() == EntityType.MINECART_HOPPER) {
+                    return allowedToSpawn;
+                }
                 if (lootable.getLootTable() != null) {
                     level.getCapability(StorageCapability.class).ifPresent(capability -> {
                         long id = capability.storage().newId();
@@ -131,8 +137,8 @@ public class StructureListener implements Listener {
                         lootable.setSeed(0L);
                         lootable.setLootTable(null);
                     });
-                } else if (entity instanceof InventoryHolder holder) {
-                    Inventory inventory = holder.getInventory();
+                } else if (entity instanceof ChestBoat boat) {
+                    Inventory inventory = boat.getInventory();
                     if (!inventory.isEmpty()) {
                         level.getCapability(StorageCapability.class).ifPresent(capability -> {
                             long id = capability.storage().newId();
