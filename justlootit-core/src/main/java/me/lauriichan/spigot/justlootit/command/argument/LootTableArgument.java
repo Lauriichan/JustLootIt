@@ -45,6 +45,7 @@ public final class LootTableArgument implements IArgumentType<LootTable> {
             key = input;
         }
         List<String> collectionList = bukkit.versionHelper().getLootTables().stream().map(NamespacedKey::toString).toList();
+        collectionList.remove("minecraft:empty");
         List<String> prefixList = collectionList.stream().filter(string -> string.startsWith(namespace)).toList();
         if(prefixList.isEmpty()) {
             prefixList = collectionList;
