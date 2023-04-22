@@ -255,7 +255,7 @@ public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
                 file.seek(settings.lookupHeaderSize);
                 file.writeShort(adapter.typeId());
                 file.writeInt(bufferSize);
-                buffer.readBytes(file.getChannel(), bufferSize);
+                buffer.readBytes(file.getChannel(), file.getFilePointer(), bufferSize);
                 return;
             }
             final long headerOffset = LOOKUP_AMOUNT_SIZE + LOOKUP_ENTRY_SIZE * valueId;
@@ -561,10 +561,10 @@ public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
                 final long offset = updateFileSize(file, lookupPosition, dataSize, bufferSize);
                 if (offset != 0) {
                     file.seek(LOOKUP_AMOUNT_SIZE);
-                    final long newDataEnd = lookupPosition + bufferSize + VALUE_HEADER_SIZE;
+                    final long oldDataEnd = lookupPosition + dataSize + VALUE_HEADER_SIZE;
                     while (file.getFilePointer() != settings.lookupHeaderSize) {
                         final long entryOffset = file.readLong();
-                        if (entryOffset < newDataEnd) {
+                        if (entryOffset < oldDataEnd) {
                             continue;
                         }
                         file.seek(file.getFilePointer() - LOOKUP_ENTRY_SIZE);
@@ -574,7 +574,7 @@ public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
                 file.seek(lookupPosition);
                 file.writeShort(adapter.typeId());
                 file.writeInt(bufferSize);
-                buffer.readBytes(file.getChannel(), bufferSize);
+                buffer.readBytes(file.getChannel(), file.getFilePointer(), bufferSize);
             }
             int amount = delete.size();
             if (amount == 0) {
