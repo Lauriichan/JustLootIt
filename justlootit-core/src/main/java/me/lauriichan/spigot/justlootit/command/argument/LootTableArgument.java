@@ -1,5 +1,6 @@
 package me.lauriichan.spigot.justlootit.command.argument;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
@@ -44,8 +45,13 @@ public final class LootTableArgument implements IArgumentType<LootTable> {
             namespace = "minecraft";
             key = input;
         }
-        List<String> collectionList = bukkit.versionHelper().getLootTables().stream().map(NamespacedKey::toString).toList();
-        collectionList.remove("minecraft:empty");
+        ArrayList<String> collectionList = new ArrayList<>();
+        bukkit.versionHelper().getLootTables().forEach(namespacedKey -> {
+            if(namespacedKey.getKey().equals("empty")) {
+                return;
+            }
+            collectionList.add(namespacedKey.toString());
+        });
         List<String> prefixList = collectionList.stream().filter(string -> string.startsWith(namespace)).toList();
         if(prefixList.isEmpty()) {
             prefixList = collectionList;
