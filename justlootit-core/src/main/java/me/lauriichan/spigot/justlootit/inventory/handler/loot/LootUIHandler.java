@@ -1,5 +1,8 @@
 package me.lauriichan.spigot.justlootit.inventory.handler.loot;
 
+import org.bukkit.Location;
+import org.bukkit.block.BlockState;
+import org.bukkit.block.Lidded;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.inventory.InventoryClickEvent;
 
@@ -14,11 +17,19 @@ public final class LootUIHandler implements IHandler {
 
     public static final LootUIHandler LOOT_HANDLER = new LootUIHandler();
     public static final String ATTR_ID = "PlayerStorageId";
+    public static final String ATTR_LIDDED_LOCATION = "LiddedBlockLocation";
 
     private LootUIHandler() {}
 
     @Override
     public boolean onEventClose(final HumanEntity entity, final IGuiInventory inventory, final VersionHandler versionHandler) {
+        final Location blockLocation = inventory.attrUnset(ATTR_LIDDED_LOCATION, Location.class);
+        if (blockLocation != null && blockLocation.getWorld() != null) {
+            BlockState state = blockLocation.getWorld().getBlockState(blockLocation);
+            if(state instanceof Lidded lidded) {
+                lidded.close();
+            }
+        }
         final Long id = inventory.attrUnset(ATTR_ID, Long.class);
         if (id == null) {
             return false;
@@ -28,7 +39,6 @@ public final class LootUIHandler implements IHandler {
             return false;
         }
         player.getCapability(StorageCapability.class).ifPresent(capability -> {
-            System.out.println("SAVING: " + id);
             try {
                 capability.storage().write(new CachedInventory(id, inventory.getInventory()));
             } catch (Throwable throwable) {

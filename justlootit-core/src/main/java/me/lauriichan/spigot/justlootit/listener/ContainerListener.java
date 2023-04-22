@@ -6,6 +6,8 @@ import java.util.UUID;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
+import org.bukkit.block.DoubleChest;
+import org.bukkit.block.Lidded;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.type.Chest;
 import org.bukkit.block.data.type.Chest.Type;
@@ -53,7 +55,7 @@ public class ContainerListener implements Listener {
         this.versionHandler = versionHandler;
     }
 
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
     public void onInteract(final PlayerInteractEvent event) {
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK) {
             return;
@@ -109,10 +111,9 @@ public class ContainerListener implements Listener {
         if (!dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
             container.update();
         }
-
     }
 
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
     public void onInteractEntity(final PlayerInteractAtEntityEvent event) {
         final Entity entity = event.getRightClicked();
         final EntityType type = entity.getType();
@@ -171,6 +172,8 @@ public class ContainerListener implements Listener {
 
                     final Duration duration = dataContainer.durationUntilNextAccess(playerId);
                     if (duration.isNegative()) {
+                        // TODO: Send message, never accessible
+                        return;
                     }
                     // TODO: Send message, not accessible yet
                     return;
@@ -193,6 +196,13 @@ public class ContainerListener implements Listener {
                     inventory.attrSet(LootUIHandler.ATTR_ID, lookupTable.acquire(entryId));
                     inventory.setHandler(LootUIHandler.LOOT_HANDLER);
                     inventory.open(bukkitPlayer);
+                    if (inventoryHolder instanceof DoubleChest chest) {
+                        ((Lidded) chest.getLeftSide()).open();
+                        inventory.attrSet(LootUIHandler.ATTR_LIDDED_LOCATION, location);
+                    } else if (inventoryHolder instanceof Lidded lidded) {
+                        lidded.open();
+                        inventory.attrSet(LootUIHandler.ATTR_LIDDED_LOCATION, location);
+                    }
                 });
             });
         }, () -> event.setCancelled(true));
