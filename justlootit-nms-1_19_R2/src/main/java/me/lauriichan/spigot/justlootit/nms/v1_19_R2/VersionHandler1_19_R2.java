@@ -12,10 +12,8 @@ import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.nms.packet.PacketOutSetEntityData;
 import me.lauriichan.spigot.justlootit.nms.v1_19_R2.io.ItemStackIO1_19_R2;
 import me.lauriichan.spigot.justlootit.nms.v1_19_R2.network.PacketManager1_19_R2;
-import me.lauriichan.spigot.justlootit.nms.v1_19_R2.packet.PacketInContainerClick1_19_R2;
-import me.lauriichan.spigot.justlootit.nms.v1_19_R2.packet.PacketInSwingArm1_19_R2;
-import me.lauriichan.spigot.justlootit.nms.v1_19_R2.packet.PacketInUseItemOn1_19_R2;
-import me.lauriichan.spigot.justlootit.nms.v1_19_R2.packet.PacketOutSetEntityData1_19_R2;
+import me.lauriichan.spigot.justlootit.nms.v1_19_R2.packet.*;
+import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket;
 import net.minecraft.network.protocol.game.ServerboundContainerClickPacket;
 import net.minecraft.network.protocol.game.ServerboundSwingPacket;
@@ -46,6 +44,7 @@ public final class VersionHandler1_19_R2 extends VersionHandler implements IServ
         packetManager.register(ServerboundContainerClickPacket.class, PacketInContainerClick1_19_R2::new);
         // Outgoing packets (nms)
         packetManager.register(ClientboundSetEntityDataPacket.class, PacketOutSetEntityData1_19_R2::new);
+        packetManager.register(ClientboundAddEntityPacket.class, PacketOutAddEntity1_19_R2::new);
         // Outgoing packets (adapter)
         packetManager.registerAdapter(PacketOutSetEntityData.class, PacketOutSetEntityData1_19_R2::new);
     }

@@ -31,7 +31,7 @@ public class PacketOutSetEntityData1_19_R3 extends PacketOutSetEntityData {
     private static List<DataValue<?>> extractValues(final SynchedEntityData data) {
         Int2ObjectMap<DataItem<?>> map;
         try {
-            map = (Int2ObjectMap<DataItem<?>>) EntityData_map.invokeExact(data);
+            map = (Int2ObjectMap<DataItem<?>>) EntityData_map.invoke(data);
         } catch (final Throwable e) {
             return Collections.emptyList();
         }
