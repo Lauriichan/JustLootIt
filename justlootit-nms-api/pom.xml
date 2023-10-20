@@ -17,7 +17,7 @@
         <dependency>
             <groupId>me.lauriichan.laylib</groupId>
             <artifactId>command</artifactId>
-            <version>0.1.0-10191ac-SNAPSHOT</version>
+            <version>0.1.0-ab2f306-SNAPSHOT</version>
         </dependency>
         <!-- Spigot -->
         <dependency>
