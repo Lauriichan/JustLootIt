@@ -4,36 +4,28 @@ import java.lang.reflect.Constructor;
 import java.util.concurrent.ExecutorService;
 
 import org.bukkit.NamespacedKey;
+import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.plugin.PluginManager;
-import org.bukkit.plugin.java.JavaPlugin;
 
 import me.lauriichan.laylib.command.ArgumentRegistry;
 import me.lauriichan.laylib.command.CommandManager;
 import me.lauriichan.laylib.localization.MessageManager;
-import me.lauriichan.laylib.localization.source.AnnotationMessageSource;
-import me.lauriichan.laylib.localization.source.EnumMessageSource;
-import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.laylib.reflection.ClassUtil;
 import me.lauriichan.laylib.reflection.JavaAccess;
+import me.lauriichan.minecraft.pluginbase.BasePlugin;
+import me.lauriichan.minecraft.pluginbase.ConditionConstant;
+import me.lauriichan.minecraft.pluginbase.command.bridge.BukkitCommandInjectableBridge;
+import me.lauriichan.minecraft.pluginbase.command.bridge.BukkitCommandInjectableBridge.CommandDefinition;
+import me.lauriichan.minecraft.pluginbase.command.processor.IBukkitCommandProcessor;
+import me.lauriichan.minecraft.pluginbase.extension.IConditionMap;
 import me.lauriichan.spigot.justlootit.capability.JustLootItCapabilityProvider;
 import me.lauriichan.spigot.justlootit.command.DebugCommand;
 import me.lauriichan.spigot.justlootit.command.HelpCommand;
 import me.lauriichan.spigot.justlootit.command.argument.LootTableArgument;
-import me.lauriichan.spigot.justlootit.command.impl.BukkitCommandInjectedBridge;
-import me.lauriichan.spigot.justlootit.command.impl.BukkitCommandInjectedBridge.CommandDefinition;
-import me.lauriichan.spigot.justlootit.command.provider.LoggerProvider;
+import me.lauriichan.spigot.justlootit.command.impl.LootItActor;
 import me.lauriichan.spigot.justlootit.command.provider.PluginProvider;
 import me.lauriichan.spigot.justlootit.data.io.DataIO;
-import me.lauriichan.spigot.justlootit.inventory.item.HeadProfileProvider;
-import me.lauriichan.spigot.justlootit.listener.ContainerListener;
-import me.lauriichan.spigot.justlootit.listener.GuiListener;
-import me.lauriichan.spigot.justlootit.listener.ItemFrameListener;
-import me.lauriichan.spigot.justlootit.listener.StructureListener;
-import me.lauriichan.spigot.justlootit.message.CommandDescription;
-import me.lauriichan.spigot.justlootit.message.CommandManagerMessage;
-import me.lauriichan.spigot.justlootit.message.Messages;
-import me.lauriichan.spigot.justlootit.message.impl.SimpleMessageProviderFactory;
+import me.lauriichan.spigot.justlootit.listener.ItemFramePacketListener;
 import me.lauriichan.spigot.justlootit.nms.IServiceProvider;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.nms.VersionHelper;
@@ -41,10 +33,9 @@ import me.lauriichan.spigot.justlootit.nms.capability.CapabilityManager;
 import me.lauriichan.spigot.justlootit.nms.packet.listener.PacketContainer;
 import me.lauriichan.spigot.justlootit.nms.packet.listener.PacketManager;
 import me.lauriichan.spigot.justlootit.util.BukkitExecutorService;
-import me.lauriichan.spigot.justlootit.util.BukkitSimpleLogger;
 import me.lauriichan.spigot.justlootit.util.VersionConstant;
 
-public final class JustLootItPlugin extends JavaPlugin implements IServiceProvider {
+public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> implements IServiceProvider {
 
     /*
      *  TODO List
@@ -66,11 +57,8 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
     private PacketManager packetManager;
     private String coreVersion;
 
-    private ISimpleLogger logger;
     private CommandManager commandManager;
-    private MessageManager messageManager;
-
-    private BukkitCommandInjectedBridge commandBridge;
+    private BukkitCommandInjectableBridge<?> commandBridge;
 
     private boolean disabled = false;
 
@@ -85,18 +73,15 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
      */
 
     @Override
-    public void onLoad() {
+    protected void onPluginLoad() throws Throwable {
         if (!setupVersionHandler()) {
             return;
         }
-        setupEnvironment();
         DataIO.setup(versionHandler.io());
         setupCapabilities();
     }
 
     private boolean setupVersionHandler() {
-        logger = new BukkitSimpleLogger(getLogger());
-        logger.setDebug(true); // TODO: Debug is activated
         try {
             versionHandler = initVersionHandler();
             versionHelper = versionHandler.versionHelper();
@@ -113,11 +98,6 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
         }
     }
 
-    private void setupEnvironment() {
-        messageManager = new MessageManager();
-        commandManager = new CommandManager(logger);
-    }
-
     private void setupCapabilities() {
         final CapabilityManager capabilities = versionHandler.capabilities();
         capabilities.add(JustLootItCapabilityProvider.CAPABILITY_PROVIDER);
@@ -126,40 +106,37 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
     /*
      * Start
      */
+    
+    @Override
+    protected void onConditionMapSetup(IConditionMap conditionMap) {
+        conditionMap.value(ConditionConstant.ENABLE_GUI, true);
+    }
 
     @Override
-    public void onEnable() {
-        if (disabled) {
-            getServer().getPluginManager().disablePlugin(this);
-            return;
-        }
-        JustLootItKey.setup(this);
-        commandBridge = new BukkitCommandInjectedBridge(this, versionHelper, commandManager, messageManager,
-            CommandDefinition.of("justlootit").alias("jloot").alias("jli").description("command.description.justlootit.parent").build(this))
-                .inject();
-        registerMessages(messageManager);
-        registerArgumentTypes(commandManager.getRegistry());
-        registerCommands(commandManager);
-        if (versionHandler != null) {
-            versionHandler.enable();
-        }
-        registerListeners(getServer().getPluginManager());
-    }
-
-    private void registerMessages(final MessageManager manager) {
-        final SimpleMessageProviderFactory factory = new SimpleMessageProviderFactory();
-        manager.register(new EnumMessageSource(CommandManagerMessage.class, factory));
-        manager.register(new EnumMessageSource(CommandDescription.class, factory));
-        manager.register(new AnnotationMessageSource(Messages.class, factory));
-    }
-
-    private void registerArgumentTypes(final ArgumentRegistry registry) {
+    protected void onArgumentSetup(ArgumentRegistry registry) {
         // Register argument types
         registry.registerArgumentType(LootTableArgument.class);
 
         // Register providers
         registry.setProvider(new PluginProvider(this));
-        registry.setProvider(new LoggerProvider(logger));
+    }
+
+    @Override
+    public void onPluginEnable() {
+        if (disabled) {
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+        JustLootItKey.setup(this);
+        commandManager = new CommandManager(logger(), argumentRegistry());
+        commandBridge = new BukkitCommandInjectableBridge<>(IBukkitCommandProcessor.commandLine(), commandManager, messageManager(), this,
+            CommandDefinition.of("justlootit").alias("jloot").alias("jli").description("command.description.justlootit.parent").build(this), this::actor)
+                .inject();
+        registerCommands(commandManager);
+        if (versionHandler != null) {
+            versionHandler.enable();
+            registerPacketListeners();
+        }
     }
 
     private void registerCommands(final CommandManager manager) {
@@ -167,18 +144,9 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
         manager.register(DebugCommand.class);
     }
 
-    private void registerListeners(final PluginManager pluginManager) {
-        // Construct listener used for events and packets
-        final ItemFrameListener itemFrameListener = new ItemFrameListener(versionHandler);
-
-        // Register event listener
-        pluginManager.registerEvents(itemFrameListener, this);
-        pluginManager.registerEvents(new ContainerListener(versionHandler), this);
-        pluginManager.registerEvents(new StructureListener(versionHandler), this);
-        pluginManager.registerEvents(new GuiListener(this), this);
-        
+    private void registerPacketListeners() {
         // Register packet listener
-        itemFrameContainer = packetManager.register(itemFrameListener).setGlobal(true);
+        itemFrameContainer = packetManager.register(new ItemFramePacketListener(versionHandler)).setGlobal(true);
     }
 
     /*
@@ -186,7 +154,7 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
      */
 
     @Override
-    public void onDisable() {
+    public void onPluginDisable() {
         if (disabled) {
             return;
         }
@@ -197,7 +165,6 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
         if (commandBridge != null) {
             commandBridge.uninject();
         }
-        HeadProfileProvider.dispose();
     }
 
     /*
@@ -230,11 +197,6 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
     }
 
     @Override
-    public ISimpleLogger logger() {
-        return logger;
-    }
-
-    @Override
     public ExecutorService mainService() {
         return mainService;
     }
@@ -250,6 +212,10 @@ public final class JustLootItPlugin extends JavaPlugin implements IServiceProvid
 
     public NamespacedKey key(final String name) {
         return new NamespacedKey(this, name);
+    }
+    
+    public <T extends CommandSender> LootItActor<T> actor(final T sender, final MessageManager manager) {
+        return new LootItActor<>(sender, manager, versionHelper);
     }
 
     /*

@@ -1,13 +1,14 @@
-package me.lauriichan.spigot.justlootit.inventory.handler.loot;
+package me.lauriichan.spigot.justlootit.inventory.handler;
 
 import org.bukkit.Location;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.inventory.InventoryClickEvent;
 
+import me.lauriichan.minecraft.pluginbase.inventory.IGuiInventory;
+import me.lauriichan.minecraft.pluginbase.inventory.IHandler;
+import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.capability.StorageCapability;
 import me.lauriichan.spigot.justlootit.data.CachedInventory;
-import me.lauriichan.spigot.justlootit.inventory.IGuiInventory;
-import me.lauriichan.spigot.justlootit.inventory.IHandler;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.util.BlockUtil;
@@ -18,10 +19,15 @@ public final class LootUIHandler implements IHandler {
     public static final String ATTR_ID = "PlayerStorageId";
     public static final String ATTR_LIDDED_LOCATION = "LiddedBlockLocation";
 
-    private LootUIHandler() {}
+    private final VersionHandler versionHandler;
+    
+    private LootUIHandler() {
+        JustLootItPlugin plugin = JustLootItPlugin.get();
+        this.versionHandler = plugin.versionHandler();
+    }
 
     @Override
-    public boolean onEventClose(final HumanEntity entity, final IGuiInventory inventory, final VersionHandler versionHandler) {
+    public boolean onEventClose(final HumanEntity entity, final IGuiInventory inventory) {
         final Long id = inventory.attrUnset(ATTR_ID, Long.class);
         if (id == null) {
             return false;
@@ -45,8 +51,7 @@ public final class LootUIHandler implements IHandler {
     }
 
     @Override
-    public boolean onEventClick(final HumanEntity entity, final IGuiInventory inventory, final VersionHandler versionHandler,
-        final InventoryClickEvent event) {
+    public boolean onEventClick(final HumanEntity entity, final IGuiInventory inventory, final InventoryClickEvent event) {
         return false;
     }
 

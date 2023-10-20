@@ -29,6 +29,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import me.lauriichan.spigot.justlootit.JustLootItConstant;
 import me.lauriichan.spigot.justlootit.JustLootItFlag;
 import me.lauriichan.spigot.justlootit.JustLootItKey;
+import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.capability.StorageCapability;
 import me.lauriichan.spigot.justlootit.data.FrameContainer;
 import me.lauriichan.spigot.justlootit.data.StaticContainer;
@@ -45,8 +46,8 @@ public class StructureListener implements Listener {
 
     private final VersionHandler versionHandler;
 
-    public StructureListener(final VersionHandler versionHandler) {
-        this.versionHandler = versionHandler;
+    public StructureListener(final JustLootItPlugin plugin) {
+        this.versionHandler = plugin.versionHandler();
     }
 
     @EventHandler

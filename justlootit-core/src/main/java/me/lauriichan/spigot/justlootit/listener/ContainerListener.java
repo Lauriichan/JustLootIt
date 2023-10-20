@@ -17,7 +17,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
-import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -27,19 +26,22 @@ import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.Vector;
 
+import me.lauriichan.minecraft.pluginbase.extension.Extension;
+import me.lauriichan.minecraft.pluginbase.inventory.ChestSize;
+import me.lauriichan.minecraft.pluginbase.inventory.IGuiInventory;
+import me.lauriichan.minecraft.pluginbase.listener.IListenerExtension;
 import me.lauriichan.spigot.justlootit.JustLootItConstant;
 import me.lauriichan.spigot.justlootit.JustLootItFlag;
 import me.lauriichan.spigot.justlootit.JustLootItKey;
+import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.capability.PlayerGUICapability;
 import me.lauriichan.spigot.justlootit.capability.StorageCapability;
 import me.lauriichan.spigot.justlootit.data.CacheLookupTable;
 import me.lauriichan.spigot.justlootit.data.CacheLookupTable.WorldEntry;
+import me.lauriichan.spigot.justlootit.inventory.handler.LootUIHandler;
 import me.lauriichan.spigot.justlootit.data.CachedInventory;
 import me.lauriichan.spigot.justlootit.data.Container;
 import me.lauriichan.spigot.justlootit.data.IInventoryContainer;
-import me.lauriichan.spigot.justlootit.inventory.ChestSize;
-import me.lauriichan.spigot.justlootit.inventory.IGuiInventory;
-import me.lauriichan.spigot.justlootit.inventory.handler.loot.LootUIHandler;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.storage.IStorage;
@@ -48,12 +50,13 @@ import me.lauriichan.spigot.justlootit.util.BlockUtil;
 import me.lauriichan.spigot.justlootit.util.InventoryUtil;
 import me.lauriichan.spigot.justlootit.util.SimpleDataType;
 
-public class ContainerListener implements Listener {
+@Extension
+public class ContainerListener implements IListenerExtension {
 
     private final VersionHandler versionHandler;
 
-    public ContainerListener(final VersionHandler versionHandler) {
-        this.versionHandler = versionHandler;
+    public ContainerListener(final JustLootItPlugin plugin) {
+        this.versionHandler = plugin.versionHandler();
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)

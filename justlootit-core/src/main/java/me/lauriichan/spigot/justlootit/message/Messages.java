@@ -1,9 +1,12 @@
 package me.lauriichan.spigot.justlootit.message;
 
 import me.lauriichan.laylib.localization.source.Message;
-import me.lauriichan.spigot.justlootit.message.impl.SimpleMessageProvider;
+import me.lauriichan.minecraft.pluginbase.extension.Extension;
+import me.lauriichan.minecraft.pluginbase.message.IMessageExtension;
+import me.lauriichan.minecraft.pluginbase.message.provider.SimpleMessageProvider;
 
-public final class Messages {
+@Extension
+public final class Messages implements IMessageExtension {
 
     private Messages() {
         throw new UnsupportedOperationException();

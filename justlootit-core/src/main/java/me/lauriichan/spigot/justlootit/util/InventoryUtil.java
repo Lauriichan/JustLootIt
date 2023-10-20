@@ -5,7 +5,7 @@ import org.bukkit.inventory.DoubleChestInventory;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
-import me.lauriichan.spigot.justlootit.inventory.ChestSize;
+import me.lauriichan.minecraft.pluginbase.inventory.ChestSize;
 
 public final class InventoryUtil {
 

@@ -6,6 +6,11 @@
     <version>1.0.0</version>
   </parent>
   <artifactId>justlootit-core</artifactId>
+  
+  <properties>
+      <server.version>1.20.2</server.version>
+      <pluginbase.version>1.0.0</pluginbase.version>
+  </properties>
 
     <dependencies>
         <dependency>
@@ -18,7 +23,15 @@
         <dependency>
             <groupId>org.spigotmc</groupId>
             <artifactId>spigot-api</artifactId>
-            <version>1.20.2-R0.1-SNAPSHOT</version>
+            <version>${server.version}-R0.1-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+        
+        <!-- PluginBase -->
+        <dependency>
+            <groupId>me.lauriichan.minecraft</groupId>
+            <artifactId>pluginbase</artifactId>
+            <version>${pluginbase.version}-MC${server.version}</version>
             <scope>provided</scope>
         </dependency>
         
@@ -35,7 +48,7 @@
         </dependency>
         
         <!-- Bukkit Version Compat -->
-        <!-- 1.20.1 -->
+        <!-- 1.20.2 -->
         <dependency>
             <groupId>${project.parent.groupId}</groupId>
             <artifactId>justlootit-nms-1_20_R2</artifactId>

@@ -12,7 +12,7 @@ import org.bukkit.loot.LootTable;
 import me.lauriichan.laylib.command.Actor;
 import me.lauriichan.laylib.command.IArgumentType;
 import me.lauriichan.laylib.command.Suggestions;
-import me.lauriichan.spigot.justlootit.command.impl.BukkitActor;
+import me.lauriichan.spigot.justlootit.command.impl.LootItActor;
 import me.lauriichan.spigot.justlootit.util.ImprovedLevenshteinDistance;
 
 public final class LootTableArgument implements IArgumentType<LootTable> {
@@ -23,7 +23,7 @@ public final class LootTableArgument implements IArgumentType<LootTable> {
         if (key == null) {
             throw new IllegalArgumentException("Key '" + input + "' is invalid!");
         }
-        LootTable table = actor instanceof BukkitActor<?> bukkit ? bukkit.versionHelper().getLootTable(key) : Bukkit.getLootTable(key);
+        LootTable table = actor instanceof LootItActor<?> bukkit ? bukkit.versionHelper().getLootTable(key) : Bukkit.getLootTable(key);
         if (table == null) {
             throw new IllegalArgumentException("Unknown loot table '" + input + "'!");
         }
@@ -32,7 +32,7 @@ public final class LootTableArgument implements IArgumentType<LootTable> {
 
     @Override
     public void suggest(Actor<?> actor, String input, Suggestions suggestions) {
-        if (!(actor instanceof BukkitActor<?> bukkit)) {
+        if (!(actor instanceof LootItActor<?> bukkit)) {
             return;
         }
         String namespace;

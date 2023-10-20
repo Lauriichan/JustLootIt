@@ -1,61 +1,31 @@
 package me.lauriichan.spigot.justlootit.command.impl;
 
-import java.util.UUID;
-
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
 import org.bukkit.inventory.ItemStack;
 
 import me.lauriichan.laylib.command.Action;
 import me.lauriichan.laylib.command.ActionMessage;
-import me.lauriichan.laylib.command.Actor;
 import me.lauriichan.laylib.localization.MessageManager;
-import me.lauriichan.spigot.justlootit.message.component.ComponentParser;
+import me.lauriichan.minecraft.pluginbase.command.BukkitActor;
+import me.lauriichan.minecraft.pluginbase.message.component.ComponentParser;
 import me.lauriichan.spigot.justlootit.nms.VersionHelper;
-import me.lauriichan.spigot.justlootit.util.color.BukkitColor;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.hover.content.Item;
 import net.md_5.bungee.api.chat.hover.content.Text;
 
-public final class BukkitActor<P extends CommandSender> extends Actor<P> {
+public class LootItActor<P extends CommandSender> extends BukkitActor<P> {
 
     private final VersionHelper versionHelper;
 
-    public BukkitActor(final P handle, final MessageManager messageManager, final VersionHelper versionHelper) {
+    public LootItActor(final P handle, final MessageManager messageManager, final VersionHelper versionHelper) {
         super(handle, messageManager);
         this.versionHelper = versionHelper;
     }
     
     public VersionHelper versionHelper() {
         return versionHelper;
-    }
-
-    @Override
-    public UUID getId() {
-        final Actor<Entity> actor = as(Entity.class);
-        if (actor.isValid()) {
-            return actor.getHandle().getUniqueId();
-        }
-        return IMPL_ID;
-    }
-
-    @Override
-    public String getName() {
-        final Actor<Entity> actor = as(Entity.class);
-        if (actor.isValid()) {
-            final Entity entity = actor.getHandle();
-            if (entity.getCustomName() == null) {
-                return entity.getName();
-            }
-            return entity.getCustomName();
-        }
-        return handle.getName();
-    }
-
-    @Override
-    public void sendMessage(final String message) {
-        handle.sendMessage(BukkitColor.apply(message));
     }
 
     @Override
@@ -117,11 +87,6 @@ public final class BukkitActor<P extends CommandSender> extends Actor<P> {
             }
         }
         handle.spigot().sendMessage(ComponentParser.parse(message.message(), click, hover));
-    }
-
-    @Override
-    public boolean hasPermission(final String permission) {
-        return handle.hasPermission(permission);
     }
 
 }
