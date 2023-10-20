@@ -16,14 +16,14 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.world.AsyncStructureGenerateEvent;
 import org.bukkit.event.world.WorldUnloadEvent;
-import org.bukkit.event.world.AsyncStructureGenerateEvent.BlockTransformer;
-import org.bukkit.event.world.AsyncStructureGenerateEvent.EntityTransformer;
 import org.bukkit.generator.LimitedRegion;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.loot.Lootable;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.util.BlockTransformer;
+import org.bukkit.util.EntityTransformer;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import me.lauriichan.spigot.justlootit.JustLootItConstant;
@@ -77,7 +77,7 @@ public class StructureListener implements Listener {
         }
 
         @Override
-        public BlockState transform(LimitedRegion region, int x, int y, int z, BlockState original, BlockState current, BlockState placed) {
+        public BlockState transform(LimitedRegion region, int x, int y, int z, BlockState current, TransformationState state) {
             if (level.isTerminated()) {
                 return current;
             }
