@@ -32,7 +32,6 @@
             <groupId>me.lauriichan.minecraft</groupId>
             <artifactId>pluginbase</artifactId>
             <version>${pluginbase.version}-MC${server.version}</version>
-            <scope>provided</scope>
         </dependency>
         
         <!-- JustLootIt Modules -->
@@ -85,6 +84,10 @@
                         <relocation>
                             <pattern>me.lauriichan.laylib</pattern>
                             <shadedPattern>${project.groupId}.shaded.laylib</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>me.lauriichan.pluginbase</pattern>
+                            <shadedPattern>${project.groupId}.shaded.pluginbase</shadedPattern>
                         </relocation>
                         <relocation>
                             <pattern>org.bstats</pattern>

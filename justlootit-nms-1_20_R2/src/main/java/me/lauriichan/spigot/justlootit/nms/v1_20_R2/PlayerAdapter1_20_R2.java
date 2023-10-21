@@ -23,14 +23,14 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientboundContainerClosePacket;
 import net.minecraft.network.protocol.game.ClientboundOpenScreenPacket;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.network.ServerGamePacketListenerImpl;
+import net.minecraft.server.network.ServerCommonPacketListenerImpl;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.AnvilMenu;
 
 public final class PlayerAdapter1_20_R2 extends PlayerAdapter {
 
     private static final MethodHandle PlayerConnection_connection = JavaAccess
-        .accessFieldGetter(ClassUtil.getField(ServerGamePacketListenerImpl.class, false, Connection.class));
+        .accessFieldGetter(ClassUtil.getField(ServerCommonPacketListenerImpl.class, false, Connection.class));
 
     private final VersionHandler1_20_R2 versionHandler;
     private final PlayerNetwork1_20_R2 network;
@@ -128,7 +128,7 @@ public final class PlayerAdapter1_20_R2 extends PlayerAdapter {
     public Channel getChannel() {
         Connection connection;
         try {
-            connection = (Connection) PlayerConnection_connection.invokeExact(minecraft.connection);
+            connection = (Connection) PlayerConnection_connection.invoke(minecraft.connection);
         } catch (final Throwable e) {
             throw new IllegalStateException("Unable to get player channel", e);
         }
