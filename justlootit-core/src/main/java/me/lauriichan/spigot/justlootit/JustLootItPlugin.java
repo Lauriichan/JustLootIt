@@ -127,6 +127,7 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
+        logger().setDebug(true);
         JustLootItKey.setup(this);
         commandManager = new CommandManager(logger(), argumentRegistry());
         commandBridge = new BukkitCommandInjectableBridge<>(IBukkitCommandProcessor.commandLine(), commandManager, messageManager(), this,

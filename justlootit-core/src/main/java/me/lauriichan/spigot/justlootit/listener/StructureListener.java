@@ -13,7 +13,6 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.ItemFrame;
 import org.bukkit.entity.Minecart;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
 import org.bukkit.event.world.AsyncStructureGenerateEvent;
 import org.bukkit.event.world.WorldUnloadEvent;
 import org.bukkit.generator.LimitedRegion;
@@ -26,6 +25,8 @@ import org.bukkit.util.BlockTransformer;
 import org.bukkit.util.EntityTransformer;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import me.lauriichan.minecraft.pluginbase.extension.Extension;
+import me.lauriichan.minecraft.pluginbase.listener.IListenerExtension;
 import me.lauriichan.spigot.justlootit.JustLootItConstant;
 import me.lauriichan.spigot.justlootit.JustLootItFlag;
 import me.lauriichan.spigot.justlootit.JustLootItKey;
@@ -40,7 +41,8 @@ import me.lauriichan.spigot.justlootit.storage.IStorage;
 import me.lauriichan.spigot.justlootit.util.BlockUtil;
 import me.lauriichan.spigot.justlootit.util.SimpleDataType;
 
-public class StructureListener implements Listener {
+@Extension
+public class StructureListener implements IListenerExtension {
 
     private final Object2ObjectOpenHashMap<UUID, StructureTransformer> transformers = new Object2ObjectOpenHashMap<>();
 

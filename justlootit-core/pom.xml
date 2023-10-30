@@ -1,16 +1,20 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <parent>
-    <groupId>me.lauriichan.spigot.justlootit</groupId>
-    <artifactId>justlootit-parent</artifactId>
-    <version>1.0.0</version>
-  </parent>
-  <artifactId>justlootit-core</artifactId>
-  
-  <properties>
-      <server.version>1.20.2</server.version>
-      <pluginbase.version>1.0.0</pluginbase.version>
-  </properties>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>me.lauriichan.spigot.justlootit</groupId>
+        <artifactId>justlootit-parent</artifactId>
+        <version>1.0.0</version>
+    </parent>
+    <artifactId>justlootit-core</artifactId>
+
+    <properties>
+        <server.version>1.20.2</server.version>
+        <pluginbase.version>1.0.0</pluginbase.version>
+        <project.sourceDir>${project.build.directory}/project-sources</project.sourceDir>
+        <project.java.version>17</project.java.version>
+    </properties>
 
     <dependencies>
         <dependency>
@@ -18,7 +22,7 @@
             <artifactId>justlootit-nms-api</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
-        
+
         <!-- Spigot -->
         <dependency>
             <groupId>org.spigotmc</groupId>
@@ -26,14 +30,14 @@
             <version>${server.version}-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
-        
+
         <!-- PluginBase -->
         <dependency>
             <groupId>me.lauriichan.minecraft</groupId>
             <artifactId>pluginbase</artifactId>
             <version>${pluginbase.version}-MC${server.version}</version>
         </dependency>
-        
+
         <!-- JustLootIt Modules -->
         <dependency>
             <groupId>me.lauriichan.spigot.justlootit</groupId>
@@ -45,7 +49,7 @@
             <artifactId>justlootit-nms-api</artifactId>
             <version>1.0.0</version>
         </dependency>
-        
+
         <!-- Bukkit Version Compat -->
         <!-- 1.20.2 -->
         <dependency>
@@ -79,6 +83,12 @@
                                 <exclude>META-INF/*.RSA</exclude>
                             </excludes>
                         </filter>
+                        <filter>
+                            <artifact>me.lauriichan.minecraft:pluginbase</artifact>
+                            <excludes>
+                                <exclude>me/lauriichan/maven/pluginbase/**</exclude>
+                            </excludes>
+                        </filter>
                     </filters>
                     <relocations>
                         <relocation>
@@ -95,7 +105,114 @@
                         </relocation>
                     </relocations>
                     <finalName>justlootit-${project.version}</finalName>
+                    <transformers>
+                        <transformer
+                            implementation="me.lauriichan.maven.shade.transformers.AppendingTransformer">
+                            <pattern>META-INF/extension/*.*</pattern>
+                        </transformer>
+                    </transformers>
                 </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>me.lauriichan.maven</groupId>
+                        <artifactId>shade-transformers</artifactId>
+                        <version>1.0.0</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+                <configuration>
+                    <source>${project.java.version}</source>
+                    <target>${project.java.version}</target>
+                    <annotationProcessors>
+                        <annotationProcessor>
+                            me.lauriichan.minecraft.pluginbase.extension.processor.ExtensionProcessor</annotationProcessor>
+                    </annotationProcessors>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>compile-processors</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                            <proc>none</proc>
+                            <includes>
+                                <include>
+                                    me/lauriichan/maven/justlootit/**/*.java</include>
+                            </includes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>me.lauriichan.maven</groupId>
+                <artifactId>maven-source-modification-plugin</artifactId>
+                <version>1.0.0</version>
+                <executions>
+                    <execution>
+                        <id>default-modifySources</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>modifySource</goal>
+                        </goals>
+                        <configuration>
+                            <transformers>
+                                <transformer>
+                                    <className>
+                                        me.lauriichan.maven.pluginbase.transformer.ConfigSourceTransformer</className>
+                                </transformer>
+                            </transformers>
+                            <includes>
+                                <include>**/*Template.java</include>
+                            </includes>
+                            <replacements>
+                                <replacement>
+                                    <regex>true</regex>
+                                    <pattern>(?:.*)(Template)(?:\.java)</pattern>
+                                    <replace></replace>
+                                </replacement>
+                            </replacements>
+                            <copyUnmodifiedFiles>false</copyUnmodifiedFiles>
+                            <outputDirectory>${project.sourceDir}</outputDirectory>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>default-deleteSources</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>deleteSources</goal>
+                        </goals>
+                        <configuration>
+                            <includes>
+                                <include>**/*Template.class</include>
+                            </includes>
+                            <purgeEmptyPackages>true</purgeEmptyPackages>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.4.0</version>
+                <executions>
+                    <execution>
+                        <id>add-modified-source</id>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${project.sourceDir}</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
