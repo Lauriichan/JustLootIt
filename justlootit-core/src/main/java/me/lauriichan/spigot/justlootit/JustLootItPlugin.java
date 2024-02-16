@@ -1,8 +1,10 @@
 package me.lauriichan.spigot.justlootit;
 
+import java.io.File;
 import java.lang.reflect.Constructor;
 import java.util.concurrent.ExecutorService;
 
+import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
@@ -52,6 +54,8 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     private final ExecutorService mainService = new BukkitExecutorService(this, false);
     private final ExecutorService asyncService = new BukkitExecutorService(this, true);
 
+    private File mainWorldFolder;
+    
     private VersionHandler versionHandler;
     private VersionHelper versionHelper;
     private PacketManager packetManager;
@@ -134,6 +138,11 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
             CommandDefinition.of("justlootit").alias("jloot").alias("jli").description("command.description.justlootit.parent").build(this), this::actor)
                 .inject();
         registerCommands(commandManager);
+    }
+    
+    @Override
+    protected void onPluginReady() {
+        mainWorldFolder = Bukkit.getWorlds().get(0).getWorldFolder();
         if (versionHandler != null) {
             versionHandler.enable();
             registerPacketListeners();
@@ -186,6 +195,10 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
 
     public String coreVersion() {
         return coreVersion;
+    }
+    
+    public File mainWorldFolder() {
+        return mainWorldFolder;
     }
 
     /*

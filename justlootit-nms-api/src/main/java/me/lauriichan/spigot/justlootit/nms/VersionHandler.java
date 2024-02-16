@@ -1,5 +1,6 @@
 package me.lauriichan.spigot.justlootit.nms;
 
+import java.io.File;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -212,6 +213,10 @@ public abstract class VersionHandler {
 
     public final Plugin plugin() {
         return serviceProvider.plugin();
+    }
+    
+    public final File mainWorldFolder() {
+        return serviceProvider.mainWorldFolder();
     }
 
     public final ISimpleLogger logger() {

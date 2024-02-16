@@ -36,7 +36,7 @@ public abstract class StorageCapability implements ICapability {
 
         public PlayerImpl(final VersionHandler handler, final PlayerAdapter adapter) {
             super(new CachedStorage<>(new RAFSingleStorage<>(handler.logger(), Storable.class,
-                new File(handler.plugin().getDataFolder(), "player/" + adapter.getUniqueId().toString() + ".jli"),
+                new File(handler.mainWorldFolder(), "player/" + adapter.getUniqueId().toString() + ".jli"),
                 RAFSettings.builder().copyBufferBytes(128).valuesPerFile(64).build())));
             storage.register(CachedInventory.ADAPTER);
             storage.register(CacheLookupTable.ADAPTER);

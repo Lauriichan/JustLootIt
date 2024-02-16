@@ -1,0 +1,104 @@
+package me.lauriichan.spigot.justlootit.config;
+
+import java.util.concurrent.TimeUnit;
+
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectCollection;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
+import me.lauriichan.minecraft.pluginbase.config.Configuration;
+import me.lauriichan.minecraft.pluginbase.config.IConfigExtension;
+import me.lauriichan.minecraft.pluginbase.config.IConfigHandler;
+import me.lauriichan.minecraft.pluginbase.config.handler.JsonConfigHandler;
+import me.lauriichan.minecraft.pluginbase.extension.Extension;
+import me.lauriichan.spigot.justlootit.config.data.RefreshGroup;
+
+@Extension
+public class RefreshConfig implements IConfigExtension {
+
+    private final Object2ObjectOpenHashMap<String, RefreshGroup> groups = new Object2ObjectOpenHashMap<>();
+    private volatile boolean modified = false;
+
+    @Override
+    public IConfigHandler handler() {
+        return JsonConfigHandler.JSON;
+    }
+
+    @Override
+    public String path() {
+        return "data://refreshGroups.json";
+    }
+    
+    @Override
+    public boolean isModified() {
+        return modified;
+    }
+    
+    public void setDirty() {
+        modified = true;
+    }
+
+    @Override
+    public void onLoad(Configuration configuration) throws Exception {
+        this.modified = false;
+        ObjectArrayList<String> list = new ObjectArrayList<>();
+        list.addAll(groups.keySet());
+        for (String key : configuration.keySet()) {
+            if (!configuration.isConfiguration(key)) {
+                continue;
+            }
+            list.remove(key);
+            Configuration groupConfig = configuration.getConfiguration(key);
+            RefreshGroup group = groups.get(key);
+            if (group == null) {
+                groups.put(key, group = new RefreshGroup(key));
+            }
+            group.unit(groupConfig.getEnum("unit", TimeUnit.class, TimeUnit.MILLISECONDS));
+            group.timeoutTime(groupConfig.getLong("time", 0));
+        }
+        for (String entry : list) {
+            groups.remove(entry);
+        }
+    }
+
+    @Override
+    public void onSave(Configuration configuration) throws Exception {
+        this.modified = false;
+        for (RefreshGroup group : groups.values()) {
+            Configuration groupConfig = configuration.getConfiguration(group.id(), true);
+            groupConfig.set("unit", group.unit().name());
+            groupConfig.set("time", group.timeoutTime());
+        }
+    }
+    
+    public boolean deleteGroup(String id) {
+        if (groups.remove(id) != null) {
+            setDirty();
+            return true;
+        }
+        return false;
+    }
+
+    public RefreshGroup getOrCreateGroup(String id) {
+        RefreshGroup group = groups.get(id);
+        if (group == null) {
+            group = new RefreshGroup(id);
+            groups.put(id, group);
+            setDirty();
+        }
+        return group;
+    }
+
+    public RefreshGroup group(String id) {
+        return groups.get(id);
+    }
+
+    public ObjectCollection<RefreshGroup> groups() {
+        return groups.values();
+    }
+
+    public ObjectSet<String> ids() {
+        return groups.keySet();
+    }
+
+}

@@ -17,7 +17,7 @@ import me.lauriichan.spigot.justlootit.storage.StorageAdapter;
 
 public class CacheLookupTable extends Storable implements IModifiable {
 
-    public static final long ID = 0;
+    public static final long ID = 16;
     public static final int SIZE = 20;
 
     public static final long MIN_ENTRY_ID = ID + 1;
@@ -110,6 +110,10 @@ public class CacheLookupTable extends Storable implements IModifiable {
     }
 
     public void update() {
+        // Cache days on 0 mean we don't want to do anything
+        if (cacheDays == 0) {
+            return;
+        }
         int offset = 0;
         final OffsetDateTime now = OffsetDateTime.now();
         for (int index = 0; index < SIZE; index++) {

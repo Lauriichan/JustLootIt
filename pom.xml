@@ -11,6 +11,11 @@
         <module>justlootit-nms-1_20_R2</module>
         <module>justlootit-storage</module>
     </modules>
+    
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <laylib.version>0.1.0-eb393f1-SNAPSHOT</laylib.version>
+    </properties>
 
     <repositories>
         <repository>
@@ -58,10 +63,6 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
 
     <build>
         <plugins>

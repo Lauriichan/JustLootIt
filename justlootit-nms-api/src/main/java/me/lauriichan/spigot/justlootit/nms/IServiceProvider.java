@@ -1,5 +1,6 @@
 package me.lauriichan.spigot.justlootit.nms;
 
+import java.io.File;
 import java.util.concurrent.ExecutorService;
 
 import org.bukkit.plugin.Plugin;
@@ -15,5 +16,7 @@ public interface IServiceProvider {
     ExecutorService mainService();
 
     ExecutorService asyncService();
+    
+    File mainWorldFolder();
 
 }

@@ -11,7 +11,7 @@
 
     <properties>
         <server.version>1.20.2</server.version>
-        <pluginbase.version>1.0.0</pluginbase.version>
+        <pluginbase.version>1.0.1</pluginbase.version>
         <project.sourceDir>${project.build.directory}/project-sources</project.sourceDir>
         <project.java.version>17</project.java.version>
     </properties>
@@ -35,7 +35,7 @@
         <dependency>
             <groupId>me.lauriichan.minecraft</groupId>
             <artifactId>pluginbase</artifactId>
-            <version>${pluginbase.version}-MC${server.version}</version>
+            <version>${pluginbase.version}-MC1.20.1</version>
         </dependency>
 
         <!-- JustLootIt Modules -->

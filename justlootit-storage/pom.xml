@@ -11,7 +11,7 @@
         <dependency>
             <groupId>me.lauriichan.laylib</groupId>
             <artifactId>logger</artifactId>
-            <version>0.1.0-10191ac-SNAPSHOT</version>
+            <version>${laylib.version}</version>
             <scope>provided</scope>
         </dependency>
         

@@ -16,6 +16,10 @@ public final class BufIO {
     }
 
     public static void writeString(final ByteBuf buffer, final String string, final Charset charset) {
+        if (string == null) {
+            buffer.writeInt(-1);
+            return;
+        }
         buffer.writeInt(string.length());
         buffer.writeCharSequence(string, charset);
     }
@@ -26,6 +30,9 @@ public final class BufIO {
 
     public static String readString(final ByteBuf buffer, final Charset charset) {
         final int length = buffer.readInt();
+        if (length == -1) {
+            return "";
+        }
         return buffer.readCharSequence(length, charset).toString();
     }
 
