@@ -9,6 +9,8 @@ import io.netty.buffer.ByteBuf;
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
+import me.lauriichan.spigot.justlootit.JustLootItPlugin;
+import me.lauriichan.spigot.justlootit.config.MainConfig;
 import me.lauriichan.spigot.justlootit.data.io.DataIO;
 import me.lauriichan.spigot.justlootit.storage.IModifiable;
 import me.lauriichan.spigot.justlootit.storage.IStorage;
@@ -17,11 +19,8 @@ import me.lauriichan.spigot.justlootit.storage.StorageAdapter;
 
 public class CacheLookupTable extends Storable implements IModifiable {
 
-    public static final long ID = 16;
-    public static final int SIZE = 20;
-
+    public static final long ID = 15;
     public static final long MIN_ENTRY_ID = ID + 1;
-    public static final long MAX_ENTRY_ID = MIN_ENTRY_ID + SIZE - 1;
 
     public static final int DEFAULT_DAYS = 7;
 
@@ -29,7 +28,6 @@ public class CacheLookupTable extends Storable implements IModifiable {
         @Override
         public void serialize(final CacheLookupTable storable, final ByteBuf buffer) {
             final int size = storable.tableToMapped.size();
-            buffer.writeInt(storable.cacheDays);
             buffer.writeByte(size);
             for (int index = 0; index < size; index++) {
                 final LookupEntry entry = storable.tableToMapped.get(index);
@@ -42,8 +40,8 @@ public class CacheLookupTable extends Storable implements IModifiable {
 
         @Override
         public CacheLookupTable deserialize(final long id, final ByteBuf buffer) {
-            final CacheLookupTable table = new CacheLookupTable(buffer.readInt());
             final int size = buffer.readByte();
+            final CacheLookupTable table = new CacheLookupTable(size);
             for (int index = 0; index < size; index++) {
                 final LookupEntry entry = new LookupEntry();
                 entry.tableId = index;
@@ -86,22 +84,24 @@ public class CacheLookupTable extends Storable implements IModifiable {
 
     }
 
-    private final Int2ObjectArrayMap<LookupEntry> tableToMapped = new Int2ObjectArrayMap<>(SIZE);
-    private final Object2ObjectArrayMap<WorldEntry, LookupEntry> mappedToTable = new Object2ObjectArrayMap<>(SIZE);
+    private final Int2ObjectArrayMap<LookupEntry> tableToMapped;
+    private final Object2ObjectArrayMap<WorldEntry, LookupEntry> mappedToTable;
     
-    private final LongArrayList entryIds = new LongArrayList(SIZE);
+    private final LongArrayList entryIds;
 
-    private int cacheDays;
+    private final MainConfig config = JustLootItPlugin.get().configManager().config(MainConfig.class);
 
     private boolean dirty = false;
+    
+    private int maxSize;
+    private long maxEntryId;
 
-    public CacheLookupTable() {
-        this(DEFAULT_DAYS);
-    }
-
-    public CacheLookupTable(final int cacheDays) {
+    public CacheLookupTable(int size) {
         super(ID);
-        this.cacheDays = Math.max(cacheDays, 0);
+        this.maxSize = Math.max(size, config.cacheSize());
+        this.tableToMapped = new Int2ObjectArrayMap<>(maxSize);
+        this.mappedToTable = new Object2ObjectArrayMap<>(maxSize);
+        this.entryIds = new LongArrayList(maxSize);
     }
 
     @Override
@@ -110,19 +110,32 @@ public class CacheLookupTable extends Storable implements IModifiable {
     }
 
     public void update() {
-        // Cache days on 0 mean we don't want to do anything
-        if (cacheDays == 0) {
+        int days = config.days();
+        this.maxSize = config.cacheSize();
+        this.maxEntryId = MIN_ENTRY_ID + maxSize;
+        if (days == 0) {
             return;
+        }
+        int tableSize = tableToMapped.size();
+        if (tableSize > maxSize) {
+            for (int i = maxSize; i < tableSize; i++) {
+                LookupEntry entry = tableToMapped.remove(i);
+                if (entry == null) {
+                    continue;
+                }
+                mappedToTable.remove(entry.mappedId);
+                entryIds.rem(entry.entryId);
+            }
         }
         int offset = 0;
         final OffsetDateTime now = OffsetDateTime.now();
-        for (int index = 0; index < SIZE; index++) {
+        for (int index = 0; index < maxSize; index++) {
             final LookupEntry entry = tableToMapped.remove(index);
             if (entry == null) {
                 // Null means we're done
                 break;
             }
-            if (now.isAfter(entry.cached.plusDays(cacheDays))) {
+            if (now.isAfter(entry.cached.plusDays(days))) {
                 mappedToTable.remove(entry.mappedId);
                 entryIds.rem(entry.entryId);
                 offset++;
@@ -137,15 +150,6 @@ public class CacheLookupTable extends Storable implements IModifiable {
 
     private void setDirty() {
         dirty = true;
-    }
-
-    public int getCacheDays() {
-        return cacheDays;
-    }
-
-    public void setCacheDays(final int cacheDays) {
-        this.cacheDays = Math.max(cacheDays, 0);
-        setDirty();
     }
 
     public boolean hasTable(final int tableId) {
@@ -221,11 +225,11 @@ public class CacheLookupTable extends Storable implements IModifiable {
         final LookupEntry entry = new LookupEntry();
         entry.cached = OffsetDateTime.now();
         entry.mappedId = mappedId;
-        if (tableToMapped.size() == SIZE) {
-            entry.tableId = SIZE - 1;
+        if (tableToMapped.size() == maxSize) {
+            entry.tableId = maxSize - 1;
             final LookupEntry first = tableToMapped.remove(0);
             mappedToTable.remove(first.mappedId);
-            for (int index = 1; index < SIZE; index++) {
+            for (int index = 1; index < maxSize; index++) {
                 final LookupEntry current = tableToMapped.remove(index);
                 tableToMapped.put(--current.tableId, current);
             }
@@ -242,13 +246,13 @@ public class CacheLookupTable extends Storable implements IModifiable {
     }
 
     private long findEntryId() {
-        for (long id = MIN_ENTRY_ID; id < MAX_ENTRY_ID; id++) {
+        for (long id = MIN_ENTRY_ID; id < maxEntryId; id++) {
             if (entryIds.contains(id)) {
                 continue;
             }
             return id;
         }
-        return MAX_ENTRY_ID;
+        return maxEntryId;
     }
 
     public static CacheLookupTable retrieve(final IStorage<Storable> storage) {
@@ -259,8 +263,7 @@ public class CacheLookupTable extends Storable implements IModifiable {
             }
             throw new IllegalStateException("Storage has unknown object at id " + ID);
         }
-        // TODO: Customize how many days this table should have
-        final CacheLookupTable table = new CacheLookupTable();
+        final CacheLookupTable table = new CacheLookupTable(0);
         storage.write(table);
         return table;
     }

@@ -52,6 +52,8 @@ import me.lauriichan.spigot.justlootit.util.SimpleDataType;
 
 @Extension
 public class ContainerListener implements IListenerExtension {
+    
+    private static final ChestSize[] CHEST_VALUES = ChestSize.values();
 
     private final VersionHandler versionHandler;
 
@@ -159,7 +161,7 @@ public class ContainerListener implements IListenerExtension {
                                 player.getCapability(PlayerGUICapability.class).ifPresent(guiCapability -> {
                                     final IGuiInventory inventory = guiCapability.gui();
                                     if (rowSize == 9) {
-                                        inventory.setChestSize(ChestSize.values()[columnAmount - 1]);
+                                        inventory.setChestSize(CHEST_VALUES[columnAmount - 1]);
                                     } else {
                                         inventory.setType(cachedInventory.getType());
                                     }
@@ -196,7 +198,7 @@ public class ContainerListener implements IListenerExtension {
                     final Inventory holderInventory = inventoryHolder.getInventory();
                     int rowSize = IGuiInventory.getRowSize(holderInventory.getType());
                     if (rowSize == 9) {
-                        inventory.setChestSize(ChestSize.values()[(InventoryUtil.getSize(holderInventory) / rowSize) - 1]);
+                        inventory.setChestSize(CHEST_VALUES[(InventoryUtil.getSize(holderInventory) / rowSize) - 1]);
                     } else {
                         inventory.setType(holderInventory.getType());
                     }
