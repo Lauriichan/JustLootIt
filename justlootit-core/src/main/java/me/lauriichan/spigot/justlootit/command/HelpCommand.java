@@ -145,12 +145,7 @@ public class HelpCommand {
             actor.sendTranslatedMessage(Messages.COMMAND_HELP_UNKNOWN, Key.of("command", command));
             return;
         }
-        Node commandNode = triple.getB();
-        if (!isSomethingPermitted(actor, commandNode)) {
-            actor.sendTranslatedMessage(Messages.COMMAND_HELP_UNKNOWN, Key.of("command", command));
-            return;
-        }
-        showHelpTree(commandManager, actor, new HelpNodeTree(commandNode, actor), page, getPrefix(commandManager.getPrefix(), commandNode),
+        showHelpTree(commandManager, actor, new HelpNodeTree(triple.getB(), actor), page, getPrefix(commandManager.getPrefix(),triple.getB()),
             command, "{0} command '{1}' {2}");
     }
 
