@@ -128,7 +128,7 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         logger().setDebug(true);
         JustLootItKey.setup(this);
         commandManager = new CommandManager(logger(), argumentRegistry());
-        commandManager.setPrefix("/justlootit ");
+        commandManager.setPrefix("/jli ");
         commandBridge = new BukkitCommandInjectableBridge<>(IBukkitCommandProcessor.commandLine(), commandManager, messageManager(), this,
             CommandDefinition.of("justlootit").alias("jloot").alias("jli").description("command.description.justlootit.parent").build(this), this::actor)
                 .inject();
