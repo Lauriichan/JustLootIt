@@ -64,8 +64,6 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     private CommandManager commandManager;
     private BukkitCommandInjectableBridge<?> commandBridge;
 
-    private boolean disabled = false;
-
     /*
      * PacketContainers
      */
@@ -90,14 +88,14 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
             versionHandler = initVersionHandler();
             versionHelper = versionHandler.versionHelper();
             packetManager = versionHandler.packetManager();
-            getLogger().info("Initialized version support for " + coreVersion);
+            logger().info("Initialized version support for " + coreVersion);
             return true;
         } catch (final Exception exp) {
-            getLogger().severe("Failed to initialize version support for " + coreVersion);
-            getLogger().severe("Reason: '" + exp.getMessage() + "'");
-            getLogger().severe("");
-            getLogger().severe("Can't work like this, disabling...");
-            this.disabled = true;
+            logger().error("Failed to initialize version support for " + coreVersion);
+            logger().error("Reason: '" + exp.getMessage() + "'");
+            logger().error("");
+            logger().error("Can't work like this, disabling...");
+            actDisabled(true);
             return false;
         }
     }
@@ -127,10 +125,6 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
 
     @Override
     public void onPluginEnable() {
-        if (disabled) {
-            getServer().getPluginManager().disablePlugin(this);
-            return;
-        }
         logger().setDebug(true);
         JustLootItKey.setup(this);
         commandManager = new CommandManager(logger(), argumentRegistry());
@@ -166,9 +160,6 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
 
     @Override
     public void onPluginDisable() {
-        if (disabled) {
-            return;
-        }
         if (versionHandler != null) {
             packetManager.unregister(itemFrameContainer);
             versionHandler.disable();

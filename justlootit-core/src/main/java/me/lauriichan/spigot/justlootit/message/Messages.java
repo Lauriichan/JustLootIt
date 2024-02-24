@@ -51,15 +51,18 @@ public final class Messages implements IMessageExtension {
     @Message(id = "command.help.command.overview-header", content = "Commands")
     public static MessageProvider COMMAND_HELP_OVERVIEW_HEADER;
 
-    @Message(id = "command.help.header.format.start", content = "$#plugin.prefix &8| &7$helpText &8[&c$page&8/&7$maxPage&8]")
+    @Message(id = "command.help.header.format.start", content = {
+        "$#plugin.name &8| &7$helpText &8[&c$page&8/&7$maxPage&8]",
+        "&8[&7required&8] &8<&7optional&8>"
+    })
     public static MessageProvider COMMAND_HELP_HEADER_FORMAT_START;
-    @Message(id = "command.help.header.format.end", content = "$#plugin.prefix &8| &7$helpText &8[&c$page&8/&7$maxPage&8]")
+    @Message(id = "command.help.header.format.end", content = "$#plugin.name &8| &7$helpText &8[&c$page&8/&7$maxPage&8]")
     public static MessageProvider COMMAND_HELP_HEADER_FORMAT_END;
-    @Message(id = "command.help.argument.format.required", content = "&7[$type: &c$name&7")
+    @Message(id = "command.help.argument.format.required", content = "&8[&7$type&8: &c$name&8]")
     public static MessageProvider COMMAND_HELP_ARGUMENT_FORMAT_REQUIRED;
-    @Message(id = "command.help.argument.format.optional", content = "&7<$type: &c$name&7>")
+    @Message(id = "command.help.argument.format.optional", content = "&8<&7$type&8: &c$name&8>")
     public static MessageProvider COMMAND_HELP_ARGUMENT_FORMAT_OPTIONAL;
-    @Message(id = "command.help.command.format.noargs", content = "&8$prefix &c$name &8- &7$description")
+    @Message(id = "command.help.command.format.noargs", content = "&7$prefix &c$name &8- &7$description")
     public static MessageProvider COMMAND_HELP_COMMAND_FORMAT_NOARGS;
     @Message(id = "command.help.command.format.withargs", content = "&8$prefix &c$name $arguments &8- &7$description")
     public static MessageProvider COMMAND_HELP_COMMAND_FORMAT_WITHARGS;

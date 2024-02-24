@@ -9,12 +9,13 @@
         <module>justlootit-core</module>
         <module>justlootit-nms-api</module>
         <module>justlootit-nms-1_20_R2</module>
+        <module>justlootit-nms-1_20_R3</module>
         <module>justlootit-storage</module>
     </modules>
     
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <laylib.version>0.1.0-eb393f1-SNAPSHOT</laylib.version>
+        <laylib.version>0.1.0-37564de-SNAPSHOT</laylib.version>
     </properties>
 
     <repositories>

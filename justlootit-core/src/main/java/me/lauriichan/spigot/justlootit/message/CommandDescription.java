@@ -11,7 +11,8 @@ import me.lauriichan.minecraft.pluginbase.message.IMessageExtension;
 public enum CommandDescription implements IMessageDefinition, IMessageExtension {
 
     JUSTLOOTIT_PARENT("Main command for all JustLootIt commands"),
-    JUSTLOOTIT_HELP("Gives all information available about a command (without arguments)"),
+    JUSTLOOTIT_HELP_ALL("Gives all information about permitted commands"),
+    JUSTLOOTIT_HELP_COMMAND("Gives all information about a specified permitted command"),
 
     ;
 

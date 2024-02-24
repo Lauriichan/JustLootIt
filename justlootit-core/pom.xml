@@ -37,6 +37,18 @@
             <artifactId>pluginbase</artifactId>
             <version>${pluginbase.version}-MC1.20.1</version>
         </dependency>
+        
+        <!-- LayLib -->
+        <dependency>
+            <groupId>me.lauriichan.laylib</groupId>
+            <artifactId>command</artifactId>
+            <version>${laylib.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>me.lauriichan.laylib</groupId>
+            <artifactId>json</artifactId>
+            <version>${laylib.version}</version>
+        </dependency>
 
         <!-- JustLootIt Modules -->
         <dependency>
@@ -55,6 +67,12 @@
         <dependency>
             <groupId>${project.parent.groupId}</groupId>
             <artifactId>justlootit-nms-1_20_R2</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <!-- 1.20.4 -->
+        <dependency>
+            <groupId>${project.parent.groupId}</groupId>
+            <artifactId>justlootit-nms-1_20_R3</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
     </dependencies>
