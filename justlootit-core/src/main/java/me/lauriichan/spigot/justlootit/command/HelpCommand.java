@@ -160,26 +160,8 @@ public class HelpCommand {
         int maxPage = Math.floorDiv(tree.amount(), HELP_PAGE_SIZE) + (tree.amount() % HELP_PAGE_SIZE != 0 ? 1 : 0);
         page = Math.min(Math.max(page, 1), maxPage);
 
-        ComponentCompound component = ComponentCompound.create();
-        if (page != maxPage) {
-            component.add(Component.of(Messages.COMMAND_SYSTEM_ARROW_LEFT, actor.getLanguage())
-                .clickRun(arrowCommandFormat, commandManager.getPrefix() + "help", helpText, page - 1)
-                .hoverText(Messages.COMMAND_SYSTEM_PAGE_NEXT, actor.getLanguage()));
-        }
-        if (page != 1) {
-            if (page != maxPage) {
-                component.add(Component.of(Messages.COMMAND_SYSTEM_ARROW_SEPERATOR, actor.getLanguage()));
-            }
-            component.add(Component.of(Messages.COMMAND_SYSTEM_ARROW_RIGHT, actor.getLanguage())
-                .clickRun(arrowCommandFormat, commandManager.getPrefix() + "help", helpText, page + 1)
-                .hoverText(Messages.COMMAND_SYSTEM_PAGE_PREVIOUS, actor.getLanguage()));
-        }
-
         actor.sendTranslatedMessage(Messages.COMMAND_HELP_HEADER_FORMAT_START, Key.of("helpText", helpText), Key.of("page", page),
             Key.of("maxPage", maxPage));
-        if (!component.isEmpty() && actor.getId() != Actor.IMPL_ID) {
-            component.send(actor);
-        }
         actor.sendMessage(""); // Add one space
         int maxIndex = Math.min((page - 1) * HELP_PAGE_SIZE + HELP_PAGE_SIZE, tree.amount());
         for (int index = (page - 1) * HELP_PAGE_SIZE; index < maxIndex; index++) {
@@ -207,8 +189,24 @@ public class HelpCommand {
                 Key.of("description", action.getDescription()));
         }
         actor.sendMessage(""); // Add one space
-        if (!component.isEmpty() && actor.getId() != Actor.IMPL_ID) {
-            component.send(actor);
+        if (actor.getId() != Actor.IMPL_ID) {
+            ComponentCompound component = ComponentCompound.create();
+            if (page != maxPage) {
+                component.add(Component.of(Messages.COMMAND_SYSTEM_ARROW_RIGHT, actor.getLanguage())
+                    .clickRun(arrowCommandFormat, commandManager.getPrefix() + "help", helpText, page + 1)
+                    .hoverText(Messages.COMMAND_SYSTEM_PAGE_NEXT, actor.getLanguage()));
+            }
+            if (page != 1) {
+                if (page != maxPage) {
+                    component.add(Component.of(Messages.COMMAND_SYSTEM_ARROW_SEPERATOR, actor.getLanguage()));
+                }
+                component.add(Component.of(Messages.COMMAND_SYSTEM_ARROW_LEFT, actor.getLanguage())
+                    .clickRun(arrowCommandFormat, commandManager.getPrefix() + "help", helpText, page - 1)
+                    .hoverText(Messages.COMMAND_SYSTEM_PAGE_PREVIOUS, actor.getLanguage()));
+            }
+            if (!component.isEmpty()) {
+                component.send(actor);
+            }
         }
         actor.sendTranslatedMessage(Messages.COMMAND_HELP_HEADER_FORMAT_END, Key.of("helpText", helpText), Key.of("page", page),
             Key.of("maxPage", maxPage));
