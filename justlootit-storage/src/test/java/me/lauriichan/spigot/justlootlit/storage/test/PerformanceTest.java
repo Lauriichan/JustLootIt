@@ -5,11 +5,11 @@ import java.math.BigInteger;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.FileUtils;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 
@@ -22,8 +22,6 @@ public class PerformanceTest {
     /*
      * ONLY MODIFY PUBLIC FIELDS
      */
-
-    public static final boolean DO_PERFORMANCE_TEST = false;
 
     public static final long SEED = 285428738523L;
 
@@ -45,11 +43,9 @@ public class PerformanceTest {
     private static final double MILLI_IN_NANOS = TimeUnit.MILLISECONDS.toNanos(1);
     private static final DecimalFormat FORMAT = new DecimalFormat("0.000");
 
+    @Disabled
     @TestFactory
     public Collection<DynamicTest> performanceTests() {
-        if (!DO_PERFORMANCE_TEST) {
-            return Collections.emptyList();
-        }
         final ArrayList<DynamicTest> tests = new ArrayList<>(TESTS.length);
         if (TESTS.length == 0) {
             return tests;

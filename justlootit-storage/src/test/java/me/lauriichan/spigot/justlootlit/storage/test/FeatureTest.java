@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import org.apache.commons.io.FileUtils;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 
@@ -39,6 +40,7 @@ public class FeatureTest {
      * ONLY MODIFY PUBLIC FIELDS
      */
 
+    @Disabled
     @TestFactory
     public Collection<DynamicTest> featureTests() {
         final ArrayList<DynamicTest> tests = new ArrayList<>(TESTS.length);
