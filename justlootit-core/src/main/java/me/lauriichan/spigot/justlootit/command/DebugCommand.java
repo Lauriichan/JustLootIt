@@ -39,6 +39,13 @@ import me.lauriichan.spigot.justlootit.util.SimpleDataType;
 
 @Command(name = "debug", description = "A debug command")
 public class DebugCommand {
+    
+    @Action("config reload")
+    public void configReload(final JustLootItPlugin plugin, final Actor<?> actor) {
+        actor.sendMessage("Reloading config...");
+        plugin.configManager().reload();
+        actor.sendMessage("Config reloaded.");
+    }
 
     @Action("info pdc")
     public void infoPdc(final JustLootItPlugin plugin, final Actor<?> actor) {

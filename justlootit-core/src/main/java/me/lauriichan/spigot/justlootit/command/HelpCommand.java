@@ -13,10 +13,10 @@ import me.lauriichan.laylib.command.NodeCommand;
 import me.lauriichan.laylib.command.annotation.Action;
 import me.lauriichan.laylib.command.annotation.Argument;
 import me.lauriichan.laylib.command.annotation.Command;
+import me.lauriichan.laylib.command.annotation.Description;
 import me.lauriichan.laylib.command.annotation.Param;
 import me.lauriichan.laylib.command.util.Triple;
 import me.lauriichan.laylib.localization.Key;
-import me.lauriichan.laylib.localization.MessageProvider;
 import me.lauriichan.laylib.reflection.ClassUtil;
 import me.lauriichan.minecraft.pluginbase.message.component.Component;
 import me.lauriichan.minecraft.pluginbase.message.component.ComponentCompound;
@@ -24,7 +24,7 @@ import me.lauriichan.spigot.justlootit.message.Messages;
 
 @Command(name = "help", aliases = {
     "?"
-}, description = "command.description.justlootit.help")
+})
 public class HelpCommand {
 
     private static final Node[] EMPTY_NODES = new Node[0];
@@ -38,6 +38,9 @@ public class HelpCommand {
             public String fullPath() {
                 if (path.isEmpty()) {
                     return node.getName();
+                }
+                if (path.charAt(path.length() - 1) == ' ') {
+                    return path + node.getName();
                 }
                 return path + ' ' + node.getName();
             }
@@ -106,29 +109,35 @@ public class HelpCommand {
         }
 
     }
+    
 
-    @Action("all")
+    @Action("")
+    @Description("$#command.description.justlootit.help.all")
     public void helpOverview(CommandManager commandManager, Actor<?> actor, @Argument(name = "page", optional = true, index = 1, params = {
-        @Param(name = "min", type = Param.TYPE_INT, intValue = 1)
+        @Param(name = "minimum", type = Param.TYPE_INT, intValue = 1)
     }) int page) {
-        List<NodeCommand> commands = commandManager.getCommands().stream().filter(cmd -> isSomethingPermitted(actor, cmd.getNode()))
-            .toList();
-        if (commands.isEmpty()) {
+        List<NodeCommand> commands = commandManager.getCommands();
+        HelpNodeTree tree = new HelpNodeTree();
+        for (NodeCommand command : commands) {
+            HelpNodeTree current = new HelpNodeTree(command.getNode(), actor);
+            if (current.amount() == 0) {
+                continue;
+            }
+            tree.merge(current);
+        }
+        if (tree.amount() == 0) {
             actor.sendTranslatedMessage(Messages.COMMAND_HELP_NONE);
             return;
         }
-        HelpNodeTree tree = new HelpNodeTree();
-        for (NodeCommand command : commands) {
-            tree.merge(new HelpNodeTree(command.getNode(), actor));
-        }
-        showHelpTree(commandManager, actor, tree, page, commandManager.getPrefix(), actor.getTranslatedMessageAsString(Messages.COMMAND_HELP_OVERVIEW_HEADER), "{0} all {2}");
+        showHelpTree(commandManager, actor, tree, page, commandManager.getPrefix(),
+            actor.getTranslatedMessageAsString(Messages.COMMAND_HELP_OVERVIEW_HEADER), "{0} {2}");
     }
 
-    @Action("")
     @Action("command")
+    @Description("$#command.description.justlootit.help.command")
     public void help(CommandManager commandManager, Actor<?> actor, @Argument(name = "command", optional = true, index = 1) String command,
         @Argument(name = "page", optional = true, index = 2, params = {
-            @Param(name = "min", type = Param.TYPE_INT, intValue = 1)
+            @Param(name = "minimum", type = Param.TYPE_INT, intValue = 1)
         }) int page) {
         if (command == null || command.isBlank()) {
             helpOverview(commandManager, actor, page);
@@ -144,30 +153,35 @@ public class HelpCommand {
             actor.sendTranslatedMessage(Messages.COMMAND_HELP_UNKNOWN, Key.of("command", command));
             return;
         }
-        showHelpTree(commandManager, actor, new HelpNodeTree(commandNode, actor), page, getPrefix(commandManager.getPrefix(), commandNode), command, "{0} command '{1}' {2}");
+        showHelpTree(commandManager, actor, new HelpNodeTree(commandNode, actor), page, getPrefix(commandManager.getPrefix(), commandNode),
+            command, "{0} command '{1}' {2}");
     }
 
     private void showHelpTree(CommandManager commandManager, Actor<?> actor, HelpNodeTree tree, int page, String prefix, String helpText,
         String arrowCommandFormat) {
         int maxPage = Math.floorDiv(tree.amount(), HELP_PAGE_SIZE) + (tree.amount() % HELP_PAGE_SIZE != 0 ? 1 : 0);
-        page = Math.min(page, maxPage);
+        page = Math.min(Math.max(page, 1), maxPage);
 
         ComponentCompound component = ComponentCompound.create();
         if (page != maxPage) {
-            component.add(Component.of(Messages.COMMAND_SYSTEM_ARROW_LEFT, actor.getLanguage()).clickRun(arrowCommandFormat,
-                commandManager.getPrefix(), helpText, page - 1).hoverText(Messages.COMMAND_SYSTEM_PAGE_NEXT, actor.getLanguage()));
+            component.add(Component.of(Messages.COMMAND_SYSTEM_ARROW_LEFT, actor.getLanguage())
+                .clickRun(arrowCommandFormat, commandManager.getPrefix() + "help", helpText, page - 1)
+                .hoverText(Messages.COMMAND_SYSTEM_PAGE_NEXT, actor.getLanguage()));
         }
         if (page != 1) {
             if (page != maxPage) {
                 component.add(Component.of(Messages.COMMAND_SYSTEM_ARROW_SEPERATOR, actor.getLanguage()));
             }
-            component.add(Component.of(Messages.COMMAND_SYSTEM_ARROW_RIGHT, actor.getLanguage()).clickRun(arrowCommandFormat,
-                commandManager.getPrefix(), helpText, page + 1).hoverText(Messages.COMMAND_SYSTEM_PAGE_PREVIOUS, actor.getLanguage()));
+            component.add(Component.of(Messages.COMMAND_SYSTEM_ARROW_RIGHT, actor.getLanguage())
+                .clickRun(arrowCommandFormat, commandManager.getPrefix() + "help", helpText, page + 1)
+                .hoverText(Messages.COMMAND_SYSTEM_PAGE_PREVIOUS, actor.getLanguage()));
         }
 
         actor.sendTranslatedMessage(Messages.COMMAND_HELP_HEADER_FORMAT_START, Key.of("helpText", helpText), Key.of("page", page),
             Key.of("maxPage", maxPage));
-        component.send(actor);
+        if (!component.isEmpty() && actor.getId() != Actor.IMPL_ID) {
+            component.send(actor);
+        }
         actor.sendMessage(""); // Add one space
         int maxIndex = Math.min((page - 1) * HELP_PAGE_SIZE + HELP_PAGE_SIZE, tree.amount());
         for (int index = (page - 1) * HELP_PAGE_SIZE; index < maxIndex; index++) {
@@ -176,7 +190,8 @@ public class HelpCommand {
             List<NodeArgument> argumentList = action.getArguments().stream().filter(arg -> !arg.isProvided()).toList();
             if (argumentList.isEmpty()) {
                 actor.sendTranslatedMessage(Messages.COMMAND_HELP_COMMAND_FORMAT_NOARGS, Key.of("prefix", prefix),
-                    Key.of("name", helpNode.fullPath()));
+                    Key.of("name", helpNode.fullPath()),
+                    Key.of("description", action.getDescription()));
                 continue;
             }
             StringBuilder arguments = new StringBuilder();
@@ -184,10 +199,9 @@ public class HelpCommand {
                 if (i != 0) {
                     arguments.append(' ');
                 }
-                NodeArgument argument = argumentList.get(index);
-                MessageProvider provider = argument.isOptional() ? Messages.COMMAND_HELP_ARGUMENT_FORMAT_OPTIONAL
-                    : Messages.COMMAND_HELP_ARGUMENT_FORMAT_REQUIRED;
-                arguments.append(actor.getTranslatedMessageAsString(provider,
+                NodeArgument argument = argumentList.get(i);
+                arguments.append(actor.getTranslatedMessageAsString(
+                    argument.isOptional() ? Messages.COMMAND_HELP_ARGUMENT_FORMAT_OPTIONAL : Messages.COMMAND_HELP_ARGUMENT_FORMAT_REQUIRED,
                     Key.of("type", ClassUtil.getClassName(argument.getArgumentType())), Key.of("name", argument.getName())));
             }
             actor.sendTranslatedMessage(Messages.COMMAND_HELP_COMMAND_FORMAT_WITHARGS, Key.of("prefix", prefix),
@@ -195,7 +209,9 @@ public class HelpCommand {
                 Key.of("description", action.getDescription()));
         }
         actor.sendMessage(""); // Add one space
-        component.send(actor);
+        if (!component.isEmpty() && actor.getId() != Actor.IMPL_ID) {
+            component.send(actor);
+        }
         actor.sendTranslatedMessage(Messages.COMMAND_HELP_HEADER_FORMAT_END, Key.of("helpText", helpText), Key.of("page", page),
             Key.of("maxPage", maxPage));
     }

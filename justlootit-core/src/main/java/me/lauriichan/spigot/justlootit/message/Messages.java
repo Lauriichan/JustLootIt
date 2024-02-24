@@ -64,7 +64,7 @@ public final class Messages implements IMessageExtension {
     public static MessageProvider COMMAND_HELP_ARGUMENT_FORMAT_OPTIONAL;
     @Message(id = "command.help.command.format.noargs", content = "&7$prefix &c$name &8- &7$description")
     public static MessageProvider COMMAND_HELP_COMMAND_FORMAT_NOARGS;
-    @Message(id = "command.help.command.format.withargs", content = "&8$prefix &c$name $arguments &8- &7$description")
+    @Message(id = "command.help.command.format.withargs", content = "&7$prefix &c$name $arguments &8- &7$description")
     public static MessageProvider COMMAND_HELP_COMMAND_FORMAT_WITHARGS;
 
 }
