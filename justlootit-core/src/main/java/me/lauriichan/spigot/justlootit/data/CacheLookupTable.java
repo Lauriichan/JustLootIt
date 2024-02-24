@@ -99,6 +99,7 @@ public class CacheLookupTable extends Storable implements IModifiable {
     public CacheLookupTable(int size) {
         super(ID);
         this.maxSize = Math.max(size, config.cacheSize());
+        this.maxEntryId = MIN_ENTRY_ID + maxSize;
         this.tableToMapped = new Int2ObjectArrayMap<>(maxSize);
         this.mappedToTable = new Object2ObjectArrayMap<>(maxSize);
         this.entryIds = new LongArrayList(maxSize);
