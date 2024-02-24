@@ -39,9 +39,6 @@ public class HelpCommand {
                 if (path.isEmpty()) {
                     return node.getName();
                 }
-                if (path.charAt(path.length() - 1) == ' ') {
-                    return path + node.getName();
-                }
                 return path + ' ' + node.getName();
             }
 
@@ -159,6 +156,7 @@ public class HelpCommand {
 
     private void showHelpTree(CommandManager commandManager, Actor<?> actor, HelpNodeTree tree, int page, String prefix, String helpText,
         String arrowCommandFormat) {
+        prefix = prefix.trim();
         int maxPage = Math.floorDiv(tree.amount(), HELP_PAGE_SIZE) + (tree.amount() % HELP_PAGE_SIZE != 0 ? 1 : 0);
         page = Math.min(Math.max(page, 1), maxPage);
 
@@ -219,7 +217,7 @@ public class HelpCommand {
     private String getPrefix(String prefix, Node command) {
         Node root = command.getRoot();
         if (root == command) {
-            return prefix + command.getName();
+            return prefix;
         }
         StringBuilder builder = new StringBuilder(prefix).append(root.getName());
         for (Node parent = command.getParent(); parent != root; parent = parent.getParent()) {
