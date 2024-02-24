@@ -30,75 +30,38 @@ public final class Messages implements IMessageExtension {
     @Message(id = "command.system.actor.not-supported", content = "$#plugin.prefix The command '&c$command&7' can only be excuted by actors of type &c$actorType&7.")
     public static MessageProvider COMMAND_SYSTEM_ACTOR_NOT$SUPPORTED;
 
+    @Message(id = "command.system.arrow.left", content = "&c<<")
+    public static MessageProvider COMMAND_SYSTEM_ARROW_LEFT;
+    @Message(id = "command.system.arrow.seperator", content = " &8/ ")
+    public static MessageProvider COMMAND_SYSTEM_ARROW_SEPERATOR;
+    @Message(id = "command.system.arrow.right", content = "&c>>")
+    public static MessageProvider COMMAND_SYSTEM_ARROW_RIGHT;
+
+    @Message(id = "command.system.page.previous", content = "&cPrevious page")
+    public static MessageProvider COMMAND_SYSTEM_PAGE_PREVIOUS;
+    @Message(id = "command.system.page.next", content = "&cNext page")
+    public static MessageProvider COMMAND_SYSTEM_PAGE_NEXT;
+
     // Help
 
     @Message(id = "command.help.command.none", content = "$#plugin.prefix There are no commands to list that you are permitted to see!")
     public static MessageProvider COMMAND_HELP_NONE;
     @Message(id = "command.help.command.unknown", content = "$#plugin.prefix The command '&c$command&7' doesn't exist!")
     public static MessageProvider COMMAND_HELP_UNKNOWN;
-    @Message(id = "command.help.command.overview", content = {
-        "&8=< $#plugin.name &8>-< &7Overview",
-        " ",
-        "$tree",
-        " ",
-        "&8=< $#plugin.name &8>-< &7Overview"
-    })
-    public static MessageProvider COMMAND_HELP_OVERVIEW;
-    @Message(id = "command.help.command.empty", content = {
-        "&8=< $#plugin.name &8>-< &7$command",
-        " ",
-        "&7$description",
-        " ",
-        "&8=< $#plugin.name &8>-< &7$command"
-    })
-    public static MessageProvider COMMAND_HELP_EMPTY;
-    @Message(id = "command.help.command.tree", content = {
-        "&8=< $#plugin.name &8>-< &7$command",
-        " ",
-        "&7$description",
-        " ",
-        "&7This command has following subcommands:",
-        "$tree",
-        " ",
-        "&8=< $#plugin.name &8>-< &7$command"
-    })
-    public static MessageProvider COMMAND_HELP_TREE;
-    @Message(id = "command.help.command.executable", content = {
-        "&8=< $#plugin.name &8>-< &7$command",
-        " ",
-        "&7$description",
-        " ",
-        "&7$arguments",
-        " ",
-        "&7This command can be executed.",
-        " ",
-        "&8=< $#plugin.name &8>-< &7$command"
-    })
-    public static MessageProvider COMMAND_HELP_EXECUATABLE;
-    @Message(id = "command.help.command.tree-executable", content = {
-        "&8=< $#plugin.name &8>-< &7$command",
-        " ",
-        "&7$description",
-        " ",
-        "&7$arguments",
-        " ",
-        "&7This command can be executed and has following subcommands:",
-        "$tree",
-        " ",
-        "&8=< $#plugin.name &8>-< &7$command"
-    })
-    public static MessageProvider COMMAND_HELP_TREE$EXECUTABLE;
-    @Message(id = "command.help.argument.no-arguments", content = "There are no arguments for this command")
-    public static MessageProvider COMMAND_HELP_ARGUMENT_NO$ARGUMENTS;
-    @Message(id = "command.help.argument.format.header", content = "&7[required] <optional>")
-    public static MessageProvider COMMAND_HELP_ARGUMENT_FORMAT_HEADER;
-    @Message(id = "command.help.argument.format.required", content = "&8[&7$type&8] &7$name")
+    @Message(id = "command.help.command.overview-header", content = "Commands")
+    public static MessageProvider COMMAND_HELP_OVERVIEW_HEADER;
+
+    @Message(id = "command.help.header.format.start", content = "$#plugin.prefix &8| &7$helpText &8[&c$page&8/&7$maxPage&8]")
+    public static MessageProvider COMMAND_HELP_HEADER_FORMAT_START;
+    @Message(id = "command.help.header.format.end", content = "$#plugin.prefix &8| &7$helpText &8[&c$page&8/&7$maxPage&8]")
+    public static MessageProvider COMMAND_HELP_HEADER_FORMAT_END;
+    @Message(id = "command.help.argument.format.required", content = "&7[$type: &c$name&7")
     public static MessageProvider COMMAND_HELP_ARGUMENT_FORMAT_REQUIRED;
-    @Message(id = "command.help.argument.format.optional", content = "&8<&7$type&8> &7$name")
+    @Message(id = "command.help.argument.format.optional", content = "&7<$type: &c$name&7>")
     public static MessageProvider COMMAND_HELP_ARGUMENT_FORMAT_OPTIONAL;
-    @Message(id = "command.help.tree.format.normal", content = "&8- &7$name")
-    public static MessageProvider COMMAND_HELP_TREE_FORMAT_NORMAL;
-    @Message(id = "command.help.tree.format.overview", content = "&8/town &7$name &8- &7$description")
-    public static MessageProvider COMMAND_HELP_TREE_FORMAT_OVERVIEW;
+    @Message(id = "command.help.command.format.noargs", content = "&8$prefix &c$name &8- &7$description")
+    public static MessageProvider COMMAND_HELP_COMMAND_FORMAT_NOARGS;
+    @Message(id = "command.help.command.format.withargs", content = "&8$prefix &c$name $arguments &8- &7$description")
+    public static MessageProvider COMMAND_HELP_COMMAND_FORMAT_WITHARGS;
 
 }
