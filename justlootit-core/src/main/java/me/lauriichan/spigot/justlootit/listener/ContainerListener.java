@@ -107,7 +107,7 @@ public class ContainerListener implements IListenerExtension {
             return;
         }
         
-        // TODO: CANCEL CONTAINER REMOVAL
+        // TODO: CONTAINER REMOVAL
     }
     
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
@@ -122,7 +122,7 @@ public class ContainerListener implements IListenerExtension {
         }
         event.setCancelled(true);
         Entity attacker = event.getAttacker();
-        if (attacker.getType() != EntityType.PLAYER) {
+        if (attacker == null || attacker.getType() != EntityType.PLAYER) {
             return;
         }
         Player player = (Player) attacker;
@@ -130,9 +130,9 @@ public class ContainerListener implements IListenerExtension {
             // TODO: Send message
             return;
         }
+        
+        // TODO: ENTITY REMOVAL
     }
-    
-    // TODO: CANCEL ENTITY REMOVAL
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
     public void onInteract(final PlayerInteractEvent event) {
