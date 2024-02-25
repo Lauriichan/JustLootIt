@@ -10,6 +10,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.loot.LootTable;
 
 import me.lauriichan.laylib.command.Actor;
+import me.lauriichan.laylib.command.IArgumentMap;
 import me.lauriichan.laylib.command.IArgumentType;
 import me.lauriichan.laylib.command.Suggestions;
 import me.lauriichan.spigot.justlootit.command.impl.LootItActor;
@@ -18,7 +19,7 @@ import me.lauriichan.spigot.justlootit.util.ImprovedLevenshteinDistance;
 public final class LootTableArgument implements IArgumentType<LootTable> {
 
     @Override
-    public LootTable parse(Actor<?> actor, String input) throws IllegalArgumentException {
+    public LootTable parse(Actor<?> actor, String input, IArgumentMap map) throws IllegalArgumentException {
         NamespacedKey key = NamespacedKey.fromString(input);
         if (key == null) {
             throw new IllegalArgumentException("Key '" + input + "' is invalid!");
@@ -31,7 +32,7 @@ public final class LootTableArgument implements IArgumentType<LootTable> {
     }
 
     @Override
-    public void suggest(Actor<?> actor, String input, Suggestions suggestions) {
+    public void suggest(Actor<?> actor, String input, Suggestions suggestions, IArgumentMap map) {
         if (!(actor instanceof LootItActor<?> bukkit)) {
             return;
         }

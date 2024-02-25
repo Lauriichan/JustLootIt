@@ -1,6 +1,11 @@
 package me.lauriichan.spigot.justlootit.command;
 
+import java.util.Collection;
+import java.util.List;
+
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Container;
@@ -8,8 +13,10 @@ import org.bukkit.block.DoubleChest;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.type.Chest;
 import org.bukkit.block.data.type.Chest.Type;
+import org.bukkit.entity.ChestBoat;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.ItemFrame;
+import org.bukkit.entity.Minecart;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -23,10 +30,15 @@ import me.lauriichan.laylib.command.Actor;
 import me.lauriichan.laylib.command.annotation.Action;
 import me.lauriichan.laylib.command.annotation.Argument;
 import me.lauriichan.laylib.command.annotation.Command;
+import me.lauriichan.laylib.command.annotation.Param;
+import me.lauriichan.laylib.command.annotation.Permission;
 import me.lauriichan.laylib.localization.Key;
+import me.lauriichan.minecraft.pluginbase.extension.Extension;
 import me.lauriichan.spigot.justlootit.JustLootItKey;
+import me.lauriichan.spigot.justlootit.JustLootItPermission;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.capability.StorageCapability;
+import me.lauriichan.spigot.justlootit.command.argument.CoordinateArgument.Coord;
 import me.lauriichan.spigot.justlootit.data.FrameContainer;
 import me.lauriichan.spigot.justlootit.data.StaticContainer;
 import me.lauriichan.spigot.justlootit.data.VanillaContainer;
@@ -37,52 +49,78 @@ import me.lauriichan.spigot.justlootit.storage.Storable;
 import me.lauriichan.spigot.justlootit.util.BlockUtil;
 import me.lauriichan.spigot.justlootit.util.SimpleDataType;
 
-@Command(name = "debug", description = "A debug command")
-public class DebugCommand {
+@Extension
+@Command(name = "debug")
+@Permission(JustLootItPermission.COMMAND_DEBUG)
+public class DebugCommand implements ICommandExtension {
 
-    @Action("a")
-    public void a() {}
-    @Action("b")
-    public void b() {}
-    @Action("c")
-    public void c() {}
-    @Action("d")
-    public void d() {}
-    
-    @Action("config reload")
-    public void configReload(final JustLootItPlugin plugin, final Actor<?> actor) {
-        actor.sendMessage("Reloading config...");
-        plugin.configManager().reload();
-        actor.sendMessage("Config reloaded.");
-    }
-
-    @Action("info pdc")
-    public void infoPdc(final JustLootItPlugin plugin, final Actor<?> actor) {
-        final Actor<Player> playerActor = actor.as(Player.class);
-        if (!playerActor.isValid()) {
-            actor.sendTranslatedMessage(Messages.COMMAND_SYSTEM_ACTOR_NOT$SUPPORTED, Key.of("actorType", "Player"));
-            return;
+    @Action("pdc")
+    public void pdc(final JustLootItPlugin plugin, final Actor<?> actor,
+        @Argument(name = "x", index = 0, params = @Param(name = "axis", stringValue = "x", type = Param.TYPE_STRING)) final Coord x,
+        @Argument(name = "y", index = 1, params = @Param(name = "axis", stringValue = "y", type = Param.TYPE_STRING)) final Coord y,
+        @Argument(name = "z", index = 2, params = @Param(name = "axis", stringValue = "z", type = Param.TYPE_STRING)) final Coord z,
+        @Argument(name = "world", optional = true, index = 3) World world) {
+        if (world == null) {
+            if (!(actor.getHandle() instanceof Entity entity)) {
+                actor.sendTranslatedMessage(Messages.COMMAND_SYSTEM_ACTOR_WORLD_REQUIRED);
+                return;
+            }
+            world = entity.getWorld();
         }
-        final Player player = playerActor.getHandle();
-        final RayTraceResult result = player.getWorld().rayTraceBlocks(player.getEyeLocation(), player.getLocation().getDirection(), 5);
-        if (result == null) {
-            actor.sendMessage("&cYou have to look at a block!");
-            return;
-        }
+        final World finalWorld = world;
         plugin.mainService().submit(() -> {
-            // If a exception happens in this lambda it will not be detected.
-            final Block block = result.getHitBlock();
-            final BlockState state = block.getState();
-            if (!(state instanceof PersistentDataHolder holder)) {
-                actor.sendMessage("&cYou have to look at a persistent data holding block!");
+            Block block = finalWorld.getBlockAt(x.value(), y.value(), z.value());
+            if (block.isEmpty()) {
+                Collection<Entity> entities = finalWorld
+                    .getNearbyEntities(new Location(finalWorld, x.value() + 0.5d, y.value() + 0.5d, z.value() + 0.5d), 1.5d, 1.5d, 1.5d);
+                if (entities.isEmpty()) {
+                    actor.sendTranslatedMessage(Messages.COMMAND_DEBUG_PDC_DATA_EMPTY_BLOCK, Key.of("x", x.value()), Key.of("y", y.value()),
+                        Key.of("z", z.value()), Key.of("world", finalWorld.getName()));
+                    return;
+                }
+                List<Entity> validEntities = entities.stream()
+                    .filter(entity -> entity instanceof ItemFrame || entity instanceof ChestBoat || entity instanceof Minecart).toList();
+                if (validEntities.isEmpty()) {
+                    actor.sendTranslatedMessage(Messages.COMMAND_DEBUG_PDC_DATA_EMPTY_BLOCK, Key.of("x", x.value()), Key.of("y", y.value()),
+                        Key.of("z", z.value()), Key.of("world", finalWorld.getName()));
+                    return;
+                }
+                double distance = Double.MAX_VALUE;
+                Location origin = new Location(finalWorld, x.value() + 0.5d, y.value() + 0.5d, z.value() + 0.5d);
+                Entity closest = null;
+                for (Entity entity : validEntities) {
+                    Location current = entity.getLocation();
+                    double dist = origin.distanceSquared(current);
+                    if (dist < distance) {
+                        closest = entity;
+                        distance = dist;
+                    }
+                }
+                Location loc = closest.getLocation();
+                String data = plugin.versionHandler().debugHelper().persistentDataAsString(closest.getPersistentDataContainer());
+                if (data.isEmpty()) {
+                    actor.sendTranslatedMessage(Messages.COMMAND_DEBUG_PDC_DATA_EMPTY_ENTITY, Key.of("x", loc.getX()),
+                        Key.of("y", loc.getY()), Key.of("z", loc.getZ()), Key.of("world", finalWorld.getName()));
+                    return;
+                }
+                actor.sendTranslatedMessage(Messages.COMMAND_DEBUG_PDC_DATA_FORMAT_ENTITY, Key.of("data", data.replace("\r", "")),
+                    Key.of("x", loc.getX()), Key.of("y", loc.getY()), Key.of("z", loc.getZ()), Key.of("world", finalWorld.getName()));
                 return;
             }
-            String data = plugin.versionHandler().debugHelper().persistentDataAsString(holder.getPersistentDataContainer());
+            BlockState state = block.getState();
+            if (!(state instanceof PersistentDataHolder dataHolder)) {
+                actor.sendTranslatedMessage(Messages.COMMAND_DEBUG_PDC_DATA_EMPTY_BLOCK, Key.of("x", x.value()), Key.of("y", y.value()),
+                    Key.of("z", z.value()), Key.of("world", finalWorld.getName()));
+                return;
+            }
+            String data = plugin.versionHandler().debugHelper().persistentDataAsString(dataHolder.getPersistentDataContainer());
             if (data.isEmpty()) {
-                actor.sendMessage("&eBlock has no persistent data set");
+                actor.sendTranslatedMessage(Messages.COMMAND_DEBUG_PDC_DATA_EMPTY_BLOCK, Key.of("x", x.value()), Key.of("y", y.value()),
+                    Key.of("z", z.value()), Key.of("world", finalWorld.getName()));
                 return;
             }
-            actor.sendMessage("&a" + data.replace("\r", ""));
+            actor.sendTranslatedMessage(Messages.COMMAND_DEBUG_PDC_DATA_FORMAT_BLOCK, Key.of("data", data.replace("\r", "")),
+                Key.of("x", x.value()), Key.of("y", y.value()), Key.of("z", z.value()), Key.of("world", finalWorld.getName()));
         });
     }
 
@@ -90,7 +128,7 @@ public class DebugCommand {
     public void frameContainer(final JustLootItPlugin plugin, final Actor<?> actor) {
         final Actor<Player> playerActor = actor.as(Player.class);
         if (!playerActor.isValid()) {
-            actor.sendTranslatedMessage(Messages.COMMAND_SYSTEM_ACTOR_NOT$SUPPORTED, Key.of("actorType", "Player"));
+            actor.sendTranslatedMessage(Messages.COMMAND_SYSTEM_ACTOR_NOT_SUPPORTED, Key.of("actorType", "Player"));
             return;
         }
         final Player player = playerActor.getHandle();
@@ -130,11 +168,11 @@ public class DebugCommand {
     }
 
     @Action("container vanilla")
-    public void vanillaContainer(final JustLootItPlugin plugin, final Actor<?> actor, @Argument(name = "loottable") final LootTable loottable,
-        @Argument(name = "seed") final long seed) {
+    public void vanillaContainer(final JustLootItPlugin plugin, final Actor<?> actor,
+        @Argument(name = "loottable") final LootTable loottable, @Argument(name = "seed") final long seed) {
         final Actor<Player> playerActor = actor.as(Player.class);
         if (!playerActor.isValid()) {
-            actor.sendTranslatedMessage(Messages.COMMAND_SYSTEM_ACTOR_NOT$SUPPORTED, Key.of("actorType", "Player"));
+            actor.sendTranslatedMessage(Messages.COMMAND_SYSTEM_ACTOR_NOT_SUPPORTED, Key.of("actorType", "Player"));
             return;
         }
         final Player player = playerActor.getHandle();
@@ -165,7 +203,8 @@ public class DebugCommand {
                 stateDataContainer.set(JustLootItKey.identity(), PersistentDataType.LONG, id);
                 final BlockData data = state.getBlockData();
                 if (data instanceof Chest chest && chest.getType() != Type.SINGLE) {
-                    final Container otherContainer = BlockUtil.findChestAround(block.getWorld(), state.getLocation(), chest.getType(), chest.getFacing());
+                    final Container otherContainer = BlockUtil.findChestAround(block.getWorld(), state.getLocation(), chest.getType(),
+                        chest.getFacing());
                     if (otherContainer != null) {
                         stateDataContainer.set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR,
                             otherContainer.getLocation().toVector().subtract(stateContainer.getLocation().toVector()));
@@ -177,7 +216,7 @@ public class DebugCommand {
                 stateContainer.update();
                 Bukkit.getScheduler().runTaskLater(plugin, () -> {
                     Inventory inv = ((Container) stateContainer.getBlock().getState()).getInventory();
-                    if(inv.getHolder() instanceof DoubleChest chest) {
+                    if (inv.getHolder() instanceof DoubleChest chest) {
                         chest.getLeftSide().getInventory().clear();
                         chest.getRightSide().getInventory().clear();
                     } else {
@@ -196,7 +235,7 @@ public class DebugCommand {
     public void vanillaContainer(final JustLootItPlugin plugin, final Actor<?> actor) {
         final Actor<Player> playerActor = actor.as(Player.class);
         if (!playerActor.isValid()) {
-            actor.sendTranslatedMessage(Messages.COMMAND_SYSTEM_ACTOR_NOT$SUPPORTED, Key.of("actorType", "Player"));
+            actor.sendTranslatedMessage(Messages.COMMAND_SYSTEM_ACTOR_NOT_SUPPORTED, Key.of("actorType", "Player"));
             return;
         }
         final Player player = playerActor.getHandle();
@@ -227,7 +266,8 @@ public class DebugCommand {
                 stateDataContainer.set(JustLootItKey.identity(), PersistentDataType.LONG, id);
                 final BlockData data = state.getBlockData();
                 if (data instanceof Chest chest && chest.getType() != Type.SINGLE) {
-                    final Container otherContainer = BlockUtil.findChestAround(block.getWorld(), state.getLocation(), chest.getType(), chest.getFacing());
+                    final Container otherContainer = BlockUtil.findChestAround(block.getWorld(), state.getLocation(), chest.getType(),
+                        chest.getFacing());
                     if (otherContainer != null) {
                         stateDataContainer.set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR,
                             otherContainer.getLocation().toVector().subtract(stateContainer.getLocation().toVector()));
@@ -241,7 +281,7 @@ public class DebugCommand {
                 stateContainer.update();
                 Bukkit.getScheduler().runTaskLater(plugin, () -> {
                     Inventory inv = ((Container) stateContainer.getBlock().getState()).getInventory();
-                    if(inv.getHolder() instanceof DoubleChest chest) {
+                    if (inv.getHolder() instanceof DoubleChest chest) {
                         chest.getLeftSide().getInventory().clear();
                         chest.getRightSide().getInventory().clear();
                     } else {

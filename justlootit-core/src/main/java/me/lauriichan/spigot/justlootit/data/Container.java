@@ -43,7 +43,7 @@ public abstract class Container extends Storable implements IModifiable {
 
         @Override
         public final C deserialize(final long id, final ByteBuf buffer) {
-            final ContainerData data = new ContainerData(config);
+            final ContainerData data = new ContainerData(id, config);
             final int amount = buffer.readInt();
             for (int index = 0; index < amount; index++) {
                 final UUID uuid = DataIO.UUID.deserialize(buffer);
@@ -62,13 +62,15 @@ public abstract class Container extends Storable implements IModifiable {
 
     protected static final class ContainerData {
 
+        private final long id;
         private final RefreshConfig config;
         private final Object2ObjectOpenHashMap<UUID, OffsetDateTime> playerAccess = new Object2ObjectOpenHashMap<>();
 
         private WeakReference<RefreshGroup> refreshGroup;
         private volatile String refreshGroupId;
 
-        public ContainerData(RefreshConfig config) {
+        public ContainerData(long id, RefreshConfig config) {
+            this.id = id;
             this.config = config;
         }
 
@@ -81,6 +83,10 @@ public abstract class Container extends Storable implements IModifiable {
             }
             RefreshGroup group = config.group(refreshGroupId);
             refreshGroup = new WeakReference<>(group);
+            if (group == null) {
+                JustLootItPlugin.get().logger().warning("Refresh group '{0}' doesn't exist but is requested by container with id {1}",
+                    refreshGroupId, id);
+            }
             return group;
         }
 
@@ -98,7 +104,7 @@ public abstract class Container extends Storable implements IModifiable {
     private boolean dirty = false;
 
     public Container(final long id) {
-        this(id, new ContainerData(JustLootItPlugin.get().configManager().config(RefreshConfig.class)));
+        this(id, new ContainerData(id, JustLootItPlugin.get().configManager().config(RefreshConfig.class)));
     }
 
     public Container(final long id, final ContainerData data) {
@@ -134,7 +140,7 @@ public abstract class Container extends Storable implements IModifiable {
     public boolean canAccess(final UUID id) {
         RefreshGroup group = data.group();
         if (group == null) {
-            return data.playerAccess.containsKey(id);
+            return !data.playerAccess.containsKey(id);
         }
         return group.isAccessible(data.playerAccess.get(id), OffsetDateTime.now());
     }

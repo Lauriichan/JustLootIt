@@ -19,6 +19,7 @@ import org.bukkit.persistence.PersistentDataType;
 import me.lauriichan.minecraft.pluginbase.extension.Extension;
 import me.lauriichan.minecraft.pluginbase.listener.IListenerExtension;
 import me.lauriichan.spigot.justlootit.JustLootItKey;
+import me.lauriichan.spigot.justlootit.JustLootItPermission;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.capability.StorageCapability;
 import me.lauriichan.spigot.justlootit.data.FrameContainer;
@@ -81,7 +82,7 @@ public class ItemFrameEventListener implements IListenerExtension {
             return;
         }
         final Player player = (Player) remover;
-        if (player.hasPermission("" /* TODO: Add permission here */) && player.isSneaking()) {
+        if (player.hasPermission(JustLootItPermission.ACTION_REMOVE_CONTAINER_FRAME) && player.isSneaking()) {
             final BreakData data = container.getOrDefault(JustLootItKey.breakData(), BreakData.BREAK_DATA_TYPE, null);
             if (data == null || !data.playerId().equals(player.getUniqueId()) || data.time().isBefore(OffsetDateTime.now())) {
                 // TODO: Send message to repeat

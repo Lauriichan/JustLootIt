@@ -38,6 +38,14 @@
             <version>${pluginbase.version}-MC1.20.1</version>
         </dependency>
         
+        <!-- Source transformer -->
+        <dependency>
+            <groupId>me.lauriichan.maven</groupId>
+            <artifactId>maven-source-modification-plugin</artifactId>
+            <version>1.1.0</version>
+            <scope>provided</scope>
+        </dependency>
+        
         <!-- LayLib -->
         <dependency>
             <groupId>me.lauriichan.laylib</groupId>
@@ -170,7 +178,7 @@
             <plugin>
                 <groupId>me.lauriichan.maven</groupId>
                 <artifactId>maven-source-modification-plugin</artifactId>
-                <version>1.0.0</version>
+                <version>1.1.0</version>
                 <executions>
                     <execution>
                         <id>default-modifySources</id>

@@ -31,7 +31,7 @@ public final class BufIO {
     public static String readString(final ByteBuf buffer, final Charset charset) {
         final int length = buffer.readInt();
         if (length == -1) {
-            return "";
+            return null;
         }
         return buffer.readCharSequence(length, charset).toString();
     }

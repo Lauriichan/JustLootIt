@@ -14,14 +14,20 @@ import org.bukkit.block.data.type.Chest.Type;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Vehicle;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.vehicle.VehicleDamageEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.Vector;
@@ -33,6 +39,7 @@ import me.lauriichan.minecraft.pluginbase.listener.IListenerExtension;
 import me.lauriichan.spigot.justlootit.JustLootItConstant;
 import me.lauriichan.spigot.justlootit.JustLootItFlag;
 import me.lauriichan.spigot.justlootit.JustLootItKey;
+import me.lauriichan.spigot.justlootit.JustLootItPermission;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.capability.PlayerGUICapability;
 import me.lauriichan.spigot.justlootit.capability.StorageCapability;
@@ -47,6 +54,7 @@ import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.storage.IStorage;
 import me.lauriichan.spigot.justlootit.storage.Storable;
 import me.lauriichan.spigot.justlootit.util.BlockUtil;
+import me.lauriichan.spigot.justlootit.util.EntityUtil;
 import me.lauriichan.spigot.justlootit.util.InventoryUtil;
 import me.lauriichan.spigot.justlootit.util.SimpleDataType;
 
@@ -60,19 +68,91 @@ public class ContainerListener implements IListenerExtension {
     public ContainerListener(final JustLootItPlugin plugin) {
         this.versionHandler = plugin.versionHandler();
     }
+    
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
+    public void onBlockPlaceEvent(final BlockPlaceEvent event) {
+        Block block = event.getBlock();
+        if (!(block.getState() instanceof org.bukkit.block.Container container) || !(container.getBlockData() instanceof Chest chest) || chest.getType() == Type.SINGLE) {
+            return;
+        }
+        org.bukkit.block.Container otherContainer = BlockUtil.findChestAround(block.getWorld(), block.getLocation(), chest.getType(), chest.getFacing());
+        if (otherContainer == null) {
+            // This should not happen but just do it for safety
+            return;
+        }
+        PersistentDataContainer dataContainer = otherContainer.getPersistentDataContainer();
+        if (!dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+            return;
+        }
+        Chest cloned = (Chest) chest.clone();
+        cloned.setType(Type.SINGLE);
+        container.setBlockData(cloned);
+        container.update(false, false);
+    }
+    
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
+    public void onBlockBreakEvent(final BlockBreakEvent event) {
+        Block block = event.getBlock();
+        if (!(block.getState() instanceof org.bukkit.block.Container container)) {
+            return;
+        }
+        PersistentDataContainer dataContainer = container.getPersistentDataContainer();
+        if (!dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+            return;
+        }
+        event.setCancelled(true);
+        Player player = event.getPlayer();
+        if (!player.isSneaking() || !player.hasPermission(JustLootItPermission.ACTION_REMOVE_CONTAINER_BLOCK)) {
+            // TODO: Send message
+            return;
+        }
+        
+        // TODO: CANCEL CONTAINER REMOVAL
+    }
+    
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
+    public void onVehicleDamage(final VehicleDamageEvent event) {
+        Vehicle vehicle = event.getVehicle();
+        if (!EntityUtil.isSuppportedEntity(vehicle)) {
+            return;
+        }
+        PersistentDataContainer dataContainer = vehicle.getPersistentDataContainer();
+        if (!dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+            return;
+        }
+        event.setCancelled(true);
+        Entity attacker = event.getAttacker();
+        if (attacker.getType() != EntityType.PLAYER) {
+            return;
+        }
+        Player player = (Player) attacker;
+        if (!player.isSneaking() || !player.hasPermission(JustLootItPermission.ACTION_REMOVE_CONTAINER_ENTITY)) {
+            // TODO: Send message
+            return;
+        }
+    }
+    
+    // TODO: CANCEL ENTITY REMOVAL
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
     public void onInteract(final PlayerInteractEvent event) {
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK) {
             return;
         }
+        final Player player = event.getPlayer();
+        if (player.isSneaking()) {
+            final PlayerInventory inventory = player.getInventory();
+            final ItemStack first = inventory.getItemInMainHand(), second = inventory.getItemInOffHand();
+            if (first.getType().isBlock() || second.getType().isBlock()) {
+                return;
+            }
+        }
         final Block block = event.getClickedBlock();
         final BlockState state = block.getState();
-        if (!(state instanceof org.bukkit.block.Container)) {
+        if (!(state instanceof org.bukkit.block.Container container)) {
             return;
         }
         final BlockData blockData = state.getBlockData();
-        final org.bukkit.block.Container container = (org.bukkit.block.Container) state;
         final PersistentDataContainer dataContainer = container.getPersistentDataContainer();
         if (blockData instanceof Chest chest && chest.getType() != Type.SINGLE) {
             if (!dataContainer.has(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR)) {
@@ -122,9 +202,7 @@ public class ContainerListener implements IListenerExtension {
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
     public void onInteractEntity(final PlayerInteractAtEntityEvent event) {
         final Entity entity = event.getRightClicked();
-        final EntityType type = entity.getType();
-        if (type != EntityType.MINECART_CHEST && type != EntityType.MINECART_HOPPER && type != EntityType.CHEST_BOAT
-            || !JustLootItFlag.TILE_ENTITY_CONTAINERS.isSet() && type == EntityType.MINECART_HOPPER) {
+        if (!EntityUtil.isSuppportedEntity(entity)) {
             return;
         }
         final PersistentDataContainer dataContainer = entity.getPersistentDataContainer();

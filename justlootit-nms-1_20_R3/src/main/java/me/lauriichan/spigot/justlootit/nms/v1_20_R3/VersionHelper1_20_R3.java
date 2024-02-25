@@ -50,7 +50,7 @@ public class VersionHelper1_20_R3 extends VersionHelper {
 
     @Override
     public ItemTag asItemTag(final org.bukkit.inventory.ItemStack itemStack) {
-        return ItemTag.ofNbt(ItemStackIO1_20_R3.ITEM_STACK.asNbt(itemStack).getAsString());
+        return ItemTag.ofNbt(ItemStackIO1_20_R3.ITEM_STACK.asMinecraftStack(itemStack).getOrCreateTag().getAsString());
     }
 
     @Override

@@ -15,17 +15,20 @@ import me.lauriichan.laylib.command.annotation.Argument;
 import me.lauriichan.laylib.command.annotation.Command;
 import me.lauriichan.laylib.command.annotation.Description;
 import me.lauriichan.laylib.command.annotation.Param;
+import me.lauriichan.laylib.command.annotation.Permission;
 import me.lauriichan.laylib.command.util.Triple;
 import me.lauriichan.laylib.localization.Key;
 import me.lauriichan.laylib.reflection.ClassUtil;
+import me.lauriichan.minecraft.pluginbase.extension.Extension;
 import me.lauriichan.minecraft.pluginbase.message.component.Component;
 import me.lauriichan.minecraft.pluginbase.message.component.ComponentCompound;
+import me.lauriichan.spigot.justlootit.JustLootItPermission;
 import me.lauriichan.spigot.justlootit.message.Messages;
 
-@Command(name = "help", aliases = {
-    "?"
-})
-public class HelpCommand {
+@Extension
+@Command(name = "help", aliases = "?")
+@Permission(JustLootItPermission.COMMAND_HELP)
+public class HelpCommand implements ICommandExtension {
 
     private static final Node[] EMPTY_NODES = new Node[0];
 
@@ -106,7 +109,6 @@ public class HelpCommand {
         }
 
     }
-    
 
     @Action("")
     @Description("$#command.description.justlootit.help.all")
@@ -116,6 +118,9 @@ public class HelpCommand {
         List<NodeCommand> commands = commandManager.getCommands();
         HelpNodeTree tree = new HelpNodeTree();
         for (NodeCommand command : commands) {
+            if (command.isRestricted() && !actor.hasPermission(command.getPermission())) {
+                continue;
+            }
             HelpNodeTree current = new HelpNodeTree(command.getNode(), actor);
             if (current.amount() == 0) {
                 continue;
@@ -145,8 +150,8 @@ public class HelpCommand {
             actor.sendTranslatedMessage(Messages.COMMAND_HELP_UNKNOWN, Key.of("command", command));
             return;
         }
-        showHelpTree(commandManager, actor, new HelpNodeTree(triple.getB(), actor), page, getPrefix(commandManager.getPrefix(),triple.getB()),
-            command, "{0} command '{1}' {2}");
+        showHelpTree(commandManager, actor, new HelpNodeTree(triple.getB(), actor), page,
+            getPrefix(commandManager.getPrefix(), triple.getB()), command, "{0} command '{1}' {2}");
     }
 
     private void showHelpTree(CommandManager commandManager, Actor<?> actor, HelpNodeTree tree, int page, String prefix, String helpText,
@@ -165,8 +170,7 @@ public class HelpCommand {
             List<NodeArgument> argumentList = action.getArguments().stream().filter(arg -> !arg.isProvided()).toList();
             if (argumentList.isEmpty()) {
                 actor.sendTranslatedMessage(Messages.COMMAND_HELP_COMMAND_FORMAT_NOARGS, Key.of("prefix", prefix),
-                    Key.of("name", helpNode.fullPath()),
-                    Key.of("description", action.getDescription()));
+                    Key.of("name", helpNode.fullPath()), Key.of("description", action.getDescription()));
                 continue;
             }
             StringBuilder arguments = new StringBuilder();

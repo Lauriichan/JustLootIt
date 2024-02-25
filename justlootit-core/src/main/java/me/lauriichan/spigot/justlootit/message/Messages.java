@@ -28,7 +28,9 @@ public final class Messages implements IMessageExtension {
     // System (general)
 
     @Message(id = "command.system.actor.not-supported", content = "$#plugin.prefix The command '&c$command&7' can only be excuted by actors of type &c$actorType&7.")
-    public static MessageProvider COMMAND_SYSTEM_ACTOR_NOT$SUPPORTED;
+    public static MessageProvider COMMAND_SYSTEM_ACTOR_NOT_SUPPORTED;
+    @Message(id = "command.system.actor.world-required", content = "$#plugin.prefix Please specify a world.")
+    public static MessageProvider COMMAND_SYSTEM_ACTOR_WORLD_REQUIRED;
 
     @Message(id = "command.system.arrow.left", content = "&c<<")
     public static MessageProvider COMMAND_SYSTEM_ARROW_LEFT;
@@ -41,6 +43,11 @@ public final class Messages implements IMessageExtension {
     public static MessageProvider COMMAND_SYSTEM_PAGE_PREVIOUS;
     @Message(id = "command.system.page.next", content = "&cNext page")
     public static MessageProvider COMMAND_SYSTEM_PAGE_NEXT;
+    
+    @Message(id = "command.system.error.storage-access.level", content = "$#plugin.prefix Failed to access storage of level '&c$level&7', please try again later.")
+    public static MessageProvider COMMAND_SYSTEM_ERROR_STORAGE_ACCESS_LEVEL;
+    @Message(id = "command.system.error.storage-access.player", content = "$#plugin.prefix Failed to access storage of player '&c$player&7', please try again later.")
+    public static MessageProvider COMMAND_SYSTEM_ERROR_STORAGE_ACCESS_PLAYER;
 
     // Help
 
@@ -66,5 +73,90 @@ public final class Messages implements IMessageExtension {
     public static MessageProvider COMMAND_HELP_COMMAND_FORMAT_NOARGS;
     @Message(id = "command.help.command.format.withargs", content = "&7$prefix &c$name $arguments &8- &7$description")
     public static MessageProvider COMMAND_HELP_COMMAND_FORMAT_WITHARGS;
+    
+    // Debug
+
+    @Message(id = "command.debug.pdc.data.empty.block", content = "$#plugin.prefix Block at &c$x $y $z &7in &c$world&7 doesn't have any data.")
+    public static MessageProvider COMMAND_DEBUG_PDC_DATA_EMPTY_BLOCK;
+    @Message(id = "command.debug.pdc.data.empty.entity", content = "$#plugin.prefix Entity at &c$x $y $z &7in &c$world&7 doesn't have any data.")
+    public static MessageProvider COMMAND_DEBUG_PDC_DATA_EMPTY_ENTITY;
+    @Message(id = "command.debug.pdc.data.format.block", content = {
+        "&8| $#plugin.name",
+        "&8|",
+        "&8| &7Data of block at &c$x $y $z &7in &c$world&7:",
+        "&a$data"
+    })
+    public static MessageProvider COMMAND_DEBUG_PDC_DATA_FORMAT_BLOCK;
+    @Message(id = "command.debug.pdc.data.format.entity", content = {
+        "&8| $#plugin.name",
+        "&8|",
+        "&8| &7Data of entity at &c$x $y $z &7in &c$world&7:",
+        "&a$data"
+    })
+    public static MessageProvider COMMAND_DEBUG_PDC_DATA_FORMAT_ENTITY;
+    
+    // Container
+
+    @Message(id = "command.container.info.no-container.block", content = "$#plugin.prefix Block at &c$x $y $z &7in &c$world&7 is not an JustLootIt container!")
+    public static MessageProvider COMMAND_CONTAINER_INFO_NO_CONTAINER_BLOCK;
+    @Message(id = "command.container.info.no-container.entity", content = "$#plugin.prefix Entity at &c$x $y $z &7in &c$world&7 is not an JustLootIt container!")
+    public static MessageProvider COMMAND_CONTAINER_INFO_NO_CONTAINER_ENTITY;
+    @Message(id = "command.container.info.container.any.block", content = {
+        "&8| $#plugin.name",
+        "&8|",
+        "&8| &7Block at &c$x $y $z &7in &c$world &7with Container (&c$id&7):",
+        "&8|",
+        "&8| &7Type: &c$type",
+        "&8| &7Refresh Group: &c$refreshGroup",
+    })
+    public static MessageProvider COMMAND_CONTAINER_INFO_CONTAINER_ANY_BLOCK;
+    @Message(id = "command.container.info.container.any.entity", content = {
+        "&8| $#plugin.name",
+        "&8|",
+        "&8| &7Entity at &c$x $y $z &7in &c$world &7with Container (&c$id&7):",
+        "&8|",
+        "&8| &7Type: &c$type",
+        "&8| &7Refresh Group: &c$refreshGroup",
+    })
+    public static MessageProvider COMMAND_CONTAINER_INFO_CONTAINER_ANY_ENTITY;
+    @Message(id = "command.container.info.container.vanilla", content = {
+        "&8|",
+        "&8| &7Seed: &c$seed",
+        "&8| &7Loot Table: &c$lootTable",
+    })
+    public static MessageProvider COMMAND_CONTAINER_INFO_CONTAINER_VANILLA;
+    @Message(id = "command.container.info.container.frame", content = {
+        "&8|",
+        "&8| &7Item: &f$itemName&r &8(&7Hover for more info&8)"
+    })
+    public static MessageProvider COMMAND_CONTAINER_INFO_CONTAINER_FRAME;
+    
+    // Config
+
+    @Message(id = "command.config.save.single", content = "$#plugin.prefix Saving config '&c$config&7'...")
+    public static MessageProvider COMMAND_CONFIG_SAVE_SINGLE;
+    @Message(id = "command.config.save.all.start", content = "$#plugin.prefix Saving configs...")
+    public static MessageProvider COMMAND_CONFIG_SAVE_ALL_START;
+    @Message(id = "command.config.save.all.end", content = "$#plugin.prefix Tried to save &c$total &7configs: &c$success &7successful, &c$skipped &7skipped, &c$failed &7failed.")
+    public static MessageProvider COMMAND_CONFIG_SAVE_ALL_END;
+    @Message(id = "command.config.save.result.skipped", content = "$#plugin.prefix Skipped saving config '&c$config&7'.")
+    public static MessageProvider COMMAND_CONFIG_SAVE_RESULT_SKIPPED;
+    @Message(id = "command.config.save.result.success", content = "$#plugin.prefix Successfully saved config '&c$config&7'.")
+    public static MessageProvider COMMAND_CONFIG_SAVE_RESULT_SUCCESS;
+    @Message(id = "command.config.save.result.failed", content = "$#plugin.prefix Failed to save config '&c$config&7', check the Server console for more info!")
+    public static MessageProvider COMMAND_CONFIG_SAVE_RESULT_FAILED;
+
+    @Message(id = "command.config.reload.single", content = "$#plugin.prefix Reloading config '&c$config&7'...")
+    public static MessageProvider COMMAND_CONFIG_RELOAD_SINGLE;
+    @Message(id = "command.config.reload.all.start", content = "$#plugin.prefix Reloadings configs...")
+    public static MessageProvider COMMAND_CONFIG_RELOAD_ALL_START;
+    @Message(id = "command.config.reload.all.end", content = "$#plugin.prefix Tried to reload &c$total &7configs: &c$success &7successful, &c$skipped &7skipped, &c$failed &7failed.")
+    public static MessageProvider COMMAND_CONFIG_RELOAD_ALL_END;
+    @Message(id = "command.config.reload.result.skipped", content = "$#plugin.prefix Skipped reloading config '&c$config&7'.")
+    public static MessageProvider COMMAND_CONFIG_RELOAD_RESULT_SKIPPED;
+    @Message(id = "command.config.reload.result.success", content = "$#plugin.prefix Successfully reloaded config '&c$config&7'.")
+    public static MessageProvider COMMAND_CONFIG_RELOAD_RESULT_SUCCESS;
+    @Message(id = "command.config.reload.result.failed", content = "$#plugin.prefix Failed to reload config '&c$config&7', check the Server console for more info!")
+    public static MessageProvider COMMAND_CONFIG_RELOAD_RESULT_FAILED;
 
 }

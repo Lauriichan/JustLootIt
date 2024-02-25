@@ -34,7 +34,7 @@ public final class ItemStackIO1_20_R2 extends NbtIO1_20_R2<org.bukkit.inventory.
         return CraftItemStack.asCraftMirror(tag.isEmpty() ? ItemStack.EMPTY : ItemStack.of(tag));
     }
 
-    private ItemStack asMinecraftStack(final org.bukkit.inventory.ItemStack itemStack) {
+    public ItemStack asMinecraftStack(final org.bukkit.inventory.ItemStack itemStack) {
         if (itemStack == null) {
             return ItemStack.EMPTY;
         }

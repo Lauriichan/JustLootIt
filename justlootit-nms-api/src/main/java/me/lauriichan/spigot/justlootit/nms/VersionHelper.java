@@ -11,12 +11,17 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.loot.LootTable;
 
 import net.md_5.bungee.api.chat.ItemTag;
+import net.md_5.bungee.api.chat.hover.content.Item;
 
 public abstract class VersionHelper {
 
     public abstract VersionHandler handler();
 
     public abstract ItemTag asItemTag(ItemStack itemStack);
+    
+    public final Item createItemHover(ItemStack itemStack) {
+        return new Item(itemStack.getType().getKey().toString(), itemStack.getAmount(), asItemTag(itemStack));
+    }
 
     public abstract net.md_5.bungee.api.chat.hover.content.Entity createEntityHover(Entity entity);
     

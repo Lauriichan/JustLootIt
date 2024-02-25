@@ -21,9 +21,8 @@ import me.lauriichan.minecraft.pluginbase.command.bridge.BukkitCommandInjectable
 import me.lauriichan.minecraft.pluginbase.command.processor.IBukkitCommandProcessor;
 import me.lauriichan.minecraft.pluginbase.extension.IConditionMap;
 import me.lauriichan.spigot.justlootit.capability.JustLootItCapabilityProvider;
-import me.lauriichan.spigot.justlootit.command.DebugCommand;
-import me.lauriichan.spigot.justlootit.command.HelpCommand;
-import me.lauriichan.spigot.justlootit.command.argument.LootTableArgument;
+import me.lauriichan.spigot.justlootit.command.*;
+import me.lauriichan.spigot.justlootit.command.argument.*;
 import me.lauriichan.spigot.justlootit.command.impl.LootItActor;
 import me.lauriichan.spigot.justlootit.command.provider.PluginProvider;
 import me.lauriichan.spigot.justlootit.data.io.DataIO;
@@ -118,6 +117,9 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     protected void onArgumentSetup(ArgumentRegistry registry) {
         // Register argument types
         registry.registerArgumentType(LootTableArgument.class);
+        registry.registerArgumentType(ConfigArgument.class);
+        registry.registerArgumentType(CoordinateArgument.class);
+        registry.registerArgumentType(WorldArgument.class);
 
         // Register providers
         registry.setProvider(new PluginProvider(this));
@@ -145,8 +147,7 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     }
 
     private void registerCommands(final CommandManager manager) {
-        manager.register(HelpCommand.class);
-        manager.register(DebugCommand.class);
+        extension(ICommandExtension.class, false).callClasses(clazz -> manager.register(clazz));
     }
 
     private void registerPacketListeners() {
