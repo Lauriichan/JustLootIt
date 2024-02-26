@@ -32,7 +32,7 @@ public final class JustLootItCapabilityProvider implements ICapabilityProvider {
     }
 
     private void provideLevel(final VersionHandler handler, final LevelAdapter adapter, final List<ICapability> capabilities) {
-        capabilities.add(new StorageCapability.LevelImpl(handler, adapter));
+        capabilities.add(new StorageCapability.LevelContainerImpl(handler, adapter));
     }
 
     private void providePlayer(final VersionHandler handler, final PlayerAdapter adapter, final List<ICapability> capabilities) {

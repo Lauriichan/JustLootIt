@@ -9,6 +9,7 @@ import me.lauriichan.laylib.command.ActionMessage;
 import me.lauriichan.laylib.localization.MessageManager;
 import me.lauriichan.minecraft.pluginbase.command.BukkitActor;
 import me.lauriichan.minecraft.pluginbase.message.component.ComponentParser;
+import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.nms.VersionHelper;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.HoverEvent;
@@ -22,6 +23,10 @@ public class LootItActor<P extends CommandSender> extends BukkitActor<P> {
     public LootItActor(final P handle, final MessageManager messageManager, final VersionHelper versionHelper) {
         super(handle, messageManager);
         this.versionHelper = versionHelper;
+    }
+    
+    public VersionHandler versionHandler() {
+        return versionHelper.handler();
     }
     
     public VersionHelper versionHelper() {

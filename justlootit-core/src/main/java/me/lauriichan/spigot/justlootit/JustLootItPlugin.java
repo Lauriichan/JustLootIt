@@ -2,6 +2,7 @@ package me.lauriichan.spigot.justlootit;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 
 import org.bukkit.Bukkit;
@@ -26,6 +27,8 @@ import me.lauriichan.spigot.justlootit.command.argument.*;
 import me.lauriichan.spigot.justlootit.command.impl.LootItActor;
 import me.lauriichan.spigot.justlootit.command.provider.PluginProvider;
 import me.lauriichan.spigot.justlootit.data.io.DataIO;
+import me.lauriichan.spigot.justlootit.input.InputProvider;
+import me.lauriichan.spigot.justlootit.input.SimpleChatInputProvider;
 import me.lauriichan.spigot.justlootit.listener.ItemFramePacketListener;
 import me.lauriichan.spigot.justlootit.nms.IServiceProvider;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
@@ -34,14 +37,17 @@ import me.lauriichan.spigot.justlootit.nms.capability.CapabilityManager;
 import me.lauriichan.spigot.justlootit.nms.packet.listener.PacketContainer;
 import me.lauriichan.spigot.justlootit.nms.packet.listener.PacketManager;
 import me.lauriichan.spigot.justlootit.util.BukkitExecutorService;
+import me.lauriichan.spigot.justlootit.util.CompatDependency;
 import me.lauriichan.spigot.justlootit.util.VersionConstant;
 
 public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> implements IServiceProvider {
 
     /*
-     *  TODO List
-     * 
-     *  - Add support for third-party plugins (add an api or smth)
+     *  TODO: [AFTER RELEASE] Add support for third-party plugins (add an api or smth)
+     *  
+     *  TODO: [AFTER RELEASE] Possibly add items that create containers
+     *  
+     *  TODO: Add command to create and manage 'Refresh Groups'
      */
 
     public static JustLootItPlugin get() {
@@ -62,6 +68,8 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
 
     private CommandManager commandManager;
     private BukkitCommandInjectableBridge<?> commandBridge;
+    
+    private volatile InputProvider inputProvider = SimpleChatInputProvider.CHAT;
 
     /*
      * PacketContainers
@@ -135,6 +143,9 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
             CommandDefinition.of("justlootit").alias("jloot").alias("jli").description("command.description.justlootit.parent").build(this), this::actor)
                 .inject();
         registerCommands(commandManager);
+        // Handle compatibilities
+        JustLootItCompatibilities.class.getClass();
+        CompatDependency.updateAll(this);
     }
     
     @Override
@@ -169,10 +180,22 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
             commandBridge.uninject();
         }
     }
+    
+    /*
+     * Setter
+     */
+    
+    public void inputProvider(InputProvider inputProvider) {
+        this.inputProvider = Objects.requireNonNull(inputProvider);
+    }
 
     /*
      * Getter
      */
+    
+    public InputProvider inputProvider() {
+        return inputProvider;
+    }
 
     public VersionHandler versionHandler() {
         return versionHandler;
@@ -219,6 +242,10 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
 
     public NamespacedKey key(final String name) {
         return new NamespacedKey(this, name);
+    }
+
+    public <T extends CommandSender> LootItActor<T> actor(final T sender) {
+        return actor(sender, messageManager());
     }
     
     public <T extends CommandSender> LootItActor<T> actor(final T sender, final MessageManager manager) {

@@ -12,6 +12,7 @@
     <properties>
         <server.version>1.20.2</server.version>
         <pluginbase.version>1.0.1</pluginbase.version>
+        <betterinputs.version>0.3.0</betterinputs.version>
         <project.sourceDir>${project.build.directory}/project-sources</project.sourceDir>
         <project.java.version>17</project.java.version>
     </properties>
@@ -37,15 +38,23 @@
             <artifactId>pluginbase</artifactId>
             <version>${pluginbase.version}-MC1.20.1</version>
         </dependency>
-        
+
         <!-- Source transformer -->
         <dependency>
             <groupId>me.lauriichan.maven</groupId>
             <artifactId>maven-source-modification-plugin</artifactId>
-            <version>1.1.0</version>
+            <version>2.0.0</version>
             <scope>provided</scope>
         </dependency>
-        
+
+        <!-- Better Inputs -->
+        <dependency>
+            <groupId>me.nemo_64.betterinputs</groupId>
+            <artifactId>api</artifactId>
+            <version>${betterinputs.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- LayLib -->
         <dependency>
             <groupId>me.lauriichan.laylib</groupId>
@@ -178,8 +187,24 @@
             <plugin>
                 <groupId>me.lauriichan.maven</groupId>
                 <artifactId>maven-source-modification-plugin</artifactId>
-                <version>1.1.0</version>
+                <version>2.0.0</version>
                 <executions>
+                    <execution>
+                        <id>default-generateSources</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generateSource</goal>
+                        </goals>
+                        <configuration>
+                            <generators>
+                                <generator>
+                                    <className>
+                                        me.lauriichan.maven.justlootit.generator.ContainerTypeGenerator</className>
+                                </generator>
+                            </generators>
+                            <outputDirectory>${project.sourceDir}</outputDirectory>
+                        </configuration>
+                    </execution>
                     <execution>
                         <id>default-modifySources</id>
                         <phase>generate-sources</phase>

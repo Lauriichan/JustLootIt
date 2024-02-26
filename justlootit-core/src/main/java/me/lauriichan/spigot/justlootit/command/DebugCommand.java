@@ -47,6 +47,7 @@ import me.lauriichan.spigot.justlootit.nms.LevelAdapter;
 import me.lauriichan.spigot.justlootit.storage.IStorage;
 import me.lauriichan.spigot.justlootit.storage.Storable;
 import me.lauriichan.spigot.justlootit.util.BlockUtil;
+import me.lauriichan.spigot.justlootit.util.CommandUtil;
 import me.lauriichan.spigot.justlootit.util.SimpleDataType;
 
 @Extension
@@ -54,39 +55,36 @@ import me.lauriichan.spigot.justlootit.util.SimpleDataType;
 @Permission(JustLootItPermission.COMMAND_DEBUG)
 public class DebugCommand implements ICommandExtension {
 
+    // TODO: Add descriptions
+    
+    // TODO: Remove container creation commands
+
     @Action("pdc")
     public void pdc(final JustLootItPlugin plugin, final Actor<?> actor,
-        @Argument(name = "x", index = 0, params = @Param(name = "axis", stringValue = "x", type = Param.TYPE_STRING)) final Coord x,
-        @Argument(name = "y", index = 1, params = @Param(name = "axis", stringValue = "y", type = Param.TYPE_STRING)) final Coord y,
-        @Argument(name = "z", index = 2, params = @Param(name = "axis", stringValue = "z", type = Param.TYPE_STRING)) final Coord z,
+        @Argument(name = "x", optional = true, index = 0, params = @Param(name = "axis", stringValue = "x", type = Param.TYPE_STRING)) final Coord x,
+        @Argument(name = "y", optional = true, index = 1, params = @Param(name = "axis", stringValue = "y", type = Param.TYPE_STRING)) final Coord y,
+        @Argument(name = "z", optional = true, index = 2, params = @Param(name = "axis", stringValue = "z", type = Param.TYPE_STRING)) final Coord z,
         @Argument(name = "world", optional = true, index = 3) World world) {
-        if (world == null) {
-            if (!(actor.getHandle() instanceof Entity entity)) {
-                actor.sendTranslatedMessage(Messages.COMMAND_SYSTEM_ACTOR_WORLD_REQUIRED);
-                return;
-            }
-            world = entity.getWorld();
-        }
-        final World finalWorld = world;
+        final Location loc = CommandUtil.getLocation(actor, x, y, z, world);
         plugin.mainService().submit(() -> {
-            Block block = finalWorld.getBlockAt(x.value(), y.value(), z.value());
+            Block block = loc.getBlock();
             if (block.isEmpty()) {
-                Collection<Entity> entities = finalWorld
-                    .getNearbyEntities(new Location(finalWorld, x.value() + 0.5d, y.value() + 0.5d, z.value() + 0.5d), 1.5d, 1.5d, 1.5d);
+                Collection<Entity> entities = loc.getWorld()
+                    .getNearbyEntities(new Location(loc.getWorld(), loc.getBlockX() + 0.5d, loc.getBlockY() + 0.5d, loc.getBlockZ() + 0.5d), 1.5d, 1.5d, 1.5d);
                 if (entities.isEmpty()) {
-                    actor.sendTranslatedMessage(Messages.COMMAND_DEBUG_PDC_DATA_EMPTY_BLOCK, Key.of("x", x.value()), Key.of("y", y.value()),
-                        Key.of("z", z.value()), Key.of("world", finalWorld.getName()));
+                    actor.sendTranslatedMessage(Messages.COMMAND_DEBUG_PDC_DATA_EMPTY_BLOCK, Key.of("x", loc.getBlockX()), Key.of("y", loc.getBlockY()),
+                        Key.of("z", loc.getBlockZ()), Key.of("world", loc.getWorld().getName()));
                     return;
                 }
                 List<Entity> validEntities = entities.stream()
                     .filter(entity -> entity instanceof ItemFrame || entity instanceof ChestBoat || entity instanceof Minecart).toList();
                 if (validEntities.isEmpty()) {
-                    actor.sendTranslatedMessage(Messages.COMMAND_DEBUG_PDC_DATA_EMPTY_BLOCK, Key.of("x", x.value()), Key.of("y", y.value()),
-                        Key.of("z", z.value()), Key.of("world", finalWorld.getName()));
+                    actor.sendTranslatedMessage(Messages.COMMAND_DEBUG_PDC_DATA_EMPTY_BLOCK, Key.of("x", loc.getBlockX()), Key.of("y", loc.getBlockY()),
+                        Key.of("z", loc.getBlockZ()), Key.of("world", loc.getWorld().getName()));
                     return;
                 }
                 double distance = Double.MAX_VALUE;
-                Location origin = new Location(finalWorld, x.value() + 0.5d, y.value() + 0.5d, z.value() + 0.5d);
+                Location origin = new Location(loc.getWorld(), loc.getBlockX() + 0.5d, loc.getBlockY() + 0.5d, loc.getBlockZ() + 0.5d);
                 Entity closest = null;
                 for (Entity entity : validEntities) {
                     Location current = entity.getLocation();
@@ -96,31 +94,31 @@ public class DebugCommand implements ICommandExtension {
                         distance = dist;
                     }
                 }
-                Location loc = closest.getLocation();
+                Location closestLoc = closest.getLocation();
                 String data = plugin.versionHandler().debugHelper().persistentDataAsString(closest.getPersistentDataContainer());
                 if (data.isEmpty()) {
                     actor.sendTranslatedMessage(Messages.COMMAND_DEBUG_PDC_DATA_EMPTY_ENTITY, Key.of("x", loc.getX()),
-                        Key.of("y", loc.getY()), Key.of("z", loc.getZ()), Key.of("world", finalWorld.getName()));
+                        Key.of("y", closestLoc.getY()), Key.of("z", closestLoc.getZ()), Key.of("world", closestLoc.getWorld().getName()));
                     return;
                 }
                 actor.sendTranslatedMessage(Messages.COMMAND_DEBUG_PDC_DATA_FORMAT_ENTITY, Key.of("data", data.replace("\r", "")),
-                    Key.of("x", loc.getX()), Key.of("y", loc.getY()), Key.of("z", loc.getZ()), Key.of("world", finalWorld.getName()));
+                    Key.of("x", closestLoc.getX()), Key.of("y", closestLoc.getY()), Key.of("z", closestLoc.getZ()), Key.of("world", closestLoc.getWorld().getName()));
                 return;
             }
             BlockState state = block.getState();
             if (!(state instanceof PersistentDataHolder dataHolder)) {
-                actor.sendTranslatedMessage(Messages.COMMAND_DEBUG_PDC_DATA_EMPTY_BLOCK, Key.of("x", x.value()), Key.of("y", y.value()),
-                    Key.of("z", z.value()), Key.of("world", finalWorld.getName()));
+                actor.sendTranslatedMessage(Messages.COMMAND_DEBUG_PDC_DATA_EMPTY_BLOCK, Key.of("x", loc.getBlockX()), Key.of("y", loc.getBlockY()),
+                    Key.of("z", loc.getBlockZ()), Key.of("world", loc.getWorld().getName()));
                 return;
             }
             String data = plugin.versionHandler().debugHelper().persistentDataAsString(dataHolder.getPersistentDataContainer());
             if (data.isEmpty()) {
-                actor.sendTranslatedMessage(Messages.COMMAND_DEBUG_PDC_DATA_EMPTY_BLOCK, Key.of("x", x.value()), Key.of("y", y.value()),
-                    Key.of("z", z.value()), Key.of("world", finalWorld.getName()));
+                actor.sendTranslatedMessage(Messages.COMMAND_DEBUG_PDC_DATA_EMPTY_BLOCK, Key.of("x", loc.getBlockX()), Key.of("y", loc.getBlockY()),
+                    Key.of("z", loc.getBlockZ()), Key.of("world", loc.getWorld().getName()));
                 return;
             }
             actor.sendTranslatedMessage(Messages.COMMAND_DEBUG_PDC_DATA_FORMAT_BLOCK, Key.of("data", data.replace("\r", "")),
-                Key.of("x", x.value()), Key.of("y", y.value()), Key.of("z", z.value()), Key.of("world", finalWorld.getName()));
+                Key.of("x", loc.getBlockX()), Key.of("y", loc.getBlockY()), Key.of("z", loc.getBlockZ()), Key.of("world", loc.getWorld().getName()));
         });
     }
 

@@ -30,9 +30,11 @@ import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.capability.StorageCapability;
 import me.lauriichan.spigot.justlootit.command.argument.CoordinateArgument.Coord;
 import me.lauriichan.spigot.justlootit.data.Container;
+import me.lauriichan.spigot.justlootit.data.ContainerType;
 import me.lauriichan.spigot.justlootit.data.FrameContainer;
 import me.lauriichan.spigot.justlootit.data.VanillaContainer;
 import me.lauriichan.spigot.justlootit.message.Messages;
+import me.lauriichan.spigot.justlootit.util.CommandUtil;
 import me.lauriichan.spigot.justlootit.util.SimpleDataType;
 import me.lauriichan.spigot.justlootit.util.TypeName;
 import net.md_5.bungee.api.chat.HoverEvent;
@@ -41,37 +43,61 @@ import net.md_5.bungee.api.chat.HoverEvent;
 @Command(name = "container")
 @Permission(JustLootItPermission.COMMAND_CONTAINER)
 public class ContainerCommand implements ICommandExtension {
+    
+    // TODO: Add container creation commands
+    
+    // TODO: Command to view and modify existing containers (Preferably with Inventory UI)
+    
+    // TODO: [IDEA] Add command to view which player accessed a container and reset their cooldown / make it so they didn't access it yet (Inventory UI or Chat UI)
+    
+    // TODO: Add descriptions
+    
+    @Action("create")
+    public void create(final JustLootItPlugin plugin, final Actor<?> actor,
+        @Argument(name = "type", index = 0, params = @Param(name = "type", classValue = ContainerType.class, type = Param.TYPE_CLASS)) final ContainerType type,
+        @Argument(name = "x", optional = true, index = 1, params = @Param(name = "axis", stringValue = "x", type = Param.TYPE_STRING)) final Coord x,
+        @Argument(name = "y", optional = true, index = 2, params = @Param(name = "axis", stringValue = "y", type = Param.TYPE_STRING)) final Coord y,
+        @Argument(name = "z", optional = true, index = 3, params = @Param(name = "axis", stringValue = "z", type = Param.TYPE_STRING)) final Coord z,
+        @Argument(name = "world", optional = true, index = 4) World world) {
+        final Location loc = CommandUtil.getLocation(actor, x, y, z, world);
+        if (type == ContainerType.FRAME) {
+            createEntityContainer(plugin, actor, type, loc);
+            return;
+        }
+        createBlockContainer(plugin, actor, type, loc);
+    }
+    
+    private void createEntityContainer(final JustLootItPlugin plugin, final Actor<?> actor, final ContainerType type, final Location location) {
+        
+    }
+    
+    private void createBlockContainer(final JustLootItPlugin plugin, final Actor<?> actor, final ContainerType type, final Location location) {
+        
+    }
 
     @Action("info")
     public void info(final JustLootItPlugin plugin, final Actor<?> actor,
-        @Argument(name = "x", index = 0, params = @Param(name = "axis", stringValue = "x", type = Param.TYPE_STRING)) final Coord x,
-        @Argument(name = "y", index = 1, params = @Param(name = "axis", stringValue = "y", type = Param.TYPE_STRING)) final Coord y,
-        @Argument(name = "z", index = 2, params = @Param(name = "axis", stringValue = "z", type = Param.TYPE_STRING)) final Coord z,
+        @Argument(name = "x", optional = true, index = 0, params = @Param(name = "axis", stringValue = "x", type = Param.TYPE_STRING)) Coord x,
+        @Argument(name = "y", optional = true, index = 1, params = @Param(name = "axis", stringValue = "y", type = Param.TYPE_STRING)) Coord y,
+        @Argument(name = "z", optional = true, index = 2, params = @Param(name = "axis", stringValue = "z", type = Param.TYPE_STRING)) Coord z,
         @Argument(name = "world", optional = true, index = 3) World world) {
-        if (world == null) {
-            if (!(actor.getHandle() instanceof Entity entity)) {
-                actor.sendTranslatedMessage(Messages.COMMAND_SYSTEM_ACTOR_WORLD_REQUIRED);
-                return;
-            }
-            world = entity.getWorld();
-        }
-        final World finalWorld = world;
+        final Location loc = CommandUtil.getLocation(actor, x, y, z, world);
         plugin.mainService().submit(() -> {
-            Block block = finalWorld.getBlockAt(x.value(), y.value(), z.value());
+            Block block = loc.getBlock();
             if (block.isEmpty()) {
-                doEntityContainer(plugin, finalWorld, actor, x.value(), y.value(), z.value());
+                doInfoForEntityContainer(plugin, loc.getWorld(), actor, loc.getBlockX(), loc.getBlockY(), loc.getBlockZ());
                 return;
             }
             BlockState state = block.getState();
             if (!(state instanceof org.bukkit.block.Container stateContainer)) {
-                doEntityContainer(plugin, finalWorld, actor, x.value(), y.value(), z.value());
+                doInfoForEntityContainer(plugin, loc.getWorld(), actor, loc.getBlockX(), loc.getBlockY(), loc.getBlockZ());
                 return;
             }
-            doBlockContainer(plugin, block, stateContainer, finalWorld, actor, x.value(), y.value(), z.value());
+            doInfoForBlockContainer(plugin, block, stateContainer, loc.getWorld(), actor, loc.getBlockX(), loc.getBlockY(), loc.getBlockZ());
         });
     }
 
-    private void doEntityContainer(JustLootItPlugin plugin, World world, Actor<?> actor, int x, int y, int z) {
+    private void doInfoForEntityContainer(JustLootItPlugin plugin, World world, Actor<?> actor, int x, int y, int z) {
         Collection<Entity> entities = world
             .getNearbyEntities(new Location(world, x + 0.5d, y + 0.5d, z + 0.5d), 1.5d, 1.5d, 1.5d);
         if (entities.isEmpty()) {
@@ -130,7 +156,7 @@ public class ContainerCommand implements ICommandExtension {
         });
     }
 
-    private void doBlockContainer(JustLootItPlugin plugin, Block block, org.bukkit.block.Container stateContainer, World world, Actor<?> actor, int x, int y, int z) {
+    private void doInfoForBlockContainer(JustLootItPlugin plugin, Block block, org.bukkit.block.Container stateContainer, World world, Actor<?> actor, int x, int y, int z) {
         PersistentDataContainer dataContainer = stateContainer.getPersistentDataContainer();
         Location location = block.getLocation();
         org.bukkit.block.Container otherContainer = stateContainer;

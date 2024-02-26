@@ -8,7 +8,6 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.DoubleChest;
 import org.bukkit.block.Lidded;
-import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.type.Chest;
 import org.bukkit.block.data.type.Chest.Type;
 import org.bukkit.entity.Entity;
@@ -32,6 +31,7 @@ import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.Vector;
 
+import me.lauriichan.laylib.localization.Key;
 import me.lauriichan.minecraft.pluginbase.extension.Extension;
 import me.lauriichan.minecraft.pluginbase.inventory.ChestSize;
 import me.lauriichan.minecraft.pluginbase.inventory.IGuiInventory;
@@ -43,45 +43,44 @@ import me.lauriichan.spigot.justlootit.JustLootItPermission;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.capability.PlayerGUICapability;
 import me.lauriichan.spigot.justlootit.capability.StorageCapability;
+import me.lauriichan.spigot.justlootit.command.impl.LootItActor;
 import me.lauriichan.spigot.justlootit.data.CacheLookupTable;
 import me.lauriichan.spigot.justlootit.data.CacheLookupTable.WorldEntry;
 import me.lauriichan.spigot.justlootit.inventory.handler.LootUIHandler;
+import me.lauriichan.spigot.justlootit.message.Messages;
 import me.lauriichan.spigot.justlootit.data.CachedInventory;
 import me.lauriichan.spigot.justlootit.data.Container;
 import me.lauriichan.spigot.justlootit.data.IInventoryContainer;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
-import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.storage.IStorage;
 import me.lauriichan.spigot.justlootit.storage.Storable;
 import me.lauriichan.spigot.justlootit.util.BlockUtil;
+import me.lauriichan.spigot.justlootit.util.DataHelper;
 import me.lauriichan.spigot.justlootit.util.EntityUtil;
 import me.lauriichan.spigot.justlootit.util.InventoryUtil;
 import me.lauriichan.spigot.justlootit.util.SimpleDataType;
 
 @Extension
 public class ContainerListener implements IListenerExtension {
-    
+
     private static final ChestSize[] CHEST_VALUES = ChestSize.values();
 
-    private final VersionHandler versionHandler;
+    private final JustLootItPlugin plugin;
 
     public ContainerListener(final JustLootItPlugin plugin) {
-        this.versionHandler = plugin.versionHandler();
+        this.plugin = plugin;
     }
-    
+
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
     public void onBlockPlaceEvent(final BlockPlaceEvent event) {
         Block block = event.getBlock();
-        if (!(block.getState() instanceof org.bukkit.block.Container container) || !(container.getBlockData() instanceof Chest chest) || chest.getType() == Type.SINGLE) {
+        if (!(block.getState() instanceof org.bukkit.block.Container container) || !(container.getBlockData() instanceof Chest chest)
+            || chest.getType() == Type.SINGLE) {
             return;
         }
-        org.bukkit.block.Container otherContainer = BlockUtil.findChestAround(block.getWorld(), block.getLocation(), chest.getType(), chest.getFacing());
-        if (otherContainer == null) {
-            // This should not happen but just do it for safety
-            return;
-        }
-        PersistentDataContainer dataContainer = otherContainer.getPersistentDataContainer();
-        if (!dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+        org.bukkit.block.Container otherContainer = BlockUtil.findChestAround(block.getWorld(), block.getLocation(), chest.getType(),
+            chest.getFacing());
+        if (otherContainer == null || !otherContainer.getPersistentDataContainer().has(JustLootItKey.identity(), PersistentDataType.LONG)) {
             return;
         }
         Chest cloned = (Chest) chest.clone();
@@ -89,7 +88,7 @@ public class ContainerListener implements IListenerExtension {
         container.setBlockData(cloned);
         container.update(false, false);
     }
-    
+
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
     public void onBlockBreakEvent(final BlockBreakEvent event) {
         Block block = event.getBlock();
@@ -97,19 +96,84 @@ public class ContainerListener implements IListenerExtension {
             return;
         }
         PersistentDataContainer dataContainer = container.getPersistentDataContainer();
-        if (!dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+        if (!dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)
+            && !dataContainer.has(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR)) {
+            return;
+        }
+        org.bukkit.block.Container otherContainer = null;
+        if (container.getBlockData() instanceof Chest chest && chest.getType() != Type.SINGLE) {
+            Vector offset = dataContainer.get(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR);
+            BlockState otherState = block.getWorld().getBlockState(block.getLocation().add(offset));
+            if (!(otherState instanceof org.bukkit.block.Container)) {
+                dataContainer.remove(JustLootItKey.chestData());
+                container.update(false, false);
+                return;
+            }
+            otherContainer = ((org.bukkit.block.Container) otherState);
+            if (!dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+                PersistentDataContainer otherDataContainer = otherContainer.getPersistentDataContainer();
+                if (!otherDataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+                    otherDataContainer.remove(JustLootItKey.chestData());
+                    dataContainer.remove(JustLootItKey.chestData());
+                    otherContainer.update(false, false);
+                    container.update(false, false);
+                    return;
+                }
+            }
+        } else if(!dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+            dataContainer.remove(JustLootItKey.chestData());
+            container.update(false, false);
             return;
         }
         event.setCancelled(true);
         Player player = event.getPlayer();
-        if (!player.isSneaking() || !player.hasPermission(JustLootItPermission.ACTION_REMOVE_CONTAINER_BLOCK)) {
-            // TODO: Send message
+        LootItActor<?> actor = plugin.actor(player);
+        if (!player.hasPermission(JustLootItPermission.ACTION_REMOVE_CONTAINER_BLOCK)) {
+            actor.sendTranslatedMessage(Messages.CONTAINER_BREAK_UNPERMITTED_BLOCK);
             return;
         }
-        
-        // TODO: CONTAINER REMOVAL
+        if (!player.isSneaking()) {
+            actor.sendTranslatedMessage(Messages.CONTAINER_BREAK_PERMITTED_BLOCK);
+            return;
+        }
+        if (!DataHelper.canBreakContainer(dataContainer, actor.getId())) {
+            actor.sendTranslatedMessage(Messages.CONTAINER_BREAK_CONFIRMATION_BLOCK);
+            return;
+        }
+        if (otherContainer != null) {
+            if (!dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+                event.setCancelled(false);
+                otherContainer.getPersistentDataContainer().remove(JustLootItKey.chestData());
+                dataContainer.remove(JustLootItKey.chestData());
+                container.update(false, false);
+                Chest chest = (Chest) otherContainer.getBlockData();
+                chest.setType(Type.SINGLE);
+                otherContainer.setBlockData(chest);
+                otherContainer.update(true, false);
+                actor.sendTranslatedBarMessage(Messages.CONTAINER_BREAK_DOUBLE_CHEST);
+                return;
+            }
+            otherContainer.getPersistentDataContainer().remove(JustLootItKey.chestData());
+            Chest chest = (Chest) otherContainer.getBlockData();
+            chest.setType(Type.SINGLE);
+            otherContainer.setBlockData(chest);
+            otherContainer.update(true, false);
+            container.setBlockData(chest);
+        }
+        dataContainer.remove(JustLootItKey.breakData());
+        final long id = dataContainer.get(JustLootItKey.identity(), PersistentDataType.LONG);
+        actor.versionHandler().getLevel(player.getWorld()).getCapability(StorageCapability.class).ifPresent(capability -> {
+            event.setCancelled(false);
+            if (!capability.storage().delete(id)) {
+                actor.sendTranslatedMessage(Messages.CONTAINER_BREAK_NO_CONTAINER, Key.of("id", id));
+            }
+            dataContainer.remove(JustLootItKey.identity());
+            dataContainer.remove(JustLootItKey.breakData());
+            actor.sendTranslatedMessage(Messages.CONTAINER_BREAK_REMOVED_BLOCK, Key.of("id", id));
+        });
+        container.update(true, false);
     }
-    
+
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
     public void onVehicleDamage(final VehicleDamageEvent event) {
         Vehicle vehicle = event.getVehicle();
@@ -126,12 +190,29 @@ public class ContainerListener implements IListenerExtension {
             return;
         }
         Player player = (Player) attacker;
-        if (!player.isSneaking() || !player.hasPermission(JustLootItPermission.ACTION_REMOVE_CONTAINER_ENTITY)) {
-            // TODO: Send message
+        LootItActor<?> actor = plugin.actor(player);
+        if (!player.hasPermission(JustLootItPermission.ACTION_REMOVE_CONTAINER_ENTITY)) {
+            actor.sendTranslatedMessage(Messages.CONTAINER_BREAK_UNPERMITTED_ENTITY);
             return;
         }
-        
-        // TODO: ENTITY REMOVAL
+        if (!player.isSneaking()) {
+            actor.sendTranslatedMessage(Messages.CONTAINER_BREAK_PERMITTED_ENTITY);
+            return;
+        }
+        if (!DataHelper.canBreakContainer(dataContainer, actor.getId())) {
+            actor.sendTranslatedMessage(Messages.CONTAINER_BREAK_CONFIRMATION_ENTITY);
+            return;
+        }
+        final long id = dataContainer.get(JustLootItKey.identity(), PersistentDataType.LONG);
+        actor.versionHandler().getLevel(player.getWorld()).getCapability(StorageCapability.class).ifPresent(capability -> {
+            event.setCancelled(false);
+            if (!capability.storage().delete(id)) {
+                actor.sendTranslatedMessage(Messages.CONTAINER_BREAK_NO_CONTAINER, Key.of("id", id));
+            }
+            dataContainer.remove(JustLootItKey.identity());
+            dataContainer.remove(JustLootItKey.breakData());
+            actor.sendTranslatedMessage(Messages.CONTAINER_BREAK_REMOVED_ENTITY, Key.of("id", id));
+        });
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
@@ -152,51 +233,48 @@ public class ContainerListener implements IListenerExtension {
         if (!(state instanceof org.bukkit.block.Container container)) {
             return;
         }
-        final BlockData blockData = state.getBlockData();
         final PersistentDataContainer dataContainer = container.getPersistentDataContainer();
-        if (blockData instanceof Chest chest && chest.getType() != Type.SINGLE) {
-            if (!dataContainer.has(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR)) {
+        if (!dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+            if (!(container.getBlockData() instanceof Chest chest) || chest.getType() == Type.SINGLE
+                || !dataContainer.has(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR)) {
                 return;
             }
             Vector offset = dataContainer.get(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR);
-            BlockState otherState = block.getWorld()
-                .getBlockAt(block.getX() + offset.getBlockX(), block.getY(), block.getZ() + offset.getBlockZ()).getState();
+            BlockState otherState = block.getWorld().getBlockAt(block.getLocation().add(offset)).getState();
             if (!(otherState instanceof org.bukkit.block.Container otherContainer)) {
                 dataContainer.remove(JustLootItKey.chestData());
-                state.update(true);
+                state.update(false, false);
                 return;
             }
             PersistentDataContainer otherDataContainer = otherContainer.getPersistentDataContainer();
-            org.bukkit.block.Container accessContainer = dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG) ? container
-                : otherContainer;
-            if (accessContainer != container && !otherDataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+            if (!otherDataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
                 otherDataContainer.remove(JustLootItKey.chestData());
                 dataContainer.remove(JustLootItKey.chestData());
-                otherContainer.update(true);
-                container.update(true);
+                otherContainer.update(false, false);
+                container.update(false, false);
                 return;
             }
-            PersistentDataContainer accessDataContainer = accessContainer == container ? dataContainer : otherDataContainer;
-            accessContainer(accessContainer.getLocation(), accessContainer, accessDataContainer, event, event.getPlayer(),
-                accessDataContainer.get(JustLootItKey.identity(), PersistentDataType.LONG));
-            if (!accessDataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
-                otherDataContainer.remove(JustLootItKey.chestData());
-                dataContainer.remove(JustLootItKey.chestData());
-                accessDataContainer.remove(JustLootItKey.identity());
-                otherContainer.update(true);
-                container.update(true);
+            accessContainer(otherContainer.getLocation(), otherContainer, otherDataContainer, event, event.getPlayer(),
+                otherDataContainer.get(JustLootItKey.identity(), PersistentDataType.LONG));
+            if (otherDataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+                return;
             }
+            otherDataContainer.remove(JustLootItKey.chestData());
+            dataContainer.remove(JustLootItKey.chestData());
+            otherContainer.update(false, false);
+            container.update(false, false);
             return;
         }
-        if (!dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG) || !JustLootItFlag.TILE_ENTITY_CONTAINERS.isSet()
+        if (!JustLootItFlag.TILE_ENTITY_CONTAINERS.isSet()
             && JustLootItConstant.UNSUPPORTED_CONTAINER_TYPES.contains(container.getInventory().getType())) {
             return;
         }
         accessContainer(block.getLocation(), container, dataContainer, event, event.getPlayer(),
             dataContainer.get(JustLootItKey.identity(), PersistentDataType.LONG));
-        if (!dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
-            container.update();
+        if (dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+            return;
         }
+        container.update(false, false);
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
@@ -216,9 +294,10 @@ public class ContainerListener implements IListenerExtension {
     private void accessContainer(final Location location, final InventoryHolder inventoryHolder, final PersistentDataContainer data,
         final Cancellable event, final Player bukkitPlayer, final long id) {
         final WorldEntry entryId = new WorldEntry(location.getWorld(), id);
-        final PlayerAdapter player = versionHandler.getPlayer(bukkitPlayer);
+        final LootItActor<?> actor = plugin.actor(bukkitPlayer);
+        final PlayerAdapter player = actor.versionHandler().getPlayer(bukkitPlayer);
         final UUID playerId = bukkitPlayer.getUniqueId();
-        versionHandler.getLevel(location.getWorld()).getCapability(StorageCapability.class).ifPresentOrElse(capability -> {
+        actor.versionHandler().getLevel(location.getWorld()).getCapability(StorageCapability.class).ifPresentOrElse(capability -> {
             final Container dataContainer = (Container) capability.storage().read(id);
             if (dataContainer == null) {
                 data.remove(JustLootItKey.identity());
@@ -257,16 +336,15 @@ public class ContainerListener implements IListenerExtension {
                         }
                         playerStorage.delete(cachedInventory.id());
                     }
-
                     final Duration duration = dataContainer.durationUntilNextAccess(playerId);
                     if (duration.isNegative()) {
-                        // TODO: Send message, never accessible
+                        actor.sendTranslatedBarMessage(Messages.CONTAINER_ACCESS_NOT_REPEATABLE);
                         return;
                     }
-                    // TODO: Send message, not accessible yet
+                    actor.sendTranslatedBarMessage(Messages.CONTAINER_ACCESS_NOT_ACCESSIBLE,
+                        Key.of("time", DataHelper.formTimeString(actor, duration)));
                     return;
                 }
-
                 player.getCapability(PlayerGUICapability.class).ifPresent(guiCapability -> {
                     final IGuiInventory inventory = guiCapability.gui();
                     if (!(dataContainer instanceof final IInventoryContainer container)) {

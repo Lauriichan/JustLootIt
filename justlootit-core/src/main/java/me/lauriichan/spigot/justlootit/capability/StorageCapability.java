@@ -20,9 +20,9 @@ import me.lauriichan.spigot.justlootit.storage.randomaccessfile.RAFSingleStorage
 
 public abstract class StorageCapability implements ICapability {
 
-    static final class LevelImpl extends StorageCapability {
+    static final class LevelContainerImpl extends StorageCapability {
 
-        public LevelImpl(final VersionHandler handler, final LevelAdapter adapter) {
+        public LevelContainerImpl(final VersionHandler handler, final LevelAdapter adapter) {
             super(new CachedStorage<>(new RAFMultiStorage<>(handler.logger(), Storable.class,
                 new File(adapter.asBukkit().getWorldFolder(), "justlootit/containers"))));
             storage.register(VanillaContainer.ADAPTER);

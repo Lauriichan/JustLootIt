@@ -19,6 +19,8 @@ import me.lauriichan.spigot.justlootit.util.TypeName;
 @Command(name = "config")
 @Permission(JustLootItPermission.COMMAND_CONFIG)
 public class ConfigCommand implements ICommandExtension {
+    
+    // TODO: Add descriptions
 
     @Action("save")
     public void save(JustLootItPlugin plugin, Actor<?> actor,

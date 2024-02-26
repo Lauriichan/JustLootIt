@@ -7,7 +7,7 @@ import me.lauriichan.minecraft.pluginbase.message.IMessageExtension;
 
 @Extension
 public final class Messages implements IMessageExtension {
-
+    
     private Messages() {
         throw new UnsupportedOperationException();
     }
@@ -20,6 +20,79 @@ public final class Messages implements IMessageExtension {
     public static MessageProvider NAME;
     @Message(id = "plugin.prefix", content = "$#plugin.name &8|&7")
     public static MessageProvider PREFIX;
+    
+    /*
+     * Input
+     */
+    @Message(id = "input.manual.cancel", content = "$#plugin.prefix &7Successfully cancelled input.")
+    public static MessageProvider INPUT_MANUAL_CANCEL;
+    
+    @Message(id = "input.betterinputs.cancelled", content = "$#plugin.prefix &7Input inquiry cancelled: &c$reason")
+    public static MessageProvider INPUT_BETTERINPUTS_CANCELLED;
+    @Message(id = "input.betterinputs.failed", content = "$#plugin.prefix &7Input inquiry failed: &c$message")
+    public static MessageProvider INPUT_BETTERINPUTS_FAILED;
+    @Message(id = "input.betterinputs.prompt", content = "$#plugin.prefix &7$prompt")
+    public static MessageProvider INPUT_BETTERINPUTS_PROMPT;
+
+    @Message(id = "input.simple.failed", content = "$#plugin.prefix &7Input inquiry failed: &c$message")
+    public static MessageProvider INPUT_SIMPLE_FAILED;
+    @Message(id = "input.simple.prompt", content = "$#plugin.prefix &7$prompt")
+    public static MessageProvider INPUT_SIMPLE_PROMPT;
+    
+    /*
+     * Container
+     */
+    
+    @Message(id = "container.access.not-repeatable", content = "&7Can &cnever &7be accessed again.")
+    public static MessageProvider CONTAINER_ACCESS_NOT_REPEATABLE;
+    @Message(id = "container.access.not-accessible", content = "&7Not accessable for $time&7.")
+    public static MessageProvider CONTAINER_ACCESS_NOT_ACCESSIBLE;
+
+    @Message(id = "container.break.unpermitted.block", content = "$#plugin.prefix This entity is a loot container can not be removed.")
+    public static MessageProvider CONTAINER_BREAK_UNPERMITTED_BLOCK;
+    @Message(id = "container.break.unpermitted.entity", content = "$#plugin.prefix This block is a loot container can not be removed.")
+    public static MessageProvider CONTAINER_BREAK_UNPERMITTED_ENTITY;
+
+    @Message(id = "container.break.permitted.block", content = "$#plugin.prefix This entity is a loot container, you have to sneak in order to remove it.")
+    public static MessageProvider CONTAINER_BREAK_PERMITTED_BLOCK;
+    @Message(id = "container.break.permitted.entity", content = "$#plugin.prefix This block is a loot container, you have to sneak in order to remove it.")
+    public static MessageProvider CONTAINER_BREAK_PERMITTED_ENTITY;
+    
+    @Message(id = "container.break.confirmation.block", content = "$#plugin.prefix Please break the container block again in the next &c2 minutes &7in order to remove it.")
+    public static MessageProvider CONTAINER_BREAK_CONFIRMATION_BLOCK;
+    @Message(id = "container.break.confirmation.entity", content = "$#plugin.prefix Please hit the container entity again in the next &c2 minutes &7in order to remove it.")
+    public static MessageProvider CONTAINER_BREAK_CONFIRMATION_ENTITY;
+    
+    @Message(id = "container.break.no-container", content = "$#plugin.prefix Container &8(&c$id&8) &7is already deleted.")
+    public static MessageProvider CONTAINER_BREAK_NO_CONTAINER;
+    
+    @Message(id = "container.break.double-chest", content = "$#plugin.prefix Successfully removed chest half.")
+    public static MessageProvider CONTAINER_BREAK_DOUBLE_CHEST;
+    
+    @Message(id = "container.break.removed.block", content = "$#plugin.prefix Succesfully removed container &8(&c$id&8) &7from block.")
+    public static MessageProvider CONTAINER_BREAK_REMOVED_BLOCK;
+    @Message(id = "container.break.removed.entity", content = "$#plugin.prefix Succesfully removed container &8(&c$id&8) &7from entity.")
+    public static MessageProvider CONTAINER_BREAK_REMOVED_ENTITY;
+    
+    @Message(id = "container.time.unit.millisecond", content = "$value millisecond(s)")
+    public static MessageProvider CONTAINER_TIME_UNIT_MILLISECOND;
+    @Message(id = "container.time.unit.second", content = "$value second(s)")
+    public static MessageProvider CONTAINER_TIME_UNIT_SECOND;
+    @Message(id = "container.time.unit.minute", content = "$value minute(s)")
+    public static MessageProvider CONTAINER_TIME_UNIT_MINUTE;
+    @Message(id = "container.time.unit.hour", content = "$value hour(s)")
+    public static MessageProvider CONTAINER_TIME_UNIT_HOUR;
+    @Message(id = "container.time.unit.day", content = "$value day(s)")
+    public static MessageProvider CONTAINER_TIME_UNIT_DAY;
+
+    @Message(id = "container.time.format.seconds", content = "&c$seconds &7and &c$milliseconds")
+    public static MessageProvider CONTAINER_TIME_FORMAT_SECONDS;
+    @Message(id = "container.time.format.minutes", content = "&c$minutes &7and &c$minutes")
+    public static MessageProvider CONTAINER_TIME_FORMAT_MINUTES;
+    @Message(id = "container.time.format.hours", content = "&c$hours &7and &c$minutes")
+    public static MessageProvider CONTAINER_TIME_FORMAT_HOURS;
+    @Message(id = "container.time.format.days", content = "&c$days &7and &c$hours")
+    public static MessageProvider CONTAINER_TIME_FORMAT_DAYS;
 
     /*
      * Commands
@@ -29,6 +102,10 @@ public final class Messages implements IMessageExtension {
 
     @Message(id = "command.system.actor.not-supported", content = "$#plugin.prefix The command '&c$command&7' can only be excuted by actors of type &c$actorType&7.")
     public static MessageProvider COMMAND_SYSTEM_ACTOR_NOT_SUPPORTED;
+    @Message(id = "command.system.actor.coords-required.player", content = "$#plugin.prefix Please specify all x, y and z coordinates or look at a block.")
+    public static MessageProvider COMMAND_SYSTEM_ACTOR_COORDS_REQUIRED_PLAYER;
+    @Message(id = "command.system.actor.coords-required.non-player", content = "$#plugin.prefix Please specify all x, y and z coordinates.")
+    public static MessageProvider COMMAND_SYSTEM_ACTOR_COORDS_REQUIRED_NON_PLAYER;
     @Message(id = "command.system.actor.world-required", content = "$#plugin.prefix Please specify a world.")
     public static MessageProvider COMMAND_SYSTEM_ACTOR_WORLD_REQUIRED;
 
