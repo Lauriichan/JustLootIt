@@ -43,10 +43,8 @@ public record CompatDependency(String name, int minMajor, int maxMajor, int minM
         }
         ObjectArrayList<CompatDependency> dependencies = DEPENDENCIES.get(plugin.getName());
         if (dependencies == null) {
-            System.out.println("UPDATE FAILED");
             return;
         }
-        System.out.println("UPDATING");
         for (CompatDependency dependency : dependencies) {
             if (dependency.isSupported(plugin)) {
                 justlootit.logger().info("{0} compatibility for {1}.", enabled ? "Enabling" : "Disabling", dependency.name());
@@ -79,7 +77,6 @@ public record CompatDependency(String name, int minMajor, int maxMajor, int minM
             dependencies = new ObjectArrayList<>();
             DEPENDENCIES.put(name, dependencies);
         }
-        System.out.println(name);
         dependencies.add(this);
     }
 
