@@ -96,7 +96,7 @@ public final class Messages implements IMessageExtension {
 
     @Message(id = "container.time.format.seconds", content = "&c$seconds &7and &c$milliseconds")
     public static MessageProvider CONTAINER_TIME_FORMAT_SECONDS;
-    @Message(id = "container.time.format.minutes", content = "&c$minutes &7and &c$minutes")
+    @Message(id = "container.time.format.minutes", content = "&c$minutes &7and &c$seconds")
     public static MessageProvider CONTAINER_TIME_FORMAT_MINUTES;
     @Message(id = "container.time.format.hours", content = "&c$hours &7and &c$minutes")
     public static MessageProvider CONTAINER_TIME_FORMAT_HOURS;
