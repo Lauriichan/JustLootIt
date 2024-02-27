@@ -30,7 +30,7 @@ public class ConfigCommand implements ICommandExtension {
         if (choosenWrapper == null) {
             actor.sendTranslatedMessage(Messages.COMMAND_CONFIG_SAVE_ALL_START);
             int saved = 0, skipped = 0;
-            for (Object2IntMap.Entry<ConfigWrapper<?>> entry : configManager.reload().object2IntEntrySet()) {
+            for (Object2IntMap.Entry<ConfigWrapper<?>> entry : configManager.save().object2IntEntrySet()) {
                 int state = sendSaveInfo(actor, TypeName.ofConfig(entry.getKey().config()), entry.getIntValue());
                 if (state == 1) {
                     saved++;
