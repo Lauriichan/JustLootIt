@@ -117,10 +117,14 @@ public final class GroupCommand implements ICommandExtension {
         actor.sendTranslatedMessage(Messages.COMMAND_GROUP_LIST_FORMAT_HEADER, Key.of("page", page), Key.of("maxPage", maxPage));
         actor.sendMessage(""); // Add one space
         int maxIndex = Math.min((page - 1) * GROUP_PAGE_SIZE + GROUP_PAGE_SIZE, groups.length);
+        RefreshGroup group;
         for (int index = (page - 1) * GROUP_PAGE_SIZE; index < maxIndex; index++) {
-            Component.of(Messages.COMMAND_GROUP_LIST_FORMAT_ENTRY_TEXT, actor.getLanguage())
+            group = groups[index];
+            Component
+                .of(actor.getTranslatedMessageAsString(Messages.COMMAND_GROUP_LIST_FORMAT_ENTRY_TEXT, Key.of("group", group.id()),
+                    Key.of("time", getTimePlaceholder(actor, group.timeoutTime(), group.unit()))))
                 .hoverText(Messages.COMMAND_GROUP_LIST_FORMAT_ENTRY_HOVER, actor.getLanguage())
-                .clickSuggest("{0} group set {1}", commandManager.getPrefix(), groups[index].id()).send(actor);
+                .clickSuggest("{0} group set {1}", commandManager.getPrefix(), group.id()).send(actor);
         }
         actor.sendMessage(""); // Add one space
         if (actor.getId() != Actor.IMPL_ID) {
