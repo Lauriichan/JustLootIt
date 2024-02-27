@@ -24,7 +24,7 @@ public abstract class StorageCapability implements ICapability {
 
         public LevelContainerImpl(final VersionHandler handler, final LevelAdapter adapter) {
             super(new CachedStorage<>(new RAFMultiStorage<>(handler.logger(), Storable.class,
-                new File(adapter.asBukkit().getWorldFolder(), "justlootit/level/containers"))));
+                new File(adapter.asBukkit().getWorldFolder(), "justlootit/containers"))));
             storage.register(VanillaContainer.ADAPTER);
             storage.register(StaticContainer.ADAPTER);
             storage.register(FrameContainer.ADAPTER);
