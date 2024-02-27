@@ -88,7 +88,8 @@ public final class ContainerCreationHelper {
         (plugin, actor, location, entity, creator) -> {
             if (!(entity instanceof ItemFrame itemFrame)) {
                 actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_UNSUPPORTED_ENTITY, Key.of("x", location.getBlockX()),
-                    Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()), Key.of("type", ContainerType.FRAME));
+                    Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()),
+                    Key.of("type", ContainerType.FRAME));
                 return;
             }
             if (itemFrame.getPersistentDataContainer().has(JustLootItKey.identity(), PersistentDataType.LONG)) {
@@ -113,7 +114,8 @@ public final class ContainerCreationHelper {
         (plugin, actor, location, entity, creator) -> {
             if (!EntityUtil.isSuppportedEntity(entity)) {
                 actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_UNSUPPORTED_ENTITY, Key.of("x", location.getBlockX()),
-                    Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()), Key.of("type", ContainerType.VANILLA));
+                    Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()),
+                    Key.of("type", ContainerType.VANILLA));
                 return;
             }
             PersistentDataContainer dataContainer = entity.getPersistentDataContainer();
@@ -128,20 +130,24 @@ public final class ContainerCreationHelper {
                         actor.getTranslatedMessageAsString(Messages.INPUT_RETRY_LOOTTABLE_KEY),
                         (str) -> LootTableArgument.isLootTable(plugin.versionHelper(), str), (a2, rawLootTable) -> {
                             LootTable lootTable = LootTableArgument.parseLootTable(plugin.versionHelper(), rawLootTable);
-                            if (entity.isDead()) {
-                                actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_CHANGED_ENTITY, Key.of("x", location.getBlockX()),
-                                    Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()));
-                                return;
-                            }
-                            if (dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
-                                actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_ALREADY_CONTAINER_ENTITY, Key.of("x", location.getBlockX()),
-                                    Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()));
-                                return;
-                            }
-                            creator.accept((id) -> {
-                                dataContainer.set(JustLootItKey.identity(), PersistentDataType.LONG, id);
-                                ((InventoryHolder) entity).getInventory().clear();
-                                return new VanillaContainer(id, lootTable, seed);
+                            plugin.scheduler().entity(entity, () -> {
+                                if (entity.isDead()) {
+                                    actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_CHANGED_ENTITY,
+                                        Key.of("x", location.getBlockX()), Key.of("y", location.getBlockY()),
+                                        Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()));
+                                    return;
+                                }
+                                if (dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+                                    actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_ALREADY_CONTAINER_ENTITY,
+                                        Key.of("x", location.getBlockX()), Key.of("y", location.getBlockY()),
+                                        Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()));
+                                    return;
+                                }
+                                creator.accept((id) -> {
+                                    dataContainer.set(JustLootItKey.identity(), PersistentDataType.LONG, id);
+                                    ((InventoryHolder) entity).getInventory().clear();
+                                    return new VanillaContainer(id, lootTable, seed);
+                                });
                             });
                         });
                 });
@@ -159,23 +165,26 @@ public final class ContainerCreationHelper {
                         actor.getTranslatedMessageAsString(Messages.INPUT_RETRY_LOOTTABLE_KEY),
                         (str) -> LootTableArgument.isLootTable(plugin.versionHelper(), str), (a2, rawLootTable) -> {
                             LootTable lootTable = LootTableArgument.parseLootTable(plugin.versionHelper(), rawLootTable);
-                            if (!(block.getBlock().getState() instanceof org.bukkit.block.Container blockContainer)) {
-                                actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_CHANGED_BLOCK,
-                                    Key.of("x", location.getBlockX()), Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()),
-                                    Key.of("world", location.getWorld()));
-                                return;
-                            }
-                            PersistentDataContainer dataContainer = blockContainer.getPersistentDataContainer();
-                            if (dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
-                                actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_ALREADY_CONTAINER_BLOCK, Key.of("x", location.getBlockX()),
-                                    Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()));
-                                return;
-                            }
-                            creator.accept((id) -> {
-                                dataContainer.set(JustLootItKey.identity(), PersistentDataType.LONG, id);
-                                blockContainer.update(false, false);
-                                blockContainer.getInventory().clear();
-                                return new VanillaContainer(id, lootTable, seed);
+                            plugin.scheduler().regional(location, () -> {
+                                if (!(block.getBlock().getState() instanceof org.bukkit.block.Container blockContainer)) {
+                                    actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_CHANGED_BLOCK,
+                                        Key.of("x", location.getBlockX()), Key.of("y", location.getBlockY()),
+                                        Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()));
+                                    return;
+                                }
+                                PersistentDataContainer dataContainer = blockContainer.getPersistentDataContainer();
+                                if (dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+                                    actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_ALREADY_CONTAINER_BLOCK,
+                                        Key.of("x", location.getBlockX()), Key.of("y", location.getBlockY()),
+                                        Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()));
+                                    return;
+                                }
+                                creator.accept((id) -> {
+                                    dataContainer.set(JustLootItKey.identity(), PersistentDataType.LONG, id);
+                                    blockContainer.update(false, false);
+                                    blockContainer.getInventory().clear();
+                                    return new VanillaContainer(id, lootTable, seed);
+                                });
                             });
                         });
                 });
@@ -185,7 +194,8 @@ public final class ContainerCreationHelper {
         (plugin, actor, location, entity, creator) -> {
             if (!EntityUtil.isSuppportedEntity(entity)) {
                 actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_UNSUPPORTED_ENTITY, Key.of("x", location.getBlockX()),
-                    Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()), Key.of("type", ContainerType.STATIC));
+                    Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()),
+                    Key.of("type", ContainerType.STATIC));
                 return;
             }
             PersistentDataContainer dataContainer = entity.getPersistentDataContainer();

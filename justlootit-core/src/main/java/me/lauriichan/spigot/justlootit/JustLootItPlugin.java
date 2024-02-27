@@ -146,9 +146,8 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
             CommandDefinition.of("justlootit").alias("jloot").alias("jli").description("command.description.justlootit.parent").build(this), this::actor)
                 .inject();
         registerCommands(commandManager);
-        // Handle compatibilities
-        JustLootItCompatibilities.class.getClass();
-        CompatDependency.updateAll(this);
+        // Initialize compatibilities
+        JustLootItCompatibilities.loadClass();
     }
     
     @Override
@@ -158,6 +157,8 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
             versionHandler.enable();
             registerPacketListeners();
         }
+        // Update compatibilities
+        CompatDependency.updateAll(this);
     }
 
     private void registerCommands(final CommandManager manager) {

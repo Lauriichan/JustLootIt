@@ -10,17 +10,18 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.lauriichan.laylib.reflection.StackTracker;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 
-public record CompatDependency(String name, int minMajor, int maxMajor, int minMinor, int maxMinor, DependencyExecutable enable, DependencyExecutable disable) {
-    
+public record CompatDependency(String name, int minMajor, int maxMajor, int minMinor, int maxMinor, DependencyExecutable enable,
+    DependencyExecutable disable) {
+
     @FunctionalInterface
     public static interface DependencyExecutable {
-        
+
         void execute(JustLootItPlugin justlootit, Plugin plugin);
-        
+
     }
 
     private static final Object2ObjectArrayMap<String, ObjectArrayList<CompatDependency>> DEPENDENCIES = new Object2ObjectArrayMap<>();
-    
+
     public static void updateAll(JustLootItPlugin jliPlugin) {
         Class<?> caller = StackTracker.getCallerClass().orElse(null);
         if (caller == null || JustLootItPlugin.class.getClassLoader() != caller.getClassLoader()) {
@@ -42,21 +43,26 @@ public record CompatDependency(String name, int minMajor, int maxMajor, int minM
         }
         ObjectArrayList<CompatDependency> dependencies = DEPENDENCIES.get(plugin.getName());
         if (dependencies == null) {
+            System.out.println("UPDATE FAILED");
             return;
         }
+        System.out.println("UPDATING");
         for (CompatDependency dependency : dependencies) {
             if (dependency.isSupported(plugin)) {
+                justlootit.logger().info("{0} compatibility for {1}.", enabled ? "Enabling" : "Disabling", dependency.name());
                 try {
                     (enabled ? dependency.enable() : dependency.disable()).execute(justlootit, plugin);
                 } catch (Throwable exception) {
-                    justlootit.logger().error("Failed to {0} compatibility for {1}.", exception, enabled ? "enable" : "disable", dependency.name());
+                    justlootit.logger().error("Failed to {0} compatibility for {1}.", exception, enabled ? "enable" : "disable",
+                        dependency.name());
                 }
                 break;
             }
         }
     }
 
-    public CompatDependency(String name, int minMajor, int maxMajor, int minMinor, int maxMinor, DependencyExecutable enable, DependencyExecutable disable) {
+    public CompatDependency(String name, int minMajor, int maxMajor, int minMinor, int maxMinor, DependencyExecutable enable,
+        DependencyExecutable disable) {
         this.name = name;
         this.minMajor = minMajor;
         this.maxMajor = maxMajor;
@@ -73,6 +79,7 @@ public record CompatDependency(String name, int minMajor, int maxMajor, int minM
             dependencies = new ObjectArrayList<>();
             DEPENDENCIES.put(name, dependencies);
         }
+        System.out.println(name);
         dependencies.add(this);
     }
 
@@ -85,14 +92,14 @@ public record CompatDependency(String name, int minMajor, int maxMajor, int minM
         if (!version.contains(".")) {
             return false;
         }
-        String[] ver = version.split(".", 3);
+        String[] ver = version.split("\\.", 3);
         try {
             int major = Integer.parseInt(ver[0]);
             int minor = Integer.parseInt(ver[1]);
             if (major > minMajor) {
                 return maxMajor == -1 || major <= maxMajor;
             }
-            if (major == minMajor && minor > minMinor) {
+            if (major == minMajor && minor >= minMinor) {
                 return maxMinor == -1 || minor <= maxMinor;
             }
             return false;

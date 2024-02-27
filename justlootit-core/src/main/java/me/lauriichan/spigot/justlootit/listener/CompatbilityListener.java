@@ -19,12 +19,12 @@ public final class CompatbilityListener implements IListenerExtension {
         this.plugin = plugin;
     }
 
-    @EventHandler(priority = EventPriority.MONITOR)
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onEnable(PluginEnableEvent event) {
         CompatDependency.handleUpdate(plugin, event.getPlugin(), true);
     }
 
-    @EventHandler(priority = EventPriority.MONITOR)
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onDisable(PluginDisableEvent event) {
         CompatDependency.handleUpdate(plugin, event.getPlugin(), false);
     }

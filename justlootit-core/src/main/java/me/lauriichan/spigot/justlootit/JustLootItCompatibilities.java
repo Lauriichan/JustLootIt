@@ -7,10 +7,18 @@ import me.lauriichan.spigot.justlootit.util.CompatDependency;
 public final class JustLootItCompatibilities {
 
     public static final CompatDependency BETTER_INPUTS;
+    
+    private JustLootItCompatibilities() {
+        throw new UnsupportedOperationException();
+    }
 
     static {
         BETTER_INPUTS = new CompatDependency("BetterInputs", 0, 3, (jli, plugin) -> jli.inputProvider(new BetterInputsInputProvider()),
             (jli, plugin) -> jli.inputProvider(SimpleChatInputProvider.CHAT));
     }
 
+    public static void loadClass() {
+        BETTER_INPUTS.getClass();
+    }
+    
 }
