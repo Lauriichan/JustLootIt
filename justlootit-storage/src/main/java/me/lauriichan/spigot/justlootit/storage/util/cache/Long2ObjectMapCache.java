@@ -27,17 +27,17 @@ public final class Long2ObjectMapCache<V> extends MapCache<Long, V> {
 
     @Override
     protected CachedValue<V> getEntry(final Long key) {
-        return map.get(key);
+        return map.get(key.longValue());
     }
 
     @Override
     protected void putEntry(final Long key, final CachedValue<V> value) {
-        map.put(key, value);
+        map.put(key.longValue(), value);
     }
 
     @Override
     protected CachedValue<V> removeEntry(final Long key) {
-        return map.remove(key);
+        return map.remove(key.longValue());
     }
 
     @Override

@@ -17,4 +17,9 @@ public final class EntityUtil {
             || JustLootItFlag.TILE_ENTITY_CONTAINERS.isSet() && type == EntityType.MINECART_HOPPER;
     }
 
+    public static boolean isItemFrame(Entity entity) {
+        EntityType type = entity.getType();
+        return type == EntityType.ITEM_FRAME || type == EntityType.GLOW_ITEM_FRAME;
+    }
+
 }

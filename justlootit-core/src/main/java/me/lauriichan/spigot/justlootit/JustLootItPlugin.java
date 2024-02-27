@@ -3,7 +3,6 @@ package me.lauriichan.spigot.justlootit;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.util.Objects;
-import java.util.concurrent.ExecutorService;
 
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
@@ -36,9 +35,11 @@ import me.lauriichan.spigot.justlootit.nms.VersionHelper;
 import me.lauriichan.spigot.justlootit.nms.capability.CapabilityManager;
 import me.lauriichan.spigot.justlootit.nms.packet.listener.PacketContainer;
 import me.lauriichan.spigot.justlootit.nms.packet.listener.PacketManager;
-import me.lauriichan.spigot.justlootit.util.BukkitExecutorService;
+import me.lauriichan.spigot.justlootit.platform.JustLootItPlatform;
+import me.lauriichan.spigot.justlootit.platform.spigot.SpigotPlatform;
 import me.lauriichan.spigot.justlootit.util.CompatDependency;
 import me.lauriichan.spigot.justlootit.util.VersionConstant;
+import me.lauriichen.spigot.justlootit.platform.folia.FoliaPlatform;
 
 public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> implements IServiceProvider {
 
@@ -46,8 +47,6 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
      *  TODO: [AFTER RELEASE] Add support for third-party plugins (add an api or smth)
      *  
      *  TODO: [AFTER RELEASE] Possibly add items that create containers
-     *  
-     *  TODO: Add command to create and manage 'Refresh Groups'
      */
 
     public static JustLootItPlugin get() {
@@ -56,8 +55,7 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
 
     private static final String VERSION_PATH = JustLootItPlugin.class.getPackageName() + ".nms.%s.VersionHandler%s";
 
-    private final ExecutorService mainService = new BukkitExecutorService(this, false);
-    private final ExecutorService asyncService = new BukkitExecutorService(this, true);
+    private final JustLootItPlatform platform;
 
     private File mainWorldFolder;
     
@@ -80,6 +78,10 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     /*
      * Setup
      */
+    
+    public JustLootItPlugin() {
+        this.platform = initPlatform();
+    }
 
     @Override
     protected void onPluginLoad() throws Throwable {
@@ -124,10 +126,11 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     @Override
     protected void onArgumentSetup(ArgumentRegistry registry) {
         // Register argument types
-        registry.registerArgumentType(LootTableArgument.class);
-        registry.registerArgumentType(ConfigArgument.class);
-        registry.registerArgumentType(CoordinateArgument.class);
         registry.registerArgumentType(WorldArgument.class);
+        registry.registerArgumentType(ConfigArgument.class);
+        registry.registerArgumentType(LootTableArgument.class);
+        registry.registerArgumentType(CoordinateArgument.class);
+        registry.registerArgumentType(RefreshGroupArgument.class);
 
         // Register providers
         registry.setProvider(new PluginProvider(this));
@@ -179,6 +182,8 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         if (commandBridge != null) {
             commandBridge.uninject();
         }
+        // Ignore any stats here
+        configManager().save();
     }
     
     /*
@@ -192,6 +197,10 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     /*
      * Getter
      */
+    
+    public JustLootItPlatform platform() {
+        return platform;
+    }
     
     public InputProvider inputProvider() {
         return inputProvider;
@@ -226,16 +235,6 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         return this;
     }
 
-    @Override
-    public ExecutorService mainService() {
-        return mainService;
-    }
-
-    @Override
-    public ExecutorService asyncService() {
-        return asyncService;
-    }
-
     /*
      * Utility
      */
@@ -250,6 +249,17 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     
     public <T extends CommandSender> LootItActor<T> actor(final T sender, final MessageManager manager) {
         return new LootItActor<>(sender, manager, versionHelper);
+    }
+    
+    /*
+     * Init Platform
+     */
+    
+    private JustLootItPlatform initPlatform() {
+        if (ClassUtil.findClass("io.papermc.paper.threadedregions.RegionizedServer") != null || ClassUtil.findClass("io.papermc.paper.threadedregions.RegionizedServerInitEvent") != null) {
+            return new FoliaPlatform(this);
+        }
+        return new SpigotPlatform(this);
     }
 
     /*

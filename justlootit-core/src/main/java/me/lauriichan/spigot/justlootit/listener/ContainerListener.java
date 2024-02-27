@@ -20,7 +20,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.player.PlayerInteractAtEntityEvent;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.vehicle.VehicleDamageEvent;
 import org.bukkit.inventory.Inventory;
@@ -44,13 +44,14 @@ import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.capability.PlayerGUICapability;
 import me.lauriichan.spigot.justlootit.capability.StorageCapability;
 import me.lauriichan.spigot.justlootit.command.impl.LootItActor;
+import me.lauriichan.spigot.justlootit.config.MainConfig;
 import me.lauriichan.spigot.justlootit.data.CacheLookupTable;
-import me.lauriichan.spigot.justlootit.data.CacheLookupTable.WorldEntry;
-import me.lauriichan.spigot.justlootit.inventory.handler.LootUIHandler;
-import me.lauriichan.spigot.justlootit.message.Messages;
 import me.lauriichan.spigot.justlootit.data.CachedInventory;
 import me.lauriichan.spigot.justlootit.data.Container;
 import me.lauriichan.spigot.justlootit.data.IInventoryContainer;
+import me.lauriichan.spigot.justlootit.data.CacheLookupTable.WorldEntry;
+import me.lauriichan.spigot.justlootit.inventory.handler.LootUIHandler;
+import me.lauriichan.spigot.justlootit.message.Messages;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.storage.IStorage;
 import me.lauriichan.spigot.justlootit.storage.Storable;
@@ -66,9 +67,11 @@ public class ContainerListener implements IListenerExtension {
     private static final ChestSize[] CHEST_VALUES = ChestSize.values();
 
     private final JustLootItPlugin plugin;
+    private final MainConfig config;
 
     public ContainerListener(final JustLootItPlugin plugin) {
         this.plugin = plugin;
+        this.config = plugin.configManager().config(MainConfig.class);
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
@@ -137,6 +140,7 @@ public class ContainerListener implements IListenerExtension {
             return;
         }
         if (!DataHelper.canBreakContainer(dataContainer, actor.getId())) {
+            container.update(false, false);
             actor.sendTranslatedMessage(Messages.CONTAINER_BREAK_CONFIRMATION_BLOCK);
             return;
         }
@@ -162,16 +166,18 @@ public class ContainerListener implements IListenerExtension {
         }
         dataContainer.remove(JustLootItKey.breakData());
         final long id = dataContainer.get(JustLootItKey.identity(), PersistentDataType.LONG);
+        dataContainer.remove(JustLootItKey.identity());
+        dataContainer.remove(JustLootItKey.breakData());
+        container.update(true, false);
+        actor.sendTranslatedMessage(Messages.CONTAINER_BREAK_REMOVED_BLOCK, Key.of("id", id));
+        if (!config.deleteOnBreak()) {
+            return;
+        }
         actor.versionHandler().getLevel(player.getWorld()).getCapability(StorageCapability.class).ifPresent(capability -> {
-            event.setCancelled(false);
             if (!capability.storage().delete(id)) {
                 actor.sendTranslatedMessage(Messages.CONTAINER_BREAK_NO_CONTAINER, Key.of("id", id));
             }
-            dataContainer.remove(JustLootItKey.identity());
-            dataContainer.remove(JustLootItKey.breakData());
-            actor.sendTranslatedMessage(Messages.CONTAINER_BREAK_REMOVED_BLOCK, Key.of("id", id));
         });
-        container.update(true, false);
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
@@ -204,14 +210,16 @@ public class ContainerListener implements IListenerExtension {
             return;
         }
         final long id = dataContainer.get(JustLootItKey.identity(), PersistentDataType.LONG);
+        dataContainer.remove(JustLootItKey.identity());
+        dataContainer.remove(JustLootItKey.breakData());
+        actor.sendTranslatedMessage(Messages.CONTAINER_BREAK_REMOVED_ENTITY, Key.of("id", id));
+        if (!config.deleteOnBreak()) {
+            return;
+        }
         actor.versionHandler().getLevel(player.getWorld()).getCapability(StorageCapability.class).ifPresent(capability -> {
-            event.setCancelled(false);
             if (!capability.storage().delete(id)) {
                 actor.sendTranslatedMessage(Messages.CONTAINER_BREAK_NO_CONTAINER, Key.of("id", id));
             }
-            dataContainer.remove(JustLootItKey.identity());
-            dataContainer.remove(JustLootItKey.breakData());
-            actor.sendTranslatedMessage(Messages.CONTAINER_BREAK_REMOVED_ENTITY, Key.of("id", id));
         });
     }
 
@@ -224,7 +232,7 @@ public class ContainerListener implements IListenerExtension {
         if (player.isSneaking()) {
             final PlayerInventory inventory = player.getInventory();
             final ItemStack first = inventory.getItemInMainHand(), second = inventory.getItemInOffHand();
-            if (first.getType().isBlock() || second.getType().isBlock()) {
+            if (first.getType().isBlock() && !first.getType().isAir() || second.getType().isBlock() && !second.getType().isAir()) {
                 return;
             }
         }
@@ -278,7 +286,7 @@ public class ContainerListener implements IListenerExtension {
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
-    public void onInteractEntity(final PlayerInteractAtEntityEvent event) {
+    public void onInteractEntity(final PlayerInteractEntityEvent event) {
         final Entity entity = event.getRightClicked();
         if (!EntityUtil.isSuppportedEntity(entity)) {
             return;

@@ -12,6 +12,7 @@ import me.lauriichan.minecraft.pluginbase.config.IConfigHandler;
 import me.lauriichan.minecraft.pluginbase.config.handler.JsonConfigHandler;
 import me.lauriichan.minecraft.pluginbase.extension.Extension;
 import me.lauriichan.spigot.justlootit.config.data.RefreshGroup;
+import me.lauriichan.spigot.justlootit.util.DataHelper;
 
 @Extension
 public class RefreshConfig implements IConfigExtension {
@@ -37,6 +38,14 @@ public class RefreshConfig implements IConfigExtension {
     public void setDirty() {
         modified = true;
     }
+    
+    @Override
+    public void onPropergate(Configuration configuration) throws Exception {
+        Configuration section = configuration.getConfiguration("example", true);
+        section.set("__comment", "This an example group (which can also be used ingame), it defines a refresh interval of 3 hours.");
+        section.set("unit", TimeUnit.HOURS.name());
+        section.set("time", 3);
+    }
 
     @Override
     public void onLoad(Configuration configuration) throws Exception {
@@ -53,8 +62,13 @@ public class RefreshConfig implements IConfigExtension {
             if (group == null) {
                 groups.put(key, group = new RefreshGroup(key));
             }
-            group.unit(groupConfig.getEnum("unit", TimeUnit.class, TimeUnit.MILLISECONDS));
-            group.timeoutTime(groupConfig.getLong("time", 0));
+            TimeUnit unit = groupConfig.getEnum("unit", TimeUnit.class, TimeUnit.MILLISECONDS);
+            long time = groupConfig.getLong("time", 0);
+            if (unit == TimeUnit.NANOSECONDS || unit == TimeUnit.MICROSECONDS) {
+                time = DataHelper.unsupportedToMillis(time, unit);
+                unit = TimeUnit.MILLISECONDS;
+            }
+            group.set(time, unit);
         }
         for (String entry : list) {
             groups.remove(entry);

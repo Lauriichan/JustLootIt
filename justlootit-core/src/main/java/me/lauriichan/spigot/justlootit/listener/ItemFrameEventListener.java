@@ -24,6 +24,7 @@ import me.lauriichan.spigot.justlootit.JustLootItPermission;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.capability.StorageCapability;
 import me.lauriichan.spigot.justlootit.command.impl.LootItActor;
+import me.lauriichan.spigot.justlootit.config.MainConfig;
 import me.lauriichan.spigot.justlootit.data.FrameContainer;
 import me.lauriichan.spigot.justlootit.message.Messages;
 import me.lauriichan.spigot.justlootit.nms.model.IEntityData;
@@ -38,9 +39,11 @@ import me.lauriichan.spigot.justlootit.util.DataHelper;
 public class ItemFrameEventListener implements IListenerExtension {
 
     private final JustLootItPlugin plugin;
+    private final MainConfig config;
 
     public ItemFrameEventListener(final JustLootItPlugin plugin) {
         this.plugin = plugin;
+        this.config = plugin.configManager().config(MainConfig.class);
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -102,15 +105,18 @@ public class ItemFrameEventListener implements IListenerExtension {
             return;
         }
         final long id = container.get(JustLootItKey.identity(), PersistentDataType.LONG);
+        container.remove(JustLootItKey.identity());
+        container.remove(JustLootItKey.breakData());
+        actor.sendTranslatedMessage(Messages.CONTAINER_BREAK_REMOVED_ENTITY, Key.of("id", id));
+        actor.versionHandler().broadcast(
+            actor.versionHandler().packetManager().createPacket(new ArgumentMap().set("entity", entity), PacketOutSetEntityData.class));
+        if (!config.deleteOnBreak()) {
+            return;
+        }
         actor.versionHandler().getLevel(entity.getWorld()).getCapability(StorageCapability.class).ifPresent(capability -> {
             if (!capability.storage().delete(id)) {
                 actor.sendTranslatedMessage(Messages.CONTAINER_BREAK_NO_CONTAINER, Key.of("id", id));
             }
-            container.remove(JustLootItKey.identity());
-            container.remove(JustLootItKey.breakData());
-            actor.sendTranslatedMessage(Messages.CONTAINER_BREAK_REMOVED_ENTITY, Key.of("id", id));
-            actor.versionHandler().broadcast(
-                actor.versionHandler().packetManager().createPacket(new ArgumentMap().set("entity", entity), PacketOutSetEntityData.class));
         });
     }
     

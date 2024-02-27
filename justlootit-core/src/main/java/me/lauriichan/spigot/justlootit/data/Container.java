@@ -90,12 +90,13 @@ public abstract class Container extends Storable implements IModifiable {
             return group;
         }
 
-        public void group(String id) {
+        public boolean group(String id) {
             if (Objects.equals(refreshGroupId, id)) {
-                return;
+                return false;
             }
             refreshGroupId = id;
             refreshGroup = null;
+            return true;
         }
 
     }
@@ -169,7 +170,9 @@ public abstract class Container extends Storable implements IModifiable {
     }
     
     public void setGroupId(String id) {
-        data.group(id);
+        if (data.group(id)) {
+            setDirty();
+        }
     }
 
 }

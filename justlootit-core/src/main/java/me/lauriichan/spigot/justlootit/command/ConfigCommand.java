@@ -1,13 +1,14 @@
 package me.lauriichan.spigot.justlootit.command;
 
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.ObjectCollection;
 import me.lauriichan.laylib.command.Actor;
 import me.lauriichan.laylib.command.annotation.Action;
 import me.lauriichan.laylib.command.annotation.Argument;
 import me.lauriichan.laylib.command.annotation.Command;
+import me.lauriichan.laylib.command.annotation.Description;
 import me.lauriichan.laylib.command.annotation.Permission;
 import me.lauriichan.laylib.localization.Key;
+import me.lauriichan.minecraft.pluginbase.config.ConfigManager;
 import me.lauriichan.minecraft.pluginbase.config.ConfigWrapper;
 import me.lauriichan.minecraft.pluginbase.extension.Extension;
 import me.lauriichan.spigot.justlootit.JustLootItPermission;
@@ -19,25 +20,25 @@ import me.lauriichan.spigot.justlootit.util.TypeName;
 @Command(name = "config")
 @Permission(JustLootItPermission.COMMAND_CONFIG)
 public class ConfigCommand implements ICommandExtension {
-    
-    // TODO: Add descriptions
+
+    private final ConfigManager configManager = JustLootItPlugin.get().configManager();
 
     @Action("save")
-    public void save(JustLootItPlugin plugin, Actor<?> actor,
-        @Argument(name = "config", optional = true) ConfigWrapper<?> choosenWrapper) {
+    @Description("$#command.description.justlootit.config.save")
+    public void save(Actor<?> actor, @Argument(name = "config", optional = true, index = 1) ConfigWrapper<?> choosenWrapper,
+        @Argument(name = "force", optional = true, index = 0) boolean force) {
         if (choosenWrapper == null) {
             actor.sendTranslatedMessage(Messages.COMMAND_CONFIG_SAVE_ALL_START);
             int saved = 0, skipped = 0;
-            ObjectCollection<ConfigWrapper<?>> wrappers = plugin.configManager().wrappers();
-            for (ConfigWrapper<?> wrapper : wrappers) {
-                int state = sendSaveInfo(actor, TypeName.ofConfig(wrapper.config()), wrapper.save(false));
+            for (Object2IntMap.Entry<ConfigWrapper<?>> entry : configManager.reload().object2IntEntrySet()) {
+                int state = sendSaveInfo(actor, TypeName.ofConfig(entry.getKey().config()), entry.getIntValue());
                 if (state == 1) {
                     saved++;
                 } else if (state == 0) {
                     skipped++;
                 }
             }
-            int amount = wrappers.size();
+            int amount = configManager.amount();
             actor.sendTranslatedMessage(Messages.COMMAND_CONFIG_SAVE_ALL_END, Key.of("total", amount), Key.of("success", saved),
                 Key.of("skipped", skipped), Key.of("failed", (amount - saved - skipped)));
             return;
@@ -45,14 +46,14 @@ public class ConfigCommand implements ICommandExtension {
         String name = TypeName.ofConfig(choosenWrapper.config());
         actor.sendTranslatedMessage(Messages.COMMAND_CONFIG_SAVE_SINGLE, Key.of("config", name));
         // Ignore state here as we only have one config.
-        sendSaveInfo(actor, name, choosenWrapper.reload(false));
+        sendSaveInfo(actor, name, choosenWrapper.reload(force));
     }
 
     private static int sendSaveInfo(Actor<?> actor, String name, int state) {
-        if (state == 5) {
+        if (state == ConfigWrapper.SKIPPED) {
             actor.sendTranslatedMessage(Messages.COMMAND_CONFIG_SAVE_RESULT_SKIPPED, Key.of("config", name));
             return 0;
-        } else if (state != 0) {
+        } else if (state != ConfigWrapper.SUCCESS) {
             actor.sendTranslatedMessage(Messages.COMMAND_CONFIG_SAVE_RESULT_FAILED, Key.of("config", name));
             return -1;
         }
@@ -61,12 +62,13 @@ public class ConfigCommand implements ICommandExtension {
     }
 
     @Action("reload")
-    public void reload(JustLootItPlugin plugin, Actor<?> actor,
-        @Argument(name = "config", optional = true) ConfigWrapper<?> choosenWrapper) {
+    @Description("$#command.description.justlootit.config.reload")
+    public void reload(Actor<?> actor, @Argument(name = "config", optional = true, index = 1) ConfigWrapper<?> choosenWrapper,
+        @Argument(name = "force", optional = true, index = 0) boolean force) {
         if (choosenWrapper == null) {
             actor.sendTranslatedMessage(Messages.COMMAND_CONFIG_RELOAD_ALL_START);
             int reloaded = 0, skipped = 0;
-            for (Object2IntMap.Entry<ConfigWrapper<?>> entry : plugin.configManager().reload().object2IntEntrySet()) {
+            for (Object2IntMap.Entry<ConfigWrapper<?>> entry : configManager.reload().object2IntEntrySet()) {
                 int state = sendReloadInfo(actor, TypeName.ofConfig(entry.getKey().config()), entry.getIntValue());
                 if (state == 1) {
                     reloaded++;
@@ -74,7 +76,7 @@ public class ConfigCommand implements ICommandExtension {
                     skipped++;
                 }
             }
-            int amount = plugin.configManager().wrappers().size();
+            int amount = configManager.amount();
             actor.sendTranslatedMessage(Messages.COMMAND_CONFIG_RELOAD_ALL_END, Key.of("total", amount), Key.of("success", reloaded),
                 Key.of("skipped", skipped), Key.of("failed", (amount - reloaded - skipped)));
             return;
@@ -82,14 +84,14 @@ public class ConfigCommand implements ICommandExtension {
         String name = TypeName.ofConfig(choosenWrapper.config());
         actor.sendTranslatedMessage(Messages.COMMAND_CONFIG_RELOAD_SINGLE, Key.of("config", name));
         // Ignore state here as we only have one config.
-        sendReloadInfo(actor, name, choosenWrapper.reload(false));
+        sendReloadInfo(actor, name, choosenWrapper.reload(force));
     }
 
     private static int sendReloadInfo(Actor<?> actor, String name, int state) {
-        if (state == 5) {
+        if (state == ConfigWrapper.SKIPPED) {
             actor.sendTranslatedMessage(Messages.COMMAND_CONFIG_RELOAD_RESULT_SKIPPED, Key.of("config", name));
             return 0;
-        } else if (state != 0) {
+        } else if (state != ConfigWrapper.SUCCESS) {
             actor.sendTranslatedMessage(Messages.COMMAND_CONFIG_RELOAD_RESULT_FAILED, Key.of("config", name));
             return -1;
         }

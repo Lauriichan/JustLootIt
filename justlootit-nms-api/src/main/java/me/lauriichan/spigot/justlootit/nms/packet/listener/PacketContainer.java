@@ -7,7 +7,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import me.lauriichan.laylib.logger.ISimpleLogger;
@@ -19,9 +18,6 @@ public final class PacketContainer {
 
     private final ISimpleLogger logger;
 
-    private final ExecutorService mainService;
-    private final ExecutorService asyncService;
-
     private final IPacketListener instance;
     private final List<PacketExecutor> executors;
 
@@ -31,11 +27,9 @@ public final class PacketContainer {
 
     private final boolean acceptCancelled;
 
-    public PacketContainer(final ISimpleLogger logger, final ExecutorService mainService, final ExecutorService asyncService,
+    public PacketContainer(final ISimpleLogger logger,
         final IPacketListener instance) {
         this.logger = Objects.requireNonNull(logger);
-        this.mainService = Objects.requireNonNull(mainService);
-        this.asyncService = Objects.requireNonNull(asyncService);
         this.instance = Objects.requireNonNull(instance);
         final ArrayList<PacketExecutor> executors = new ArrayList<>();
         final Method[] methods = ClassUtil.getMethods(instance.getClass());
@@ -67,14 +61,6 @@ public final class PacketContainer {
 
     public ISimpleLogger logger() {
         return logger;
-    }
-
-    public ExecutorService mainService() {
-        return mainService;
-    }
-
-    public ExecutorService asyncService() {
-        return asyncService;
     }
 
     public IPacketListener getInstance() {

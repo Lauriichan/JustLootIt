@@ -10,7 +10,7 @@ public class RefreshGroup {
     
     private final String id;
     
-    private long timeoutTime;
+    private long timeoutMillis;
     private TimeUnit unit = TimeUnit.MILLISECONDS;
     
     public RefreshGroup(String id) {
@@ -25,12 +25,23 @@ public class RefreshGroup {
         return unit;
     }
     
-    public void unit(TimeUnit unit) {
+    public void set(long timeoutTime, TimeUnit unit) {
         this.unit = Objects.requireNonNull(unit);
+        timeoutTime(timeoutTime);
+    }
+    
+    public void unit(TimeUnit unit) {
+        unit = Objects.requireNonNull(unit);
+        if (this.unit == unit) {
+            return;
+        }
+        long time = timeoutTime();
+        this.unit = unit;
+        timeoutTime(time);
     }
     
     public long timeoutTime() {
-        return unit.convert(timeoutTime, TimeUnit.MILLISECONDS);
+        return unit.convert(timeoutMillis, TimeUnit.MILLISECONDS);
     }
     
     public void timeoutTime(long timeoutTime) {
@@ -39,22 +50,22 @@ public class RefreshGroup {
             // Do conversion to actual millis to prevent any desync between config and this value
             timeoutTime = unit.toMillis(unit.convert(timeoutTime, TimeUnit.MILLISECONDS));
         }
-        this.timeoutTime = Math.max(timeoutTime, 0);
+        this.timeoutMillis = Math.max(timeoutTime, 0);
     }
     
     public long timeoutMillis() {
-        return timeoutTime;
+        return timeoutMillis;
     }
 
     public boolean isAccessible(OffsetDateTime time, OffsetDateTime now) {
-        return time == null || timeoutTime != 0 && time.plus(timeoutTime, ChronoUnit.MILLIS).isBefore(now);
+        return time == null || timeoutMillis != 0 && time.plus(timeoutMillis, ChronoUnit.MILLIS).isBefore(now);
     }
     
     public Duration duration(OffsetDateTime time, OffsetDateTime now) {
         if (time == null) {
             return Duration.ZERO;
         }
-        final Duration duration = Duration.between(now, time.plus(timeoutTime, ChronoUnit.MILLIS));
+        final Duration duration = Duration.between(now, time.plus(timeoutMillis, ChronoUnit.MILLIS));
         return duration.isNegative() ? Duration.ZERO : duration;
     }
 }

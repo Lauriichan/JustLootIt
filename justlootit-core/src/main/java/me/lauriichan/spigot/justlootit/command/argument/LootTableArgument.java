@@ -14,21 +14,43 @@ import me.lauriichan.laylib.command.IArgumentMap;
 import me.lauriichan.laylib.command.IArgumentType;
 import me.lauriichan.laylib.command.Suggestions;
 import me.lauriichan.spigot.justlootit.command.impl.LootItActor;
+import me.lauriichan.spigot.justlootit.nms.VersionHelper;
 import me.lauriichan.spigot.justlootit.util.ImprovedLevenshteinDistance;
 
 public final class LootTableArgument implements IArgumentType<LootTable> {
-
-    @Override
-    public LootTable parse(Actor<?> actor, String input, IArgumentMap map) throws IllegalArgumentException {
+    
+    public static boolean isLootTable(String input) {
+        return isLootTable(null, input);
+    }
+    
+    public static boolean isLootTable(VersionHelper helper, String input) {
+        NamespacedKey key = NamespacedKey.fromString(input);
+        if (key == null) {
+            return false;
+        }
+        LootTable table = helper != null ? helper.getLootTable(key) : Bukkit.getLootTable(key);
+        return table != null;
+    }
+    
+    public static LootTable parseLootTable(String input) throws IllegalArgumentException {
+        return parseLootTable(null, input);
+    }
+    
+    public static LootTable parseLootTable(VersionHelper helper, String input) throws IllegalArgumentException {
         NamespacedKey key = NamespacedKey.fromString(input);
         if (key == null) {
             throw new IllegalArgumentException("Key '" + input + "' is invalid!");
         }
-        LootTable table = actor instanceof LootItActor<?> bukkit ? bukkit.versionHelper().getLootTable(key) : Bukkit.getLootTable(key);
+        LootTable table = helper != null ? helper.getLootTable(key) : Bukkit.getLootTable(key);
         if (table == null) {
             throw new IllegalArgumentException("Unknown loot table '" + input + "'!");
         }
         return table;
+    }
+
+    @Override
+    public LootTable parse(Actor<?> actor, String input, IArgumentMap map) throws IllegalArgumentException {
+        return parseLootTable(actor instanceof LootItActor<?> bukkit ? bukkit.versionHelper() : null, input);
     }
 
     @Override

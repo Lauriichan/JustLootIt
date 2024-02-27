@@ -56,7 +56,7 @@ public class ItemFramePacketListener implements IPacketListener {
                     return;
                 }
                 ((IItemEntityData) data).setItem(frame.getItem());
-                versionHandler.mainService().submit(() -> player.send(dataPacket));
+                versionHandler.platform().scheduler().sync(() -> player.send(dataPacket));
             }
         });
     }

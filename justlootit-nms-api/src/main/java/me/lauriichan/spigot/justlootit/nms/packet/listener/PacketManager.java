@@ -1,7 +1,6 @@
 package me.lauriichan.spigot.justlootit.nms.packet.listener;
 
 import java.util.ArrayList;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import me.lauriichan.laylib.logger.ISimpleLogger;
@@ -11,6 +10,7 @@ import me.lauriichan.spigot.justlootit.nms.packet.AbstractPacket;
 import me.lauriichan.spigot.justlootit.nms.packet.AbstractPacketOut;
 import me.lauriichan.spigot.justlootit.nms.util.argument.ArgumentMap;
 import me.lauriichan.spigot.justlootit.nms.util.argument.NotEnoughArgumentsException;
+import me.lauriichan.spigot.justlootit.platform.Scheduler;
 
 public abstract class PacketManager {
 
@@ -18,26 +18,19 @@ public abstract class PacketManager {
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
     private final ISimpleLogger logger;
-
-    private final ExecutorService mainService;
-    private final ExecutorService asyncService;
+    private final Scheduler scheduler;
 
     public PacketManager(final VersionHandler handler) {
         this.logger = handler.logger();
-        this.mainService = handler.mainService();
-        this.asyncService = handler.asyncService();
+        this.scheduler = handler.scheduler();
     }
 
     public final ISimpleLogger logger() {
         return logger;
     }
 
-    public final ExecutorService mainService() {
-        return mainService;
-    }
-
-    public final ExecutorService asyncService() {
-        return asyncService;
+    public final Scheduler scheduler() {
+        return scheduler;
     }
 
     public final PacketContainer register(final IPacketListener listener) {
@@ -52,7 +45,7 @@ public abstract class PacketManager {
         } finally {
             lock.readLock().unlock();
         }
-        final PacketContainer container = new PacketContainer(logger, mainService, asyncService, listener);
+        final PacketContainer container = new PacketContainer(logger, listener);
         lock.writeLock().lock();
         try {
             listeners.add(container);

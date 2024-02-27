@@ -3,7 +3,6 @@ package me.lauriichan.spigot.justlootit.nms;
 import java.io.File;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
 
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -20,6 +19,8 @@ import me.lauriichan.spigot.justlootit.nms.debug.IDebugHelper;
 import me.lauriichan.spigot.justlootit.nms.io.IOProvider;
 import me.lauriichan.spigot.justlootit.nms.packet.AbstractPacketOut;
 import me.lauriichan.spigot.justlootit.nms.packet.listener.PacketManager;
+import me.lauriichan.spigot.justlootit.platform.JustLootItPlatform;
+import me.lauriichan.spigot.justlootit.platform.Scheduler;
 
 public abstract class VersionHandler {
 
@@ -223,12 +224,12 @@ public abstract class VersionHandler {
         return serviceProvider.logger();
     }
 
-    public final ExecutorService mainService() {
-        return serviceProvider.mainService();
+    public final JustLootItPlatform platform() {
+        return serviceProvider.platform();
     }
 
-    public final ExecutorService asyncService() {
-        return serviceProvider.asyncService();
+    public final Scheduler scheduler() {
+        return serviceProvider.platform().scheduler();
     }
 
 }

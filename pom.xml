@@ -1,4 +1,6 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>me.lauriichan.spigot.justlootit</groupId>
     <artifactId>justlootit-parent</artifactId>
@@ -11,10 +13,17 @@
         <module>justlootit-nms-1_20_R2</module>
         <module>justlootit-nms-1_20_R3</module>
         <module>justlootit-storage</module>
+        <module>justlootit-platform-api</module>
+        <module>justlootit-platform-folia</module>
+        <module>justlootit-platform-paper</module>
     </modules>
-    
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- Versions -->
+        <server.version>1.20.2</server.version>
+        <pluginbase.version>1.0.1</pluginbase.version>
+        <betterinputs.version>0.3.0</betterinputs.version>
         <laylib.version>0.2.0-SNAPSHOT</laylib.version>
     </properties>
 
@@ -28,7 +37,7 @@
             <url>https://oss.sonatype.org/content/repositories/snapshots</url>
         </repository>
     </repositories>
-    
+
     <dependencies>
         <!-- Minecraft dependencies -->
         <dependency>
@@ -43,7 +52,7 @@
             <version>8.5.9</version>
             <scope>provided</scope>
         </dependency>
-        
+
         <!-- Test -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>

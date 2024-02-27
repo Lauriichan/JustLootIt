@@ -27,17 +27,17 @@ public final class Int2ObjectMapCache<V> extends MapCache<Integer, V> {
 
     @Override
     protected CachedValue<V> getEntry(final Integer key) {
-        return map.get(key);
+        return map.get(key.intValue());
     }
 
     @Override
     protected void putEntry(final Integer key, final CachedValue<V> value) {
-        map.put(key, value);
+        map.put(key.intValue(), value);
     }
 
     @Override
     protected CachedValue<V> removeEntry(final Integer key) {
-        return map.remove(key);
+        return map.remove(key.intValue());
     }
 
     @Override

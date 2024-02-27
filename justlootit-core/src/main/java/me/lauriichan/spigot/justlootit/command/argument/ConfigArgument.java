@@ -13,7 +13,9 @@ import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.util.ImprovedLevenshteinDistance;
 import me.lauriichan.spigot.justlootit.util.TypeName;
 
-public class ConfigArgument implements IArgumentType<ConfigWrapper<?>> {
+public final class ConfigArgument implements IArgumentType<ConfigWrapper<?>> {
+    
+    private final ConfigManager configManager = JustLootItPlugin.get().configManager();
 
     @Override
     public ConfigWrapper<?> parse(Actor<?> actor, String input, IArgumentMap map) throws IllegalArgumentException {
@@ -21,7 +23,6 @@ public class ConfigArgument implements IArgumentType<ConfigWrapper<?>> {
             throw new IllegalArgumentException("No valid config name specified.");
         }
         input = input.toLowerCase();
-        ConfigManager configManager = JustLootItPlugin.get().configManager();
         for (ConfigWrapper<?> wrapper : configManager.wrappers()) {
             if (input.equals(TypeName.ofConfig(wrapper.config()))) {
                 return wrapper;
@@ -32,7 +33,6 @@ public class ConfigArgument implements IArgumentType<ConfigWrapper<?>> {
 
     @Override
     public void suggest(Actor<?> actor, String input, Suggestions suggestions, IArgumentMap map) {
-        ConfigManager configManager = JustLootItPlugin.get().configManager();
         ArrayList<String> configs = new ArrayList<>();
         for (ConfigWrapper<?> wrapper : configManager.wrappers()) {
             configs.add(TypeName.ofConfig(wrapper.config()));

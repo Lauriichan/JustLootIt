@@ -38,6 +38,15 @@ public final class Messages implements IMessageExtension {
     public static MessageProvider INPUT_SIMPLE_FAILED;
     @Message(id = "input.simple.prompt", content = "$#plugin.prefix &7$prompt")
     public static MessageProvider INPUT_SIMPLE_PROMPT;
+
+    @Message(id = "input.prompt.loottable.seed", content = "&7Enter loot table seed")
+    public static MessageProvider INPUT_PROMPT_LOOTTABLE_SEED;
+    @Message(id = "input.prompt.loottable.key", content = "&7Enter loot table key")
+    public static MessageProvider INPUT_PROMPT_LOOTTABLE_KEY;
+    @Message(id = "input.retry.loottable.seed", content = "$#plugin.prefix Invalid seed, please try again.")
+    public static MessageProvider INPUT_RETRY_LOOTTABLE_SEED;
+    @Message(id = "input.retry.loottable.key", content = "$#plugin.prefix Invalid loot table, please try again.")
+    public static MessageProvider INPUT_RETRY_LOOTTABLE_KEY;
     
     /*
      * Container
@@ -45,7 +54,7 @@ public final class Messages implements IMessageExtension {
     
     @Message(id = "container.access.not-repeatable", content = "&7Can &cnever &7be accessed again.")
     public static MessageProvider CONTAINER_ACCESS_NOT_REPEATABLE;
-    @Message(id = "container.access.not-accessible", content = "&7Not accessable for $time&7.")
+    @Message(id = "container.access.not-accessible", content = "&7Not accessible for $time&7.")
     public static MessageProvider CONTAINER_ACCESS_NOT_ACCESSIBLE;
 
     @Message(id = "container.break.unpermitted.block", content = "$#plugin.prefix This entity is a loot container can not be removed.")
@@ -172,11 +181,41 @@ public final class Messages implements IMessageExtension {
     })
     public static MessageProvider COMMAND_DEBUG_PDC_DATA_FORMAT_ENTITY;
     
+    // Group
+    
+    @Message(id = "command.group.all.unsupported", content = "$#plugin.prefix The time unit '&c$unit&7' is not supported by JustLootIt!")
+    public static MessageProvider COMMAND_GROUP_ALL_UNSUPPORTED;
+    @Message(id = "command.group.all.never-interval", content = "never")
+    public static MessageProvider COMMAND_GROUP_ALL_NEVER;
+
+    @Message(id = "command.group.create.success", content = "$#plugin.prefix Successfully created the refresh group '&c$group&7' with an interval of &c$time&7.")
+    public static MessageProvider COMMAND_GROUP_CREATE_SUCCESS;
+    @Message(id = "command.group.create.already-exists", content = "$#plugin.prefix There is already a refresh group named '&c$group&7'!")
+    public static MessageProvider COMMAND_GROUP_CREATE_ALREADY_EXISTS;
+
+    @Message(id = "command.group.set", content = "$#plugin.prefix Successfully set the interval of refresh group '&c$group&7' to &c$time&7.")
+    public static MessageProvider COMMAND_GROUP_SET;
+
+    @Message(id = "command.group.info", content = "$#plugin.prefix Interval of refresh group '&c$group&7' is currently set to &c$time&7.")
+    public static MessageProvider COMMAND_GROUP_INFO;
+
+    @Message(id = "command.group.delete", content = "$#plugin.prefix Successfully deleted refresh group '&c$group&7'.")
+    public static MessageProvider COMMAND_GROUP_DELETE;
+
+    @Message(id = "command.group.list.no-entries", content = "$#plugin.prefix There are no refresh groups available!")
+    public static MessageProvider COMMAND_GROUP_LIST_NO_ENTRIES;
+    @Message(id = "command.group.list.format.header", content = "$#plugin.name &8| &7Refresh groups &8[&c$page&8/&7$maxPage&8]")
+    public static MessageProvider COMMAND_GROUP_LIST_FORMAT_HEADER;
+    @Message(id = "command.group.list.format.entry.text", content = "&8- &c$group &8- &7$time")
+    public static MessageProvider COMMAND_GROUP_LIST_FORMAT_ENTRY_TEXT;
+    @Message(id = "command.group.list.format.entry.hover", content = "&7Click to get edit command")
+    public static MessageProvider COMMAND_GROUP_LIST_FORMAT_ENTRY_HOVER;
+    
     // Container
 
-    @Message(id = "command.container.info.no-container.block", content = "$#plugin.prefix Block at &c$x $y $z &7in &c$world&7 is not an JustLootIt container!")
+    @Message(id = "command.container.info.no-container.block", content = "$#plugin.prefix Block at &c$x $y $z &7in &c$world&7 is not a JustLootIt container!")
     public static MessageProvider COMMAND_CONTAINER_INFO_NO_CONTAINER_BLOCK;
-    @Message(id = "command.container.info.no-container.entity", content = "$#plugin.prefix Entity at &c$x $y $z &7in &c$world&7 is not an JustLootIt container!")
+    @Message(id = "command.container.info.no-container.entity", content = "$#plugin.prefix Entity at &c$x $y $z &7in &c$world&7 is not a JustLootIt container!")
     public static MessageProvider COMMAND_CONTAINER_INFO_NO_CONTAINER_ENTITY;
     @Message(id = "command.container.info.container.any.block", content = {
         "&8| $#plugin.name",
@@ -207,6 +246,44 @@ public final class Messages implements IMessageExtension {
         "&8| &7Item: &f$itemName&r &8(&7Hover for more info&8)"
     })
     public static MessageProvider COMMAND_CONTAINER_INFO_CONTAINER_FRAME;
+    
+    @Message(id = "command.container.create.already-container.entity", content = "$#plugin.prefix Entity at &c$x $y $z &7in &c$world &7is already linked to a JustLootIt Container.")
+    public static MessageProvider COMMAND_CONTAINER_CREATE_ALREADY_CONTAINER_ENTITY;
+    @Message(id = "command.container.create.already-container.block", content = "$#plugin.prefix Block at &c$x $y $z &7in &c$world &7is already linked to a JustLootIt Container.")
+    public static MessageProvider COMMAND_CONTAINER_CREATE_ALREADY_CONTAINER_BLOCK;
+    @Message(id = "command.container.create.unsupported.block", content = "$#plugin.prefix Block at &c$x $y $z &7in &c$world &7is not supported to be used as &c$type container&7!")
+    public static MessageProvider COMMAND_CONTAINER_CREATE_UNSUPPORTED_BLOCK;
+    @Message(id = "command.container.create.unsupported.entity", content = "$#plugin.prefix Entity at &c$x $y $z &7in &c$world &7is not supported to be used as &c$type container&7!")
+    public static MessageProvider COMMAND_CONTAINER_CREATE_UNSUPPORTED_ENTITY;
+    @Message(id = "command.container.create.changed.block", content = "$#plugin.prefix Block at &c$x $y $z &7in &c$world &7has changed, please try again!")
+    public static MessageProvider COMMAND_CONTAINER_CREATE_CHANGED_BLOCK;
+    @Message(id = "command.container.create.changed.entity", content = "$#plugin.prefix Entity at &c$x $y $z &7in &c$world &7has died, please try again!")
+    public static MessageProvider COMMAND_CONTAINER_CREATE_CHANGED_ENTITY;
+    @Message(id = "command.container.create.success.block", content = "$#plugin.prefix Successfully linked block at &c$x $y $z &7in &c$world &7to a &c$type container &8(&c$id&8)&7.")
+    public static MessageProvider COMMAND_CONTAINER_CREATE_SUCCESS_BLOCK;
+    @Message(id = "command.container.create.success.entity", content = "$#plugin.prefix Successfully linked entity at &c$x $y $z &7in &c$world &7to a &c$type container &8(&c$id&8)&7.")
+    public static MessageProvider COMMAND_CONTAINER_CREATE_SUCCESS_ENTITY;
+    @Message(id = "command.container.create.not-found.block", content = "$#plugin.prefix No block found at &c$x $y $z &7in &c$world&7.")
+    public static MessageProvider COMMAND_CONTAINER_CREATE_NOT_FOUND_BLOCK;
+    @Message(id = "command.container.create.not-found.entity", content = "$#plugin.prefix No valid entity around &c$x $y $z &7in &c$world&7.")
+    public static MessageProvider COMMAND_CONTAINER_CREATE_NOT_FOUND_ENTITY;
+    @Message(id = "command.container.create.not-creatable", content = "$#plugin.prefix The &c$type container &7can not be created manually.")
+    public static MessageProvider COMMAND_CONTAINER_CREATE_NOT_CREATABLE;
+    @Message(id = "command.container.create.frame.item-required", content = "$#plugin.prefix The item frame at &c$x $y $z &7in &c$world &7has to contain a valid item!")
+    public static MessageProvider COMMAND_CONTAINER_CREATE_FRAME_ITEM_REQUIRED;
+    
+    @Message(id = "command.container.group.no-container.block", content = "$#plugin.prefix Block at &c$x $y $z &7in &c$world&7 is not a JustLootIt container!")
+    public static MessageProvider COMMAND_CONTAINER_GROUP_NO_CONTAINER_BLOCK;
+    @Message(id = "command.container.group.no-container.entity", content = "$#plugin.prefix Entity at &c$x $y $z &7in &c$world&7 is not a JustLootIt container!")
+    public static MessageProvider COMMAND_CONTAINER_GROUP_NO_CONTAINER_ENTITY;
+    @Message(id = "command.container.group.set.block", content = "$#plugin.prefix Successfully set the refresh group of the container linked to the block at &c$x $y $z &7in &c$world &7to &c$group&7.")
+    public static MessageProvider COMMAND_CONTAINER_GROUP_SET_BLOCK;
+    @Message(id = "command.container.group.set.entity", content = "$#plugin.prefix Successfully set the refresh group of the container linked to the entity at &c$x $y $z &7in &c$world &7to &c$group&7.")
+    public static MessageProvider COMMAND_CONTAINER_GROUP_SET_ENTITY;
+    @Message(id = "command.container.group.removed.block", content = "$#plugin.prefix Successfully removed the refresh group from the container linked to the block at &c$x $y $z &7in &c$world&7.")
+    public static MessageProvider COMMAND_CONTAINER_GROUP_REMOVED_BLOCK;
+    @Message(id = "command.container.group.removed.entity", content = "$#plugin.prefix Successfully removed the refresh group from the container linked to the entity at &c$x $y $z &7in &c$world&7.")
+    public static MessageProvider COMMAND_CONTAINER_GROUP_REMOVED_ENTITY;
     
     // Config
 

@@ -1,21 +1,24 @@
 package me.lauriichan.spigot.justlootit.nms;
 
 import java.io.File;
-import java.util.concurrent.ExecutorService;
 
 import org.bukkit.plugin.Plugin;
 
 import me.lauriichan.laylib.logger.ISimpleLogger;
+import me.lauriichan.spigot.justlootit.platform.JustLootItPlatform;
+import me.lauriichan.spigot.justlootit.platform.Scheduler;
 
 public interface IServiceProvider {
 
     Plugin plugin();
 
     ISimpleLogger logger();
-
-    ExecutorService mainService();
-
-    ExecutorService asyncService();
+    
+    JustLootItPlatform platform();
+    
+    default Scheduler scheduler() {
+        return platform().scheduler();
+    }
     
     File mainWorldFolder();
 

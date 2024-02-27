@@ -1,0 +1,33 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>me.lauriichan.spigot.justlootit</groupId>
+        <artifactId>justlootit-parent</artifactId>
+        <version>1.0.0</version>
+    </parent>
+    <artifactId>justlootit-platform-paper</artifactId>
+    <repositories>
+        <repository>
+            <id>papermc</id>
+            <url>https://repo.papermc.io/repository/maven-public/</url>
+        </repository>
+    </repositories>
+    <dependencies>
+        <dependency>
+            <groupId>io.papermc.paper</groupId>
+            <artifactId>paper-api</artifactId>
+            <version>${server.version}-R0.1-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- Laylib -->
+        <dependency>
+            <groupId>me.lauriichan.laylib</groupId>
+            <artifactId>logger</artifactId>
+            <version>${laylib.version}</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+</project>

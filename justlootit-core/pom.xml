@@ -10,20 +10,11 @@
     <artifactId>justlootit-core</artifactId>
 
     <properties>
-        <server.version>1.20.2</server.version>
-        <pluginbase.version>1.0.1</pluginbase.version>
-        <betterinputs.version>0.3.0</betterinputs.version>
         <project.sourceDir>${project.build.directory}/project-sources</project.sourceDir>
         <project.java.version>17</project.java.version>
     </properties>
 
     <dependencies>
-        <dependency>
-            <groupId>${project.parent.groupId}</groupId>
-            <artifactId>justlootit-nms-api</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
-
         <!-- Spigot -->
         <dependency>
             <groupId>org.spigotmc</groupId>
@@ -71,12 +62,24 @@
         <dependency>
             <groupId>me.lauriichan.spigot.justlootit</groupId>
             <artifactId>justlootit-storage</artifactId>
-            <version>1.0.0</version>
+            <version>${project.parent.version}</version>
         </dependency>
         <dependency>
             <groupId>me.lauriichan.spigot.justlootit</groupId>
             <artifactId>justlootit-nms-api</artifactId>
-            <version>1.0.0</version>
+            <version>${project.parent.version}</version>
+        </dependency>
+        
+        <!-- Platform Compat -->
+        <dependency>
+            <groupId>${project.parent.groupId}</groupId>
+            <artifactId>justlootit-platform-api</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.parent.groupId}</groupId>
+            <artifactId>justlootit-platform-folia</artifactId>
+            <version>${project.parent.version}</version>
         </dependency>
 
         <!-- Bukkit Version Compat -->
@@ -240,7 +243,8 @@
                         </goals>
                         <configuration>
                             <includes>
-                                <include>**/*Template.class</include>
+                                <include>me/lauriichan/spigot/justlootit/**/*Template.class</include>
+                                <include>me/lauriichan/maven/justlootit/**/*.class</include>
                             </includes>
                             <purgeEmptyPackages>true</purgeEmptyPackages>
                         </configuration>

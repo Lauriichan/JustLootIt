@@ -32,7 +32,7 @@ public class HelpCommand implements ICommandExtension {
 
     private static final Node[] EMPTY_NODES = new Node[0];
 
-    private static final int HELP_PAGE_SIZE = 8;
+    private static final int HELP_PAGE_SIZE = 4;
 
     private static class HelpNodeTree {
 
@@ -94,6 +94,7 @@ public class HelpCommand implements ICommandExtension {
                     queue.enqueue(new HelpNode(path, node));
                 }
             }
+            paths.sort((n1, n2) -> n1.fullPath().compareTo(n2.fullPath()));
         }
 
         public int amount() {
@@ -145,8 +146,12 @@ public class HelpCommand implements ICommandExtension {
             helpOverview(commandManager, actor, page);
             return;
         }
-        Triple<NodeCommand, Node, String> triple = commandManager.findNode(command);
+        Triple<NodeCommand, Node, String> triple = commandManager.findNode(command = command.trim().replaceAll(" {2,}", " "));
         if (triple == null || (triple.getA().isRestricted() && !actor.hasPermission(triple.getA().getPermission()))) {
+            actor.sendTranslatedMessage(Messages.COMMAND_HELP_UNKNOWN, Key.of("command", command));
+            return;
+        }
+        if (!triple.getC().substring(commandManager.getPrefix().length()).equals(command)) {
             actor.sendTranslatedMessage(Messages.COMMAND_HELP_UNKNOWN, Key.of("command", command));
             return;
         }
@@ -157,13 +162,14 @@ public class HelpCommand implements ICommandExtension {
     private void showHelpTree(CommandManager commandManager, Actor<?> actor, HelpNodeTree tree, int page, String prefix, String helpText,
         String arrowCommandFormat) {
         prefix = prefix.trim();
-        int maxPage = Math.floorDiv(tree.amount(), HELP_PAGE_SIZE) + (tree.amount() % HELP_PAGE_SIZE != 0 ? 1 : 0);
+        int total = tree.amount();
+        int maxPage = Math.floorDiv(total, HELP_PAGE_SIZE) + (total % HELP_PAGE_SIZE != 0 ? 1 : 0);
         page = Math.min(Math.max(page, 1), maxPage);
 
         actor.sendTranslatedMessage(Messages.COMMAND_HELP_HEADER_FORMAT_START, Key.of("helpText", helpText), Key.of("page", page),
             Key.of("maxPage", maxPage));
         actor.sendMessage(""); // Add one space
-        int maxIndex = Math.min((page - 1) * HELP_PAGE_SIZE + HELP_PAGE_SIZE, tree.amount());
+        int maxIndex = Math.min((page - 1) * HELP_PAGE_SIZE + HELP_PAGE_SIZE, total);
         for (int index = (page - 1) * HELP_PAGE_SIZE; index < maxIndex; index++) {
             HelpNodeTree.HelpNode helpNode = tree.path(index);
             NodeAction action = helpNode.node().getAction();
@@ -190,18 +196,18 @@ public class HelpCommand implements ICommandExtension {
         actor.sendMessage(""); // Add one space
         if (actor.getId() != Actor.IMPL_ID) {
             ComponentCompound component = ComponentCompound.create();
-            if (page != maxPage) {
-                component.add(Component.of(Messages.COMMAND_SYSTEM_ARROW_RIGHT, actor.getLanguage())
-                    .clickRun(arrowCommandFormat, commandManager.getPrefix() + "help", helpText, page + 1)
-                    .hoverText(Messages.COMMAND_SYSTEM_PAGE_NEXT, actor.getLanguage()));
-            }
             if (page != 1) {
-                if (page != maxPage) {
-                    component.add(Component.of(Messages.COMMAND_SYSTEM_ARROW_SEPERATOR, actor.getLanguage()));
-                }
                 component.add(Component.of(Messages.COMMAND_SYSTEM_ARROW_LEFT, actor.getLanguage())
                     .clickRun(arrowCommandFormat, commandManager.getPrefix() + "help", helpText, page - 1)
                     .hoverText(Messages.COMMAND_SYSTEM_PAGE_PREVIOUS, actor.getLanguage()));
+            }
+            if (page != maxPage) {
+                if (page != 1) {
+                    component.add(Component.of(Messages.COMMAND_SYSTEM_ARROW_SEPERATOR, actor.getLanguage()));
+                }
+                component.add(Component.of(Messages.COMMAND_SYSTEM_ARROW_RIGHT, actor.getLanguage())
+                    .clickRun(arrowCommandFormat, commandManager.getPrefix() + "help", helpText, page + 1)
+                    .hoverText(Messages.COMMAND_SYSTEM_PAGE_NEXT, actor.getLanguage()));
             }
             if (!component.isEmpty()) {
                 component.send(actor);

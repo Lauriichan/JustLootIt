@@ -17,6 +17,9 @@ public class MainConfigTemplate implements IConfigExtension {
     @ConfigValue("player.cache.timeout-days")
     public int days = 7;
     
+    @ConfigValue("container.delete-on-break")
+    public boolean deleteOnBreak = true;
+    
     /*
      * Implementation
      */
