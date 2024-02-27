@@ -49,7 +49,17 @@ public class RAFMultiStorage<S extends Storable> extends AbstractStorage<S> {
         this.settings = settings;
         this.accesses = new ThreadSafeMapCache<>(new Int2ObjectMapCache<>(logger));
         this.directory = directory;
+        createDirectory();
         this.identifier = new FileIdentifier(logger, directory);
+    }
+    
+    private void createDirectory() {
+        if (!directory.exists()) {
+            directory.mkdirs();
+        } else if(directory.isFile()) {
+            directory.delete();
+            directory.mkdirs();
+        }
     }
 
     @Override
