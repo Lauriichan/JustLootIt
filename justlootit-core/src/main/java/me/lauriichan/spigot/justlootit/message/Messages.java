@@ -206,7 +206,7 @@ public final class Messages implements IMessageExtension {
     public static MessageProvider COMMAND_GROUP_LIST_NO_ENTRIES;
     @Message(id = "command.group.list.format.header", content = "$#plugin.name &8| &7Refresh groups &8[&c$page&8/&7$maxPage&8]")
     public static MessageProvider COMMAND_GROUP_LIST_FORMAT_HEADER;
-    @Message(id = "command.group.list.format.entry.text", content = "&8- &c$group &8- &7$time")
+    @Message(id = "command.group.list.format.entry.text", content = "&8- &c$group &8(&7$time&8)")
     public static MessageProvider COMMAND_GROUP_LIST_FORMAT_ENTRY_TEXT;
     @Message(id = "command.group.list.format.entry.hover", content = "&7Click to get edit command")
     public static MessageProvider COMMAND_GROUP_LIST_FORMAT_ENTRY_HOVER;

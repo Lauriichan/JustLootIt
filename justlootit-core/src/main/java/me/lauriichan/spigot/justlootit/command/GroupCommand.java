@@ -122,7 +122,7 @@ public final class GroupCommand implements ICommandExtension {
             group = groups[index];
             Component
                 .of(actor.getTranslatedMessageAsString(Messages.COMMAND_GROUP_LIST_FORMAT_ENTRY_TEXT, Key.of("group", group.id()),
-                    Key.of("time", getTimePlaceholder(actor, group.timeoutTime(), group.unit()))))
+                    getTimePlaceholder(actor, group.timeoutTime(), group.unit())))
                 .hoverText(Messages.COMMAND_GROUP_LIST_FORMAT_ENTRY_HOVER, actor.getLanguage())
                 .clickSuggest("{0} group set {1}", commandManager.getPrefix(), group.id()).send(actor);
         }
