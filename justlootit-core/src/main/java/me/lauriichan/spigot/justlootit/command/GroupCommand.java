@@ -124,14 +124,14 @@ public final class GroupCommand implements ICommandExtension {
                 .of(actor.getTranslatedMessageAsString(Messages.COMMAND_GROUP_LIST_FORMAT_ENTRY_TEXT, Key.of("group", group.id()),
                     getTimePlaceholder(actor, group.timeoutTime(), group.unit())))
                 .hoverText(Messages.COMMAND_GROUP_LIST_FORMAT_ENTRY_HOVER, actor.getLanguage())
-                .clickSuggest("{0} group set {1}", commandManager.getPrefix(), group.id()).send(actor);
+                .clickSuggest("{0} set {1}", commandManager.getPrefix() + "group", group.id()).send(actor);
         }
         actor.sendMessage(""); // Add one space
         if (actor.getId() != Actor.IMPL_ID) {
             ComponentCompound component = ComponentCompound.create();
             if (page != 1) {
                 component.add(Component.of(Messages.COMMAND_SYSTEM_ARROW_LEFT, actor.getLanguage())
-                    .clickRun("{0} group list {1}", commandManager.getPrefix(), page - 1)
+                    .clickRun("{0} list {1}", commandManager.getPrefix() + "group", page - 1)
                     .hoverText(Messages.COMMAND_SYSTEM_PAGE_PREVIOUS, actor.getLanguage()));
             }
             if (page != maxPage) {
@@ -139,7 +139,7 @@ public final class GroupCommand implements ICommandExtension {
                     component.add(Component.of(Messages.COMMAND_SYSTEM_ARROW_SEPERATOR, actor.getLanguage()));
                 }
                 component.add(Component.of(Messages.COMMAND_SYSTEM_ARROW_RIGHT, actor.getLanguage())
-                    .clickRun("{0} group list {1}", commandManager.getPrefix(), page + 1)
+                    .clickRun("{0} list {1}", commandManager.getPrefix() + "group", page + 1)
                     .hoverText(Messages.COMMAND_SYSTEM_PAGE_NEXT, actor.getLanguage()));
             }
             if (!component.isEmpty()) {
