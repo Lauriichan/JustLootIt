@@ -40,7 +40,7 @@ public class MainConfigTemplate implements IConfigExtension {
     
     @ConfigValue("player.cache.size")
     public int validateConfigSize(int value) {
-        return Math.max(Math.min(value, 48), 3);
+        return Math.max(Math.min(value, 48), 1);
     }
     
     @ConfigValue("player.cache.timeout-days")
