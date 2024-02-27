@@ -47,8 +47,8 @@ public final class GroupCommand implements ICommandExtension {
         }
         RefreshGroup group = config.getOrCreateGroup(groupId);
         group.set(value, timeUnit);
-        actor.sendTranslatedMessage(Messages.COMMAND_GROUP_CREATE_SUCCESS,
-            Key.of("time", getTimePlaceholder(actor, group.timeoutTime(), timeUnit)));
+        actor.sendTranslatedMessage(Messages.COMMAND_GROUP_CREATE_SUCCESS, Key.of("group", groupId),
+            getTimePlaceholder(actor, group.timeoutTime(), timeUnit));
     }
 
     @Action("set time")
@@ -91,7 +91,7 @@ public final class GroupCommand implements ICommandExtension {
     @Description("$#command.description.justlootit.group.delete")
     public void delete(Actor<?> actor, @Argument(name = "group", index = 0) RefreshGroup group) {
         config.deleteGroup(group.id());
-        actor.sendTranslatedMessage(Messages.COMMAND_GROUP_DELETE, Key.of(group.id()));
+        actor.sendTranslatedMessage(Messages.COMMAND_GROUP_DELETE, Key.of("group", group.id()));
     }
 
     @Action("info")
