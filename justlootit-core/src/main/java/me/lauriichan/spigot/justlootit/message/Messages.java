@@ -213,10 +213,11 @@ public final class Messages implements IMessageExtension {
     
     // Container
 
-    @Message(id = "command.container.info.no-container.block", content = "$#plugin.prefix Block at &c$x $y $z &7in &c$world&7 is not a JustLootIt container!")
-    public static MessageProvider COMMAND_CONTAINER_INFO_NO_CONTAINER_BLOCK;
-    @Message(id = "command.container.info.no-container.entity", content = "$#plugin.prefix Entity at &c$x $y $z &7in &c$world&7 is not a JustLootIt container!")
-    public static MessageProvider COMMAND_CONTAINER_INFO_NO_CONTAINER_ENTITY;
+    @Message(id = "command.container.all.no-container.block", content = "$#plugin.prefix Block at &c$x $y $z &7in &c$world&7 is not a JustLootIt container!")
+    public static MessageProvider COMMAND_CONTAINER_ALL_NO_CONTAINER_BLOCK;
+    @Message(id = "command.container.all.no-container.entity", content = "$#plugin.prefix Entity at &c$x $y $z &7in &c$world&7 is not a JustLootIt container!")
+    public static MessageProvider COMMAND_CONTAINER_ALL_NO_CONTAINER_ENTITY;
+    
     @Message(id = "command.container.info.container.any.block", content = {
         "&8| $#plugin.name",
         "&8|",
@@ -272,10 +273,6 @@ public final class Messages implements IMessageExtension {
     @Message(id = "command.container.create.frame.item-required", content = "$#plugin.prefix The item frame at &c$x $y $z &7in &c$world &7has to contain a valid item!")
     public static MessageProvider COMMAND_CONTAINER_CREATE_FRAME_ITEM_REQUIRED;
     
-    @Message(id = "command.container.group.no-container.block", content = "$#plugin.prefix Block at &c$x $y $z &7in &c$world&7 is not a JustLootIt container!")
-    public static MessageProvider COMMAND_CONTAINER_GROUP_NO_CONTAINER_BLOCK;
-    @Message(id = "command.container.group.no-container.entity", content = "$#plugin.prefix Entity at &c$x $y $z &7in &c$world&7 is not a JustLootIt container!")
-    public static MessageProvider COMMAND_CONTAINER_GROUP_NO_CONTAINER_ENTITY;
     @Message(id = "command.container.group.set.block", content = "$#plugin.prefix Successfully set the refresh group of the container linked to the block at &c$x $y $z &7in &c$world &7to &c$group&7.")
     public static MessageProvider COMMAND_CONTAINER_GROUP_SET_BLOCK;
     @Message(id = "command.container.group.set.entity", content = "$#plugin.prefix Successfully set the refresh group of the container linked to the entity at &c$x $y $z &7in &c$world &7to &c$group&7.")

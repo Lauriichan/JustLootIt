@@ -131,6 +131,7 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         registry.registerArgumentType(LootTableArgument.class);
         registry.registerArgumentType(CoordinateArgument.class);
         registry.registerArgumentType(RefreshGroupArgument.class);
+        registry.registerArgumentType(OfflinePlayerArgument.class);
 
         // Register providers
         registry.setProvider(new PluginProvider(this));
@@ -258,9 +259,9 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     
     private JustLootItPlatform initPlatform() {
         if (ClassUtil.findClass("io.papermc.paper.threadedregions.RegionizedServer") != null || ClassUtil.findClass("io.papermc.paper.threadedregions.RegionizedServerInitEvent") != null) {
-            return new FoliaPlatform(this);
+            return new FoliaPlatform(this, logger());
         }
-        return new SpigotPlatform(this);
+        return new SpigotPlatform(this, logger());
     }
 
     /*

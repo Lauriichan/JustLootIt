@@ -20,7 +20,7 @@ import me.lauriichan.spigot.justlootit.nms.io.IOProvider;
 import me.lauriichan.spigot.justlootit.nms.packet.AbstractPacketOut;
 import me.lauriichan.spigot.justlootit.nms.packet.listener.PacketManager;
 import me.lauriichan.spigot.justlootit.platform.JustLootItPlatform;
-import me.lauriichan.spigot.justlootit.platform.Scheduler;
+import me.lauriichan.spigot.justlootit.platform.scheduler.Scheduler;
 
 public abstract class VersionHandler {
 

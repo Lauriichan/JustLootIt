@@ -68,7 +68,7 @@ public final class PlayerAdapter1_20_R3 extends PlayerAdapter {
     @Override
     public int createAnvilMenu(final String name, final ItemStack itemStack) {
         if (!Bukkit.isPrimaryThread()) {
-            return CompletableFuture.supplyAsync(() -> createAnvilMenu(name, itemStack), network.packetManager().scheduler()::sync).join();
+            return CompletableFuture.supplyAsync(() -> createAnvilMenu(name, itemStack), network.packetManager().scheduler().syncExecutor()).join();
         }
         final AnvilMenu menu = new AnvilMenu(minecraft.nextContainerCounter(), minecraft.getInventory(),
             MinecraftConstant1_20_R3.BETTER_NULL);

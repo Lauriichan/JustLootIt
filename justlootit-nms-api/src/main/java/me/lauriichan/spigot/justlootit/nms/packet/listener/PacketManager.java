@@ -10,7 +10,7 @@ import me.lauriichan.spigot.justlootit.nms.packet.AbstractPacket;
 import me.lauriichan.spigot.justlootit.nms.packet.AbstractPacketOut;
 import me.lauriichan.spigot.justlootit.nms.util.argument.ArgumentMap;
 import me.lauriichan.spigot.justlootit.nms.util.argument.NotEnoughArgumentsException;
-import me.lauriichan.spigot.justlootit.platform.Scheduler;
+import me.lauriichan.spigot.justlootit.platform.scheduler.Scheduler;
 
 public abstract class PacketManager {
 

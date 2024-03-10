@@ -6,7 +6,7 @@ import org.bukkit.plugin.Plugin;
 
 import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.spigot.justlootit.platform.JustLootItPlatform;
-import me.lauriichan.spigot.justlootit.platform.Scheduler;
+import me.lauriichan.spigot.justlootit.platform.scheduler.Scheduler;
 
 public interface IServiceProvider {
 
