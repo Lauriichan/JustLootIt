@@ -72,11 +72,15 @@ public final class UIInventoryNames implements IMessageExtension {
     })
     public static MessageProvider CONTAINER_MANAGE_PAGE_OVERVIEW_ITEM_CONTAINER_INFO_STATIC_LORE;
 
-    @Message(id = "inventory.container-manage.page.overview.item.container-info.vanilla.name", content = "&cInformation")
+    @Message(id = "inventory.container-manage.page.overview.item.container-info.vanilla.name", content = "&7Information")
     public static MessageProvider CONTAINER_MANAGE_PAGE_OVERVIEW_ITEM_CONTAINER_INFO_VANILLA_NAME;
     @Message(id = "inventory.container-manage.page.overview.item.container-info.vanilla.lore", content = {
-        "&7Seed: &c$seed",
-        "&7LootTable: &c$lootTable"
+        "&r",
+        "&8Seed:",
+        "&8= &7$seed",
+        "&r",
+        "&8LootTable:",
+        "&8= &7$lootTable"
     })
     public static MessageProvider CONTAINER_MANAGE_PAGE_OVERVIEW_ITEM_CONTAINER_INFO_VANILLA_LORE;
 

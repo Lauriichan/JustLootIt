@@ -26,6 +26,7 @@ public final class LootUIHandler implements IHandler {
 
     @Override
     public boolean onEventClose(final HumanEntity entity, final IGuiInventory inventory) {
+        inventory.setHandler(null);
         final Long id = inventory.attrUnset(ATTR_ID, Long.class);
         if (id == null) {
             return false;

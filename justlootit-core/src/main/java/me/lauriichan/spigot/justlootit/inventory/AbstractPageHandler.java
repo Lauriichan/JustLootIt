@@ -3,6 +3,7 @@ package me.lauriichan.spigot.justlootit.inventory;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 
+import me.lauriichan.minecraft.pluginbase.inventory.IGuiInventory;
 import me.lauriichan.minecraft.pluginbase.inventory.paged.PagedInventoryHandler;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
@@ -33,6 +34,12 @@ public abstract class AbstractPageHandler<P extends IPage<P>> extends PagedInven
             return versionHandler.getPlayer(player);
         }
         return versionHandler.getPlayer(entity.getUniqueId());
+    }
+    
+    @Override
+    protected void onInventoryClose(PlayerAdapter player, IGuiInventory inventory) {
+        super.onInventoryClose(player, inventory);
+        inventory.setHandler(null);
     }
 
 }

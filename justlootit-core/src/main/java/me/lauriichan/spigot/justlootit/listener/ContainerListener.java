@@ -35,6 +35,7 @@ import me.lauriichan.laylib.localization.Key;
 import me.lauriichan.minecraft.pluginbase.extension.Extension;
 import me.lauriichan.minecraft.pluginbase.inventory.ChestSize;
 import me.lauriichan.minecraft.pluginbase.inventory.IGuiInventory;
+import me.lauriichan.minecraft.pluginbase.inventory.IGuiInventoryUpdater;
 import me.lauriichan.minecraft.pluginbase.listener.IListenerExtension;
 import me.lauriichan.spigot.justlootit.JustLootItConstant;
 import me.lauriichan.spigot.justlootit.JustLootItFlag;
@@ -326,15 +327,16 @@ public class ContainerListener implements IListenerExtension {
                             if (((columnAmount != 9) || ((rowAmount <= 6) && (rowAmount >= 1)))) {
                                 player.getCapability(PlayerGUICapability.class).ifPresent(guiCapability -> {
                                     final IGuiInventory inventory = guiCapability.gui();
+                                    IGuiInventoryUpdater updater = inventory.updater().title(plugin.actor(bukkitPlayer).getTranslatedMessageAsString(UIInventoryNames.LOOT_UI_NAME));
                                     if (columnAmount == 9) {
-                                        inventory.setChestSize(CHEST_VALUES[rowAmount - 1]);
+                                        updater.chestSize(CHEST_VALUES[rowAmount - 1]);
                                     } else {
-                                        inventory.setType(cachedInventory.getType());
+                                        updater.type(cachedInventory.getType());
                                     }
-                                    inventory.setTitle(plugin.actor(bukkitPlayer).getTranslatedMessageAsString(UIInventoryNames.LOOT_UI_NAME));
-                                    inventory.getInventory().setContents(cachedInventory.getItems());
+                                    updater.apply();
                                     inventory.attrSet(LootUIHandler.ATTR_ID, cachedInventory.id());
                                     inventory.setHandler(LootUIHandler.LOOT_HANDLER);
+                                    inventory.getInventory().setContents(cachedInventory.getItems());
                                     inventory.open(bukkitPlayer);
                                     if (inventoryHolder instanceof DoubleChest || inventoryHolder instanceof Lidded) {
                                         inventory.attrSet(LootUIHandler.ATTR_LIDDED_LOCATION, location);
@@ -363,15 +365,16 @@ public class ContainerListener implements IListenerExtension {
                     }
                     final Inventory holderInventory = inventoryHolder.getInventory();
                     int columnAmount = IGuiInventory.getColumnAmount(holderInventory.getType());
+                    IGuiInventoryUpdater updater = inventory.updater().title(plugin.actor(bukkitPlayer).getTranslatedMessageAsString(UIInventoryNames.LOOT_UI_NAME));
                     if (columnAmount == 9) {
-                        inventory.setChestSize(CHEST_VALUES[(InventoryUtil.getSize(holderInventory) / columnAmount) - 1]);
+                        updater.chestSize(CHEST_VALUES[(InventoryUtil.getSize(holderInventory) / columnAmount) - 1]);
                     } else {
-                        inventory.setType(holderInventory.getType());
+                        updater.type(holderInventory.getType());
                     }
-                    inventory.setTitle(plugin.actor(bukkitPlayer).getTranslatedMessageAsString(UIInventoryNames.LOOT_UI_NAME));
-                    container.fill(player, location, inventory.getInventory());
+                    updater.apply();
                     inventory.attrSet(LootUIHandler.ATTR_ID, lookupTable.acquire(entryId));
                     inventory.setHandler(LootUIHandler.LOOT_HANDLER);
+                    container.fill(player, location, inventory.getInventory());
                     inventory.open(bukkitPlayer);
                     if (inventoryHolder instanceof DoubleChest || inventoryHolder instanceof Lidded) {
                         inventory.attrSet(LootUIHandler.ATTR_LIDDED_LOCATION, location);
