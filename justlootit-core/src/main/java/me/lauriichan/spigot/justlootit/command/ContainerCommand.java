@@ -4,12 +4,12 @@ import java.util.Collection;
 import java.util.List;
 
 import org.bukkit.Location;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.data.type.Chest;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.Vector;
@@ -23,11 +23,13 @@ import me.lauriichan.laylib.command.annotation.Param;
 import me.lauriichan.laylib.command.annotation.Permission;
 import me.lauriichan.laylib.localization.Key;
 import me.lauriichan.minecraft.pluginbase.extension.Extension;
+import me.lauriichan.minecraft.pluginbase.inventory.IGuiInventory;
 import me.lauriichan.minecraft.pluginbase.inventory.item.ItemEditor;
 import me.lauriichan.minecraft.pluginbase.message.component.Component;
 import me.lauriichan.spigot.justlootit.JustLootItKey;
 import me.lauriichan.spigot.justlootit.JustLootItPermission;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
+import me.lauriichan.spigot.justlootit.capability.PlayerGUICapability;
 import me.lauriichan.spigot.justlootit.capability.StorageCapability;
 import me.lauriichan.spigot.justlootit.command.argument.CoordinateArgument.Coord;
 import me.lauriichan.spigot.justlootit.config.data.RefreshGroup;
@@ -35,6 +37,7 @@ import me.lauriichan.spigot.justlootit.data.Container;
 import me.lauriichan.spigot.justlootit.data.ContainerType;
 import me.lauriichan.spigot.justlootit.data.FrameContainer;
 import me.lauriichan.spigot.justlootit.data.VanillaContainer;
+import me.lauriichan.spigot.justlootit.inventory.handler.manage.ContainerPageHandler;
 import me.lauriichan.spigot.justlootit.message.Messages;
 import me.lauriichan.spigot.justlootit.storage.IStorage;
 import me.lauriichan.spigot.justlootit.storage.Storable;
@@ -51,72 +54,95 @@ public class ContainerCommand implements ICommandExtension {
 
     // TODO: [IDEA] Command to view and modify existing containers (Preferably with Inventory UI)
 
-    @Action("access list")
-    public void accessList(final JustLootItPlugin plugin, final Actor<?> actor,
-        @Argument(name = "id", optional = true, params = @Param(name = "minimum", longValue = 0, type = Param.TYPE_LONG)) Long id,
+    @Action("manage")
+    public void manage(final JustLootItPlugin plugin, final Actor<?> rawActor,
+        @Argument(name = "id", index = 1, params = @Param(name = "minimum", longValue = 0, type = Param.TYPE_LONG)) Long id,
         @Argument(name = "world", optional = true, index = 2) World world) {
-        Container container = accessContainer(plugin, actor, id, world);
-        if (container == null) {
+        Actor<Player> actor = rawActor.as(Player.class);
+        if (!actor.isValid()) {
+            actor.sendTranslatedMessage(Messages.COMMAND_SYSTEM_ACTOR_NOT_SUPPORTED, Key.of("actorType", "Player"));
             return;
         }
-        // TODO: List accesses
+        plugin.scheduler().async(() -> {
+            Container container = accessContainer(plugin, actor, id, null, null, null, world);
+            if (container == null) {
+                return;
+            }
+            openManageInventory(plugin, actor, container);
+        });
     }
 
-    @Action("access info")
-    public void accessInfo(final JustLootItPlugin plugin, final Actor<?> actor,
-        @Argument(name = "player", optional = true, index = 0) OfflinePlayer player,
-        @Argument(name = "id", optional = true, index = 1, params = @Param(name = "minimum", longValue = 0, type = Param.TYPE_LONG)) Long id,
-        @Argument(name = "world", optional = true, index = 2) World world) {
-        Container container = accessContainer(plugin, actor, id, world);
-        if (container == null) {
+    @Action("manage loc")
+    @Action("manage location")
+    public void manage(final JustLootItPlugin plugin, final Actor<?> rawActor,
+        @Argument(name = "x", optional = true, index = 1, params = @Param(name = "axis", stringValue = "x", type = Param.TYPE_STRING)) final Coord x,
+        @Argument(name = "y", optional = true, index = 2, params = @Param(name = "axis", stringValue = "y", type = Param.TYPE_STRING)) final Coord y,
+        @Argument(name = "z", optional = true, index = 3, params = @Param(name = "axis", stringValue = "z", type = Param.TYPE_STRING)) final Coord z,
+        @Argument(name = "world", optional = true, index = 4) World world) {
+        Actor<Player> actor = rawActor.as(Player.class);
+        if (!actor.isValid()) {
+            actor.sendTranslatedMessage(Messages.COMMAND_SYSTEM_ACTOR_NOT_SUPPORTED, Key.of("actorType", "Player"));
             return;
         }
-        // TODO: Send access info
+        plugin.scheduler().async(() -> {
+            Container container = accessContainer(plugin, actor, null, x, y, z, world);
+            if (container == null) {
+                return;
+            }
+            openManageInventory(plugin, actor, container);
+        });
     }
 
-    @Action("access reset")
-    public void accessReset(final JustLootItPlugin plugin, final Actor<?> actor,
-        @Argument(name = "player", optional = true, index = 0) OfflinePlayer player,
-        @Argument(name = "id", optional = true, index = 1, params = @Param(name = "minimum", longValue = 0, type = Param.TYPE_LONG)) Long id,
-        @Argument(name = "world", optional = true, index = 2) World world) {
-        Container container = accessContainer(plugin, actor, id, world);
-        if (container == null) {
-            return;
-        }
-        // TODO: Reset access for player
+    private void openManageInventory(final JustLootItPlugin plugin, final Actor<Player> actor, final Container container) {
+        plugin.scheduler().sync(() -> {
+            plugin.versionHandler().getPlayer(actor.getHandle()).getCapability(PlayerGUICapability.class).ifPresent(guiCapability -> {
+                final IGuiInventory inventory = guiCapability.gui();
+                inventory.attrSet(ContainerPageHandler.ATTR_CONTAINER, container);
+                inventory.setHandler(plugin.pagedInventoryRegistry().get(ContainerPageHandler.class));
+                inventory.open(actor.getHandle());
+            });
+        });
     }
 
-    private Container accessContainer(final JustLootItPlugin plugin, final Actor<?> actor, Long id, World world) {
-        Location location = CommandUtil.getLocation(actor, null, null, null, world);
+    private Container accessContainer(final JustLootItPlugin plugin, final Actor<Player> actor, Long id, Coord x, Coord y, Coord z,
+        World world) {
         if (id == null) {
+            Location location = CommandUtil.getLocation(actor, x, y, z, world);
+            if (location == null) {
+                return null;
+            }
             id = plugin.scheduler().regional(location, () -> {
                 Block block = location.getBlock();
                 if (block.isEmpty()) {
-                    return retrieveEntityContainer(plugin, world, actor, location.getBlockX(), location.getBlockY(), location.getBlockZ());
+                    return retrieveEntityContainer(plugin, location.getWorld(), actor, location.getBlockX(), location.getBlockY(),
+                        location.getBlockZ());
                 }
                 if (!(block.getState() instanceof org.bukkit.block.Container stateContainer)) {
-                    return retrieveEntityContainer(plugin, world, actor, location.getBlockX(), location.getBlockY(), location.getBlockZ());
+                    return retrieveEntityContainer(plugin, location.getWorld(), actor, location.getBlockX(), location.getBlockY(),
+                        location.getBlockZ());
                 }
-                return retrieveBlockContainer(plugin, block, stateContainer, world, actor);
+                return retrieveBlockContainer(plugin, block, stateContainer, location.getWorld(), actor);
             }).join();
             if (id == null) {
                 return null;
             }
         }
-        StorageCapability capability = plugin.versionHandler().getLevel(location.getWorld()).getCapability(StorageCapability.class)
-            .orElse(null);
+        if (world == null) {
+            world = actor.getHandle().getWorld();
+        }
+        StorageCapability capability = plugin.versionHandler().getLevel(world).getCapability(StorageCapability.class).orElse(null);
         if (capability == null) {
-            actor.sendTranslatedMessage(Messages.COMMAND_SYSTEM_ERROR_STORAGE_ACCESS_LEVEL, Key.of("level", location.getWorld().getName()));
+            actor.sendTranslatedMessage(Messages.COMMAND_SYSTEM_ERROR_STORAGE_ACCESS_LEVEL, Key.of("level", world.getName()));
             return null;
         }
         Container container = (Container) capability.storage().read(id.longValue());
         if (container == null) {
-            // TODO: SEND MESSAGE
+            actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_ID, Key.of("id", id));
             return null;
         }
         return container;
     }
-    
+
     private Long retrieveEntityContainer(JustLootItPlugin plugin, World world, Actor<?> actor, int x, int y, int z) {
         Collection<Entity> entities = world.getNearbyEntities(new Location(world, x + 0.5d, y + 0.5d, z + 0.5d), 1.5d, 1.5d, 1.5d);
         if (entities.isEmpty()) {
@@ -151,16 +177,16 @@ public class ContainerCommand implements ICommandExtension {
         }
         return dataContainer.get(JustLootItKey.identity(), PersistentDataType.LONG);
     }
-    
-    private Long retrieveBlockContainer(JustLootItPlugin plugin, Block block, org.bukkit.block.Container stateContainer, World world, Actor<?> actor) {
+
+    private Long retrieveBlockContainer(JustLootItPlugin plugin, Block block, org.bukkit.block.Container stateContainer, World world,
+        Actor<?> actor) {
         Location location = block.getLocation();
         PersistentDataContainer dataContainer = stateContainer.getPersistentDataContainer();
         if (!dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)
             && dataContainer.has(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR)) {
             if (!(stateContainer.getBlockData() instanceof Chest chest) || chest.getType() == Chest.Type.SINGLE) {
                 actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_BLOCK, Key.of("x", location.getBlockX()),
-                    Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()),
-                    Key.of("world", location.getWorld().getName()));
+                    Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld().getName()));
                 dataContainer.remove(JustLootItKey.chestData());
                 stateContainer.update(false, false);
                 return null;
@@ -170,24 +196,21 @@ public class ContainerCommand implements ICommandExtension {
             block = location.getWorld().getBlockAt(location);
             if (block.isEmpty()) {
                 actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_BLOCK, Key.of("x", location.getBlockX()),
-                    Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()),
-                    Key.of("world", location.getWorld().getName()));
+                    Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld().getName()));
                 dataContainer.remove(JustLootItKey.chestData());
                 stateContainer.update(false, false);
                 return null;
             }
             if (!(block.getState() instanceof org.bukkit.block.Container stateContainer0)) {
                 actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_BLOCK, Key.of("x", location.getBlockX()),
-                    Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()),
-                    Key.of("world", location.getWorld().getName()));
+                    Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld().getName()));
                 dataContainer.remove(JustLootItKey.chestData());
                 stateContainer.update(false, false);
                 return null;
             }
             if (!stateContainer0.getPersistentDataContainer().has(JustLootItKey.identity(), PersistentDataType.LONG)) {
                 actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_BLOCK, Key.of("x", location.getBlockX()),
-                    Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()),
-                    Key.of("world", location.getWorld().getName()));
+                    Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld().getName()));
                 dataContainer.remove(JustLootItKey.chestData());
                 stateContainer.update(false, false);
                 return null;

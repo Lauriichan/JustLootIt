@@ -50,8 +50,9 @@ import me.lauriichan.spigot.justlootit.data.CachedInventory;
 import me.lauriichan.spigot.justlootit.data.Container;
 import me.lauriichan.spigot.justlootit.data.IInventoryContainer;
 import me.lauriichan.spigot.justlootit.data.CacheLookupTable.WorldEntry;
-import me.lauriichan.spigot.justlootit.inventory.handler.LootUIHandler;
+import me.lauriichan.spigot.justlootit.inventory.handler.loot.LootUIHandler;
 import me.lauriichan.spigot.justlootit.message.Messages;
+import me.lauriichan.spigot.justlootit.message.UIInventoryNames;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.storage.IStorage;
 import me.lauriichan.spigot.justlootit.storage.Storable;
@@ -319,17 +320,18 @@ public class ContainerListener implements IListenerExtension {
                     if (lookupTable.access(entryId)) {
                         final CachedInventory cachedInventory = (CachedInventory) playerStorage
                             .read(lookupTable.getEntryIdByMapped(entryId));
-                        final int rowSize = IGuiInventory.getRowSize(cachedInventory.getType());
-                        if (cachedInventory.size() % rowSize == 0) {
-                            final int columnAmount = cachedInventory.size() / rowSize;
-                            if (((rowSize != 9) || ((columnAmount <= 6) && (columnAmount >= 1)))) {
+                        final int columnAmount = IGuiInventory.getColumnAmount(cachedInventory.getType());
+                        if (cachedInventory.size() % columnAmount == 0) {
+                            final int rowAmount = cachedInventory.size() / columnAmount;
+                            if (((columnAmount != 9) || ((rowAmount <= 6) && (rowAmount >= 1)))) {
                                 player.getCapability(PlayerGUICapability.class).ifPresent(guiCapability -> {
                                     final IGuiInventory inventory = guiCapability.gui();
-                                    if (rowSize == 9) {
-                                        inventory.setChestSize(CHEST_VALUES[columnAmount - 1]);
+                                    if (columnAmount == 9) {
+                                        inventory.setChestSize(CHEST_VALUES[rowAmount - 1]);
                                     } else {
                                         inventory.setType(cachedInventory.getType());
                                     }
+                                    inventory.setTitle(plugin.actor(bukkitPlayer).getTranslatedMessageAsString(UIInventoryNames.LOOT_UI_NAME));
                                     inventory.getInventory().setContents(cachedInventory.getItems());
                                     inventory.attrSet(LootUIHandler.ATTR_ID, cachedInventory.id());
                                     inventory.setHandler(LootUIHandler.LOOT_HANDLER);
@@ -360,12 +362,13 @@ public class ContainerListener implements IListenerExtension {
                         return;
                     }
                     final Inventory holderInventory = inventoryHolder.getInventory();
-                    int rowSize = IGuiInventory.getRowSize(holderInventory.getType());
-                    if (rowSize == 9) {
-                        inventory.setChestSize(CHEST_VALUES[(InventoryUtil.getSize(holderInventory) / rowSize) - 1]);
+                    int columnAmount = IGuiInventory.getColumnAmount(holderInventory.getType());
+                    if (columnAmount == 9) {
+                        inventory.setChestSize(CHEST_VALUES[(InventoryUtil.getSize(holderInventory) / columnAmount) - 1]);
                     } else {
                         inventory.setType(holderInventory.getType());
                     }
+                    inventory.setTitle(plugin.actor(bukkitPlayer).getTranslatedMessageAsString(UIInventoryNames.LOOT_UI_NAME));
                     container.fill(player, location, inventory.getInventory());
                     inventory.attrSet(LootUIHandler.ATTR_ID, lookupTable.acquire(entryId));
                     inventory.setHandler(LootUIHandler.LOOT_HANDLER);

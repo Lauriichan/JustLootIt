@@ -200,6 +200,10 @@ public abstract class VersionHandler {
 
     public abstract VersionHelper versionHelper();
     
+    public final IServiceProvider serviceProvider() {
+        return serviceProvider;
+    }
+    
     public final IDebugHelper debugHelper() {
         return debugHelper;
     }

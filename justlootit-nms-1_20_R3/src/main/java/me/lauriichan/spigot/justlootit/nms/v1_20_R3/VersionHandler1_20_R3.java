@@ -16,7 +16,7 @@ import me.lauriichan.spigot.justlootit.nms.v1_20_R3.network.PacketManager1_20_R3
 import me.lauriichan.spigot.justlootit.nms.v1_20_R3.packet.*;
 import net.minecraft.network.protocol.game.*;
 
-public final class VersionHandler1_20_R3 extends VersionHandler implements IServiceProvider {
+public final class VersionHandler1_20_R3 extends VersionHandler {
 
     private final PacketManager1_20_R3 packetManager;
     private final VersionHelper1_20_R3 versionHelper;

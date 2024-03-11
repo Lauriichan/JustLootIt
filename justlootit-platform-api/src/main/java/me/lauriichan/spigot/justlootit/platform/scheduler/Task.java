@@ -1,5 +1,7 @@
 package me.lauriichan.spigot.justlootit.platform.scheduler;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
@@ -7,14 +9,16 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
 import me.lauriichan.laylib.logger.ISimpleLogger;
 
 public abstract class Task<E> {
+    
+    private static record Result(Throwable throwable) {}
 
-    private static final Object NULL = new Object();
+    private static final Result NULL = new Result(null);
 
     protected final ISimpleLogger logger;
     private final boolean repeating;
 
     private final AtomicReference<TaskState> state = new AtomicReference<>(TaskState.IDLE);
-    private final AtomicReference<Object> value = new AtomicReference<>();
+    private volatile Object value;
 
     private final ObjectArrayFIFOQueue<Stage<E>> stages = new ObjectArrayFIFOQueue<>();
 
@@ -52,27 +56,42 @@ public abstract class Task<E> {
     }
 
     @SuppressWarnings("unchecked")
-    public final E value() {
-        Object object = value.get();
-        if (object == NULL) {
+    public final E value() throws IllegalStateException {
+        if (value == null) {
+            throw new IllegalStateException("Task isn't complete yet");
+        }
+        if (value instanceof Result) {
             return null;
         }
-        return (E) object;
+        return (E) this.value;
+    }
+
+    @SuppressWarnings("unchecked")
+    public final E join() {
+        if (isCompleted()) {
+            return value();
+        }
+        pushStage(new Stage.JoinStage<>());
+        Object value = VALUE.getVolatile(this);
+        if (value instanceof Result) {
+            return null;
+        }
+        return (E) value;
     }
 
     public final void complete(E value) {
         if (isCompleted()) {
             return;
         }
-        state.set(TaskState.DONE);
         try {
             if (value == null) {
-                this.value.set(NULL);
+                this.value = NULL;
                 return;
             }
-            this.value.set(value);
+            this.value = value;
         } finally {
-            runStages();
+            state.set(TaskState.DONE);
+            runStages(value);
         }
     }
 
@@ -82,15 +101,11 @@ public abstract class Task<E> {
         }
         this.state.set(TaskState.CANCELLED);
         try {
+            this.value = NULL;
             doCancel();
         } finally {
-            runStages();
+            runStages(null);
         }
-    }
-
-    public final E join() {
-        pushStage(new Stage.JoinStage<>());
-        return value();
     }
 
     public final Task<E> thenRun(Runnable runnable) {
@@ -126,12 +141,11 @@ public abstract class Task<E> {
      * Implementation
      */
 
-    protected final void runStages() {
+    protected final void runStages(E value) {
         synchronized (stages) {
             if (stages.isEmpty()) {
                 return;
             }
-            E value = value();
             while (!stages.isEmpty()) {
                 try {
                     stages.dequeue().done(value);
@@ -145,5 +159,16 @@ public abstract class Task<E> {
     protected abstract void doCancel();
 
     protected abstract boolean isCancelled();
+    
+    // VarHandle mechanics
+    private static final VarHandle VALUE;
+    static {
+        try {
+            MethodHandles.Lookup lookup = MethodHandles.lookup();
+            VALUE = lookup.findVarHandle(Task.class, "value", Object.class);
+        } catch (ReflectiveOperationException e) {
+            throw new ExceptionInInitializerError(e);
+        }
+    }
 
 }

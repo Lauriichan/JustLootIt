@@ -32,7 +32,7 @@ public class LootItActor<P extends CommandSender> extends BukkitActor<P> {
     public VersionHelper versionHelper() {
         return versionHelper;
     }
-
+    
     @Override
     public void sendActionMessage(final ActionMessage message) {
         if (message == null) {

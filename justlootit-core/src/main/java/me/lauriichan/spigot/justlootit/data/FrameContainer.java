@@ -1,8 +1,10 @@
 package me.lauriichan.spigot.justlootit.data;
 
+import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
 import io.netty.buffer.ByteBuf;
+import me.lauriichan.minecraft.pluginbase.inventory.item.ItemEditor;
 import me.lauriichan.spigot.justlootit.data.io.DataIO;
 import me.lauriichan.spigot.justlootit.nms.io.IOHandler;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapter;
@@ -37,6 +39,11 @@ public final class FrameContainer extends Container {
 
     public ItemStack getItem() {
         return item;
+    }
+
+    @Override
+    public ItemEditor createIcon() {
+        return ItemEditor.of(Material.ITEM_FRAME).setName("&cFrame");
     }
 
 }

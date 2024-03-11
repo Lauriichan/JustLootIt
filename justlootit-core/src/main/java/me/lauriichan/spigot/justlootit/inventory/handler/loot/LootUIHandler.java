@@ -1,4 +1,4 @@
-package me.lauriichan.spigot.justlootit.inventory.handler;
+package me.lauriichan.spigot.justlootit.inventory.handler.loot;
 
 import org.bukkit.Location;
 import org.bukkit.entity.HumanEntity;
@@ -19,12 +19,10 @@ public final class LootUIHandler implements IHandler {
     public static final String ATTR_ID = "PlayerStorageId";
     public static final String ATTR_LIDDED_LOCATION = "LiddedBlockLocation";
 
-    private final VersionHandler versionHandler;
+    private final JustLootItPlugin plugin = JustLootItPlugin.get();
+    private final VersionHandler versionHandler = plugin.versionHandler();
     
-    private LootUIHandler() {
-        JustLootItPlugin plugin = JustLootItPlugin.get();
-        this.versionHandler = plugin.versionHandler();
-    }
+    private LootUIHandler() {}
 
     @Override
     public boolean onEventClose(final HumanEntity entity, final IGuiInventory inventory) {

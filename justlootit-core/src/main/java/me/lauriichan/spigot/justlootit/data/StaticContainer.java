@@ -1,10 +1,12 @@
 package me.lauriichan.spigot.justlootit.data;
 
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 import io.netty.buffer.ByteBuf;
+import me.lauriichan.minecraft.pluginbase.inventory.item.ItemEditor;
 import me.lauriichan.spigot.justlootit.data.io.DataIO;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.nms.io.IOHandler;
@@ -37,6 +39,10 @@ public final class StaticContainer extends Container implements IInventoryContai
     private StaticContainer(final long id, final ContainerData data, final ItemStack[] items) {
         super(id, data);
         this.items = items;
+    }
+    
+    public int amount() {
+        return items.length;
     }
 
     public ItemStack[] getItems() {
@@ -73,6 +79,11 @@ public final class StaticContainer extends Container implements IInventoryContai
     @Override
     public void fill(final PlayerAdapter player, final Location location, final Inventory inventory) {
         loadTo(inventory);
+    }
+
+    @Override
+    public ItemEditor createIcon() {
+        return ItemEditor.of(Material.CHEST).setName("&cStatic");
     }
 
 }

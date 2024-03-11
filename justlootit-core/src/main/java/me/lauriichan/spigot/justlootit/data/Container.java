@@ -8,7 +8,12 @@ import java.util.Objects;
 import java.util.UUID;
 
 import io.netty.buffer.ByteBuf;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
+import me.lauriichan.minecraft.pluginbase.inventory.item.ItemEditor;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.config.RefreshConfig;
 import me.lauriichan.spigot.justlootit.config.data.RefreshGroup;
@@ -19,6 +24,19 @@ import me.lauriichan.spigot.justlootit.storage.Storable;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapter;
 
 public abstract class Container extends Storable implements IModifiable {
+    
+    private static final Object2ObjectArrayMap<Class<? extends Container>, ContainerType> CONTAINERS;
+    
+    static {
+        CONTAINERS = new Object2ObjectArrayMap<>();
+        for (ContainerType type : ContainerType.values()) {
+            CONTAINERS.put(type.containerType(), type);
+        }
+    }
+    
+    public static ContainerType type(Class<? extends Container> containerType) {
+        return CONTAINERS.get(containerType);
+    }
 
     protected static abstract class BaseAdapter<C extends Container> extends StorageAdapter<C> {
 
@@ -64,7 +82,7 @@ public abstract class Container extends Storable implements IModifiable {
 
         private final long id;
         private final RefreshConfig config;
-        private final Object2ObjectOpenHashMap<UUID, OffsetDateTime> playerAccess = new Object2ObjectOpenHashMap<>();
+        private final Object2ObjectMap<UUID, OffsetDateTime> playerAccess = Object2ObjectMaps.synchronize(new Object2ObjectLinkedOpenHashMap<>());
 
         private WeakReference<RefreshGroup> refreshGroup;
         private volatile String refreshGroupId;
@@ -112,6 +130,10 @@ public abstract class Container extends Storable implements IModifiable {
         super(id);
         this.data = data;
     }
+    
+    public final ContainerType type() {
+        return type(getClass());
+    }
 
     @Override
     public final boolean isDirty() {
@@ -120,6 +142,20 @@ public abstract class Container extends Storable implements IModifiable {
 
     protected final void setDirty() {
         this.dirty = true;
+    }
+    
+    public int accessAmount() {
+        return data.playerAccess.size();
+    }
+    
+    public ObjectSet<Entry<UUID, OffsetDateTime>> accesses() {
+        return data.playerAccess.entrySet();
+    }
+    
+    public void resetAccess(final UUID id) {
+        if (data.playerAccess.remove(id) != null) {
+            setDirty();
+        }
     }
 
     public boolean hasAccessed(final UUID id) {
@@ -164,6 +200,14 @@ public abstract class Container extends Storable implements IModifiable {
         }
         return false;
     }
+    
+    public RefreshGroup group() {
+        return data.group();
+    }
+    
+    public boolean hasGroupId() {
+        return data.refreshGroupId != null;
+    }
 
     public String getGroupId() {
         return data.refreshGroupId;
@@ -174,5 +218,7 @@ public abstract class Container extends Storable implements IModifiable {
             setDirty();
         }
     }
+    
+    public abstract ItemEditor createIcon();
 
 }

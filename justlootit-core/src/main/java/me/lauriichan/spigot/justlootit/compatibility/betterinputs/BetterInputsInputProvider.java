@@ -8,7 +8,7 @@ import org.bukkit.entity.Player;
 
 import me.lauriichan.laylib.command.Actor;
 import me.lauriichan.laylib.localization.Key;
-import me.lauriichan.minecraft.pluginbase.util.BukkitColor;
+import me.lauriichan.minecraft.pluginbase.util.color.BukkitColor;
 import me.lauriichan.spigot.justlootit.input.InputProvider;
 import me.lauriichan.spigot.justlootit.message.Messages;
 import me.nemo_64.betterinputs.api.BetterInputs;

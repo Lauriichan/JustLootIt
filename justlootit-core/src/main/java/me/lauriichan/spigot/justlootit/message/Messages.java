@@ -109,7 +109,7 @@ public final class Messages implements IMessageExtension {
 
     // System (general)
 
-    @Message(id = "command.system.actor.not-supported", content = "$#plugin.prefix The command '&c$command&7' can only be excuted by actors of type &c$actorType&7.")
+    @Message(id = "command.system.actor.not-supported", content = "$#plugin.prefix This can only be excuted by actors of type &c$actorType&7.")
     public static MessageProvider COMMAND_SYSTEM_ACTOR_NOT_SUPPORTED;
     @Message(id = "command.system.actor.coords-required.player", content = "$#plugin.prefix Please specify all x, y and z coordinates or look at a block.")
     public static MessageProvider COMMAND_SYSTEM_ACTOR_COORDS_REQUIRED_PLAYER;
@@ -217,6 +217,8 @@ public final class Messages implements IMessageExtension {
     public static MessageProvider COMMAND_CONTAINER_ALL_NO_CONTAINER_BLOCK;
     @Message(id = "command.container.all.no-container.entity", content = "$#plugin.prefix Entity at &c$x $y $z &7in &c$world&7 is not a JustLootIt container!")
     public static MessageProvider COMMAND_CONTAINER_ALL_NO_CONTAINER_ENTITY;
+    @Message(id = "command.container.all.no-container.id", content = "$#plugin.prefix Couldn't find JustLootIt container with id &c$id&7!")
+    public static MessageProvider COMMAND_CONTAINER_ALL_NO_CONTAINER_ID;
     
     @Message(id = "command.container.info.container.any.block", content = {
         "&8| $#plugin.name",

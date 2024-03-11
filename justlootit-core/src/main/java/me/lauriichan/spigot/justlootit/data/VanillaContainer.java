@@ -4,11 +4,13 @@ import java.util.Objects;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.loot.LootTable;
 
 import io.netty.buffer.ByteBuf;
+import me.lauriichan.minecraft.pluginbase.inventory.item.ItemEditor;
 import me.lauriichan.spigot.justlootit.data.io.DataIO;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapter;
@@ -70,6 +72,11 @@ public final class VanillaContainer extends Container implements IInventoryConta
     @Override
     public void fill(final PlayerAdapter player, final Location location, final Inventory inventory) {
         player.versionHandler().versionHelper().fill(inventory, player.asBukkit(), location, getLootTable(), seed);
+    }
+
+    @Override
+    public ItemEditor createIcon() {
+        return ItemEditor.of(Material.ENDER_CHEST).setName("&cVanilla");
     }
 
 }
