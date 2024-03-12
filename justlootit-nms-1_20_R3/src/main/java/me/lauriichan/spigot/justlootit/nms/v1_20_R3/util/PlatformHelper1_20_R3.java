@@ -24,8 +24,8 @@ public final class PlatformHelper1_20_R3 {
             if (entityLookup == null) {
                 return null;
             }
-            Method method = ClassUtil.getMethod(ServerLevel.class, "getEntityLookup", entityLookup);
-            if (method == null) {
+            Method method = ClassUtil.getMethod(ServerLevel.class, "getEntityLookup");
+            if (method == null || !entityLookup.isAssignableFrom(method.getReturnType())) {
                 throw new IllegalStateException("Couldn't find method 'getEntityLookup', JustLootIt won't work here.");
             }
             return JavaAccess.accessMethod(method);
