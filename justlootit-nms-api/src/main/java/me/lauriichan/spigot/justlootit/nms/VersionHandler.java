@@ -14,6 +14,7 @@ import org.bukkit.plugin.PluginManager;
 import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.spigot.justlootit.nms.capability.CapabilityManager;
 import me.lauriichan.spigot.justlootit.nms.capability.Capable;
+import me.lauriichan.spigot.justlootit.nms.convert.ConversionAdapter;
 import me.lauriichan.spigot.justlootit.nms.debug.DebugHelper;
 import me.lauriichan.spigot.justlootit.nms.debug.IDebugHelper;
 import me.lauriichan.spigot.justlootit.nms.io.IOProvider;
@@ -195,6 +196,8 @@ public abstract class VersionHandler {
     /*
      * Getter
      */
+    
+    public abstract ConversionAdapter conversionAdapter();
 
     public abstract PacketManager packetManager();
 

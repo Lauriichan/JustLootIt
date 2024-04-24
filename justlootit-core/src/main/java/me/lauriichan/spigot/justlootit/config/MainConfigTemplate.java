@@ -20,6 +20,9 @@ public class MainConfigTemplate implements IConfigExtension {
     @ConfigValue("container.delete-on-break")
     public boolean deleteOnBreak = true;
     
+    @ConfigValue("server.convert-lootin-on-startup")
+    public boolean convertLootin = false;
+    
     /*
      * Implementation
      */

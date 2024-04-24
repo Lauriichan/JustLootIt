@@ -21,12 +21,14 @@ import me.lauriichan.minecraft.pluginbase.ConditionConstant;
 import me.lauriichan.minecraft.pluginbase.command.bridge.BukkitCommandInjectableBridge;
 import me.lauriichan.minecraft.pluginbase.command.bridge.BukkitCommandInjectableBridge.CommandDefinition;
 import me.lauriichan.minecraft.pluginbase.command.processor.IBukkitCommandProcessor;
+import me.lauriichan.minecraft.pluginbase.config.ConfigWrapper;
 import me.lauriichan.minecraft.pluginbase.extension.IConditionMap;
 import me.lauriichan.spigot.justlootit.capability.JustLootItCapabilityProvider;
 import me.lauriichan.spigot.justlootit.command.*;
 import me.lauriichan.spigot.justlootit.command.argument.*;
 import me.lauriichan.spigot.justlootit.command.impl.LootItActor;
 import me.lauriichan.spigot.justlootit.command.provider.PluginProvider;
+import me.lauriichan.spigot.justlootit.config.MainConfig;
 import me.lauriichan.spigot.justlootit.data.io.DataIO;
 import me.lauriichan.spigot.justlootit.input.InputProvider;
 import me.lauriichan.spigot.justlootit.input.SimpleChatInputProvider;
@@ -38,10 +40,10 @@ import me.lauriichan.spigot.justlootit.nms.capability.CapabilityManager;
 import me.lauriichan.spigot.justlootit.nms.packet.listener.PacketContainer;
 import me.lauriichan.spigot.justlootit.nms.packet.listener.PacketManager;
 import me.lauriichan.spigot.justlootit.platform.JustLootItPlatform;
+import me.lauriichan.spigot.justlootit.platform.folia.FoliaPlatform;
 import me.lauriichan.spigot.justlootit.platform.spigot.SpigotPlatform;
 import me.lauriichan.spigot.justlootit.util.CompatDependency;
 import me.lauriichan.spigot.justlootit.util.VersionConstant;
-import me.lauriichen.spigot.justlootit.platform.folia.FoliaPlatform;
 
 public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> implements IServiceProvider {
 
@@ -141,7 +143,12 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
 
     @Override
     public void onPluginEnable() {
-        logger().setDebug(true);
+        if (isLootinConvert()) {
+            JustLootItConverter.convert(versionHandler);
+            // Exit server afterwards, just to be safe
+            Bukkit.shutdown();
+            return;
+        }
         JustLootItKey.setup(this);
         commandManager = new CommandManager(logger(), argumentRegistry());
         commandManager.setPrefix("/jli ");
@@ -151,6 +158,16 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         registerCommands(commandManager);
         // Initialize compatibilities
         JustLootItCompatibilities.loadClass();
+    }
+    
+    private boolean isLootinConvert() {
+        ConfigWrapper<MainConfig> config = configManager().wrapper(MainConfig.class);
+        if (config.config().convertLootin()) {
+            config.config().convertLootin(false);
+            config.save(true);
+            return true;
+        }
+        return false;
     }
     
     @Override

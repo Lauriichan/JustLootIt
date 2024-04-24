@@ -55,6 +55,7 @@ public class ContainerCommand implements ICommandExtension {
     // TODO: [IDEA] Command to view and modify existing containers (Preferably with Inventory UI)
 
     @Action("manage")
+    @Description("$#command.description.justlootit.container.manage.id")
     public void manage(final JustLootItPlugin plugin, final Actor<?> rawActor,
         @Argument(name = "id", index = 1, params = @Param(name = "minimum", longValue = 0, type = Param.TYPE_LONG)) Long id,
         @Argument(name = "world", optional = true, index = 2) World world) {
@@ -74,6 +75,7 @@ public class ContainerCommand implements ICommandExtension {
 
     @Action("manage loc")
     @Action("manage location")
+    @Description("$#command.description.justlootit.container.manage.location")
     public void manage(final JustLootItPlugin plugin, final Actor<?> rawActor,
         @Argument(name = "x", optional = true, index = 1, params = @Param(name = "axis", stringValue = "x", type = Param.TYPE_STRING)) final Coord x,
         @Argument(name = "y", optional = true, index = 2, params = @Param(name = "axis", stringValue = "y", type = Param.TYPE_STRING)) final Coord y,
@@ -270,13 +272,15 @@ public class ContainerCommand implements ICommandExtension {
             location.getBlockZ() + 0.5d);
         Collection<Entity> entities = location.getWorld().getNearbyEntities(centerLocation, 1.5d, 1.5d, 1.5d);
         if (entities.isEmpty()) {
-            actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_NOT_FOUND_ENTITY);
+            actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_NOT_FOUND_ENTITY, Key.of("x", location.getBlockX()),
+                Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld().getName()));
             return;
         }
         List<Entity> validEntities = entities.stream()
             .filter(entity -> EntityUtil.isSuppportedEntity(entity) || EntityUtil.isItemFrame(entity)).toList();
         if (validEntities.isEmpty()) {
-            actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_NOT_FOUND_ENTITY);
+            actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_NOT_FOUND_ENTITY, Key.of("x", location.getBlockX()),
+                Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld().getName()));
             return;
         }
         double distance = Double.MAX_VALUE;

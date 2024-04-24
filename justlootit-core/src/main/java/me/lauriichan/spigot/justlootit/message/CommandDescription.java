@@ -23,6 +23,8 @@ public enum CommandDescription implements IMessageDefinition, IMessageExtension 
     JUSTLOOTIT_CONTAINER_GROUP_REMOVE("Removes the refresh group of a container linked to a block or entity"),
     JUSTLOOTIT_CONTAINER_CREATE_ANY("Creates a new container and links it to a block or entity"),
     JUSTLOOTIT_CONTAINER_CREATE_ENTITY("Creates a new container and links it to a block or entity while prioritizing entities over blocks"),
+    JUSTLOOTIT_CONTAINER_MANAGE_ID("Manages a container by id"),
+    JUSTLOOTIT_CONTAINER_MANAGE_LOCATION("Manages a container linked to a block or entity"),
 
     JUSTLOOTIT_GROUP_CREATE("Creates a new refresh group"),
     JUSTLOOTIT_GROUP_DELETE("Deletes a refresh group"),

@@ -111,7 +111,6 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <createDependencyReducedPom>false</createDependencyReducedPom>
                     <filters>
                         <filter>
                             <artifact>*:*</artifact>
@@ -134,15 +133,14 @@
                             <shadedPattern>${project.groupId}.shaded.laylib</shadedPattern>
                         </relocation>
                         <relocation>
-                            <pattern>me.lauriichan.pluginbase</pattern>
+                            <pattern>me.lauriichan.minecraft.pluginbase</pattern>
                             <shadedPattern>${project.groupId}.shaded.pluginbase</shadedPattern>
-                        </relocation>
-                        <relocation>
-                            <pattern>org.bstats</pattern>
-                            <shadedPattern>${project.groupId}.shaded.bstats</shadedPattern>
                         </relocation>
                     </relocations>
                     <finalName>justlootit-${project.version}</finalName>
+                    <shadedArtifactAttached>true</shadedArtifactAttached>
+                    <useDependencyReducedPomInJar>true</useDependencyReducedPomInJar>
+                    <createDependencyReducedPom>true</createDependencyReducedPom>
                     <transformers>
                         <transformer
                             implementation="me.lauriichan.maven.shade.transformers.AppendingTransformer">

@@ -10,6 +10,7 @@ import me.lauriichan.spigot.justlootit.nms.LevelAdapter;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.nms.packet.PacketOutSetEntityData;
+import me.lauriichan.spigot.justlootit.nms.v1_20_R3.convert.ConversionAdapter1_20_R3;
 import me.lauriichan.spigot.justlootit.nms.v1_20_R3.debug.Debug1_20_R3;
 import me.lauriichan.spigot.justlootit.nms.v1_20_R3.io.ItemStackIO1_20_R3;
 import me.lauriichan.spigot.justlootit.nms.v1_20_R3.network.PacketManager1_20_R3;
@@ -20,11 +21,14 @@ public final class VersionHandler1_20_R3 extends VersionHandler {
 
     private final PacketManager1_20_R3 packetManager;
     private final VersionHelper1_20_R3 versionHelper;
+    
+    private final ConversionAdapter1_20_R3 conversionAdapter;
 
     public VersionHandler1_20_R3(final IServiceProvider provider) {
         super(provider, new Debug1_20_R3());
         this.packetManager = new PacketManager1_20_R3(this);
         this.versionHelper = new VersionHelper1_20_R3(this);
+        this.conversionAdapter = new ConversionAdapter1_20_R3(provider.logger());
     }
 
     @Override
@@ -47,6 +51,11 @@ public final class VersionHandler1_20_R3 extends VersionHandler {
         io.register(ItemStackIO1_20_R3.ITEM_STACK);
     }
 
+    @Override
+    public ConversionAdapter1_20_R3 conversionAdapter() {
+        return conversionAdapter;
+    }
+    
     @Override
     public PacketManager1_20_R3 packetManager() {
         return packetManager;

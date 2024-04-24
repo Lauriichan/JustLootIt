@@ -1,4 +1,4 @@
-package me.lauriichen.spigot.justlootit.platform.folia;
+package me.lauriichan.spigot.justlootit.platform.folia;
 
 import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import me.lauriichan.laylib.logger.ISimpleLogger;

@@ -1,4 +1,4 @@
-package me.lauriichen.spigot.justlootit.platform.folia;
+package me.lauriichan.spigot.justlootit.platform.folia;
 
 import org.bukkit.plugin.Plugin;
 

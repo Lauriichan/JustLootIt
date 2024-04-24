@@ -1,4 +1,4 @@
-package me.lauriichen.spigot.justlootit.platform.folia;
+package me.lauriichan.spigot.justlootit.platform.folia;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
