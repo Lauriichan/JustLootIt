@@ -66,6 +66,8 @@ public class ProtoWorld1_20_R3 extends ProtoWorld implements LevelHeightAccessor
     
     private final ResourceKey<Level> worldKey;
     private final Path regionPath;
+    
+    private final String worldName;
 
     public ProtoWorld1_20_R3(final ExecutorService executor, final ISimpleLogger logger, final ChunkStorage chunkStorage, final LevelStorageAccess access,
         final ResourceKey<LevelStem> dimensionKey) {
@@ -78,6 +80,12 @@ public class ProtoWorld1_20_R3 extends ProtoWorld implements LevelHeightAccessor
         this.biomeRegistry = registry.registryOrThrow(Registries.BIOME);
         this.worldKey = ResourceKey.create(Registries.DIMENSION, dimensionKey.location());
         this.regionPath = access.getDimensionPath(worldKey).resolve("region");
+        this.worldName = access.getLevelId();
+    }
+    
+    @Override
+    public String getName() {
+        return worldName;
     }
 
     @Override
@@ -92,7 +100,7 @@ public class ProtoWorld1_20_R3 extends ProtoWorld implements LevelHeightAccessor
                 futures.add(CompletableFuture.runAsync(() -> streamRegion(path, counter, consumer), executor));
             });
         } catch (IOException e) {
-            logger.error("Failed to convert level '{0}'!", e, worldKey.toString());
+            logger.error("Failed to convert level '{0}'!", e, worldName);
         }
         return new ConversionProgress(compositeCounter, futures);
     }
@@ -171,7 +179,7 @@ public class ProtoWorld1_20_R3 extends ProtoWorld implements LevelHeightAccessor
         } catch (IOException | RuntimeException e) {
             // Maybe mark as complete? Unsure tho
             counter.increment(counter.max() - counter.current());
-            logger.error("Failed to convert region '{1}' in level '{0}'!", e, worldKey.toString(), path.getFileName().toString());
+            logger.error("Failed to convert region '{1}' in level '{0}'!", e, worldName, path.getFileName().toString());
         }
     }
 

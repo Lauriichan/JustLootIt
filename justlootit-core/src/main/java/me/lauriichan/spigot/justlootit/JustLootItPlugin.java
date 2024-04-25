@@ -28,7 +28,8 @@ import me.lauriichan.spigot.justlootit.command.*;
 import me.lauriichan.spigot.justlootit.command.argument.*;
 import me.lauriichan.spigot.justlootit.command.impl.LootItActor;
 import me.lauriichan.spigot.justlootit.command.provider.PluginProvider;
-import me.lauriichan.spigot.justlootit.config.MainConfig;
+import me.lauriichan.spigot.justlootit.config.ConversionConfig;
+import me.lauriichan.spigot.justlootit.convert.JustLootItConverter;
 import me.lauriichan.spigot.justlootit.data.io.DataIO;
 import me.lauriichan.spigot.justlootit.input.InputProvider;
 import me.lauriichan.spigot.justlootit.input.SimpleChatInputProvider;
@@ -143,8 +144,7 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
 
     @Override
     public void onPluginEnable() {
-        if (isLootinConvert()) {
-            JustLootItConverter.convert(versionHandler);
+        if (doWorldConversion()) {
             // Exit server afterwards, just to be safe
             Bukkit.shutdown();
             return;
@@ -160,12 +160,18 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         JustLootItCompatibilities.loadClass();
     }
     
-    private boolean isLootinConvert() {
-        ConfigWrapper<MainConfig> config = configManager().wrapper(MainConfig.class);
-        if (config.config().convertLootin()) {
-            config.config().convertLootin(false);
-            config.save(true);
-            return true;
+    private boolean doWorldConversion() {
+        ConfigWrapper<ConversionConfig> wrapper = configManager().wrapper(ConversionConfig.class);
+        ConversionConfig config = wrapper.config();
+        if (config.doLootinConversion() || config.doVanillaConversion()) {
+            boolean conversionWasDone = JustLootItConverter.convert(versionHandler, config);
+            config.doLootinConversion(config.default$doLootinConversion());
+            config.doVanillaConversion(config.default$doVanillaConversion());
+            config.allowStaticConversion(config.default$allowStaticConversion());
+            config.allowItemFrameConversion(config.default$allowItemFrameConversion());
+            wrapper.save(true);
+            // We only want to return true if the conversion was done, otherwise there is no need to restart
+            return conversionWasDone;
         }
         return false;
     }

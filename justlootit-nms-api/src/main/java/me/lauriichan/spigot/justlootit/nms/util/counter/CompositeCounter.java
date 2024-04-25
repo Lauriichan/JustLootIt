@@ -5,7 +5,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 public final class CompositeCounter extends Counter {
     
     private final ObjectArrayList<Counter> counters = new ObjectArrayList<>();
-    private volatile long max = 0L;
+    private volatile long max = 0L, cachedCurrent = 0L;
     
     public void add(Counter counter) {
         if (counters.contains(counter) || counter instanceof CompositeCounter) {
@@ -21,7 +21,15 @@ public final class CompositeCounter extends Counter {
         for (Counter counter : counters) {
             value += counter.current();
         }
-        return value;
+        return cachedCurrent = value;
+    }
+    
+    @Override
+    public double progress() {
+        if (max == 0) {
+            return 1d;
+        }
+        return ((double) cachedCurrent) / ((double) max);
     }
 
     @Override

@@ -36,8 +36,12 @@ public final class VanillaContainer extends Container implements IInventoryConta
     private long seed;
 
     public VanillaContainer(final long id, final LootTable lootTable, final long seed) {
+        this(id, lootTable.getKey(), seed);
+    }
+
+    public VanillaContainer(final long id, final NamespacedKey lootTableKey, final long seed) {
         super(id);
-        this.lootTableKey = lootTable.getKey();
+        this.lootTableKey = lootTableKey;
         this.seed = seed;
     }
 
@@ -49,6 +53,11 @@ public final class VanillaContainer extends Container implements IInventoryConta
 
     public NamespacedKey getLootTableKey() {
         return lootTableKey;
+    }
+    
+    public void setLootTableKey(final NamespacedKey lootTableKey) {
+        this.lootTableKey = Objects.requireNonNull(lootTableKey, "LootTable key can't be null");
+        setDirty();
     }
 
     public LootTable getLootTable() {

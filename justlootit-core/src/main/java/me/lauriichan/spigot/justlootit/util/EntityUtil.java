@@ -12,13 +12,19 @@ public final class EntityUtil {
     }
 
     public static boolean isSuppportedEntity(Entity entity) {
-        EntityType type = entity.getType();
+        return isSuppportedEntity(entity.getType());
+    }
+
+    public static boolean isSuppportedEntity(EntityType type) {
         return type == EntityType.CHEST_BOAT || type == EntityType.MINECART_CHEST
             || JustLootItFlag.TILE_ENTITY_CONTAINERS.isSet() && type == EntityType.MINECART_HOPPER;
     }
 
     public static boolean isItemFrame(Entity entity) {
-        EntityType type = entity.getType();
+        return isItemFrame(entity.getType());
+    }
+
+    public static boolean isItemFrame(EntityType type) {
         return type == EntityType.ITEM_FRAME || type == EntityType.GLOW_ITEM_FRAME;
     }
 

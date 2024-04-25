@@ -1,0 +1,91 @@
+package me.lauriichan.spigot.justlootit.convert;
+
+import java.io.File;
+import java.text.DecimalFormat;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
+
+import org.bukkit.Bukkit;
+
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import me.lauriichan.laylib.logger.ISimpleLogger;
+import me.lauriichan.laylib.reflection.StackTracker;
+import me.lauriichan.spigot.justlootit.JustLootItPlugin;
+import me.lauriichan.spigot.justlootit.config.ConversionConfig;
+import me.lauriichan.spigot.justlootit.nms.VersionHandler;
+import me.lauriichan.spigot.justlootit.nms.convert.ConversionAdapter;
+import me.lauriichan.spigot.justlootit.nms.convert.ConversionProgress;
+import me.lauriichan.spigot.justlootit.nms.convert.ProtoChunk;
+import me.lauriichan.spigot.justlootit.nms.convert.ProtoWorld;
+
+public final class JustLootItConverter {
+    
+    private static final DecimalFormat PROGRESS_FORMAT = new DecimalFormat("0.00%");
+
+    private JustLootItConverter() {
+        throw new UnsupportedOperationException();
+    }
+
+    private static void createConverters(ObjectArrayList<ChunkConverter> converters, ConversionConfig config) {
+        addConverter(converters, new LootinConverter(config));
+        addConverter(converters, new VanillaConverter(config));
+    }
+
+    private static void addConverter(ObjectArrayList<ChunkConverter> converters, ChunkConverter converter) {
+        if (!converter.isEnabled()) {
+            return;
+        }
+        converters.add(converter);
+    }
+
+    public static boolean convert(VersionHandler versionHandler, ConversionConfig config) {
+        Class<?> clazz = StackTracker.getCallerClass().orElse(null);
+        if (clazz != JustLootItPlugin.class) {
+            throw new UnsupportedOperationException();
+        }
+        ConversionAdapter conversionAdapter = versionHandler.conversionAdapter();
+        ObjectArrayList<ChunkConverter> converters = new ObjectArrayList<>();
+        createConverters(converters, config);
+        if (converters.isEmpty()) {
+            return false;
+        }
+        File worldContainer = Bukkit.getWorldContainer();
+        File[] possibleWorldFiles = worldContainer.listFiles();
+        Consumer<ProtoChunk> chunkConsumer = chunk -> {
+            for (ChunkConverter converter : converters) {
+                converter.convert(chunk);
+            }
+        };
+        boolean somethingWasConverted = false;
+        ISimpleLogger logger = versionHandler.logger();
+        for (File file : possibleWorldFiles) {
+            if (!file.isDirectory()) {
+                continue;
+            }
+            ProtoWorld world = conversionAdapter.getWorld(file);
+            if (world == null) {
+                continue;
+            }
+            somethingWasConverted = true;
+            ConversionProgress progress = world.streamChunks(chunkConsumer);
+            while (true) {
+                logger.info("Converting level '{0}'... ({2}) [{1} / {3} Chunks]", world.getName(), progress.counter().current(), PROGRESS_FORMAT.format(progress.counter().progress()), progress.counter().max());
+                if (progress.future().isDone()) {
+                    if (!progress.next()) {
+                        break;
+                    }
+                    continue;
+                }
+                try {
+                    progress.future().get(5, TimeUnit.SECONDS);
+                } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                    continue;
+                }
+            }
+        }
+        return somethingWasConverted;
+    }
+
+}
