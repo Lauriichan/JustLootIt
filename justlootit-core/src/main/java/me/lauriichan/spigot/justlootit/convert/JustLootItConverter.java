@@ -28,8 +28,8 @@ public final class JustLootItConverter {
         throw new UnsupportedOperationException();
     }
 
-    private static void createConverters(ObjectArrayList<ChunkConverter> converters, ConversionConfig config) {
-        addConverter(converters, new LootinConverter(config));
+    private static void createConverters(ObjectArrayList<ChunkConverter> converters, ISimpleLogger logger, ConversionConfig config) {
+        addConverter(converters, new LootinConverter(logger, config));
         addConverter(converters, new VanillaConverter(config));
     }
 
@@ -47,7 +47,7 @@ public final class JustLootItConverter {
         }
         ConversionAdapter conversionAdapter = versionHandler.conversionAdapter();
         ObjectArrayList<ChunkConverter> converters = new ObjectArrayList<>();
-        createConverters(converters, config);
+        createConverters(converters, versionHandler.logger(), config);
         if (converters.isEmpty()) {
             return false;
         }

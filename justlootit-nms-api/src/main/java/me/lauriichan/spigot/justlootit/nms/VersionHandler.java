@@ -18,6 +18,7 @@ import me.lauriichan.spigot.justlootit.nms.convert.ConversionAdapter;
 import me.lauriichan.spigot.justlootit.nms.debug.DebugHelper;
 import me.lauriichan.spigot.justlootit.nms.debug.IDebugHelper;
 import me.lauriichan.spigot.justlootit.nms.io.IOProvider;
+import me.lauriichan.spigot.justlootit.nms.nbt.NbtHelper;
 import me.lauriichan.spigot.justlootit.nms.packet.AbstractPacketOut;
 import me.lauriichan.spigot.justlootit.nms.packet.listener.PacketManager;
 import me.lauriichan.spigot.justlootit.platform.JustLootItPlatform;
@@ -202,6 +203,8 @@ public abstract class VersionHandler {
     public abstract PacketManager packetManager();
 
     public abstract VersionHelper versionHelper();
+    
+    public abstract NbtHelper nbtHelper();
     
     public final IServiceProvider serviceProvider() {
         return serviceProvider;

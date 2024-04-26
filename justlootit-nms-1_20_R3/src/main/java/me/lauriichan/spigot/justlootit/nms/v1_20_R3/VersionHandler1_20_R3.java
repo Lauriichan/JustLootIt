@@ -13,11 +13,14 @@ import me.lauriichan.spigot.justlootit.nms.packet.PacketOutSetEntityData;
 import me.lauriichan.spigot.justlootit.nms.v1_20_R3.convert.ConversionAdapter1_20_R3;
 import me.lauriichan.spigot.justlootit.nms.v1_20_R3.debug.Debug1_20_R3;
 import me.lauriichan.spigot.justlootit.nms.v1_20_R3.io.ItemStackIO1_20_R3;
+import me.lauriichan.spigot.justlootit.nms.v1_20_R3.nbt.NbtHelper1_20_R3;
 import me.lauriichan.spigot.justlootit.nms.v1_20_R3.network.PacketManager1_20_R3;
 import me.lauriichan.spigot.justlootit.nms.v1_20_R3.packet.*;
 import net.minecraft.network.protocol.game.*;
 
 public final class VersionHandler1_20_R3 extends VersionHandler {
+    
+    private final NbtHelper1_20_R3 nbtHelper = new NbtHelper1_20_R3();
 
     private final PacketManager1_20_R3 packetManager;
     private final VersionHelper1_20_R3 versionHelper;
@@ -49,6 +52,11 @@ public final class VersionHandler1_20_R3 extends VersionHandler {
 
     private void registerIO() {
         io.register(ItemStackIO1_20_R3.ITEM_STACK);
+    }
+    
+    @Override
+    public NbtHelper1_20_R3 nbtHelper() {
+        return nbtHelper;
     }
 
     @Override

@@ -6,10 +6,12 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.lang.reflect.Array;
 
+import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Container;
 import org.bukkit.block.data.type.Chest;
+import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataAdapterContext;
@@ -17,13 +19,17 @@ import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.io.BukkitObjectInputStream;
 import org.bukkit.util.io.BukkitObjectOutputStream;
+import org.yaml.snakeyaml.external.biz.base64Coder.Base64Coder;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import me.lauriichan.laylib.logger.ISimpleLogger;
+import me.lauriichan.minecraft.pluginbase.inventory.item.ItemEditor;
 import me.lauriichan.spigot.justlootit.JustLootItConstant;
 import me.lauriichan.spigot.justlootit.JustLootItFlag;
 import me.lauriichan.spigot.justlootit.config.ConversionConfig;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoChunk;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoEntity;
+import me.lauriichan.spigot.justlootit.util.EntityUtil;
 import me.lauriichan.spigot.justlootit.util.SimpleDataType;
 
 public class LootinConverter extends ChunkConverter {
@@ -42,6 +48,7 @@ public class LootinConverter extends ChunkConverter {
                 throw new IllegalStateException("Failed to serialize ItemStack[] to byte[]", e);
             }
         }
+
         @Override
         public ItemStack[] fromPrimitive(byte[] primitive, PersistentDataAdapterContext context) {
             try (final ByteArrayInputStream inputStream = new ByteArrayInputStream(primitive);
@@ -60,9 +67,24 @@ public class LootinConverter extends ChunkConverter {
     };
 
     private final NamespacedKey identityKey = NamespacedKey.fromString("lootin:Lootin");
+    private final NamespacedKey elytraKey = NamespacedKey.fromString("lootin:item-frame-elytra-key");
 
-    public LootinConverter(ConversionConfig config) {
+    private final NamespacedKey dataKey = NamespacedKey.fromString("lootin:loot-container");
+    private final NamespacedKey loottableKey = NamespacedKey.fromString("lootin:lottable");
+
+    private final NamespacedKey rwgLoottableKey = NamespacedKey.fromString("lootin:rwg-loottable-key");
+    private final NamespacedKey rwgIdentityKey = NamespacedKey.fromString("lootin:rwg-identity-key");
+    private final NamespacedKey betterStructuresKey = NamespacedKey.fromString("lootin:better-structures-name-key");
+    private final NamespacedKey customStructuresKey = NamespacedKey.fromString("lootin:custom-structures-name-key");
+
+    private final ItemStack airPlaceholderItem = ItemEditor.of(Material.STICK)
+        .applyItemMeta(meta -> meta.setDisplayName("This is temporary Item")).asItemStack();
+
+    private final ISimpleLogger logger;
+    
+    public LootinConverter(ISimpleLogger logger, ConversionConfig config) {
         super(config);
+        this.logger = logger;
     }
 
     @Override
@@ -81,24 +103,78 @@ public class LootinConverter extends ChunkConverter {
                     return;
                 }
                 PersistentDataContainer dataContainer = container.getPersistentDataContainer();
-                if (!dataContainer.has(identityKey, PersistentDataType.STRING)) {
+                if (!dataContainer.has(identityKey, PersistentDataType.STRING) || hasUnsupportedKey(dataContainer)) {
                     return;
                 }
                 if (state.getBlockData() instanceof Chest chest) {
                     Chest.Type type = chest.getType();
-                    
+
                 }
                 try {
                     dataContainer.remove(identityKey);
 
                 } finally {
                     container.update();
+                    chunk.updateBlockEntity(state);
                 }
             }
         }
         for (ProtoEntity entity : chunk.getEntities()) {
-            
+            if (EntityUtil.isItemFrame(entity.getType())) {
+                PersistentDataContainer dataContainer = entity.getContainer();
+                if (!dataContainer.has(elytraKey, PersistentDataType.INTEGER)) {
+                    return;
+                }
+                try {
+                    dataContainer.remove(elytraKey);
+                    // TODO: Create frame container (we know it's an elytra cause Lootin doesn't support any other items)
+                } finally {
+                    chunk.updateEntity(entity);
+                }
+            } else if (EntityUtil.isSuppportedEntity(entity.getType())) {
+                PersistentDataContainer dataContainer = entity.getContainer();
+                if (!dataContainer.has(identityKey, PersistentDataType.STRING) || hasUnsupportedKey(dataContainer)) {
+                    return;
+                }
+                try {
+                    dataContainer.remove(identityKey);
+                    // TODO: Create loot table container or static container based on information (same as with block entities)
+                } finally {
+                    chunk.updateEntity(entity);
+                }
+            }
         }
+    }
+
+    private boolean hasUnsupportedKey(PersistentDataContainer container) {
+        return container.has(rwgIdentityKey, PersistentDataType.BYTE) || container.has(rwgLoottableKey, PersistentDataType.STRING)
+            || container.has(betterStructuresKey, PersistentDataType.STRING)
+            || container.has(customStructuresKey, PersistentDataType.STRING);
+    }
+
+    private ItemStack[] extractContents(PersistentDataContainer container) {
+        if (container.has(loottableKey, ITEM_STACK_ARRAY_TYPE)) {
+            return container.get(loottableKey, ITEM_STACK_ARRAY_TYPE);
+        } else if (container.has(loottableKey, PersistentDataType.STRING)) {
+            try (
+                ByteArrayInputStream inputStream = new ByteArrayInputStream(
+                    Base64Coder.decodeLines(container.get(loottableKey, PersistentDataType.STRING)));
+                BukkitObjectInputStream objectInputStream = new BukkitObjectInputStream(inputStream)) {
+                ItemStack[] items = new ItemStack[objectInputStream.readInt()];
+                for (int i = 0; i < items.length; i++) {
+                    ItemStack item = items[i];
+                    if (item != null && item.isSimilar(airPlaceholderItem)) {
+                        item = new ItemStack(Material.AIR);
+                    }
+                    items[i] = item;
+                }
+                return items;
+            } catch (IOException e) {
+                logger.warning("Failed to deserialize lootin content", e);
+                return new ItemStack[0];
+            }
+        }
+        return null;
     }
 
     @Override

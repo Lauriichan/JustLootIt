@@ -4,6 +4,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.Map;
 
 import org.bukkit.craftbukkit.v1_20_R3.block.CraftBlockEntityState;
 import org.bukkit.craftbukkit.v1_20_R3.entity.CraftEntity;
@@ -11,12 +12,14 @@ import org.bukkit.craftbukkit.v1_20_R3.persistence.CraftPersistentDataTypeRegist
 
 import me.lauriichan.laylib.reflection.ClassUtil;
 import me.lauriichan.laylib.reflection.JavaAccess;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 public final class NmsHelper1_20_R3 {
 
     private static final MethodHandle GET_TILE_ENTITY = Access.getTileEntity();
     private static final VarHandle DATA_TYPE_REGISTRY = Access.dataTypeRegistry();
+    private static final VarHandle TAGS = Access.tags();
 
     private static final class Access {
 
@@ -40,6 +43,14 @@ public final class NmsHelper1_20_R3 {
             return JavaAccess.accessField(field);
         }
 
+        static VarHandle tags() {
+            Field field = ClassUtil.getField(CompoundTag.class, "tags");
+            if (field == null || !Map.class.isAssignableFrom(field.getType())) {
+                throw new IllegalStateException("Couldn't find field 'tags', JustLootIt won't be able to convert anything here.");
+            }
+            return JavaAccess.accessField(field);
+        }
+
     }
     
     public static <E extends BlockEntity> E getTileEntity(CraftBlockEntityState<E> state) {
@@ -52,6 +63,10 @@ public final class NmsHelper1_20_R3 {
     
     public static CraftPersistentDataTypeRegistry dataTypeRegistry() {
         return (CraftPersistentDataTypeRegistry) DATA_TYPE_REGISTRY.get();
+    }
+    
+    public static void clearCompound(CompoundTag tag) {
+        ((Map<?, ?>) TAGS.get(tag)).clear();
     }
 
 }

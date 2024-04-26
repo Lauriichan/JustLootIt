@@ -7,7 +7,9 @@ import org.bukkit.craftbukkit.v1_20_R2.persistence.CraftPersistentDataTypeRegist
 
 import me.lauriichan.laylib.reflection.JavaAccess;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoEntity;
+import me.lauriichan.spigot.justlootit.nms.nbt.ICompoundTag;
 import me.lauriichan.spigot.justlootit.nms.v1_20_R2.convert.ProtoChunk1_20_R2.IUpdatable;
+import me.lauriichan.spigot.justlootit.nms.v1_20_R2.nbt.CompoundTag1_20_R2;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.EntityType;
 
@@ -22,7 +24,7 @@ public class ProtoEntity1_20_R2 extends ProtoEntity implements IUpdatable {
     private final org.bukkit.entity.EntityType type;
     private final CraftPersistentDataContainer container;
     
-    private final CompoundTag tag;
+    private final CompoundTag1_20_R2 tag;
 
     public ProtoEntity1_20_R2(CompoundTag entityTag) {
         this.type = CraftEntityType.minecraftToBukkit(EntityType.byString(entityTag.getString("id")).get());
@@ -30,7 +32,12 @@ public class ProtoEntity1_20_R2 extends ProtoEntity implements IUpdatable {
         if (entityTag.get("BukkitValues") instanceof CompoundTag tag) {
             container.putAll(tag);
         }
-        this.tag = entityTag;
+        this.tag = new CompoundTag1_20_R2(entityTag);
+    }
+
+    @Override
+    public ICompoundTag getNbt() {
+        return tag;
     }
 
     @Override
@@ -44,7 +51,7 @@ public class ProtoEntity1_20_R2 extends ProtoEntity implements IUpdatable {
     }
     
     public void save() {
-        this.tag.put("BukkitValues", container.toTagCompound());
+        tag.handle().put("BukkitValues", container.toTagCompound());
     }
 
 }
