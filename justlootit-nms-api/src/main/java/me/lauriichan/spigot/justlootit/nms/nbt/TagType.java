@@ -16,8 +16,6 @@ public final class TagType<T> {
     public static final TagType<int[]> INT_ARRAY = new TagType<>(11, int[].class);
     public static final TagType<long[]> LONG_ARRAY = new TagType<>(12, long[].class);
     
-    public static final TagType<Number> NUMBER = new TagType<>(99, Number.class);
-    
     private static final TagType[] TYPES = new TagType[] { BYTE, SHORT, INT, LONG, FLOAT, DOUBLE, BYTE_ARRAY, STRING, LIST, COMPOUND, INT_ARRAY, LONG_ARRAY };
     
     public static final TagType<?> getType(int id) {
