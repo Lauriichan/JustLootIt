@@ -9,14 +9,12 @@ public final class NbtHelper1_20_R3 extends NbtHelper {
 
     @Override
     public ICompoundTag createCompound() {
-        // TODO Auto-generated method stub
-        return null;
+        return new CompoundTag1_20_R3();
     }
 
     @Override
     public <T> IListTag<T> createList(TagType<T> type) {
-        // TODO Auto-generated method stub
-        return null;
+        return new ListTag1_20_R3<>(type);
     }
 
 }
