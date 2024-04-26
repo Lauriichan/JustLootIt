@@ -159,14 +159,14 @@ public class LootinConverter extends ChunkConverter {
                 BukkitObjectInputStream objectInputStream = new BukkitObjectInputStream(inputStream)) {
                 ItemStack[] items = new ItemStack[objectInputStream.readInt()];
                 for (int i = 0; i < items.length; i++) {
-                    ItemStack item = items[i];
+                    ItemStack item = (ItemStack) objectInputStream.readObject();
                     if (item != null && item.isSimilar(airPlaceholderItem)) {
                         item = new ItemStack(Material.AIR);
                     }
                     items[i] = item;
                 }
                 return items;
-            } catch (IOException e) {
+            } catch (IOException | ClassNotFoundException e) {
                 logger.warning("Failed to deserialize lootin content", e);
                 return new ItemStack[0];
             }
