@@ -13,7 +13,6 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.laylib.reflection.StackTracker;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
-import me.lauriichan.spigot.justlootit.config.ConversionConfig;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.nms.convert.ConversionAdapter;
 import me.lauriichan.spigot.justlootit.nms.convert.ConversionProgress;
@@ -28,9 +27,9 @@ public final class JustLootItConverter {
         throw new UnsupportedOperationException();
     }
 
-    private static void createConverters(ObjectArrayList<ChunkConverter> converters, ISimpleLogger logger, ConversionConfig config) {
-        addConverter(converters, new LootinConverter(logger, config));
-        addConverter(converters, new VanillaConverter(config));
+    private static void createConverters(ObjectArrayList<ChunkConverter> converters, ISimpleLogger logger, ConversionProperties properties) {
+        addConverter(converters, new LootinConverter(logger, properties));
+        addConverter(converters, new VanillaConverter(properties));
     }
 
     private static void addConverter(ObjectArrayList<ChunkConverter> converters, ChunkConverter converter) {
@@ -40,14 +39,14 @@ public final class JustLootItConverter {
         converters.add(converter);
     }
 
-    public static boolean convert(VersionHandler versionHandler, ConversionConfig config) {
+    public static boolean convert(VersionHandler versionHandler, ConversionProperties properties) {
         Class<?> clazz = StackTracker.getCallerClass().orElse(null);
         if (clazz != JustLootItPlugin.class) {
             throw new UnsupportedOperationException();
         }
         ConversionAdapter conversionAdapter = versionHandler.conversionAdapter();
         ObjectArrayList<ChunkConverter> converters = new ObjectArrayList<>();
-        createConverters(converters, versionHandler.logger(), config);
+        createConverters(converters, versionHandler.logger(), properties);
         if (converters.isEmpty()) {
             return false;
         }

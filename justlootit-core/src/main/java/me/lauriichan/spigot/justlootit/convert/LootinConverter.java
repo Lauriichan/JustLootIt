@@ -4,14 +4,12 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
-import java.lang.reflect.Array;
 
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Container;
 import org.bukkit.block.data.type.Chest;
-import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataAdapterContext;
@@ -26,7 +24,6 @@ import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.minecraft.pluginbase.inventory.item.ItemEditor;
 import me.lauriichan.spigot.justlootit.JustLootItConstant;
 import me.lauriichan.spigot.justlootit.JustLootItFlag;
-import me.lauriichan.spigot.justlootit.config.ConversionConfig;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoChunk;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoEntity;
 import me.lauriichan.spigot.justlootit.util.EntityUtil;
@@ -82,8 +79,8 @@ public class LootinConverter extends ChunkConverter {
 
     private final ISimpleLogger logger;
     
-    public LootinConverter(ISimpleLogger logger, ConversionConfig config) {
-        super(config);
+    public LootinConverter(ISimpleLogger logger, ConversionProperties properties) {
+        super(properties);
         this.logger = logger;
     }
 
@@ -179,7 +176,7 @@ public class LootinConverter extends ChunkConverter {
 
     @Override
     boolean isEnabled() {
-        return config.doLootinConversion();
+        return properties.isProperty(ConvProp.DO_LOOTIN_CONVERSION);
     }
 
 }

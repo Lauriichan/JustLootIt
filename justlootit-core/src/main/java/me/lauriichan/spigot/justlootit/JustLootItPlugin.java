@@ -21,14 +21,13 @@ import me.lauriichan.minecraft.pluginbase.ConditionConstant;
 import me.lauriichan.minecraft.pluginbase.command.bridge.BukkitCommandInjectableBridge;
 import me.lauriichan.minecraft.pluginbase.command.bridge.BukkitCommandInjectableBridge.CommandDefinition;
 import me.lauriichan.minecraft.pluginbase.command.processor.IBukkitCommandProcessor;
-import me.lauriichan.minecraft.pluginbase.config.ConfigWrapper;
 import me.lauriichan.minecraft.pluginbase.extension.IConditionMap;
 import me.lauriichan.spigot.justlootit.capability.JustLootItCapabilityProvider;
 import me.lauriichan.spigot.justlootit.command.*;
 import me.lauriichan.spigot.justlootit.command.argument.*;
 import me.lauriichan.spigot.justlootit.command.impl.LootItActor;
 import me.lauriichan.spigot.justlootit.command.provider.PluginProvider;
-import me.lauriichan.spigot.justlootit.config.ConversionConfig;
+import me.lauriichan.spigot.justlootit.convert.ConversionProperties;
 import me.lauriichan.spigot.justlootit.convert.JustLootItConverter;
 import me.lauriichan.spigot.justlootit.data.io.DataIO;
 import me.lauriichan.spigot.justlootit.input.InputProvider;
@@ -161,15 +160,10 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     }
     
     private boolean doWorldConversion() {
-        ConfigWrapper<ConversionConfig> wrapper = configManager().wrapper(ConversionConfig.class);
-        ConversionConfig config = wrapper.config();
-        if (config.doLootinConversion() || config.doVanillaConversion()) {
-            boolean conversionWasDone = JustLootItConverter.convert(versionHandler, config);
-            config.doLootinConversion(config.default$doLootinConversion());
-            config.doVanillaConversion(config.default$doVanillaConversion());
-            config.allowStaticConversion(config.default$allowStaticConversion());
-            config.allowItemFrameConversion(config.default$allowItemFrameConversion());
-            wrapper.save(true);
+        ConversionProperties properties = new ConversionProperties(logger(), new File(getDataFolder(), "conversion.properties"), false);
+        if (properties.isAvailable()) {
+            boolean conversionWasDone = JustLootItConverter.convert(versionHandler, properties);
+            properties.delete();
             // We only want to return true if the conversion was done, otherwise there is no need to restart
             return conversionWasDone;
         }

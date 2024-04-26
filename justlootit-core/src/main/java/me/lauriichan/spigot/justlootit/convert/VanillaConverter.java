@@ -4,15 +4,14 @@ import org.bukkit.block.BlockState;
 import org.bukkit.entity.EntityType;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import me.lauriichan.spigot.justlootit.config.ConversionConfig;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoChunk;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoEntity;
 import me.lauriichan.spigot.justlootit.util.EntityUtil;
 
 public class VanillaConverter extends ChunkConverter {
 
-    public VanillaConverter(ConversionConfig config) {
-        super(config);
+    public VanillaConverter(ConversionProperties properties) {
+        super(properties);
     }
 
     @Override
@@ -23,7 +22,7 @@ public class VanillaConverter extends ChunkConverter {
         for (ProtoEntity entity : chunk.getEntities()) {
             EntityType type = entity.getType();
             if (EntityUtil.isItemFrame(type)) {
-                if (!config.allowItemFrameConversion()) {
+                if (!properties.isProperty(ConvProp.VANILLA_ALLOW_STATIC_CONTAINER)) {
                     continue;
                 }
                 // TODO: Implement item frame conversion
@@ -38,7 +37,7 @@ public class VanillaConverter extends ChunkConverter {
 
     @Override
     boolean isEnabled() {
-        return config.doVanillaConversion();
+        return properties.isProperty(ConvProp.DO_VANILLA_CONVERSION);
     }
 
 }
