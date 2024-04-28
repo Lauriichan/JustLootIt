@@ -70,10 +70,14 @@ public interface ICompoundTag {
     
     void set(String key, IListTag<?> list);
     
+    void remove(String key);
+    
     int size();
     
     boolean isEmpty();
     
     void clear();
+    
+    String asString();
     
 }

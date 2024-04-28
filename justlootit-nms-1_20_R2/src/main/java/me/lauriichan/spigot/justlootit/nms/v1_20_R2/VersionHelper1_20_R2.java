@@ -17,9 +17,7 @@ import org.bukkit.inventory.Inventory;
 
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.nms.VersionHelper;
-import me.lauriichan.spigot.justlootit.nms.v1_20_R2.io.ItemStackIO1_20_R2;
 import net.md_5.bungee.api.chat.BaseComponent;
-import net.md_5.bungee.api.chat.ItemTag;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.chat.ComponentSerializer;
 import net.minecraft.core.Vec3i;
@@ -46,11 +44,6 @@ public class VersionHelper1_20_R2 extends VersionHelper {
     @Override
     public VersionHandler handler() {
         return handler;
-    }
-
-    @Override
-    public ItemTag asItemTag(final org.bukkit.inventory.ItemStack itemStack) {
-        return ItemTag.ofNbt(ItemStackIO1_20_R2.ITEM_STACK.asMinecraftStack(itemStack).getOrCreateTag().getAsString());
     }
 
     @Override

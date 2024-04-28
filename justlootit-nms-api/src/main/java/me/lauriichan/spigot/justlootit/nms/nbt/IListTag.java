@@ -21,5 +21,7 @@ public interface IListTag<T> extends Iterable<T> {
     boolean contains(T value);
     
     void clear();
+    
+    String asString();
 
 }

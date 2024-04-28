@@ -27,5 +27,14 @@ public final class EntityUtil {
     public static boolean isItemFrame(EntityType type) {
         return type == EntityType.ITEM_FRAME || type == EntityType.GLOW_ITEM_FRAME;
     }
+    
+    public static int getInventorySize(EntityType type) {
+        if (type == EntityType.CHEST_BOAT || type == EntityType.MINECART_CHEST) {
+            return 27;
+        } else if (type == EntityType.MINECART_HOPPER) {
+            return 5;
+        }
+        return 0;
+    }
 
 }

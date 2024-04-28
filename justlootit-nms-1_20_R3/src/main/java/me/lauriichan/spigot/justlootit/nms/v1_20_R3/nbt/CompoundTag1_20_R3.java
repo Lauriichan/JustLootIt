@@ -226,6 +226,11 @@ public final class CompoundTag1_20_R3 implements ICompoundTag {
     }
     
     @Override
+    public void remove(String key) {
+        compoundTag.remove(key);
+    }
+    
+    @Override
     public int size() {
         return compoundTag.size();
     }
@@ -238,6 +243,11 @@ public final class CompoundTag1_20_R3 implements ICompoundTag {
     @Override
     public void clear() {
         NmsHelper1_20_R3.clearCompound(compoundTag);
+    }
+    
+    @Override
+    public String asString() {
+        return compoundTag.getAsString();
     }
 
 }

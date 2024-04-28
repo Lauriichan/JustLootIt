@@ -2,6 +2,7 @@ package me.lauriichan.spigot.justlootit.convert;
 
 import java.io.File;
 import java.text.DecimalFormat;
+import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -27,9 +28,9 @@ public final class JustLootItConverter {
         throw new UnsupportedOperationException();
     }
 
-    private static void createConverters(ObjectArrayList<ChunkConverter> converters, ISimpleLogger logger, ConversionProperties properties) {
-        addConverter(converters, new LootinConverter(logger, properties));
-        addConverter(converters, new VanillaConverter(properties));
+    private static void createConverters(ObjectArrayList<ChunkConverter> converters, VersionHandler versionHandler, ConversionProperties properties) {
+        addConverter(converters, new LootinConverter(versionHandler, properties));
+        addConverter(converters, new VanillaConverter(versionHandler, properties));
     }
 
     private static void addConverter(ObjectArrayList<ChunkConverter> converters, ChunkConverter converter) {
@@ -46,7 +47,7 @@ public final class JustLootItConverter {
         }
         ConversionAdapter conversionAdapter = versionHandler.conversionAdapter();
         ObjectArrayList<ChunkConverter> converters = new ObjectArrayList<>();
-        createConverters(converters, versionHandler.logger(), properties);
+        createConverters(converters, versionHandler, properties);
         if (converters.isEmpty()) {
             return false;
         }
@@ -67,8 +68,9 @@ public final class JustLootItConverter {
                     continue;
                 }
                 Consumer<ProtoChunk> chunkConsumer = chunk -> {
+                    Random random = new Random(chunk.getWorld().getSeed() | chunk.getPosAsLong());
                     for (ChunkConverter converter : enabledConverters) {
-                        converter.convert(chunk);
+                        converter.convert(chunk, random);
                     }
                 };
                 somethingWasConverted = true;

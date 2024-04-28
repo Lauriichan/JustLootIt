@@ -12,5 +12,6 @@ public final class ConvProp {
     public static final String DO_VANILLA_CONVERSION = "DoVanillaConversion";
     public static final String VANILLA_ALLOW_STATIC_CONTAINER = "VanillaAllowStaticContainerConversion";
     public static final String VANILLA_ALLOW_ITEM_FRAME = "VanillaAllowItemFrameConversion";
+    public static final String VANILLA_ALLOW_ONLY_ELYTRA_FRAME = "VanillaAllowOnlyElytraFrameConversion";
 
 }

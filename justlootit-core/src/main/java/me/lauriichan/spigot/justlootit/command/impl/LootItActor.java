@@ -13,7 +13,6 @@ import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.nms.VersionHelper;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.HoverEvent;
-import net.md_5.bungee.api.chat.hover.content.Item;
 import net.md_5.bungee.api.chat.hover.content.Text;
 
 public class LootItActor<P extends CommandSender> extends BukkitActor<P> {
@@ -78,8 +77,7 @@ public class LootItActor<P extends CommandSender> extends BukkitActor<P> {
                     break;
                 }
                 if (hoverAction.getValue() instanceof final ItemStack item) {
-                    hover = new HoverEvent(HoverEvent.Action.SHOW_ITEM,
-                        new Item(item.getType().getKey().toString(), item.getAmount(), versionHelper.asItemTag(item)));
+                    hover = new HoverEvent(HoverEvent.Action.SHOW_ITEM, versionHelper.createItemHover(item));
                 } else if (hoverAction.getValue() instanceof final Entity entity) {
                     hover = new HoverEvent(HoverEvent.Action.SHOW_ENTITY, versionHelper.createEntityHover(entity));
                 }

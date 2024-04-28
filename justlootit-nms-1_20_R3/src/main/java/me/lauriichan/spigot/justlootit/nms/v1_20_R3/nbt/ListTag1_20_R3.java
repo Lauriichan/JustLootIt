@@ -99,5 +99,10 @@ public final class ListTag1_20_R3<T> implements IListTag<T> {
     public void set(int index, T value) {
         listTag.set(index, type.fromPrimitive(value));
     }
+    
+    @Override
+    public String asString() {
+        return listTag.getAsString();
+    }
 
 }

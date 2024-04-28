@@ -12,6 +12,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Container;
 import org.bukkit.block.data.type.Chest;
+import org.bukkit.block.data.type.Chest.Type;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.loot.Lootable;
 import org.bukkit.persistence.PersistentDataAdapterContext;
@@ -22,7 +23,6 @@ import org.bukkit.util.io.BukkitObjectOutputStream;
 import org.yaml.snakeyaml.external.biz.base64Coder.Base64Coder;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.minecraft.pluginbase.inventory.item.ItemEditor;
 import me.lauriichan.spigot.justlootit.JustLootItConstant;
 import me.lauriichan.spigot.justlootit.JustLootItFlag;
@@ -31,6 +31,7 @@ import me.lauriichan.spigot.justlootit.capability.StorageCapability;
 import me.lauriichan.spigot.justlootit.data.FrameContainer;
 import me.lauriichan.spigot.justlootit.data.StaticContainer;
 import me.lauriichan.spigot.justlootit.data.VanillaContainer;
+import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoChunk;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoEntity;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoWorld;
@@ -88,18 +89,14 @@ public class LootinConverter extends ChunkConverter {
 
     private final ItemStack airPlaceholderItem = ItemEditor.of(Material.STICK)
         .applyItemMeta(meta -> meta.setDisplayName("This is temporary Item")).asItemStack();
-
-    private final ISimpleLogger logger;
     
-    public LootinConverter(ISimpleLogger logger, ConversionProperties properties) {
-        super(properties);
-        this.logger = logger;
+    public LootinConverter(VersionHandler versionHandler, ConversionProperties properties) {
+        super(versionHandler, properties);
     }
 
     @Override
-    public void convert(ProtoChunk chunk) {
+    public void convert(ProtoChunk chunk, Random random) {
         IStorage<Storable> storage = chunk.getWorld().getCapability(StorageCapability.class).map(StorageCapability::storage).get();
-        Random random = new Random(chunk.getWorld().getSeed() | chunk.getPosAsLong());
         if (!chunk.getBlockEntities().isEmpty()) {
             ObjectArrayList<BlockState> pendingBlockEntities = new ObjectArrayList<>(chunk.getBlockEntities());
             while (!pendingBlockEntities.isEmpty()) {
@@ -118,26 +115,29 @@ public class LootinConverter extends ChunkConverter {
                 boolean loottable = dataContainer.has(loottableKey, PersistentDataType.STRING);
                 ItemStack[] otherItems = null;
                 boolean otherItemsIsLeft = false;
-                if (state.getBlockData() instanceof Chest chest) {
-                    Chest.Type type = chest.getType();
-                    if (type != Chest.Type.SINGLE) {
-                        Location otherLocation = BlockUtil.findChestLocationAround(state.getLocation(), type, chest.getFacing());
-                        Location location = state.getLocation();
-                        BlockState otherState = pendingBlockEntities.stream().filter(pending -> pending.getLocation().equals(otherLocation)).findFirst().orElse(null);
-                        if (otherState instanceof Container otherContainer && otherState.getBlockData() instanceof Chest) {
-                            pendingBlockEntities.remove(otherState);
-                            PersistentDataContainer otherDataContainer = otherContainer.getPersistentDataContainer();
-                            otherDataContainer.remove(identityKey);
-                            if (!loottable) {
-                                otherItems = extractContents(otherDataContainer);
-                                otherItemsIsLeft = type == Chest.Type.LEFT;
-                            }
-                            clearLootinKeys(otherDataContainer);
-                            otherDataContainer.set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR, otherLocation.toVector().subtract(location.toVector()));
-                            dataContainer.set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR, location.toVector().subtract(otherLocation.toVector()));
-                            otherState.update();
-                            chunk.updateBlockEntity(otherState);
+                if (state.getBlockData() instanceof Chest chest && chest.getType() != Chest.Type.SINGLE) {
+                    Location otherLocation = BlockUtil.findChestLocationAround(state.getLocation(), chest.getType(), chest.getFacing());
+                    Location location = state.getLocation();
+                    BlockState otherState = pendingBlockEntities.stream().filter(pending -> pending.getLocation().equals(otherLocation)).findFirst().orElse(null);
+                    if (otherState == null) {
+                        // We convert double chests to single chests in this process
+                        // The reason why is that we can't convert chests that are across borders
+                        // Therefore we don't know how to convert this
+                        chest.setType(Chest.Type.SINGLE);
+                        state.setBlockData(chest);
+                    } else if (otherState instanceof Container otherContainer && otherState.getBlockData() instanceof Chest) {
+                        pendingBlockEntities.remove(otherState);
+                        PersistentDataContainer otherDataContainer = otherContainer.getPersistentDataContainer();
+                        otherDataContainer.remove(identityKey);
+                        if (!loottable) {
+                            otherItems = extractContents(otherDataContainer);
+                            otherItemsIsLeft = chest.getType() == Type.RIGHT;
                         }
+                        clearLootinKeys(otherDataContainer);
+                        otherDataContainer.set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR, otherLocation.toVector().subtract(location.toVector()));
+                        dataContainer.set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR, location.toVector().subtract(otherLocation.toVector()));
+                        otherState.update();
+                        chunk.updateBlockEntity(otherState);
                     }
                 }
                 try {
