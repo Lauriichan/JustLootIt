@@ -31,7 +31,7 @@ public final class VersionHandler1_20_R3 extends VersionHandler {
         super(provider, new Debug1_20_R3());
         this.packetManager = new PacketManager1_20_R3(this);
         this.versionHelper = new VersionHelper1_20_R3(this);
-        this.conversionAdapter = new ConversionAdapter1_20_R3(provider.logger());
+        this.conversionAdapter = new ConversionAdapter1_20_R3(this);
     }
 
     @Override

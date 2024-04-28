@@ -5,26 +5,37 @@ import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import com.mojang.datafixers.util.Pair;
+
 import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.spigot.justlootit.nms.convert.ConversionAdapter;
-import me.lauriichan.spigot.justlootit.nms.convert.ProtoWorld;
+import me.lauriichan.spigot.justlootit.nms.v1_20_R2.VersionHandler1_20_R2;
+import me.lauriichan.spigot.justlootit.nms.v1_20_R2.util.NmsHelper1_20_R2;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.resources.RegistryOps;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.WorldLoader;
 import net.minecraft.util.datafix.DataFixers;
 import net.minecraft.world.level.chunk.storage.ChunkStorage;
 import net.minecraft.world.level.dimension.LevelStem;
+import net.minecraft.world.level.levelgen.WorldDimensions;
 import net.minecraft.world.level.storage.LevelStorageSource;
 import net.minecraft.world.level.storage.LevelStorageSource.LevelStorageAccess;
 import net.minecraft.world.level.storage.LevelSummary;
+import net.minecraft.world.level.storage.WorldData;
 import net.minecraft.world.level.validation.ContentValidationException;
 
 public final class ConversionAdapter1_20_R2 extends ConversionAdapter {
 
     private final ISimpleLogger logger;
+    private final VersionHandler1_20_R2 handler;
 
     private ExecutorService executor;
 
-    public ConversionAdapter1_20_R2(ISimpleLogger logger) {
-        this.logger = logger;
+    public ConversionAdapter1_20_R2(VersionHandler1_20_R2 handler) {
+        this.logger = handler.logger();
+        this.handler = handler;
     }
 
     private ExecutorService executor() {
@@ -35,7 +46,7 @@ public final class ConversionAdapter1_20_R2 extends ConversionAdapter {
     }
 
     @Override
-    public ProtoWorld getWorld(File directory) {
+    public ProtoWorld1_20_R2 getWorld(File directory) {
         if (!directory.exists() || directory.isFile()) {
             return null;
         }
@@ -55,7 +66,10 @@ public final class ConversionAdapter1_20_R2 extends ConversionAdapter {
         if (info != null && (info.requiresManualConversion() || !info.isCompatible())) {
             return null;
         }
-        return new ProtoWorld1_20_R2(executor(), logger, new ChunkStorage(null, DataFixers.getDataFixer(), false), session, dimensionKey);
+        @SuppressWarnings("resource")
+        WorldLoader.DataLoadContext context = NmsHelper1_20_R2.getServer().worldLoader;
+        Pair<WorldData, WorldDimensions.Complete> pair = session.getDataTag(RegistryOps.create(NbtOps.INSTANCE, context.datapackWorldgen()), context.dataConfiguration(), context.datapackDimensions().registryOrThrow(Registries.LEVEL_STEM), context.datapackWorldgen().allRegistriesLifecycle());
+        return handler.applyCapabilities(new ProtoWorld1_20_R2(executor(), logger, new ChunkStorage(null, DataFixers.getDataFixer(), false), session, dimensionKey, pair.getFirst()));
     }
 
     private ResourceKey<LevelStem> findKey(File directory) {

@@ -52,35 +52,40 @@ public final class JustLootItConverter {
         }
         File worldContainer = Bukkit.getWorldContainer();
         File[] possibleWorldFiles = worldContainer.listFiles();
-        Consumer<ProtoChunk> chunkConsumer = chunk -> {
-            for (ChunkConverter converter : converters) {
-                converter.convert(chunk);
-            }
-        };
         boolean somethingWasConverted = false;
         ISimpleLogger logger = versionHandler.logger();
         for (File file : possibleWorldFiles) {
             if (!file.isDirectory()) {
                 continue;
             }
-            ProtoWorld world = conversionAdapter.getWorld(file);
-            if (world == null) {
-                continue;
-            }
-            somethingWasConverted = true;
-            ConversionProgress progress = world.streamChunks(chunkConsumer);
-            while (true) {
-                logger.info("Converting level '{0}'... ({2}) [{1} / {3} Chunks]", world.getName(), progress.counter().current(), PROGRESS_FORMAT.format(progress.counter().progress()), progress.counter().max());
-                if (progress.future().isDone()) {
-                    if (!progress.next()) {
-                        break;
-                    }
+            try (ProtoWorld world = conversionAdapter.getWorld(file)) {
+                if (world == null) {
                     continue;
                 }
-                try {
-                    progress.future().get(5, TimeUnit.SECONDS);
-                } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                ChunkConverter[] enabledConverters = converters.stream().filter(converter -> converter.isEnabledFor(world)).toArray(ChunkConverter[]::new);
+                if (enabledConverters.length == 0) {
                     continue;
+                }
+                Consumer<ProtoChunk> chunkConsumer = chunk -> {
+                    for (ChunkConverter converter : enabledConverters) {
+                        converter.convert(chunk);
+                    }
+                };
+                somethingWasConverted = true;
+                ConversionProgress progress = world.streamChunks(chunkConsumer);
+                while (true) {
+                    logger.info("Converting level '{0}'... ({2}) [{1} / {3} Chunks]", world.getName(), progress.counter().current(), PROGRESS_FORMAT.format(progress.counter().progress()), progress.counter().max());
+                    if (progress.future().isDone()) {
+                        if (!progress.next()) {
+                            break;
+                        }
+                        continue;
+                    }
+                    try {
+                        progress.future().get(5, TimeUnit.SECONDS);
+                    } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                        continue;
+                    }
                 }
             }
         }

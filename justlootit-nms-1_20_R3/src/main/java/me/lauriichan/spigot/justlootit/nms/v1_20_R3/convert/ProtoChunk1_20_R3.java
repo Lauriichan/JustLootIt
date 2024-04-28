@@ -20,15 +20,36 @@ public class ProtoChunk1_20_R3 extends ProtoChunk {
     
     static record UpdatedBlockState(CraftBlockEntityState<?> state) implements IUpdatable {}
 
+    private final ProtoWorld1_20_R3 world;
     private final net.minecraft.world.level.chunk.ProtoChunk chunk;
+    
+    private final int x, z;
 
     private ObjectList<BlockState> blockEntities;
     private ObjectList<ProtoEntity> entities;
     
     final ObjectArrayList<IUpdatable> updated = new ObjectArrayList<>();
 
-    public ProtoChunk1_20_R3(net.minecraft.world.level.chunk.ProtoChunk chunk) {
+    public ProtoChunk1_20_R3(ProtoWorld1_20_R3 world, net.minecraft.world.level.chunk.ProtoChunk chunk, int x, int z) {
+        this.world = world;
         this.chunk = chunk;
+        this.x = x;
+        this.z = z;
+    }
+    
+    @Override
+    public int getX() {
+        return x;
+    }
+    
+    @Override
+    public int getZ() {
+        return z;
+    }
+    
+    @Override
+    public ProtoWorld1_20_R3 getWorld() {
+        return world;
     }
 
     @Override

@@ -32,26 +32,31 @@ public final class CompoundTag1_20_R3 implements ICompoundTag {
         }
         return TagType.getType(tag.getId());
     }
-
+    
     @Override
-    public boolean isType(String key, TagType<?> type) {
-        return type == getType(key);
+    public boolean has(String key) {
+        return compoundTag.contains(key);
     }
 
     @Override
-    public boolean isListType(String key, TagType<?> type) {
+    public boolean has(String key, TagType<?> type) {
+        return type == getType(key);
+    }
+    
+    @Override
+    public boolean hasNumeric(String key) {
+        TagType<?> type = getType(key);
+        return type != null && type.numeric();
+    }
+
+    @Override
+    public boolean hasList(String key, TagType<?> type) {
         Tag tag = compoundTag.get(key);
         if (tag == null || tag.getId() != TagType.LIST.tagId()) {
             return false;
         }
         byte listType = ((ListTag) tag).getElementType();
         return listType == type.tagId() || listType == 0;
-    }
-    
-    @Override
-    public boolean isNumeric(String key) {
-        TagType<?> type = getType(key);
-        return type != null && type.numeric();
     }
 
     @Override

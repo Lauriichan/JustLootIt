@@ -2,6 +2,7 @@ package me.lauriichan.spigot.justlootit.nms.v1_20_R3.convert;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -10,8 +11,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 
-import org.bukkit.Bukkit;
-import org.bukkit.craftbukkit.v1_20_R3.CraftServer;
 import org.bukkit.craftbukkit.v1_20_R3.block.CraftBlockEntityState;
 
 import it.unimi.dsi.fastutil.objects.Object2IntArrayMap;
@@ -27,6 +26,7 @@ import me.lauriichan.spigot.justlootit.nms.v1_20_R3.convert.ProtoChunk1_20_R3.IU
 import me.lauriichan.spigot.justlootit.nms.v1_20_R3.convert.ProtoChunk1_20_R3.UpdatedBlockState;
 import me.lauriichan.spigot.justlootit.nms.v1_20_R3.util.NmsHelper1_20_R3;
 import net.minecraft.world.level.storage.LevelStorageSource.LevelStorageAccess;
+import net.minecraft.world.level.storage.WorldData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess.Frozen;
@@ -64,14 +64,15 @@ public class ProtoWorld1_20_R3 extends ProtoWorld implements LevelHeightAccessor
     private final ResourceKey<LevelStem> dimensionKey;
     private final DimensionType dimensionType;
     
-    private final ResourceKey<Level> worldKey;
-    private final Path regionPath;
+    private final WorldData worldData;
     
-    private final String worldName;
+    private final ResourceKey<Level> worldKey;
+    private final File worldFolder;
+    private final Path regionPath;
 
     public ProtoWorld1_20_R3(final ExecutorService executor, final ISimpleLogger logger, final ChunkStorage chunkStorage, final LevelStorageAccess access,
-        final ResourceKey<LevelStem> dimensionKey) {
-        Frozen registry = ((CraftServer) Bukkit.getServer()).getServer().registryAccess();
+        final ResourceKey<LevelStem> dimensionKey, WorldData worldData) {
+        Frozen registry = NmsHelper1_20_R3.getServer().registryAccess();
         this.executor = executor;
         this.logger = logger;
         this.chunkStorage = chunkStorage;
@@ -79,13 +80,25 @@ public class ProtoWorld1_20_R3 extends ProtoWorld implements LevelHeightAccessor
         this.dimensionType = registry.registryOrThrow(Registries.LEVEL_STEM).get(dimensionKey).type().value();
         this.biomeRegistry = registry.registryOrThrow(Registries.BIOME);
         this.worldKey = ResourceKey.create(Registries.DIMENSION, dimensionKey.location());
-        this.regionPath = access.getDimensionPath(worldKey).resolve("region");
-        this.worldName = access.getLevelId();
+        Path dimensionPath = access.getDimensionPath(worldKey);
+        this.worldFolder = dimensionPath.toFile();
+        this.regionPath = dimensionPath.resolve("region");
+        this.worldData = worldData;
+    }
+    
+    @Override
+    public long getSeed() {
+        return worldData.worldGenOptions().seed();
     }
     
     @Override
     public String getName() {
-        return worldName;
+        return worldData.getLevelName();
+    }
+    
+    @Override
+    public File getWorldFolder() {
+        return worldFolder;
     }
 
     @Override
@@ -100,7 +113,7 @@ public class ProtoWorld1_20_R3 extends ProtoWorld implements LevelHeightAccessor
                 futures.add(CompletableFuture.runAsync(() -> streamRegion(path, counter, consumer), executor));
             });
         } catch (IOException e) {
-            logger.error("Failed to convert level '{0}'!", e, worldName);
+            logger.error("Failed to convert level '{0}'!", e, worldData.getLevelName());
         }
         return new ConversionProgress(compositeCounter, futures);
     }
@@ -110,12 +123,12 @@ public class ProtoWorld1_20_R3 extends ProtoWorld implements LevelHeightAccessor
             for (int x = 0; x < 32; x++) {
                 for (int z = 0; z < 32; z++) {
                     try {
-                        ChunkPos pos = new ChunkPos(x, z);
-                        if (!file.doesChunkExist(pos)) {
+                        ChunkPos posInRegion = new ChunkPos(x, z);
+                        if (!file.doesChunkExist(posInRegion)) {
                             continue;
                         }
                         CompoundTag tag;
-                        try (DataInputStream input = file.getChunkDataInputStream(pos)) {
+                        try (DataInputStream input = file.getChunkDataInputStream(posInRegion)) {
                             if (input == null) {
                                 continue;
                             }
@@ -123,7 +136,7 @@ public class ProtoWorld1_20_R3 extends ProtoWorld implements LevelHeightAccessor
                             if (tag == null || !tag.contains("Status", 8)) {
                                 continue;
                             }
-                            tag = chunkStorage.upgradeChunkTag(dimensionKey, () -> null, tag, Optional.empty(), pos, null);
+                            tag = chunkStorage.upgradeChunkTag(dimensionKey, () -> null, tag, Optional.empty(), posInRegion, null);
                         }
                         ListTag listTag = tag.getList("sections", 10);
                         LevelChunkSection[] sections = new LevelChunkSection[getSectionsCount()];
@@ -135,11 +148,14 @@ public class ProtoWorld1_20_R3 extends ProtoWorld implements LevelHeightAccessor
                             }
                             sections[i] = new LevelChunkSection(ChunkSerializer.BLOCK_STATE_CODEC
                                 .parse(NbtOps.INSTANCE, sectionTag.getCompound("block_states")).promotePartial((sx) -> {
+                                    logger.warning("Something went wrong when reading chunk section: " + sx);
                                 }).getOrThrow(false, (sx) -> {
+                                    logger.warning("Something went wrong when reading chunk section: " + sx);
                                 }), new PalettedContainer<>(biomeRegistry.asHolderIdMap(), biomeRegistry.getHolderOrThrow(Biomes.PLAINS),
                                     Strategy.SECTION_BIOMES));
                         }
-                        net.minecraft.world.level.chunk.ProtoChunk chunk = new net.minecraft.world.level.chunk.ProtoChunk(pos, null, sections, null, null, this, biomeRegistry, null);
+                        int cx = tag.getInt("xPos"), cz = tag.getInt("zPos");
+                        net.minecraft.world.level.chunk.ProtoChunk chunk = new net.minecraft.world.level.chunk.ProtoChunk(new ChunkPos(cx, cz), null, sections, null, null, this, biomeRegistry, null);
                         if (tag.get("ChunkBukkitValues") instanceof CompoundTag persistentDataTag) {
                             chunk.persistentDataContainer.putAll(persistentDataTag);
                         }
@@ -154,7 +170,7 @@ public class ProtoWorld1_20_R3 extends ProtoWorld implements LevelHeightAccessor
                             chunk.setBlockEntityNbt(blockEntityTag);
                             blockEntityMap.put(BlockEntity.getPosFromTag(blockEntityTag), i);
                         }
-                        ProtoChunk1_20_R3 protoChunk = new ProtoChunk1_20_R3(chunk);
+                        ProtoChunk1_20_R3 protoChunk = new ProtoChunk1_20_R3(this, chunk, cx, cz);
                         consumer.accept(protoChunk);
                         if (!protoChunk.updated.isEmpty()) {
                             for (IUpdatable updatable : protoChunk.updated) {
@@ -167,7 +183,7 @@ public class ProtoWorld1_20_R3 extends ProtoWorld implements LevelHeightAccessor
                                     entity.save();
                                 }
                             }
-                            try (DataOutputStream output = file.getChunkDataOutputStream(pos)) {
+                            try (DataOutputStream output = file.getChunkDataOutputStream(posInRegion)) {
                                 NbtIo.write(tag, output);
                             }
                         }
@@ -179,7 +195,7 @@ public class ProtoWorld1_20_R3 extends ProtoWorld implements LevelHeightAccessor
         } catch (IOException | RuntimeException e) {
             // Maybe mark as complete? Unsure tho
             counter.increment(counter.max() - counter.current());
-            logger.error("Failed to convert region '{1}' in level '{0}'!", e, worldName, path.getFileName().toString());
+            logger.error("Failed to convert region '{1}' in level '{0}'!", e, worldData.getLevelName(), path.getFileName().toString());
         }
     }
 

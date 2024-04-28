@@ -21,6 +21,16 @@ public final class BlockUtil {
     public static Container findChestAround(RegionAccessor region, Location location, Type chestType, BlockFace chestFace) {
         return findChestAround(region, location.getBlockX(), location.getBlockY(), location.getBlockZ(), chestType, chestFace);
     }
+    
+    public static Location findChestLocationAround(Location location, Type chestType, BlockFace chestFace) {
+        location = location.clone();
+        if (chestFace.getModZ() != 0) {
+            location.setX(location.getBlockX() + (chestType == Type.LEFT ? -chestFace.getModZ() : chestFace.getModZ()));
+        } else {
+            location.setZ(location.getBlockZ() + (chestType == Type.LEFT ? chestFace.getModX() : -chestFace.getModX()));
+        }
+        return location;
+    }
 
     public static Container findChestAround(RegionAccessor region, int x, int y, int z, Type chestType, BlockFace chestFace) {
         if (chestFace.getModZ() != 0) {

@@ -11,6 +11,7 @@ import me.lauriichan.spigot.justlootit.nms.LevelAdapter;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.nms.capability.ICapability;
+import me.lauriichan.spigot.justlootit.nms.convert.ProtoWorld;
 import me.lauriichan.spigot.justlootit.storage.CachedStorage;
 import me.lauriichan.spigot.justlootit.storage.IStorage;
 import me.lauriichan.spigot.justlootit.storage.Storable;
@@ -25,6 +26,16 @@ public abstract class StorageCapability implements ICapability {
         public LevelContainerImpl(final VersionHandler handler, final LevelAdapter adapter) {
             super(new CachedStorage<>(new RAFMultiStorage<>(handler.logger(), Storable.class,
                 new File(adapter.asBukkit().getWorldFolder(), "justlootit/containers"))));
+            setupStorage();
+        }
+        
+        public LevelContainerImpl(final VersionHandler handler, final ProtoWorld world) {
+            super(new CachedStorage<>(new RAFMultiStorage<>(handler.logger(), Storable.class,
+                new File(world.getWorldFolder(), "justlootit/containers"))));
+            setupStorage();
+        }
+        
+        private void setupStorage() {
             storage.register(VanillaContainer.ADAPTER);
             storage.register(StaticContainer.ADAPTER);
             storage.register(FrameContainer.ADAPTER);

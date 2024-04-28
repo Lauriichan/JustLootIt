@@ -189,7 +189,7 @@ public abstract class VersionHandler {
      * Capabilities
      */
 
-    private final <T extends Capable<?>> T applyCapabilities(final T capable) {
+    public final <T extends Capable<?>> T applyCapabilities(final T capable) {
         capabilityManager.forEach(provider -> capable.addCapabilities(this, provider));
         return capable;
     }

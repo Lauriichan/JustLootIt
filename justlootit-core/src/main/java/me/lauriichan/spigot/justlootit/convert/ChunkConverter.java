@@ -1,6 +1,7 @@
 package me.lauriichan.spigot.justlootit.convert;
 
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoChunk;
+import me.lauriichan.spigot.justlootit.nms.convert.ProtoWorld;
 
 public abstract class ChunkConverter {
     
@@ -13,5 +14,9 @@ public abstract class ChunkConverter {
     abstract void convert(ProtoChunk chunk);
     
     abstract boolean isEnabled();
+    
+    boolean isEnabledFor(ProtoWorld world) {
+        return true;
+    }
 
 }

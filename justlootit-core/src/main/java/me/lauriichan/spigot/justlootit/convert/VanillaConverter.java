@@ -4,8 +4,10 @@ import org.bukkit.block.BlockState;
 import org.bukkit.entity.EntityType;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import me.lauriichan.spigot.justlootit.capability.StorageCapability;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoChunk;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoEntity;
+import me.lauriichan.spigot.justlootit.nms.convert.ProtoWorld;
 import me.lauriichan.spigot.justlootit.util.EntityUtil;
 
 public class VanillaConverter extends ChunkConverter {
@@ -38,6 +40,11 @@ public class VanillaConverter extends ChunkConverter {
     @Override
     boolean isEnabled() {
         return properties.isProperty(ConvProp.DO_VANILLA_CONVERSION);
+    }
+    
+    @Override
+    boolean isEnabledFor(ProtoWorld world) {
+        return world.hasCapability(StorageCapability.class);
     }
 
 }

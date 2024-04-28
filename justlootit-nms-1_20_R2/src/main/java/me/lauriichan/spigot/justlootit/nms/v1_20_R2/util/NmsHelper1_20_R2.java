@@ -6,6 +6,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Map;
 
+import org.bukkit.Bukkit;
+import org.bukkit.craftbukkit.v1_20_R2.CraftServer;
 import org.bukkit.craftbukkit.v1_20_R2.block.CraftBlockEntityState;
 import org.bukkit.craftbukkit.v1_20_R2.entity.CraftEntity;
 import org.bukkit.craftbukkit.v1_20_R2.persistence.CraftPersistentDataTypeRegistry;
@@ -13,6 +15,7 @@ import org.bukkit.craftbukkit.v1_20_R2.persistence.CraftPersistentDataTypeRegist
 import me.lauriichan.laylib.reflection.ClassUtil;
 import me.lauriichan.laylib.reflection.JavaAccess;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 public final class NmsHelper1_20_R2 {
@@ -67,6 +70,10 @@ public final class NmsHelper1_20_R2 {
     
     public static void clearCompound(CompoundTag tag) {
         ((Map<?, ?>) TAGS.get(tag)).clear();
+    }
+    
+    public static MinecraftServer getServer() {
+        return ((CraftServer) Bukkit.getServer()).getServer();
     }
 
 }

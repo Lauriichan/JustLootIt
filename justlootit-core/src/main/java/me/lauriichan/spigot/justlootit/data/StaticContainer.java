@@ -36,6 +36,11 @@ public final class StaticContainer extends Container implements IInventoryContai
         saveFrom(inventory);
     }
 
+    public StaticContainer(final long id, final ItemStack[] contents) {
+        super(id);
+        saveFrom(contents);
+    }
+
     private StaticContainer(final long id, final ContainerData data, final ItemStack[] items) {
         super(id, data);
         this.items = items;
@@ -62,7 +67,10 @@ public final class StaticContainer extends Container implements IInventoryContai
     }
 
     public void saveFrom(final Inventory inventory) {
-        final ItemStack[] contents = InventoryUtil.getContents(inventory);
+        saveFrom(InventoryUtil.getContents(inventory));
+    }
+
+    public void saveFrom(final ItemStack[] contents) {
         final ItemStack[] items = new ItemStack[contents.length];
         for (int index = 0; index < contents.length; index++) {
             final ItemStack item = contents[index];

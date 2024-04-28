@@ -9,12 +9,16 @@ import com.mojang.serialization.Dynamic;
 
 import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.spigot.justlootit.nms.convert.ConversionAdapter;
-import me.lauriichan.spigot.justlootit.nms.convert.ProtoWorld;
+import me.lauriichan.spigot.justlootit.nms.v1_20_R3.VersionHandler1_20_R3;
+import me.lauriichan.spigot.justlootit.nms.v1_20_R3.util.NmsHelper1_20_R3;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.NbtException;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.WorldLoader;
 import net.minecraft.util.datafix.DataFixers;
 import net.minecraft.world.level.chunk.storage.ChunkStorage;
 import net.minecraft.world.level.dimension.LevelStem;
+import net.minecraft.world.level.storage.LevelDataAndDimensions;
 import net.minecraft.world.level.storage.LevelStorageSource;
 import net.minecraft.world.level.storage.LevelStorageSource.LevelStorageAccess;
 import net.minecraft.world.level.storage.LevelSummary;
@@ -23,11 +27,13 @@ import net.minecraft.world.level.validation.ContentValidationException;
 public final class ConversionAdapter1_20_R3 extends ConversionAdapter {
 
     private final ISimpleLogger logger;
+    private final VersionHandler1_20_R3 handler;
 
     private ExecutorService executor;
 
-    public ConversionAdapter1_20_R3(ISimpleLogger logger) {
-        this.logger = logger;
+    public ConversionAdapter1_20_R3(VersionHandler1_20_R3 handler) {
+        this.logger = handler.logger();
+        this.handler = handler;
     }
 
     private ExecutorService executor() {
@@ -38,7 +44,7 @@ public final class ConversionAdapter1_20_R3 extends ConversionAdapter {
     }
 
     @Override
-    public ProtoWorld getWorld(File directory) {
+    public ProtoWorld1_20_R3 getWorld(File directory) {
         if (!directory.exists() || directory.isFile()) {
             return null;
         }
@@ -54,26 +60,30 @@ public final class ConversionAdapter1_20_R3 extends ConversionAdapter {
         } catch (IOException | ContentValidationException e) {
             return null;
         }
-        Dynamic<?> dynamic = null;
-        LevelSummary info = null;
-        if (session.hasWorldData()) {
+        if (!session.hasWorldData()) {
+            return null; 
+        }
+        Dynamic<?> dynamic;
+        LevelSummary info;
+        try {
+            dynamic = session.getDataTag();
+            info = session.getSummary(dynamic);
+        } catch (NbtException | net.minecraft.nbt.ReportedNbtException | IOException exp) {
             try {
-                dynamic = session.getDataTag();
+                dynamic = session.getDataTagFallback();
                 info = session.getSummary(dynamic);
-            } catch (NbtException | net.minecraft.nbt.ReportedNbtException | IOException exp) {
-                try {
-                    dynamic = session.getDataTagFallback();
-                    info = session.getSummary(dynamic);
-                } catch (NbtException | net.minecraft.nbt.ReportedNbtException | IOException exp1) {
-                    return null;
-                }
-                session.restoreLevelDataFromOld();
-            }
-            if (info.requiresManualConversion() || !info.isCompatible()) {
+            } catch (NbtException | net.minecraft.nbt.ReportedNbtException | IOException exp1) {
                 return null;
             }
+            session.restoreLevelDataFromOld();
         }
-        return new ProtoWorld1_20_R3(executor(), logger, new ChunkStorage(null, DataFixers.getDataFixer(), false), session, dimensionKey);
+        if (info.requiresManualConversion() || !info.isCompatible()) {
+            return null;
+        }
+        @SuppressWarnings("resource")
+        WorldLoader.DataLoadContext context = NmsHelper1_20_R3.getServer().worldLoader;
+        LevelDataAndDimensions levelData = LevelStorageSource.getLevelDataAndDimensions(dynamic, context.dataConfiguration(), context.datapackDimensions().registryOrThrow(Registries.LEVEL_STEM), context.datapackWorldgen());
+        return handler.applyCapabilities(new ProtoWorld1_20_R3(executor(), logger, new ChunkStorage(null, DataFixers.getDataFixer(), false), session, dimensionKey, levelData.worldData()));
     }
 
     private ResourceKey<LevelStem> findKey(File directory) {

@@ -6,11 +6,13 @@ public interface ICompoundTag {
     
     TagType<?> getType(String key);
     
-    boolean isType(String key, TagType<?> type);
+    boolean has(String key);
     
-    boolean isListType(String key, TagType<?> type);
+    boolean has(String key, TagType<?> type);
     
-    boolean isNumeric(String key);
+    boolean hasNumeric(String key);
+    
+    boolean hasList(String key, TagType<?> type);
     
     byte getByte(String key);
     
