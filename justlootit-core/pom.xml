@@ -67,7 +67,7 @@
         <dependency>
             <groupId>me.lauriichan.spigot.justlootit</groupId>
             <artifactId>justlootit-nms-api</artifactId>
-            <version>1.0.0</version>
+            <version>${project.parent.version}</version>
         </dependency>
         
         <!-- Platform Compat -->
