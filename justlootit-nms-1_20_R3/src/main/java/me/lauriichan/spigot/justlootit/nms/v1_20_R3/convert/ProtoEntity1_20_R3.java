@@ -1,25 +1,15 @@
 package me.lauriichan.spigot.justlootit.nms.v1_20_R3.convert;
 
-import org.bukkit.craftbukkit.v1_20_R3.entity.CraftEntity;
 import org.bukkit.craftbukkit.v1_20_R3.entity.CraftEntityType;
 import org.bukkit.craftbukkit.v1_20_R3.persistence.CraftPersistentDataContainer;
-import org.bukkit.craftbukkit.v1_20_R3.persistence.CraftPersistentDataTypeRegistry;
 
-import me.lauriichan.laylib.reflection.JavaAccess;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoEntity;
 import me.lauriichan.spigot.justlootit.nms.nbt.ICompoundTag;
-import me.lauriichan.spigot.justlootit.nms.v1_20_R3.convert.ProtoChunk1_20_R3.IUpdatable;
 import me.lauriichan.spigot.justlootit.nms.v1_20_R3.nbt.CompoundTag1_20_R3;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.EntityType;
 
-public class ProtoEntity1_20_R3 extends ProtoEntity implements IUpdatable {
-
-    private static final CraftPersistentDataTypeRegistry registry;
-
-    static {
-        registry = (CraftPersistentDataTypeRegistry) JavaAccess.getStaticValue(CraftEntity.class, "DATA_TYPE_REGISTRY");
-    }
+public class ProtoEntity1_20_R3 extends ProtoEntity {
 
     private final org.bukkit.entity.EntityType type;
     private final CraftPersistentDataContainer container;
@@ -28,7 +18,7 @@ public class ProtoEntity1_20_R3 extends ProtoEntity implements IUpdatable {
 
     public ProtoEntity1_20_R3(CompoundTag entityTag) {
         this.type = CraftEntityType.minecraftToBukkit(EntityType.byString(entityTag.getString("id")).get());
-        this.container = new CraftPersistentDataContainer(registry);
+        this.container = new CraftPersistentDataContainer(ConversionAdapter1_20_R3.DATA_TYPE_REGISTRY);
         if (entityTag.get("BukkitValues") instanceof CompoundTag tag) {
             container.putAll(tag);
         }

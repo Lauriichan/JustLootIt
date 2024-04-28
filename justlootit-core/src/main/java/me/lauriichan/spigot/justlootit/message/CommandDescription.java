@@ -35,7 +35,9 @@ public enum CommandDescription implements IMessageDefinition, IMessageExtension 
     JUSTLOOTIT_GROUP_SET_TIME("Sets the time of a refresh group's interval"),
     
     JUSTLOOTIT_CONFIG_SAVE("Saves all or just the specified config(s)"),
-    JUSTLOOTIT_CONFIG_RELOAD("Reloads all or just the specified config(s)")
+    JUSTLOOTIT_CONFIG_RELOAD("Reloads all or just the specified config(s)"),
+    
+    JUSTLOOTIT_CONVERT("Triggers a world conversion process")
     ;
 
     private final String id;

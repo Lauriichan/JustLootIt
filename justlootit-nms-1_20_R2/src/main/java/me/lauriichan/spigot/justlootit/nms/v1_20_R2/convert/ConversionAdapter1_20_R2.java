@@ -5,9 +5,13 @@ import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.bukkit.craftbukkit.v1_20_R2.entity.CraftEntity;
+import org.bukkit.craftbukkit.v1_20_R2.persistence.CraftPersistentDataTypeRegistry;
+
 import com.mojang.datafixers.util.Pair;
 
 import me.lauriichan.laylib.logger.ISimpleLogger;
+import me.lauriichan.laylib.reflection.JavaAccess;
 import me.lauriichan.spigot.justlootit.nms.convert.ConversionAdapter;
 import me.lauriichan.spigot.justlootit.nms.v1_20_R2.VersionHandler1_20_R2;
 import me.lauriichan.spigot.justlootit.nms.v1_20_R2.util.NmsHelper1_20_R2;
@@ -27,6 +31,12 @@ import net.minecraft.world.level.storage.WorldData;
 import net.minecraft.world.level.validation.ContentValidationException;
 
 public final class ConversionAdapter1_20_R2 extends ConversionAdapter {
+
+    static final CraftPersistentDataTypeRegistry DATA_TYPE_REGISTRY;
+
+    static {
+        DATA_TYPE_REGISTRY = (CraftPersistentDataTypeRegistry) JavaAccess.getStaticValue(CraftEntity.class, "DATA_TYPE_REGISTRY");
+    }
 
     private final ISimpleLogger logger;
     private final VersionHandler1_20_R2 handler;

@@ -44,6 +44,8 @@ public class VanillaConverter extends ChunkConverter {
         super(versionHandler, properties);
     }
 
+    // TODO: FIX THIS MESS CAUSE WE CAN'T USE org.bukkit.block.BlockState!!!
+
     @Override
     public void convert(ProtoChunk chunk, Random random) {
         IStorage<Storable> storage = chunk.getWorld().getCapability(StorageCapability.class).map(StorageCapability::storage).get();

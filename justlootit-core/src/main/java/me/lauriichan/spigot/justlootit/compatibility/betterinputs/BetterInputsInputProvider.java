@@ -10,6 +10,7 @@ import me.lauriichan.laylib.command.Actor;
 import me.lauriichan.laylib.localization.Key;
 import me.lauriichan.minecraft.pluginbase.util.color.BukkitColor;
 import me.lauriichan.spigot.justlootit.input.InputProvider;
+import me.lauriichan.spigot.justlootit.input.SimpleChatInputProvider;
 import me.lauriichan.spigot.justlootit.message.Messages;
 import me.nemo_64.betterinputs.api.BetterInputs;
 import me.nemo_64.betterinputs.api.input.modifier.AttemptModifier;
@@ -30,8 +31,12 @@ public class BetterInputsInputProvider extends InputProvider {
     @Override
     public void getStringInput(Actor<?> actor, String prompt, String retryMessage, Predicate<String> predicate,
         BiConsumer<Actor<?>, String> consumer) {
+        if (!actor.as(Player.class).isValid()) {
+            SimpleChatInputProvider.CHAT.getStringInput(actor, prompt, retryMessage, predicate, consumer);
+            return;
+        }
         String type;
-        if (api.getInputFactory(ANVIL, String.class).isPresent() && actor.as(Player.class).isValid()) {
+        if (api.getInputFactory(ANVIL, String.class).isPresent()) {
             type = ANVIL;
         } else {
             type = CHAT;
@@ -39,12 +44,16 @@ public class BetterInputsInputProvider extends InputProvider {
         }
         api.createInput(String.class).type(type).actor(actor.getHandle()).param("name", BukkitColor.apply(prompt))
             .cancelListener(
-                (provider, reason) -> actor.sendTranslatedMessage(Messages.INPUT_BETTERINPUTS_CANCELLED, Key.of("reason", reason)))
+                (provider, reason) -> {
+                    consumer.accept(actor, null);
+                    actor.sendTranslatedMessage(Messages.INPUT_BETTERINPUTS_CANCELLED, Key.of("reason", reason));
+                })
             .exceptionHandler(exp -> actor.sendTranslatedMessage(Messages.INPUT_BETTERINPUTS_FAILED, Key.of("message", exp.getMessage())))
             .provide().withModifier(new AttemptModifier<>(ATTEMPTS,
                 (string) -> string.equalsIgnoreCase(CANCEL_MESSAGE) || predicate.test(string), (p) -> actor.sendMessage(retryMessage)))
             .asFuture().thenAccept(str -> {
                 if (str.equalsIgnoreCase(CANCEL_MESSAGE)) {
+                    consumer.accept(actor, null);
                     actor.sendTranslatedMessage(Messages.INPUT_MANUAL_CANCEL);
                     return;
                 }

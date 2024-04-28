@@ -32,9 +32,11 @@ import me.lauriichan.spigot.justlootit.data.FrameContainer;
 import me.lauriichan.spigot.justlootit.data.StaticContainer;
 import me.lauriichan.spigot.justlootit.data.VanillaContainer;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
+import me.lauriichan.spigot.justlootit.nms.convert.ProtoBlockEntity;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoChunk;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoEntity;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoWorld;
+import me.lauriichan.spigot.justlootit.nms.nbt.ICompoundTag;
 import me.lauriichan.spigot.justlootit.nms.nbt.TagType;
 import me.lauriichan.spigot.justlootit.storage.IStorage;
 import me.lauriichan.spigot.justlootit.storage.Storable;
@@ -76,7 +78,7 @@ public class LootinConverter extends ChunkConverter {
         }
     };
 
-    private final NamespacedKey identityKey = NamespacedKey.fromString("lootin:Lootin");
+    private final NamespacedKey identityKey = NamespacedKey.fromString("lootin:lootin");
     private final NamespacedKey elytraKey = NamespacedKey.fromString("lootin:item-frame-elytra-key");
 
     private final NamespacedKey dataKey = NamespacedKey.fromString("lootin:loot-container");
@@ -94,16 +96,16 @@ public class LootinConverter extends ChunkConverter {
         super(versionHandler, properties);
     }
 
+    // TODO: FIX THIS MESS CAUSE WE CAN'T USE org.bukkit.block.BlockState!!!
+    
     @Override
     public void convert(ProtoChunk chunk, Random random) {
         IStorage<Storable> storage = chunk.getWorld().getCapability(StorageCapability.class).map(StorageCapability::storage).get();
         if (!chunk.getBlockEntities().isEmpty()) {
-            ObjectArrayList<BlockState> pendingBlockEntities = new ObjectArrayList<>(chunk.getBlockEntities());
+            ObjectArrayList<ProtoBlockEntity> pendingBlockEntities = new ObjectArrayList<>(chunk.getBlockEntities());
             while (!pendingBlockEntities.isEmpty()) {
-                BlockState state = pendingBlockEntities.remove(0);
-                if (!(state instanceof Container container)) {
-                    return;
-                }
+                ProtoBlockEntity state = pendingBlockEntities.remove(0);
+                ICompoundTag tag = state.getNbt();
                 if (!JustLootItFlag.TILE_ENTITY_CONTAINERS.isSet()
                     && JustLootItConstant.UNSUPPORTED_CONTAINER_TYPES.contains(container.getInventory().getType())) {
                     return;

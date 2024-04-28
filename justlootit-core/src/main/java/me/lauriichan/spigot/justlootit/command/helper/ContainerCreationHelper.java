@@ -126,9 +126,15 @@ public final class ContainerCreationHelper {
             }
             plugin.inputProvider().getLongInput(actor, actor.getTranslatedMessageAsString(Messages.INPUT_PROMPT_LOOTTABLE_SEED),
                 actor.getTranslatedMessageAsString(Messages.INPUT_RETRY_LOOTTABLE_SEED), (a1, seed) -> {
+                    if (seed == null) {
+                        return;
+                    }
                     plugin.inputProvider().getStringInput(actor, actor.getTranslatedMessageAsString(Messages.INPUT_PROMPT_LOOTTABLE_KEY),
                         actor.getTranslatedMessageAsString(Messages.INPUT_RETRY_LOOTTABLE_KEY),
                         (str) -> LootTableArgument.isLootTable(plugin.versionHelper(), str), (a2, rawLootTable) -> {
+                            if (rawLootTable == null) {
+                                return;
+                            }
                             LootTable lootTable = LootTableArgument.parseLootTable(plugin.versionHelper(), rawLootTable);
                             plugin.scheduler().entity(entity, () -> {
                                 if (entity.isDead()) {
@@ -161,9 +167,15 @@ public final class ContainerCreationHelper {
             }
             plugin.inputProvider().getLongInput(actor, actor.getTranslatedMessageAsString(Messages.INPUT_PROMPT_LOOTTABLE_SEED),
                 actor.getTranslatedMessageAsString(Messages.INPUT_RETRY_LOOTTABLE_SEED), (a1, seed) -> {
+                    if (seed == null) {
+                        return;
+                    }
                     plugin.inputProvider().getStringInput(actor, actor.getTranslatedMessageAsString(Messages.INPUT_PROMPT_LOOTTABLE_KEY),
                         actor.getTranslatedMessageAsString(Messages.INPUT_RETRY_LOOTTABLE_KEY),
                         (str) -> LootTableArgument.isLootTable(plugin.versionHelper(), str), (a2, rawLootTable) -> {
+                            if (rawLootTable == null) {
+                                return;
+                            }
                             LootTable lootTable = LootTableArgument.parseLootTable(plugin.versionHelper(), rawLootTable);
                             plugin.scheduler().regional(location, () -> {
                                 if (!(block.getBlock().getState() instanceof org.bukkit.block.Container blockContainer)) {

@@ -6,6 +6,7 @@ public final class JustLootItPermission {
         throw new UnsupportedOperationException();
     }
 
+    public static final String COMMAND_CONVERT = "justlootit.command.convert";
     public static final String COMMAND_CONFIG = "justlootit.command.config";
     public static final String COMMAND_CONTAINER = "justlootit.command.container";
     public static final String COMMAND_GROUP = "justlootit.command.group";

@@ -143,12 +143,12 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
 
     @Override
     public void onPluginEnable() {
+        JustLootItKey.setup(this);
         if (doWorldConversion()) {
-            // Exit server afterwards, just to be safe
-            Bukkit.shutdown();
+            // Restart server afterwards, just to be safe
+            getServer().spigot().restart();
             return;
         }
-        JustLootItKey.setup(this);
         commandManager = new CommandManager(logger(), argumentRegistry());
         commandManager.setPrefix("/jli ");
         commandBridge = new BukkitCommandInjectableBridge<>(IBukkitCommandProcessor.commandLine(), commandManager, messageManager(), this,
@@ -160,7 +160,7 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     }
     
     private boolean doWorldConversion() {
-        ConversionProperties properties = new ConversionProperties(logger(), new File(getDataFolder(), "conversion.properties"), false);
+        ConversionProperties properties = new ConversionProperties(logger(), getConversionPropertyFile(), false);
         if (properties.isAvailable()) {
             boolean conversionWasDone = JustLootItConverter.convert(versionHandler, properties);
             properties.delete();
@@ -259,6 +259,10 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     /*
      * Utility
      */
+    
+    public File getConversionPropertyFile() {
+        return new File(getDataFolder(), "conversion.properties");
+    }
 
     public NamespacedKey key(final String name) {
         return new NamespacedKey(this, name);

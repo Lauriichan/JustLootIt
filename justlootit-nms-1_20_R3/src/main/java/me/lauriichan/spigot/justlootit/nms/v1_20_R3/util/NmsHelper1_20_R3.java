@@ -47,8 +47,8 @@ public final class NmsHelper1_20_R3 {
         }
 
         static VarHandle tags() {
-            Field field = ClassUtil.getField(CompoundTag.class, "tags");
-            if (field == null || !Map.class.isAssignableFrom(field.getType())) {
+            Field field = ClassUtil.getField(CompoundTag.class, false, Map.class);
+            if (field == null) {
                 throw new IllegalStateException("Couldn't find field 'tags', JustLootIt won't be able to convert anything here.");
             }
             return JavaAccess.accessField(field);

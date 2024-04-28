@@ -11,19 +11,16 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 
-import org.bukkit.craftbukkit.v1_20_R2.block.CraftBlockEntityState;
-
 import it.unimi.dsi.fastutil.objects.Object2IntArrayMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.spigot.justlootit.nms.convert.ConversionProgress;
+import me.lauriichan.spigot.justlootit.nms.convert.ProtoBlockEntity;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoChunk;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoWorld;
 import me.lauriichan.spigot.justlootit.nms.util.counter.CompositeCounter;
 import me.lauriichan.spigot.justlootit.nms.util.counter.Counter;
 import me.lauriichan.spigot.justlootit.nms.util.counter.SimpleCounter;
-import me.lauriichan.spigot.justlootit.nms.v1_20_R2.convert.ProtoChunk1_20_R2.IUpdatable;
-import me.lauriichan.spigot.justlootit.nms.v1_20_R2.convert.ProtoChunk1_20_R2.UpdatedBlockState;
 import me.lauriichan.spigot.justlootit.nms.v1_20_R2.util.NmsHelper1_20_R2;
 import net.minecraft.world.level.storage.LevelStorageSource.LevelStorageAccess;
 import net.minecraft.world.level.storage.WorldData;
@@ -55,6 +52,8 @@ public class ProtoWorld1_20_R2 extends ProtoWorld implements LevelHeightAccessor
 
     private final ExecutorService executor;
     private final ISimpleLogger logger;
+    
+    private final LevelStorageAccess session;
 
     // Don't use for access, only upgrade
     private final ChunkStorage chunkStorage;
@@ -70,7 +69,7 @@ public class ProtoWorld1_20_R2 extends ProtoWorld implements LevelHeightAccessor
     private final File worldFolder;
     private final Path regionPath;
 
-    public ProtoWorld1_20_R2(final ExecutorService executor, final ISimpleLogger logger, final ChunkStorage chunkStorage, final LevelStorageAccess access,
+    public ProtoWorld1_20_R2(final ExecutorService executor, final ISimpleLogger logger, final ChunkStorage chunkStorage, final LevelStorageAccess session,
         final ResourceKey<LevelStem> dimensionKey, WorldData worldData) {
         Frozen registry = NmsHelper1_20_R2.getServer().registryAccess();
         this.executor = executor;
@@ -80,10 +79,21 @@ public class ProtoWorld1_20_R2 extends ProtoWorld implements LevelHeightAccessor
         this.dimensionType = registry.registryOrThrow(Registries.LEVEL_STEM).get(dimensionKey).type().value();
         this.biomeRegistry = registry.registryOrThrow(Registries.BIOME);
         this.worldKey = ResourceKey.create(Registries.DIMENSION, dimensionKey.location());
-        Path dimensionPath = access.getDimensionPath(worldKey);
+        Path dimensionPath = session.getDimensionPath(worldKey);
         this.worldFolder = dimensionPath.toFile();
         this.regionPath = dimensionPath.resolve("region");
         this.worldData = worldData;
+        this.session = session;
+    }
+    
+    @Override
+    public void close() {
+        super.close();
+        try {
+            session.close();
+        } catch (IOException e) {
+            logger.warning("Failed to close level access of level '{0}'", session.getLevelId());
+        }
     }
     
     @Override
@@ -172,16 +182,20 @@ public class ProtoWorld1_20_R2 extends ProtoWorld implements LevelHeightAccessor
                         }
                         ProtoChunk1_20_R2 protoChunk = new ProtoChunk1_20_R2(this, chunk, cx, cz);
                         consumer.accept(protoChunk);
-                        if (!protoChunk.updated.isEmpty()) {
-                            for (IUpdatable updatable : protoChunk.updated) {
-                                if (updatable instanceof UpdatedBlockState blockState) {
-                                    CraftBlockEntityState<?> state = blockState.state();
-                                    int index = blockEntityMap.getInt(new BlockPos(state.getX(), state.getY(), state.getZ()));
-                                    blockEntityListTag.set(index, NmsHelper1_20_R2.getTileEntity(state).saveWithId());
+                        if (protoChunk.isDirty()) {
+                            blockEntityListTag.clear();
+                            for (ProtoBlockEntity rawBlock : protoChunk.getBlockEntities()) {
+                                blockEntityListTag.add(((ProtoBlockEntity1_20_R2) rawBlock).tag());
+                            }
+                            for (int i = 0; i < listTag.size(); i++) {
+                                LevelChunkSection section = sections[i];
+                                CompoundTag sectionTag = listTag.getCompound(i);
+                                if (!sectionTag.contains("block_states", 10)) {
+                                    continue;
                                 }
-                                if (updatable instanceof ProtoEntity1_20_R2 entity) {
-                                    entity.save();
-                                }
+                                sectionTag.put("block_states", ChunkSerializer.BLOCK_STATE_CODEC.encodeStart(NbtOps.INSTANCE, section.getStates()).getOrThrow(false, (sx) -> {
+                                    logger.warning("Something went wrong when writing chunk section: " + sx);
+                                }));
                             }
                             try (DataOutputStream output = file.getChunkDataOutputStream(posInRegion)) {
                                 NbtIo.write(tag, output);

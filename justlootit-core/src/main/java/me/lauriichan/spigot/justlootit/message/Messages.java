@@ -38,15 +38,48 @@ public final class Messages implements IMessageExtension {
     public static MessageProvider INPUT_SIMPLE_FAILED;
     @Message(id = "input.simple.prompt", content = "$#plugin.prefix &7$prompt")
     public static MessageProvider INPUT_SIMPLE_PROMPT;
-
-    @Message(id = "input.prompt.loottable.seed", content = "&7Enter loot table seed")
-    public static MessageProvider INPUT_PROMPT_LOOTTABLE_SEED;
-    @Message(id = "input.prompt.loottable.key", content = "&7Enter loot table key")
-    public static MessageProvider INPUT_PROMPT_LOOTTABLE_KEY;
+    
+    // Retries
     @Message(id = "input.retry.loottable.seed", content = "$#plugin.prefix Invalid seed, please try again.")
     public static MessageProvider INPUT_RETRY_LOOTTABLE_SEED;
     @Message(id = "input.retry.loottable.key", content = "$#plugin.prefix Invalid loot table, please try again.")
     public static MessageProvider INPUT_RETRY_LOOTTABLE_KEY;
+    @Message(id = "input.retry.boolean", content = {
+        "$#plugin.prefix Invalid boolean, please try again.",
+        "&aTrue &7values: yes, y, true, on",
+        "&cFalse &7values: no, n, false, off"
+    })
+    public static MessageProvider INPUT_RETRY_BOOLEAN;
+
+    // Prompts
+    @Message(id = "input.prompt.loottable.seed", content = "&7Enter loot table seed")
+    public static MessageProvider INPUT_PROMPT_LOOTTABLE_SEED;
+    @Message(id = "input.prompt.loottable.key", content = "&7Enter loot table key")
+    public static MessageProvider INPUT_PROMPT_LOOTTABLE_KEY;
+    
+    @Message(id = "input.prompt.convert.do-lootin", content = "&7Do you want to convert Lootin containers?")
+    public static MessageProvider INPUT_PROMPT_CONVERT_DO_LOOTIN;
+    @Message(id = "input.prompt.convert.disallow-lootin-static", content = {
+        "&7Do you want to disable the conversion of static Lootin containers (same loot every time)?",
+        "&7Recommended: no"
+    })
+    public static MessageProvider INPUT_PROMPT_CONVERT_LOOTIN_STATIC;
+    @Message(id = "input.prompt.convert.do-vanilla", content = "&7Do you want to convert Vanilla containers?")
+    public static MessageProvider INPUT_PROMPT_CONVERT_DO_VANILLA;
+    @Message(id = "input.prompt.convert.vanilla-item-frames", content = "&7Do you want to convert Vanilla item frames?")
+    public static MessageProvider INPUT_PROMPT_CONVERT_VANILLA_ITEM_FRAMES;
+    @Message(id = "input.prompt.convert.vanilla-eltry-frames-only", content = {
+        "&7Do you want to only allow Vanilla elytra item frames?",
+        "&7Recommended: yes",
+        "&4WARNING: &c*NOT* using this in a world with player created item frames might cause them to be recognized as Loot containers!"
+    })
+    public static MessageProvider INPUT_PROMPT_CONVERT_VANILLA_ELYTRA_FRAMES_ONLY;
+    @Message(id = "input.prompt.convert.allow-vanilla-static", content = {
+        "&7Do you want to allow the conversion Vanilla static containers?",
+        "&7Recommended: no",
+        "&4WARNING: &cDoing this in a world with player created blocks might cause them to be recognized as Loot containers!"
+    })
+    public static MessageProvider INPUT_PROMPT_CONVERT_VANILLA_STATIC_CONTAINERS;
     
     /*
      * Container
@@ -311,5 +344,12 @@ public final class Messages implements IMessageExtension {
     public static MessageProvider COMMAND_CONFIG_RELOAD_RESULT_SUCCESS;
     @Message(id = "command.config.reload.result.failed", content = "$#plugin.prefix Failed to reload config '&c$config&7', check the Server console for more info!")
     public static MessageProvider COMMAND_CONFIG_RELOAD_RESULT_FAILED;
-
+    
+    // Convert
+    
+    @Message(id = "command.convert.proccess-on-going", content = "$#plugin.prefix &cThere is already a conversion process setup on-going!")
+    public static MessageProvider COMMAND_CONVERT_PROCESS_ONGOING;
+    @Message(id = "command.convert.process-done", content = "$#plugin.prefix &7Successfully set up conversion process, restarting server in 5 seconds (might require manual start)")
+    public static MessageProvider COMMAND_CONVERT_PROCESS_DONE;
+    
 }
