@@ -75,13 +75,13 @@ public final class JustLootItConverter {
                 };
                 somethingWasConverted = true;
                 ConversionProgress progress = world.streamChunks(chunkConsumer);
+                loop:
                 while (true) {
                     logger.info("Converting level '{0}'... ({2}) [{1} / {3} Chunks]", world.getName(), progress.counter().current(), PROGRESS_FORMAT.format(progress.counter().progress()), progress.counter().max());
-                    if (progress.future().isDone()) {
+                    while (progress.future().isDone()) {
                         if (!progress.next()) {
-                            break;
+                            break loop;
                         }
-                        continue;
                     }
                     try {
                         progress.future().get(5, TimeUnit.SECONDS);

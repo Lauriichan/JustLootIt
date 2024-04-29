@@ -4,9 +4,9 @@ import java.util.Objects;
 
 import org.bukkit.block.data.BlockData;
 import org.bukkit.craftbukkit.v1_20_R2.block.data.CraftBlockData;
-import org.joml.Vector3i;
 
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoBlock;
+import me.lauriichan.spigot.justlootit.nms.util.Vec3i;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -32,8 +32,8 @@ public class ProtoBlock1_20_R2 extends ProtoBlock {
     }
 
     @Override
-    public Vector3i getPos() {
-        return new Vector3i(pos.getX(), pos.getY(), pos.getZ());
+    public Vec3i getPos() {
+        return new Vec3i(pos.getX(), pos.getY(), pos.getZ());
     }
 
     public BlockPos pos() {

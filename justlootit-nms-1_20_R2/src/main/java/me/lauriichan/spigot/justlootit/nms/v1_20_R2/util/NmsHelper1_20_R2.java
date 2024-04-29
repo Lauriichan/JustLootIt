@@ -10,7 +10,9 @@ import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.v1_20_R2.CraftServer;
 import org.bukkit.craftbukkit.v1_20_R2.block.CraftBlockEntityState;
 import org.bukkit.craftbukkit.v1_20_R2.entity.CraftEntity;
+import org.bukkit.craftbukkit.v1_20_R2.persistence.CraftPersistentDataContainer;
 import org.bukkit.craftbukkit.v1_20_R2.persistence.CraftPersistentDataTypeRegistry;
+import org.bukkit.persistence.PersistentDataContainer;
 
 import me.lauriichan.laylib.reflection.ClassUtil;
 import me.lauriichan.laylib.reflection.JavaAccess;
@@ -23,6 +25,8 @@ public final class NmsHelper1_20_R2 {
     private static final MethodHandle GET_TILE_ENTITY = Access.getTileEntity();
     private static final VarHandle DATA_TYPE_REGISTRY = Access.dataTypeRegistry();
     private static final VarHandle TAGS = Access.tags();
+    
+    private static volatile boolean dataTypeRegistrySetup = false;
 
     private static final class Access {
 
@@ -65,7 +69,26 @@ public final class NmsHelper1_20_R2 {
     }
     
     public static CraftPersistentDataTypeRegistry dataTypeRegistry() {
-        return (CraftPersistentDataTypeRegistry) DATA_TYPE_REGISTRY.get();
+        CraftPersistentDataTypeRegistry registry = (CraftPersistentDataTypeRegistry) DATA_TYPE_REGISTRY.get();
+        if (!dataTypeRegistrySetup) {
+            dataTypeRegistrySetup = true;
+            setupRegistry(registry);
+        }
+        return registry;
+    }
+    
+    private static void setupRegistry(CraftPersistentDataTypeRegistry registry) {
+        // Initialize registry with primitives to prevent concurrent modification exceptions
+        registry.wrap(Byte.class, (byte) 0);
+        registry.wrap(Short.class, (short) 0);
+        registry.wrap(Integer.class, 0);
+        registry.wrap(Long.class, 0L);
+        registry.wrap(Float.class, 0f);
+        registry.wrap(Double.class, 0d);
+        registry.wrap(byte[].class, new byte[0]);
+        registry.wrap(int[].class, new int[0]);
+        registry.wrap(long[].class, new long[0]);
+        registry.wrap(PersistentDataContainer.class, new CraftPersistentDataContainer(registry));
     }
     
     public static void clearCompound(CompoundTag tag) {

@@ -59,10 +59,10 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
 
     private static final String VERSION_PATH = JustLootItPlugin.class.getPackageName() + ".nms.%s.VersionHandler%s";
 
-    private final JustLootItPlatform platform;
+    private volatile JustLootItPlatform platform;
 
     private File mainWorldFolder;
-    
+
     private VersionHandler versionHandler;
     private VersionHelper versionHelper;
     private PacketManager packetManager;
@@ -70,7 +70,7 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
 
     private CommandManager commandManager;
     private BukkitCommandInjectableBridge<?> commandBridge;
-    
+
     private volatile InputProvider inputProvider = SimpleChatInputProvider.CHAT;
 
     /*
@@ -82,13 +82,10 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     /*
      * Setup
      */
-    
-    public JustLootItPlugin() {
-        this.platform = initPlatform();
-    }
 
     @Override
     protected void onPluginLoad() throws Throwable {
+        platform = initPlatform();
         if (!setupVersionHandler()) {
             return;
         }
@@ -108,6 +105,7 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
             logger().error("Reason: '" + exp.getMessage() + "'");
             logger().error("");
             logger().error("Can't work like this, disabling...");
+            logger().error(exp);
             actDisabled(true);
             return false;
         }
@@ -121,7 +119,7 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     /*
      * Start
      */
-    
+
     @Override
     protected void onConditionMapSetup(IConditionMap conditionMap) {
         conditionMap.value(ConditionConstant.ENABLE_GUI, true);
@@ -144,6 +142,9 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     @Override
     public void onPluginEnable() {
         JustLootItKey.setup(this);
+        if (versionHandler != null) {
+            versionHandler.enable();
+        }
         if (doWorldConversion()) {
             // Restart server afterwards, just to be safe
             getServer().spigot().restart();
@@ -152,13 +153,13 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         commandManager = new CommandManager(logger(), argumentRegistry());
         commandManager.setPrefix("/jli ");
         commandBridge = new BukkitCommandInjectableBridge<>(IBukkitCommandProcessor.commandLine(), commandManager, messageManager(), this,
-            CommandDefinition.of("justlootit").alias("jloot").alias("jli").description("command.description.justlootit.parent").build(this), this::actor)
-                .inject();
+            CommandDefinition.of("justlootit").alias("jloot").alias("jli").description("command.description.justlootit.parent").build(this),
+            this::actor).inject();
         registerCommands(commandManager);
         // Initialize compatibilities
         JustLootItCompatibilities.loadClass();
     }
-    
+
     private boolean doWorldConversion() {
         ConversionProperties properties = new ConversionProperties(logger(), getConversionPropertyFile(), false);
         if (properties.isAvailable()) {
@@ -169,12 +170,11 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         }
         return false;
     }
-    
+
     @Override
     protected void onPluginReady() {
         mainWorldFolder = Bukkit.getWorlds().get(0).getWorldFolder();
         if (versionHandler != null) {
-            versionHandler.enable();
             registerPacketListeners();
         }
         // Update compatibilities
@@ -206,11 +206,11 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         // Ignore any stats here
         configManager().save();
     }
-    
+
     /*
      * Setter
      */
-    
+
     public void inputProvider(InputProvider inputProvider) {
         this.inputProvider = Objects.requireNonNull(inputProvider);
     }
@@ -218,11 +218,11 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     /*
      * Getter
      */
-    
+
     public JustLootItPlatform platform() {
         return platform;
     }
-    
+
     public InputProvider inputProvider() {
         return inputProvider;
     }
@@ -242,7 +242,7 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     public String coreVersion() {
         return coreVersion;
     }
-    
+
     public File mainWorldFolder() {
         return mainWorldFolder;
     }
@@ -259,7 +259,7 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     /*
      * Utility
      */
-    
+
     public File getConversionPropertyFile() {
         return new File(getDataFolder(), "conversion.properties");
     }
@@ -276,17 +276,18 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     public <T extends CommandSender> LootItActor<T> actor(final T sender) {
         return actor(sender, messageManager());
     }
-    
+
     public <T extends CommandSender> LootItActor<T> actor(final T sender, final MessageManager manager) {
         return new LootItActor<>(sender, manager, versionHelper);
     }
-    
+
     /*
      * Init Platform
      */
-    
+
     private JustLootItPlatform initPlatform() {
-        if (ClassUtil.findClass("io.papermc.paper.threadedregions.RegionizedServer") != null || ClassUtil.findClass("io.papermc.paper.threadedregions.RegionizedServerInitEvent") != null) {
+        if (ClassUtil.findClass("io.papermc.paper.threadedregions.RegionizedServer") != null
+            || ClassUtil.findClass("io.papermc.paper.threadedregions.RegionizedServerInitEvent") != null) {
             return new FoliaPlatform(this, logger());
         }
         return new SpigotPlatform(this, logger());
@@ -307,7 +308,11 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         if (constructor == null) {
             throw new IllegalStateException("Couldn't find valid constructor for class '" + path + "'!");
         }
-        return (VersionHandler) JavaAccess.instance(constructor, this);
+        try {
+            return (VersionHandler) JavaAccess.instanceThrows(constructor, this);
+        } catch (Throwable throwable) {
+            throw new IllegalStateException("Failed to initialize VersionHandler!", throwable);
+        }
     }
 
 }

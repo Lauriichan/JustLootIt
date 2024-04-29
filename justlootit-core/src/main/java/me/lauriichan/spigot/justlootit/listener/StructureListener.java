@@ -37,6 +37,7 @@ import me.lauriichan.spigot.justlootit.data.StaticContainer;
 import me.lauriichan.spigot.justlootit.data.VanillaContainer;
 import me.lauriichan.spigot.justlootit.nms.LevelAdapter;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
+import me.lauriichan.spigot.justlootit.nms.util.Vec3i;
 import me.lauriichan.spigot.justlootit.storage.IStorage;
 import me.lauriichan.spigot.justlootit.util.BlockUtil;
 import me.lauriichan.spigot.justlootit.util.SimpleDataType;
@@ -106,9 +107,9 @@ public class StructureListener implements IListenerExtension {
                             if (otherContainer != null
                                 && otherContainer.getPersistentDataContainer().has(JustLootItKey.identity(), PersistentDataType.LONG)) {
                                 container.getPersistentDataContainer().set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR,
-                                    otherContainer.getLocation().toVector().subtract(container.getLocation().toVector()));
+                                    new Vec3i(otherContainer.getLocation()).subtractOf(container.getLocation()));
                                 otherContainer.getPersistentDataContainer().set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR,
-                                    container.getLocation().toVector().subtract(otherContainer.getLocation().toVector()));
+                                    new Vec3i(container.getLocation()).subtractOf(otherContainer.getLocation()));
                                 container.update();
                                 otherContainer.update();
                             }
@@ -132,18 +133,18 @@ public class StructureListener implements IListenerExtension {
                 if (otherContainer != null) {
                     if (otherContainer.getPersistentDataContainer().has(JustLootItKey.identity(), PersistentDataType.LONG)) {
                         otherContainer.getPersistentDataContainer().set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR,
-                            otherContainer.getLocation().toVector().subtract(container.getLocation().toVector()));
+                            new Vec3i(otherContainer.getLocation()).subtractOf(container.getLocation()));
                         otherContainer.update();
                         container.getPersistentDataContainer().set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR,
-                            container.getLocation().toVector().subtract(otherContainer.getLocation().toVector()));
+                            new Vec3i(container.getLocation()).subtractOf(otherContainer.getLocation()));
                         container.getPersistentDataContainer().remove(JustLootItKey.identity());
                         return otherContainer.getPersistentDataContainer().get(JustLootItKey.identity(), PersistentDataType.LONG);
                     }
                     otherContainer.getPersistentDataContainer().set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR,
-                        otherContainer.getLocation().toVector().subtract(container.getLocation().toVector()));
+                        new Vec3i(otherContainer.getLocation()).subtractOf(container.getLocation()));
                     otherContainer.update();
                     container.getPersistentDataContainer().set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR,
-                        container.getLocation().toVector().subtract(otherContainer.getLocation().toVector()));
+                        new Vec3i(container.getLocation()).subtractOf(otherContainer.getLocation()));
                     return idFromData(storage, container.getPersistentDataContainer());
                 }
             }

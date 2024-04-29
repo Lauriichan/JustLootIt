@@ -12,7 +12,6 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
-import org.bukkit.util.Vector;
 
 import me.lauriichan.laylib.command.Actor;
 import me.lauriichan.laylib.command.annotation.Action;
@@ -39,6 +38,7 @@ import me.lauriichan.spigot.justlootit.data.FrameContainer;
 import me.lauriichan.spigot.justlootit.data.VanillaContainer;
 import me.lauriichan.spigot.justlootit.inventory.handler.manage.ContainerPageHandler;
 import me.lauriichan.spigot.justlootit.message.Messages;
+import me.lauriichan.spigot.justlootit.nms.util.Vec3i;
 import me.lauriichan.spigot.justlootit.storage.IStorage;
 import me.lauriichan.spigot.justlootit.storage.Storable;
 import me.lauriichan.spigot.justlootit.util.CommandUtil;
@@ -193,9 +193,8 @@ public class ContainerCommand implements ICommandExtension {
                 stateContainer.update(false, false);
                 return null;
             }
-            Vector vector = dataContainer.get(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR);
-            location.add(vector);
-            block = location.getWorld().getBlockAt(location);
+            Vec3i vector = dataContainer.get(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR);
+            block = location.getWorld().getBlockAt(vector.addOn(location));
             if (block.isEmpty()) {
                 actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_BLOCK, Key.of("x", location.getBlockX()),
                     Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld().getName()));
@@ -439,9 +438,8 @@ public class ContainerCommand implements ICommandExtension {
                 stateContainer.update(false, false);
                 return;
             }
-            Vector vector = dataContainer.get(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR);
-            location.add(vector);
-            block = world.getBlockAt(location);
+            Vec3i vector = dataContainer.get(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR);
+            block = world.getBlockAt(vector.addOn(location));
             if (block.isEmpty()) {
                 actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_BLOCK, Key.of("x", x), Key.of("y", y),
                     Key.of("z", z), Key.of("world", world.getName()));
@@ -482,7 +480,7 @@ public class ContainerCommand implements ICommandExtension {
                     otherContainer.update(false, false);
                 } else if (finalDataContainer.has(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR)) {
                     final Block finalBlock = world
-                        .getBlockAt(location.add(finalDataContainer.get(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR)));
+                        .getBlockAt(finalDataContainer.get(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR).addOn(location));
                     final BlockState finalState = finalBlock.getState();
                     if (finalState instanceof org.bukkit.block.Container finalOtherContainer) {
                         finalOtherContainer.getPersistentDataContainer().remove(JustLootItKey.chestData());
@@ -604,9 +602,8 @@ public class ContainerCommand implements ICommandExtension {
                 stateContainer.update(false, false);
                 return;
             }
-            Vector vector = dataContainer.get(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR);
-            location.add(vector);
-            block = world.getBlockAt(location);
+            Vec3i vector = dataContainer.get(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR);
+            block = world.getBlockAt(vector.addOn(location));
             if (block.isEmpty()) {
                 actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_BLOCK, Key.of("x", x), Key.of("y", y),
                     Key.of("z", z), Key.of("world", world.getName()));
@@ -647,7 +644,7 @@ public class ContainerCommand implements ICommandExtension {
                     otherContainer.update(false, false);
                 } else if (finalDataContainer.has(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR)) {
                     final Block finalBlock = world
-                        .getBlockAt(location.add(finalDataContainer.get(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR)));
+                        .getBlockAt(finalDataContainer.get(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR).addOn(location));
                     final BlockState finalState = finalBlock.getState();
                     if (finalState instanceof org.bukkit.block.Container finalOtherContainer) {
                         finalOtherContainer.getPersistentDataContainer().remove(JustLootItKey.chestData());

@@ -1,9 +1,8 @@
 package me.lauriichan.spigot.justlootit.nms.convert;
 
-import org.joml.Vector3i;
-
 import it.unimi.dsi.fastutil.objects.ObjectCollection;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import me.lauriichan.spigot.justlootit.nms.util.Vec3i;
 
 public abstract class ProtoChunk {
     
@@ -21,11 +20,11 @@ public abstract class ProtoChunk {
     
     public abstract ProtoWorld getWorld();
     
-    public abstract ProtoBlock getBlock(Vector3i vector);
+    public abstract ProtoBlock getBlock(Vec3i vector);
     
     public abstract ProtoBlock getBlock(int x, int y, int z);
     
-    public abstract ProtoBlockEntity getBlockEntity(Vector3i vector);
+    public abstract ProtoBlockEntity getBlockEntity(Vec3i vector);
     
     public abstract ProtoBlockEntity getBlockEntity(int x, int y, int z);
     

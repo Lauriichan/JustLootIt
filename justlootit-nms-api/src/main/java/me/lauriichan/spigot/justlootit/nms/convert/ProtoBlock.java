@@ -1,7 +1,8 @@
 package me.lauriichan.spigot.justlootit.nms.convert;
 
 import org.bukkit.block.data.BlockData;
-import org.joml.Vector3i;
+
+import me.lauriichan.spigot.justlootit.nms.util.Vec3i;
 
 public abstract class ProtoBlock {
 
@@ -9,6 +10,6 @@ public abstract class ProtoBlock {
 
     public abstract void setData(BlockData blockData);
 
-    public abstract Vector3i getPos();
+    public abstract Vec3i getPos();
 
 }

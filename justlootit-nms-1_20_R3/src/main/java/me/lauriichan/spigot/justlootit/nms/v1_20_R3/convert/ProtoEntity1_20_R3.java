@@ -13,18 +13,18 @@ public class ProtoEntity1_20_R3 extends ProtoEntity {
 
     private final org.bukkit.entity.EntityType type;
     private final CraftPersistentDataContainer container;
-    
+
     private final CompoundTag1_20_R3 tag;
 
     public ProtoEntity1_20_R3(CompoundTag entityTag) {
-        this.type = CraftEntityType.minecraftToBukkit(EntityType.byString(entityTag.getString("id")).get());
+        this.type = CraftEntityType.minecraftToBukkit(EntityType.by(entityTag).get());
         this.container = new CraftPersistentDataContainer(ConversionAdapter1_20_R3.DATA_TYPE_REGISTRY);
         if (entityTag.get("BukkitValues") instanceof CompoundTag tag) {
             container.putAll(tag);
         }
         this.tag = new CompoundTag1_20_R3(entityTag);
     }
-    
+
     @Override
     public ICompoundTag getNbt() {
         return tag;
@@ -39,7 +39,7 @@ public class ProtoEntity1_20_R3 extends ProtoEntity {
     public org.bukkit.entity.EntityType getType() {
         return type;
     }
-    
+
     public void save() {
         tag.handle().put("BukkitValues", container.toTagCompound());
     }

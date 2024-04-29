@@ -4,7 +4,8 @@ import java.util.UUID;
 
 import org.bukkit.persistence.PersistentDataAdapterContext;
 import org.bukkit.persistence.PersistentDataType;
-import org.bukkit.util.Vector;
+
+import me.lauriichan.spigot.justlootit.nms.util.Vec3i;
 
 public abstract class SimpleDataType<P, C> implements PersistentDataType<P, C> {
 
@@ -19,18 +20,15 @@ public abstract class SimpleDataType<P, C> implements PersistentDataType<P, C> {
             return primitive == 1;
         }
     };
-    public static final SimpleDataType<int[], Vector> OFFSET_VECTOR = new SimpleDataType<>(int[].class, Vector.class) {
+    public static final SimpleDataType<Byte, Vec3i> OFFSET_VECTOR = new SimpleDataType<>(Byte.class, Vec3i.class) {
         @Override
-        public int[] toPrimitive(Vector complex, PersistentDataAdapterContext context) {
-            return new int[] {
-                complex.getBlockX(),
-                complex.getBlockZ()
-            };
+        public Byte toPrimitive(Vec3i complex, PersistentDataAdapterContext context) {
+            return complex.packByte();
         }
 
         @Override
-        public Vector fromPrimitive(int[] primitive, PersistentDataAdapterContext context) {
-            return new Vector(primitive[0], 0, primitive[1]);
+        public Vec3i fromPrimitive(Byte primitive, PersistentDataAdapterContext context) {
+            return new Vec3i(primitive);
         }
     };
     public static final SimpleDataType<long[], UUID> UUID = new SimpleDataType<>(long[].class, UUID.class) {

@@ -12,6 +12,8 @@ import org.bukkit.block.ShulkerBox;
 import org.bukkit.block.data.type.Chest.Type;
 import org.bukkit.entity.Player;
 
+import me.lauriichan.spigot.justlootit.nms.util.Vec3i;
+
 public final class BlockUtil {
 
     private BlockUtil() {
@@ -22,12 +24,11 @@ public final class BlockUtil {
         return findChestAround(region, location.getBlockX(), location.getBlockY(), location.getBlockZ(), chestType, chestFace);
     }
     
-    public static Location findChestLocationAround(Location location, Type chestType, BlockFace chestFace) {
-        location = location.clone();
+    public static Vec3i findChestLocationAround(Vec3i location, Type chestType, BlockFace chestFace) {
         if (chestFace.getModZ() != 0) {
-            location.setX(location.getBlockX() + (chestType == Type.LEFT ? -chestFace.getModZ() : chestFace.getModZ()));
+            location.addX(chestType == Type.LEFT ? -chestFace.getModZ() : chestFace.getModZ());
         } else {
-            location.setZ(location.getBlockZ() + (chestType == Type.LEFT ? chestFace.getModX() : -chestFace.getModX()));
+            location.addZ(chestType == Type.LEFT ? chestFace.getModX() : -chestFace.getModX());
         }
         return location;
     }

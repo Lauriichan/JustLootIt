@@ -6,15 +6,11 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.util.Random;
 
-import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
-import org.bukkit.block.BlockState;
-import org.bukkit.block.Container;
 import org.bukkit.block.data.type.Chest;
 import org.bukkit.block.data.type.Chest.Type;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.loot.Lootable;
 import org.bukkit.persistence.PersistentDataAdapterContext;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
@@ -38,6 +34,7 @@ import me.lauriichan.spigot.justlootit.nms.convert.ProtoEntity;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoWorld;
 import me.lauriichan.spigot.justlootit.nms.nbt.ICompoundTag;
 import me.lauriichan.spigot.justlootit.nms.nbt.TagType;
+import me.lauriichan.spigot.justlootit.nms.util.Vec3i;
 import me.lauriichan.spigot.justlootit.storage.IStorage;
 import me.lauriichan.spigot.justlootit.storage.Storable;
 import me.lauriichan.spigot.justlootit.util.BlockUtil;
@@ -95,8 +92,6 @@ public class LootinConverter extends ChunkConverter {
     public LootinConverter(VersionHandler versionHandler, ConversionProperties properties) {
         super(versionHandler, properties);
     }
-
-    // TODO: FIX THIS MESS CAUSE WE CAN'T USE org.bukkit.block.BlockState!!!
     
     @Override
     public void convert(ProtoChunk chunk, Random random) {
@@ -105,51 +100,51 @@ public class LootinConverter extends ChunkConverter {
             ObjectArrayList<ProtoBlockEntity> pendingBlockEntities = new ObjectArrayList<>(chunk.getBlockEntities());
             while (!pendingBlockEntities.isEmpty()) {
                 ProtoBlockEntity state = pendingBlockEntities.remove(0);
-                ICompoundTag tag = state.getNbt();
+                if (!state.hasInventory()) {
+                    continue;
+                }
                 if (!JustLootItFlag.TILE_ENTITY_CONTAINERS.isSet()
-                    && JustLootItConstant.UNSUPPORTED_CONTAINER_TYPES.contains(container.getInventory().getType())) {
+                    && JustLootItConstant.UNSUPPORTED_CONTAINER_TYPES.contains(state.getInventory().getType())) {
                     return;
                 }
-                PersistentDataContainer dataContainer = container.getPersistentDataContainer();
+                PersistentDataContainer dataContainer = state.getContainer();
                 if (!dataContainer.has(identityKey, PersistentDataType.STRING) || hasUnsupportedKey(dataContainer)) {
                     return;
                 }
-                boolean loottable = dataContainer.has(loottableKey, PersistentDataType.STRING);
+                ICompoundTag tag = state.getNbt();
+                boolean loottable = dataContainer.has(loottableKey, PersistentDataType.STRING) || tag.has("LootTable", TagType.STRING);
                 ItemStack[] otherItems = null;
                 boolean otherItemsIsLeft = false;
-                if (state.getBlockData() instanceof Chest chest && chest.getType() != Chest.Type.SINGLE) {
-                    Location otherLocation = BlockUtil.findChestLocationAround(state.getLocation(), chest.getType(), chest.getFacing());
-                    Location location = state.getLocation();
-                    BlockState otherState = pendingBlockEntities.stream().filter(pending -> pending.getLocation().equals(otherLocation)).findFirst().orElse(null);
+                if (state.getData() instanceof Chest chest && chest.getType() != Chest.Type.SINGLE) {
+                    Vec3i otherLocation = BlockUtil.findChestLocationAround(state.getPos(), chest.getType(), chest.getFacing());
+                    Vec3i location = state.getPos();
+                    ProtoBlockEntity otherState = pendingBlockEntities.stream().filter(pending -> pending.getPos().equals(otherLocation)).findFirst().orElse(null);
                     if (otherState == null) {
                         // We convert double chests to single chests in this process
                         // The reason why is that we can't convert chests that are across borders
                         // Therefore we don't know how to convert this
-                        chest.setType(Chest.Type.SINGLE);
-                        state.setBlockData(chest);
-                    } else if (otherState instanceof Container otherContainer && otherState.getBlockData() instanceof Chest) {
+                        Chest otherChest = (Chest) chest.clone();
+                        otherChest.setType(Chest.Type.SINGLE);
+                        state.setData(otherChest);
+                    } else if (otherState.hasInventory() && otherState.getData() instanceof Chest) {
                         pendingBlockEntities.remove(otherState);
-                        PersistentDataContainer otherDataContainer = otherContainer.getPersistentDataContainer();
+                        PersistentDataContainer otherDataContainer = otherState.getContainer();
                         otherDataContainer.remove(identityKey);
                         if (!loottable) {
                             otherItems = extractContents(otherDataContainer);
                             otherItemsIsLeft = chest.getType() == Type.RIGHT;
                         }
                         clearLootinKeys(otherDataContainer);
-                        otherDataContainer.set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR, otherLocation.toVector().subtract(location.toVector()));
-                        dataContainer.set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR, location.toVector().subtract(otherLocation.toVector()));
-                        otherState.update();
-                        chunk.updateBlockEntity(otherState);
+                        otherDataContainer.set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR, otherLocation.subtract(location));
+                        dataContainer.set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR, location.subtract(otherLocation));
+                        chunk.updateBlock(otherState);
                     }
                 }
                 try {
                     if (loottable) {
-                        long seed = 0;
-                        if (state instanceof Lootable lootable) {
-                            seed = lootable.getSeed();
-                        }
+                        String lootTable = dataContainer.has(loottableKey, PersistentDataType.STRING) ? dataContainer.get(loottableKey, PersistentDataType.STRING) : tag.getString("LootTable");
                         long storageId = storage.newId();
-                        storage.write(new VanillaContainer(storageId, NamespacedKey.fromString(dataContainer.get(loottableKey, PersistentDataType.STRING)), seed == 0 ? random.nextLong() : seed));
+                        storage.write(new VanillaContainer(storageId, NamespacedKey.fromString(lootTable), tag.hasNumeric("LootTableSeed") ? tag.getLong("LootTableSeed") : random.nextLong()));
                         dataContainer.set(JustLootItKey.identity(), PersistentDataType.LONG, storageId);
                     } else {
                         ItemStack[] items = extractContents(dataContainer);
@@ -177,8 +172,7 @@ public class LootinConverter extends ChunkConverter {
                     }
                 } finally {
                     clearLootinKeys(dataContainer);
-                    container.update();
-                    chunk.updateBlockEntity(state);
+                    chunk.updateBlock(state);
                 }
             }
         }
@@ -203,16 +197,14 @@ public class LootinConverter extends ChunkConverter {
                     return;
                 }
                 try {
-                    if (dataContainer.has(loottableKey, PersistentDataType.STRING)) {
-                        long seed;
-                        if (entity.getNbt().has("LootTableSeed", TagType.LONG)) {
-                            seed = entity.getNbt().getLong("LootTableSeed");
-                        } else {
-                            seed = random.nextLong();
-                        }
+                    ICompoundTag tag = entity.getNbt();
+                    if (dataContainer.has(loottableKey, PersistentDataType.STRING) || tag.has("LootTable", TagType.STRING)) {
+                        String lootTable = dataContainer.has(loottableKey, PersistentDataType.STRING) ? dataContainer.get(loottableKey, PersistentDataType.STRING) : tag.getString("LootTable");
                         long storageId = storage.newId();
-                        storage.write(new VanillaContainer(storageId, NamespacedKey.fromString(dataContainer.get(loottableKey, PersistentDataType.STRING)), seed));
-                        dataContainer.set(JustLootItKey.identity(), PersistentDataType.LONG, seed);
+                        storage.write(new VanillaContainer(storageId, NamespacedKey.fromString(lootTable), tag.hasNumeric("LootTableSeed") ? tag.getLong("LootTableSeed") : random.nextLong()));
+                        dataContainer.set(JustLootItKey.identity(), PersistentDataType.LONG, storageId);
+                        tag.remove("LootTable");
+                        tag.remove("LootTableSeed");
                     } else {
                         ItemStack[] items = extractContents(dataContainer);
                         for (int i = 0; i < items.length; i++) {

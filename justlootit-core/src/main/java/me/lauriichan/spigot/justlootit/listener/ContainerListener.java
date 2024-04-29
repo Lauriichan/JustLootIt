@@ -29,7 +29,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
-import org.bukkit.util.Vector;
 
 import me.lauriichan.laylib.localization.Key;
 import me.lauriichan.minecraft.pluginbase.extension.Extension;
@@ -55,6 +54,7 @@ import me.lauriichan.spigot.justlootit.inventory.handler.loot.LootUIHandler;
 import me.lauriichan.spigot.justlootit.message.Messages;
 import me.lauriichan.spigot.justlootit.message.UIInventoryNames;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
+import me.lauriichan.spigot.justlootit.nms.util.Vec3i;
 import me.lauriichan.spigot.justlootit.storage.IStorage;
 import me.lauriichan.spigot.justlootit.storage.Storable;
 import me.lauriichan.spigot.justlootit.util.BlockUtil;
@@ -107,8 +107,8 @@ public class ContainerListener implements IListenerExtension {
         }
         org.bukkit.block.Container otherContainer = null;
         if (container.getBlockData() instanceof Chest chest && chest.getType() != Type.SINGLE) {
-            Vector offset = dataContainer.get(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR);
-            BlockState otherState = block.getWorld().getBlockState(block.getLocation().add(offset));
+            Vec3i offset = dataContainer.get(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR);
+            BlockState otherState = block.getWorld().getBlockState(offset.addOn(block.getLocation()));
             if (!(otherState instanceof org.bukkit.block.Container)) {
                 dataContainer.remove(JustLootItKey.chestData());
                 container.update(false, false);
@@ -249,8 +249,8 @@ public class ContainerListener implements IListenerExtension {
                 || !dataContainer.has(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR)) {
                 return;
             }
-            Vector offset = dataContainer.get(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR);
-            BlockState otherState = block.getWorld().getBlockAt(block.getLocation().add(offset)).getState();
+            Vec3i offset = dataContainer.get(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR);
+            BlockState otherState = block.getWorld().getBlockAt(offset.addOn(block.getLocation())).getState();
             if (!(otherState instanceof org.bukkit.block.Container otherContainer)) {
                 dataContainer.remove(JustLootItKey.chestData());
                 state.update(false, false);

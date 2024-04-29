@@ -2,8 +2,6 @@ package me.lauriichan.spigot.justlootit.nms.v1_20_R2.convert;
 
 import java.util.Map;
 
-import org.joml.Vector3i;
-
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectCollection;
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -13,6 +11,7 @@ import me.lauriichan.spigot.justlootit.nms.convert.ProtoBlock;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoBlockEntity;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoChunk;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoEntity;
+import me.lauriichan.spigot.justlootit.nms.util.Vec3i;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.EntityBlock;
@@ -36,7 +35,7 @@ public class ProtoChunk1_20_R2 extends ProtoChunk {
         this.x = x;
         this.z = z;
         for (Map.Entry<BlockPos, CompoundTag> entry : chunk.getBlockEntityNbts().entrySet()) {
-            blockEntities.put(posToShort(entry.getKey()),
+            blockEntities.put(packShort(entry.getKey()),
                 new ProtoBlockEntity1_20_R2(entry.getKey(), chunk.getBlockState(entry.getKey()), entry.getValue()));
         }
         for (CompoundTag entityTag : chunk.getEntities()) {
@@ -74,8 +73,8 @@ public class ProtoChunk1_20_R2 extends ProtoChunk {
     }
 
     @Override
-    public ProtoBlock getBlock(Vector3i vector) {
-        ProtoBlock block = blockEntities.get(posToShort(vector));
+    public ProtoBlock getBlock(Vec3i vector) {
+        ProtoBlock block = blockEntities.get(vector.packShort());
         if (block != null) {
             return block;
         }
@@ -85,7 +84,7 @@ public class ProtoChunk1_20_R2 extends ProtoChunk {
 
     @Override
     public ProtoBlock getBlock(int x, int y, int z) {
-        ProtoBlock block = blockEntities.get(posToShort(x, y, z));
+        ProtoBlock block = blockEntities.get(Vec3i.packShort(x, y, z));
         if (block != null) {
             return block;
         }
@@ -94,13 +93,13 @@ public class ProtoChunk1_20_R2 extends ProtoChunk {
     }
 
     @Override
-    public ProtoBlockEntity getBlockEntity(Vector3i vector) {
-        return blockEntities.get(posToShort(vector.x(), vector.y(), vector.z()));
+    public ProtoBlockEntity getBlockEntity(Vec3i vector) {
+        return blockEntities.get(vector.packShort());
     }
 
     @Override
     public ProtoBlockEntity getBlockEntity(int x, int y, int z) {
-        return blockEntities.get(posToShort(x, y, z));
+        return blockEntities.get(Vec3i.packShort(x, y, z));
     }
 
     @Override
@@ -108,7 +107,7 @@ public class ProtoChunk1_20_R2 extends ProtoChunk {
         if (protoBlock instanceof ProtoBlockEntity blockEntity) {
             return blockEntity;
         }
-        return blockEntities.get(posToShort(((ProtoBlock1_20_R2) protoBlock).pos()));
+        return blockEntities.get(packShort(((ProtoBlock1_20_R2) protoBlock).pos()));
     }
 
     @Override
@@ -116,8 +115,8 @@ public class ProtoChunk1_20_R2 extends ProtoChunk {
         if (protoBlock instanceof ProtoBlock1_20_R2 block) {
             BlockState state = block.state();
             chunk.setBlockState(block.pos(), state, false);
-            if (state instanceof EntityBlock entityBlock) {
-                short id = posToShort(block.pos());
+            if (state.getBlock() instanceof EntityBlock entityBlock) {
+                short id = packShort(block.pos());
                 if (!blockEntities.containsKey(id)) {
                     CompoundTag tag = new CompoundTag();
                     BlockPos pos = block.pos();
@@ -133,10 +132,12 @@ public class ProtoChunk1_20_R2 extends ProtoChunk {
         } else if (protoBlock instanceof ProtoBlockEntity1_20_R2 blockEntity) {
             BlockState state = blockEntity.state();
             chunk.setBlockState(blockEntity.pos(), state, false);
-            if (!(state instanceof EntityBlock entityBlock)) {
-                blockEntities.remove(posToShort(blockEntity.pos()));
+            if (!(state.getBlock() instanceof EntityBlock entityBlock)) {
+                blockEntities.remove(packShort(blockEntity.pos()));
             } else {
+                blockEntity.tag().putString("id", state.getBlockHolder().unwrapKey().get().location().toString());
                 blockEntity.save();
+                blockEntity.updateEntity();
             }
         }
         dirty = true;
@@ -148,20 +149,8 @@ public class ProtoChunk1_20_R2 extends ProtoChunk {
         dirty = true;
     }
 
-    private short posToShort(Vector3i pos) {
-        return posToShort(pos.x(), pos.y(), pos.z());
-    }
-
-    private short posToShort(BlockPos pos) {
-        return posToShort(pos.getX(), pos.getY(), pos.getZ());
-    }
-
-    private short posToShort(int x, int y, int z) {
-        short pos = 0;
-        pos += (short) (x & 0xf);
-        pos += (short) (y & 0xf) << 4;
-        pos += (short) (z & 0xf) << 8;
-        return pos;
+    private short packShort(BlockPos pos) {
+        return Vec3i.packShort(pos.getX(), pos.getY(), pos.getZ());
     }
 
 }

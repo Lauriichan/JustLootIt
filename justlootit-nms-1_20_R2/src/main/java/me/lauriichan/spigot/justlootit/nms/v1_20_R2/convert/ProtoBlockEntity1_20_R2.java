@@ -5,14 +5,24 @@ import java.util.Objects;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.craftbukkit.v1_20_R2.block.data.CraftBlockData;
 import org.bukkit.craftbukkit.v1_20_R2.persistence.CraftPersistentDataContainer;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.craftbukkit.v1_20_R2.inventory.CraftInventory;
 import org.bukkit.persistence.PersistentDataContainer;
-import org.joml.Vector3i;
 
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoBlockEntity;
 import me.lauriichan.spigot.justlootit.nms.nbt.ICompoundTag;
+import me.lauriichan.spigot.justlootit.nms.util.Vec3i;
 import me.lauriichan.spigot.justlootit.nms.v1_20_R2.nbt.CompoundTag1_20_R2;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.NonNullList;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.Container;
+import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class ProtoBlockEntity1_20_R2 extends ProtoBlockEntity {
@@ -23,6 +33,9 @@ public class ProtoBlockEntity1_20_R2 extends ProtoBlockEntity {
     private final CraftPersistentDataContainer container;
     
     private volatile CraftBlockData data;
+    private volatile BlockEntity entity;
+    
+    private volatile CraftInventory inventory;
     
     public ProtoBlockEntity1_20_R2(BlockPos pos, BlockState state, CompoundTag blockTag) {
         this.pos = pos;
@@ -32,6 +45,7 @@ public class ProtoBlockEntity1_20_R2 extends ProtoBlockEntity {
             container.putAll(tag);
         }
         this.tag = new CompoundTag1_20_R2(blockTag);
+        updateEntity();
     }
 
     @Override
@@ -45,8 +59,8 @@ public class ProtoBlockEntity1_20_R2 extends ProtoBlockEntity {
     }
 
     @Override
-    public Vector3i getPos() {
-        return new Vector3i(pos.getX(), pos.getY(), pos.getZ());
+    public Vec3i getPos() {
+        return new Vec3i(pos.getX(), pos.getY(), pos.getZ());
     }
 
     @Override
@@ -59,6 +73,21 @@ public class ProtoBlockEntity1_20_R2 extends ProtoBlockEntity {
         return tag;
     }
     
+    @Override
+    public boolean hasTileEntity() {
+        return entity != null;
+    }
+    
+    @Override
+    public boolean hasInventory() {
+        return inventory != null;
+    }
+    
+    @Override
+    public Inventory getInventory() {
+        return inventory;
+    }
+    
     public BlockPos pos() {
         return pos;
     }
@@ -69,6 +98,28 @@ public class ProtoBlockEntity1_20_R2 extends ProtoBlockEntity {
     
     public void save() {
         tag.handle().put("PublicBukkitValues", container.toTagCompound());
+        if (inventory != null) {
+            ContainerHelper.saveAllItems(tag.handle(), (NonNullList<ItemStack>) inventory.getInventory().getContents());
+        }
+    }
+    
+    public void updateEntity() {
+        if (this.entity != null && BlockEntityType.getKey(entity.getType()).toString().equals(tag.getString("id"))) {
+            // No need to update
+            return;
+        }
+        this.entity = null;
+        this.inventory = null;
+        String blockEntityId = tag.getString("id");
+        if (blockEntityId != null) {
+            BlockEntityType<?> type = BuiltInRegistries.BLOCK_ENTITY_TYPE.get(ResourceLocation.tryParse(blockEntityId));
+            if (type != null) {
+                this.entity = type.create(pos, data.getState());
+                if (entity instanceof Container container) {
+                    this.inventory = new CraftInventory(container);
+                }
+            }
+        }
     }
 
     public CompoundTag tag() {
