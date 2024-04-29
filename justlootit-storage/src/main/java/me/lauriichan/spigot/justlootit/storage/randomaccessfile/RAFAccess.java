@@ -5,8 +5,7 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
@@ -25,9 +24,7 @@ final class RAFAccess<S extends Storable> implements Closeable {
     private final File file;
     private volatile RandomAccessFile access;
 
-    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-    
-    private final Lock writeLock = lock.writeLock(), readLock = lock.readLock();
+    private final ReentrantLock lock = new ReentrantLock();
 
     RAFAccess(final int id, final File directory) {
         this.id = id;
@@ -53,20 +50,12 @@ final class RAFAccess<S extends Storable> implements Closeable {
         return file;
     }
 
-    public synchronized void writeLock() {
-        writeLock.lock();
+    public void lock() {
+        lock.lock();
     }
 
-    public synchronized void writeUnlock() {
-        writeLock.unlock();
-    }
-
-    public synchronized void readLock() {
-        readLock.lock();
-    }
-
-    public synchronized void readUnlock() {
-        readLock.unlock();
+    public void unlock() {
+        lock.unlock();
     }
 
     public boolean exists() {

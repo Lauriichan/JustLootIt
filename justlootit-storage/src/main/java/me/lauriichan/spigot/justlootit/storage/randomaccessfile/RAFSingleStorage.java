@@ -76,13 +76,13 @@ public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
             return;
         }
         if (access.isOpen()) {
-            access.writeLock();
+            access.lock();
             try {
                 access.close();
             } catch (final Exception e) {
                 logger.warning("Couldn't close File access to '" + access.hexId() + "'");
             } finally {
-                access.writeUnlock();
+                access.unlock();
             }
         }
         access.file().delete();
@@ -97,13 +97,13 @@ public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
             return;
         }
         identifier.save();
-        access.writeLock();
+        access.lock();
         try {
             access.close();
         } catch (final Exception e) {
             logger.warning("Couldn't close File access to '" + access.hexId() + "'");
         } finally {
-            access.writeUnlock();
+            access.unlock();
         }
     }
 
@@ -134,7 +134,7 @@ public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
     }
 
     private boolean has(final RAFAccess<S> access, final long fullId, final short valueId) {
-        access.readLock();
+        access.lock();
         try {
             final RandomAccessFile file = access.open();
             final long fileSize = file.length();
@@ -147,11 +147,11 @@ public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
             final long headerOffset = LOOKUP_AMOUNT_SIZE + LOOKUP_ENTRY_SIZE * valueId;
             file.seek(headerOffset);
             final long lookupPosition = file.readLong();
-            access.readUnlock();
             return lookupPosition != INVALID_HEADER_OFFSET;
         } catch (final IOException e) {
-            access.readUnlock();
             throw new StorageException("Failed to check if value with id '" + Long.toHexString(fullId) + "' exists!", e);
+        } finally {
+            access.unlock();
         }
     }
 
@@ -178,7 +178,7 @@ public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
     }
 
     private S read(final RAFAccess<S> access, final long fullId, final short valueId) {
-        access.readLock();
+        access.lock();
         try {
             final RandomAccessFile file = access.open();
             final long fileSize = file.length();
@@ -192,7 +192,6 @@ public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
             file.seek(headerOffset);
             final long lookupPosition = file.readLong();
             if (lookupPosition == INVALID_HEADER_OFFSET) {
-                access.readUnlock();
                 return null;
             }
             file.seek(lookupPosition);
@@ -200,8 +199,6 @@ public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
             final int dataSize = file.readInt();
             final StorageAdapter<? extends S> adapter = findAdapterFor(typeId);
             if (adapter == null) {
-                access.readUnlock();
-                access.writeLock();
                 try {
                     if (deleteEntry(file, lookupPosition, dataSize, headerOffset)) {
                         accessCache.remove();
@@ -211,19 +208,17 @@ public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
                 } catch (final IOException e) {
                     throw new StorageException("Failed to delete value with id '" + Long.toHexString(fullId) + "', because of the type "
                         + typeId + " is unknown, from file!", e);
-                } finally {
-                    access.writeUnlock();
                 }
                 throw new StorageException("Failed to read value with id '" + Long.toHexString(fullId) + "' from file because the type "
                     + typeId + " is unknown!");
             }
             final byte[] rawBuffer = new byte[dataSize];
             file.read(rawBuffer);
-            access.readUnlock();
             return adapter.deserialize(fullId, Unpooled.wrappedBuffer(rawBuffer));
         } catch (final IOException e) {
-            access.readUnlock();
             throw new StorageException("Failed to read value with id '" + Long.toHexString(fullId) + "' from file!", e);
+        } finally {
+            access.unlock();
         }
     }
 
@@ -258,7 +253,7 @@ public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
         } catch (final RuntimeException e) {
             throw new StorageException("Failed to write value with id '" + Long.toHexString(storable.id()) + "' to file!", e);
         }
-        access.writeLock();
+        access.lock();
         try {
             final RandomAccessFile file = access.open();
             long fileSize = file.length();
@@ -317,7 +312,7 @@ public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
         } catch (final IOException e) {
             throw new StorageException("Failed to write value with id '" + Long.toHexString(storable.id()) + "' to file!", e);
         } finally {
-            access.writeUnlock();
+            access.unlock();
         }
     }
 
@@ -344,7 +339,7 @@ public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
     }
 
     private boolean delete(final RAFAccess<S> access, final long fullId, final short valueId) {
-        access.writeLock();
+        access.lock();
         try {
             final RandomAccessFile file = access.open();
             final long fileSize = file.length();
@@ -371,7 +366,7 @@ public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
         } catch (final IOException e) {
             throw new StorageException("Failed to delete value with id '" + Long.toHexString(fullId) + "' from file!", e);
         } finally {
-            access.writeUnlock();
+            access.unlock();
         }
     }
 
@@ -481,7 +476,7 @@ public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
     }
 
     private void doUpdate(final RAFAccess<S> access, final Function<S, UpdateInfo<S>> updater) throws IOException {
-        access.writeLock();
+        access.lock();
         try {
             final RandomAccessFile file = access.open();
             final long fileSize = file.length();
@@ -686,7 +681,7 @@ public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
             }
             file.setLength(newFileSize);
         } finally {
-            access.writeUnlock();
+            access.unlock();
         }
     }
 

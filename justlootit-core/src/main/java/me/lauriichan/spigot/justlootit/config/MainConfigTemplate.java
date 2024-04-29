@@ -20,16 +20,6 @@ public class MainConfigTemplate implements IConfigExtension {
     @ConfigValue("container.delete-on-break")
     public boolean deleteOnBreak = true;
     
-    @ConfigValue("convert.compatibility.lootin")
-    public boolean doLootinConversion = false;
-
-    @ConfigValue("convert.vanilla.do-conversion")
-    public boolean doVanillaConversion = false;
-    @ConfigValue("convert.vanilla.allow-static")
-    public boolean allowStaticConversion = false;
-    @ConfigValue("convert.vanilla.allow-item-frames")
-    public boolean allowItemFrameConversion = false;
-    
     /*
      * Implementation
      */
