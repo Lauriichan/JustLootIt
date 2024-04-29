@@ -27,7 +27,7 @@ public class RefreshConfig implements IConfigExtension {
 
     @Override
     public String path() {
-        return "data://refreshGroups.json";
+        return "data://refresh_groups.json";
     }
     
     @Override
