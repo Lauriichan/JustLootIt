@@ -3,8 +3,6 @@ package me.lauriichan.spigot.justlootit.nms.v1_20_R2.convert;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import org.bukkit.craftbukkit.v1_20_R2.persistence.CraftPersistentDataTypeRegistry;
 
@@ -37,18 +35,9 @@ public final class ConversionAdapter1_20_R2 extends ConversionAdapter {
     private final ISimpleLogger logger;
     private final VersionHandler1_20_R2 handler;
 
-    private ExecutorService executor;
-
     public ConversionAdapter1_20_R2(VersionHandler1_20_R2 handler) {
         this.logger = handler.logger();
         this.handler = handler;
-    }
-
-    private ExecutorService executor() {
-        if (executor != null) {
-            return executor;
-        }
-        return executor = Executors.newCachedThreadPool();
     }
 
     @Override
@@ -87,7 +76,7 @@ public final class ConversionAdapter1_20_R2 extends ConversionAdapter {
         Pair<WorldData, WorldDimensions.Complete> pair = session.getDataTag(RegistryOps.create(NbtOps.INSTANCE, context.datapackWorldgen()),
             context.dataConfiguration(), context.datapackDimensions().registryOrThrow(Registries.LEVEL_STEM),
             context.datapackWorldgen().allRegistriesLifecycle());
-        return handler.applyCapabilities(new ProtoWorld1_20_R2(executor(), logger, new ChunkStorage(null, DataFixers.getDataFixer(), false),
+        return handler.applyCapabilities(new ProtoWorld1_20_R2(workerPool(), logger, new ChunkStorage(null, DataFixers.getDataFixer(), false),
             session, closeSession, dimensionKey, pair.getFirst()));
     }
 

@@ -15,7 +15,7 @@ import org.junit.jupiter.api.TestFactory;
 
 import me.lauriichan.spigot.justlootit.storage.Storable;
 import me.lauriichan.spigot.justlootlit.storage.test.Test.StorageProvider;
-import me.lauriichan.spigot.justlootlit.storage.test.simple.WriteReadTest;
+import me.lauriichan.spigot.justlootlit.storage.test.simple.*;
 
 public class PerformanceTest {
 
@@ -25,15 +25,17 @@ public class PerformanceTest {
 
     public static final long SEED = 285428738523L;
 
-    public static final int RUNS_PER_ROUND = 50;
+    public static final int RUNS_PER_ROUND = 3;
 
-    public static final int WARMUP_RUNS = 20;
-    public static final int SAMPLE_ROUNDS = 3;
+    public static final int WARMUP_RUNS = 2;
+    public static final int SAMPLE_ROUNDS = 1;
 
     public static final boolean PRINT_EACH_ROUND = false;
 
     public static final Test<?>[] TESTS = new Test[] {
-        new WriteReadTest(1024)
+        new WriteReadTest(1024),
+        new WriteReadDeleteTest(1024),
+        new WriteUpdateReadTest(1024)
     };
 
     /*

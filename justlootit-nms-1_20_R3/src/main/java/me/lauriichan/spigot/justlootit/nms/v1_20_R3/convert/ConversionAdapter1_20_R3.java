@@ -2,8 +2,6 @@ package me.lauriichan.spigot.justlootit.nms.v1_20_R3.convert;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import org.bukkit.craftbukkit.v1_20_R3.persistence.CraftPersistentDataTypeRegistry;
 
@@ -34,18 +32,9 @@ public final class ConversionAdapter1_20_R3 extends ConversionAdapter {
     private final ISimpleLogger logger;
     private final VersionHandler1_20_R3 handler;
 
-    private ExecutorService executor;
-
     public ConversionAdapter1_20_R3(VersionHandler1_20_R3 handler) {
         this.logger = handler.logger();
         this.handler = handler;
-    }
-
-    private ExecutorService executor() {
-        if (executor != null) {
-            return executor;
-        }
-        return executor = Executors.newCachedThreadPool();
     }
 
     @Override
@@ -66,7 +55,6 @@ public final class ConversionAdapter1_20_R3 extends ConversionAdapter {
                 session = session.parent().validateAndCreateAccess(directory.getName(), dimensionKey);
                 closeSession = true;
             } catch (IOException | ContentValidationException e) {
-                System.out.println("STILL ACCESS???????");
                 return null;
             }
         }
@@ -76,8 +64,6 @@ public final class ConversionAdapter1_20_R3 extends ConversionAdapter {
             if (!session.hasWorldData()) {
                 if (closeSession) {
                     session.close();
-                } else {
-                    System.out.println("NO WORLD DATA");
                 }
                 return null;
             }
@@ -91,8 +77,6 @@ public final class ConversionAdapter1_20_R3 extends ConversionAdapter {
                 } catch (NbtException | net.minecraft.nbt.ReportedNbtException | IOException exp1) {
                     if (closeSession) {
                         session.close();
-                    } else {
-                        System.out.println("NO TAG");
                     }
                     return null;
                 }
@@ -101,8 +85,6 @@ public final class ConversionAdapter1_20_R3 extends ConversionAdapter {
             if (info.requiresManualConversion() || !info.isCompatible()) {
                 if (closeSession) {
                     session.close();
-                } else {
-                    System.out.println("INCOMPATIBLE");
                 }
                 return null;
             }
@@ -113,7 +95,7 @@ public final class ConversionAdapter1_20_R3 extends ConversionAdapter {
         WorldLoader.DataLoadContext context = server.worldLoader;
         LevelDataAndDimensions levelData = LevelStorageSource.getLevelDataAndDimensions(dynamic, context.dataConfiguration(),
             context.datapackDimensions().registryOrThrow(Registries.LEVEL_STEM), context.datapackWorldgen());
-        return handler.applyCapabilities(new ProtoWorld1_20_R3(executor(), logger, new ChunkStorage(null, DataFixers.getDataFixer(), false),
+        return handler.applyCapabilities(new ProtoWorld1_20_R3(workerPool(), logger, new ChunkStorage(null, DataFixers.getDataFixer(), false),
             session, closeSession, dimensionKey, levelData.worldData()));
     }
 

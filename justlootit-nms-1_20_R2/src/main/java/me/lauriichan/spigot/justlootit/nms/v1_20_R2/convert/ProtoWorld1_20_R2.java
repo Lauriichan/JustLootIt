@@ -25,6 +25,7 @@ import me.lauriichan.spigot.justlootit.nms.util.counter.CompositeCounter;
 import me.lauriichan.spigot.justlootit.nms.util.counter.Counter;
 import me.lauriichan.spigot.justlootit.nms.util.counter.SimpleCounter;
 import me.lauriichan.spigot.justlootit.nms.v1_20_R2.util.NmsHelper1_20_R2;
+import me.lauriichan.spigot.justlootit.nms.v1_20_R2.util.PlatformHelper1_20_R2;
 import net.minecraft.world.level.storage.LevelStorageSource.LevelStorageAccess;
 import net.minecraft.world.level.storage.WorldData;
 import net.minecraft.core.BlockPos;
@@ -102,6 +103,9 @@ public class ProtoWorld1_20_R2 extends ProtoWorld implements LevelHeightAccessor
         this.worldData = worldData;
         this.session = session;
         this.closeSession = closeSession;
+        
+        // Apply patches
+        PlatformHelper1_20_R2.patchCraftBlockDataEnumValues();
 
         // Try to load various registries
         Blocks.AIR.getClass();
