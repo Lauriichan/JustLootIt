@@ -1,0 +1,44 @@
+name: Enhancement request
+description: Request an improvement or feature
+labels: ["Enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this enhancement report!
+  - type: dropdown
+    id: enhancement-type
+    attributes:
+      label: Enhancement type
+      description: What kind of enhancement is this request about?
+      options:
+        - "Feature"
+        - "Improvement"
+    validations:
+      required: true
+  - type: input
+    id: plugin-version
+    attributes:
+      label: Plugin version
+      description: The version that you are using of this plugin.
+    validations:
+      required: false
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe what you want to request.
+      description: A clear and concise description of what you want to be added to this plugin.
+    validations:
+      required: true
+  - type: textarea
+    id: media
+    attributes:
+      label: Media
+      description: If applicable, add screenshots or videos that show your enhancement concept.
+    validations:
+      required: false
+  - type: textarea
+    id: additional-information
+    attributes:
+      label: Additional Information
+      description: Any additional information that you would like to share.

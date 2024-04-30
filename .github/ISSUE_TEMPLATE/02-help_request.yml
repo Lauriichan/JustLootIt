@@ -1,0 +1,35 @@
+name: Help request
+description: Request for help
+labels: ["Help"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this help request!
+  - type: input
+    id: plugin-version
+    attributes:
+      label: Plugin version
+      description: The version that you are using of this plugin.
+    validations:
+      required: false
+  - type: textarea
+    id: plugin-list
+    attributes:
+      label: Plugin list
+      description: |
+        If applicable, please provide a full list of all plugins that you were using when the thing happened that you need help with.
+    validations:
+      required: false
+  - type: textarea
+    id: description
+    attributes:
+      label: With what do you need help?
+      description: A clear and concise description of what you need help with.
+    validations:
+      required: true
+  - type: textarea
+    id: additional-information
+    attributes:
+      label: Additional Information
+      description: Any additional information that you would like to share.

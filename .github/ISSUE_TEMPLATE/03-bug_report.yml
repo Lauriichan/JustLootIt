@@ -1,0 +1,62 @@
+name: Bug report
+description: Report a bug
+labels: ["Bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+  - type: input
+    id: plugin-version
+    attributes:
+      label: Plugin version
+      description: The version that you are using of this plugin.
+    validations:
+      required: true
+  - type: textarea
+    id: plugin-list
+    attributes:
+      label: Plugin list
+      description: |
+        Please provide a full list of all plugins that you were using to while the bug happened.
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe what happend
+      description: A clear and concise description of what the bug is.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: Give a description of how to reproduce the bug. Please walk through them step by step.
+      placeholder: |
+        1. Go to '...'
+        2. Click on '....'
+        3. Scroll down to '....'
+        4. See error
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: A clear and concise description of what you expected to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: media
+    attributes:
+      label: Media
+      description: If applicable, add screenshots, logs or a video to help explain your problem.
+    validations:
+      required: false
+  - type: textarea
+    id: additional-information
+    attributes:
+      label: Additional Information
+      description: Any additional information that you would like to share.
+    
