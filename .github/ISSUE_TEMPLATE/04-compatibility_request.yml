@@ -1,0 +1,35 @@
+name: Plugin compatibility request
+description: Request support for a specific plugin or plugin version
+labels: ["Compatibility"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this compatibility request!
+  - type: input
+    id: plugin-name
+    attributes:
+      label: Plugin name
+      description: The name of the plugin that you want support for.
+    validations:
+      required: true
+  - type: input
+    id: plugin-version
+    attributes:
+      label: Plugin version
+      description: The version of the plugin that you want support for.
+      placeholder: "1.0.0"
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Why should compatibility be added for this plugin / version?
+      description: A clear and concise description of why this plugin / version should be supported.
+    validations:
+      required: true
+  - type: textarea
+    id: additional-information
+    attributes:
+      label: Additional Information
+      description: Any additional information that you would like to share.
