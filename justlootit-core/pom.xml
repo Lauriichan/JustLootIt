@@ -78,12 +78,17 @@
         </dependency>
         <dependency>
             <groupId>${project.parent.groupId}</groupId>
+            <artifactId>justlootit-platform-paper</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.parent.groupId}</groupId>
             <artifactId>justlootit-platform-folia</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
 
         <!-- Bukkit Version Compat -->
-        <!-- 1.20.2 -->
+        <!-- 1.20.2 / 1.20.3 -->
         <dependency>
             <groupId>${project.parent.groupId}</groupId>
             <artifactId>justlootit-nms-1_20_R2</artifactId>
@@ -93,6 +98,12 @@
         <dependency>
             <groupId>${project.parent.groupId}</groupId>
             <artifactId>justlootit-nms-1_20_R3</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <!-- 1.20.5 / 1.20.6 -->
+        <dependency>
+            <groupId>${project.parent.groupId}</groupId>
+            <artifactId>justlootit-nms-1_20_R4</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
     </dependencies>

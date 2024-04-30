@@ -41,9 +41,9 @@ import me.lauriichan.spigot.justlootit.nms.packet.listener.PacketContainer;
 import me.lauriichan.spigot.justlootit.nms.packet.listener.PacketManager;
 import me.lauriichan.spigot.justlootit.platform.JustLootItPlatform;
 import me.lauriichan.spigot.justlootit.platform.folia.FoliaPlatform;
+import me.lauriichan.spigot.justlootit.platform.paper.PaperPlatform;
 import me.lauriichan.spigot.justlootit.platform.spigot.SpigotPlatform;
 import me.lauriichan.spigot.justlootit.util.CompatDependency;
-import me.lauriichan.spigot.justlootit.util.VersionConstant;
 
 public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> implements IServiceProvider {
 
@@ -66,7 +66,6 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     private VersionHandler versionHandler;
     private VersionHelper versionHelper;
     private PacketManager packetManager;
-    private String coreVersion;
 
     private CommandManager commandManager;
     private BukkitCommandInjectableBridge<?> commandBridge;
@@ -98,10 +97,10 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
             versionHandler = initVersionHandler();
             versionHelper = versionHandler.versionHelper();
             packetManager = versionHandler.packetManager();
-            logger().info("Initialized version support for " + coreVersion);
+            logger().info("Initialized version support for " + platform.version().coreVersion());
             return true;
         } catch (final Exception exp) {
-            logger().error("Failed to initialize version support for " + coreVersion);
+            logger().error("Failed to initialize version support for " + platform.version().coreVersion());
             logger().error("Reason: '" + exp.getMessage() + "'");
             logger().error("");
             logger().error("Can't work like this, disabling...");
@@ -239,10 +238,6 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         return packetManager;
     }
 
-    public String coreVersion() {
-        return coreVersion;
-    }
-
     public File mainWorldFolder() {
         return mainWorldFolder;
     }
@@ -290,6 +285,10 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
             || ClassUtil.findClass("io.papermc.paper.threadedregions.RegionizedServerInitEvent") != null) {
             return new FoliaPlatform(this, logger());
         }
+        if (ClassUtil.findClass("com.destroystokyo.paper.PaperConfig") != null
+            || ClassUtil.findClass("io.papermc.paper.configuration.Configuration") != null) {
+            return new PaperPlatform(this, logger());
+        }
         return new SpigotPlatform(this, logger());
     }
 
@@ -298,8 +297,7 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
      */
 
     private VersionHandler initVersionHandler() {
-        final String path = String.format(VERSION_PATH, VersionConstant.PACKAGE_VERSION,
-            coreVersion = VersionConstant.PACKAGE_VERSION.substring(1));
+        final String path = String.format(VERSION_PATH, platform.version().packageVersion(), platform.version().coreVersion());
         final Class<?> clazz = ClassUtil.findClass(path);
         if (clazz == null || !VersionHandler.class.isAssignableFrom(clazz)) {
             throw new IllegalStateException("Couldn't find class '" + path + "'!");

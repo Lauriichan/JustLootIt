@@ -7,7 +7,7 @@
         <artifactId>justlootit-parent</artifactId>
         <version>1.0.0</version>
     </parent>
-    <artifactId>justlootit-platform-folia</artifactId>
+    <artifactId>justlootit-platform-paper</artifactId>
     <repositories>
         <repository>
             <id>papermc</id>
@@ -16,8 +16,8 @@
     </repositories>
     <dependencies>
         <dependency>
-            <groupId>dev.folia</groupId>
-            <artifactId>folia-api</artifactId>
+            <groupId>io.papermc.paper</groupId>
+            <artifactId>paper-api</artifactId>
             <version>${server.version}-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>

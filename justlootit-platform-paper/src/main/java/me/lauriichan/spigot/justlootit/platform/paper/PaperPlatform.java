@@ -1,23 +1,24 @@
-package me.lauriichan.spigot.justlootit.platform.spigot;
+package me.lauriichan.spigot.justlootit.platform.paper;
 
 import org.bukkit.plugin.Plugin;
 
 import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.spigot.justlootit.platform.IVersion;
 import me.lauriichan.spigot.justlootit.platform.JustLootItPlatform;
+import me.lauriichan.spigot.justlootit.platform.spigot.SpigotScheduler;
 
-public final class SpigotPlatform extends JustLootItPlatform {
+public final class PaperPlatform extends JustLootItPlatform {
 
     private final SpigotScheduler scheduler;
 
-    public SpigotPlatform(Plugin plugin, ISimpleLogger logger) {
+    public PaperPlatform(Plugin plugin, ISimpleLogger logger) {
         super(plugin, logger);
         this.scheduler = new SpigotScheduler(plugin, logger);
     }
 
     @Override
     public IVersion version() {
-        return SpigotVersion.INSTANCE;
+        return PaperVersion.INSTANCE;
     }
     
     @Override

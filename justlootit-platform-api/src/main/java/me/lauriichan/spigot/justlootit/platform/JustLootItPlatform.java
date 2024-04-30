@@ -23,6 +23,8 @@ public abstract class JustLootItPlatform {
         return logger;
     }
     
+    public abstract IVersion version();
+    
     public abstract Scheduler scheduler();
 
 }

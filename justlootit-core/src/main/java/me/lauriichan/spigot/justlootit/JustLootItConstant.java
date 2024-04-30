@@ -10,7 +10,6 @@ import org.bukkit.event.inventory.InventoryType;
 
 import me.lauriichan.laylib.reflection.ClassUtil;
 import me.lauriichan.laylib.reflection.JavaAccess;
-import me.lauriichan.spigot.justlootit.util.VersionConstant;
 
 public final class JustLootItConstant {
 
@@ -22,7 +21,7 @@ public final class JustLootItConstant {
 
     static {
         // UNSUPPORTED_CONTAINER_TYPES
-        Class<?> CraftInventoryCreator_class = ClassUtil.findClass(VersionConstant.craftClassPath("inventory.util.CraftInventoryCreator"));
+        Class<?> CraftInventoryCreator_class = ClassUtil.findClass(JustLootItPlugin.get().platform().version().craftClassPath("inventory.util.CraftInventoryCreator"));
         MethodHandle CraftInventoryCreator_INSTANCE = JavaAccess
             .accessFieldGetter(ClassUtil.getField(CraftInventoryCreator_class, "INSTANCE"));
         MethodHandle CraftInventoryCreator_DEFAULT_CONVERTER = JavaAccess

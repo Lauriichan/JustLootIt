@@ -12,8 +12,10 @@
         <module>justlootit-nms-api</module>
         <module>justlootit-nms-1_20_R2</module>
         <module>justlootit-nms-1_20_R3</module>
+        <module>justlootit-nms-1_20_R4</module>
         <module>justlootit-storage</module>
         <module>justlootit-platform-api</module>
+        <module>justlootit-platform-paper</module>
         <module>justlootit-platform-folia</module>
     </modules>
 
