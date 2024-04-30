@@ -1,6 +1,38 @@
 main: ${project.groupId}.JustLootItPlugin
 name: JustLootIt
+author: Lauriichan
 version: ${project.version}
 api-version: 1.20
 load: startup
+softdepend: [BetterInputs]
 folia-supported: true
+
+permissions:
+    justlootit.*:
+        description: Gives access to all JustLootIt permissions
+        default: op
+        children:
+            justlootit.command.*: true
+            justlootit.remove.container.*: true
+    justlootit.command.*:
+        description: Gives access to all JustLootIt commands
+        default: op
+        children:
+            justlootit.command.convert: true
+            justlootit.command.config: true
+            justlootit.command.container: true
+            justlootit.command.group: true
+            justlootit.command.debug: true
+            justlootit.command.help: true
+    justlootit.remove.container.*:
+        description: Gives access to remove all types of JustLootIt containers
+        default: op
+        children:
+            justlootit.remove.container.block: true
+            justlootit.remove.container.entity: true
+    justlootit.remove.container.block:
+        description: Gives access to remove JustLootIt Block containers
+        default: op
+    justlootit.remove.container.entity:
+        description: Gives access to remove JustLootIt Entity containers
+        default: op
