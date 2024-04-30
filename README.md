@@ -71,7 +71,7 @@ This allows players to loot a container more than one time if the server owner w
 <!-- GETTING STARTED -->
 ## Getting Started
 
-To get a local copy you only need to download it from [Spigot](https://www.spigotmc.org/resources/)
+To get a local copy you only need to download it from [Spigot](https://www.spigotmc.org/resources/justlootit.116493/)
 or if you want to get the Source just fork this repository or download it as zip.
 
 ### Installation
@@ -159,7 +159,7 @@ Once this is setup you can simply add the dependency like this in your `pom.xml`
   <version>1.0.0</version>
 </dependency>
 ```
-You can get the [latest version here](https://github.com/MrNemo64/better-inputs/packages/1667483)
+You can get the [latest version here](https://github.com/Lauriichan/JustLootIt/) (Comming soon)
 
 <!-- ROADMAP -->
 ## Roadmap
