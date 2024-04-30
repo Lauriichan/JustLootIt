@@ -1,0 +1,27 @@
+name: Ask question
+description: Ask a question
+labels: ["Question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this question request!
+  - type: input
+    id: plugin-version
+    attributes:
+      label: Plugin version
+      description: The version that you are using of this plugin.
+    validations:
+      required: false
+  - type: input
+    id: description
+    attributes:
+      label: Tell us your question.
+      description: Enter the question that you want to ask.
+    validations:
+      required: true
+  - type: textarea
+    id: additional-information
+    attributes:
+      label: Additional Information
+      description: Any additional information that you would like to share.
