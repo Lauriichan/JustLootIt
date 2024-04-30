@@ -183,12 +183,14 @@ Contributions are what make the open source community such an amazing place to b
 
 <!-- LICENSE -->
 ## License
-Distributed under the MIT License. See `LICENSE` for more information.
+Distributed under the GPLv3 License. See `LICENSE` for more information.
 
 
 
 <!-- CONTACT -->
 ## Contact
+
+Discord Link: [https://discord.gg/m9vjsj6ScJ](https://discord.gg/m9vjsj6ScJ)
 
 Project Link: [https://github.com/Lauriichan/JustLootIt](https://github.com/Lauriichan/JustLootIt)
 
