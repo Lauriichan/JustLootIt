@@ -5,8 +5,7 @@
 <br />
 <p align="center">
   <a href="https://github.com/Lauriichan/JustLootIt">
-    <!-- Add project image -->
-    <!--<img src="" alt="Logo" width="512"/>-->
+    <img src="https://raw.githubusercontent.com/Lauriichan/JustLootIt/master/JustLootIt-Icon.png" alt="Logo" width="512"/>
   </a>
 
   <h3 align="center">JustLootIt</h3>
