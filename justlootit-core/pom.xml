@@ -5,16 +5,51 @@
     <parent>
         <groupId>me.lauriichan.spigot.justlootit</groupId>
         <artifactId>justlootit-parent</artifactId>
-        <version>1.0.0</version>
+        <version>1.0.1</version>
     </parent>
     <artifactId>justlootit-core</artifactId>
 
     <properties>
         <project.sourceDir>${project.build.directory}/project-sources</project.sourceDir>
         <project.java.version>17</project.java.version>
+        <project.libsDir>${project.basedir}/libs</project.libsDir>
     </properties>
 
     <dependencies>
+        <!-- Maven Compatibilities (Start) -->
+
+        <!-- Better Inputs -->
+        <dependency>
+            <groupId>me.nemo_64.betterinputs</groupId>
+            <artifactId>api</artifactId>
+            <version>${betterinputs.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        
+        <!-- Maven Compatibilities (End) -->
+        
+        <!-- Lib-file Compatibilities (Start) -->
+
+        <!-- Custom Structures -->
+        <dependency>
+            <groupId>spigot.plugin</groupId>
+            <artifactId>customstructures</artifactId>
+            <version>1</version>
+            <scope>system</scope>
+            <systemPath>${project.libsDir}/customstructures.jar</systemPath>
+        </dependency>
+
+        <!-- Better Structures -->
+        <dependency>
+            <groupId>spigot.plugin</groupId>
+            <artifactId>betterstructures</artifactId>
+            <version>1</version>
+            <scope>system</scope>
+            <systemPath>${project.libsDir}/betterstructures.jar</systemPath>
+        </dependency>
+        
+        <!-- Lib-file Compatibilities (End) -->
+        
         <!-- Spigot -->
         <dependency>
             <groupId>org.spigotmc</groupId>
@@ -35,14 +70,6 @@
             <groupId>me.lauriichan.maven</groupId>
             <artifactId>maven-source-modification-plugin</artifactId>
             <version>2.0.0</version>
-            <scope>provided</scope>
-        </dependency>
-
-        <!-- Better Inputs -->
-        <dependency>
-            <groupId>me.nemo_64.betterinputs</groupId>
-            <artifactId>api</artifactId>
-            <version>${betterinputs.version}</version>
             <scope>provided</scope>
         </dependency>
 

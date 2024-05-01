@@ -27,6 +27,7 @@ import me.lauriichan.spigot.justlootit.command.*;
 import me.lauriichan.spigot.justlootit.command.argument.*;
 import me.lauriichan.spigot.justlootit.command.impl.LootItActor;
 import me.lauriichan.spigot.justlootit.command.provider.PluginProvider;
+import me.lauriichan.spigot.justlootit.compatibility.CompatDependency;
 import me.lauriichan.spigot.justlootit.convert.ConversionProperties;
 import me.lauriichan.spigot.justlootit.convert.JustLootItConverter;
 import me.lauriichan.spigot.justlootit.data.io.DataIO;
@@ -43,7 +44,6 @@ import me.lauriichan.spigot.justlootit.platform.JustLootItPlatform;
 import me.lauriichan.spigot.justlootit.platform.folia.FoliaPlatform;
 import me.lauriichan.spigot.justlootit.platform.paper.PaperPlatform;
 import me.lauriichan.spigot.justlootit.platform.spigot.SpigotPlatform;
-import me.lauriichan.spigot.justlootit.util.CompatDependency;
 
 public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> implements IServiceProvider {
 

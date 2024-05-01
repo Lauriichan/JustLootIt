@@ -27,7 +27,6 @@ public final class NmsHelper1_20_R4 {
     private static final VarHandle DATA_TYPE_REGISTRY = Access.dataTypeRegistry();
     private static final VarHandle TAGS = Access.tags();
     
-    private static volatile boolean wrapRequiresClass = true;
     private static volatile boolean dataTypeRegistrySetup = false;
 
     private static final class Access {
@@ -45,13 +44,9 @@ public final class NmsHelper1_20_R4 {
         }
 
         static MethodHandle wrap() {
-            Method method = ClassUtil.getMethod(CraftPersistentDataTypeRegistry.class, "wrap", Class.class, Object.class);
+            Method method = ClassUtil.getMethod(CraftPersistentDataTypeRegistry.class, "wrap", PersistentDataType.class, Object.class);
             if (method == null) {
-                method = ClassUtil.getMethod(CraftPersistentDataTypeRegistry.class, "wrap", PersistentDataType.class, Object.class);
-                wrapRequiresClass = false;
-                if (method == null) {
-                    throw new IllegalStateException("Couldn't find method 'wrap', JustLootIt won't work here.");
-                }
+                throw new IllegalStateException("Couldn't find method 'wrap', JustLootIt won't work here.");
             }
             return JavaAccess.accessMethod(method);
         }
@@ -106,7 +101,7 @@ public final class NmsHelper1_20_R4 {
     
     private static <P> void wrap(CraftPersistentDataTypeRegistry registry, PersistentDataType<P, ?> type, P value) {
         try {
-            WRAP.invokeWithArguments(registry, wrapRequiresClass ? type.getPrimitiveType() : type, value);
+            WRAP.invokeWithArguments(registry, type, value);
         } catch (Throwable e) {
             throw new RuntimeException("Failed to wrap primitive '" + type.getPrimitiveType().getName() + "'", e);
         }

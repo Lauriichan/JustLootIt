@@ -1,0 +1,19 @@
+{
+    "base_url": "https://www.spigotmc.org/resources/$resource_id/download?version=$version_id",
+    "plugins": [
+        {
+            "plugin": "CustomStructures",
+            "resource_id": 38249,
+            "version_id": 490223,
+            "version": "1.9.0.1",
+            "file_name": "customstructures.jar"
+        },
+        {
+            "plugin": "BetterStructures",
+            "resource_id": 103241,
+            "version_id": 534495,
+            "version": "1.6.10",
+            "file_name": "betterstructures.jar"
+        }
+    ]
+}

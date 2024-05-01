@@ -1,4 +1,4 @@
-package me.lauriichan.spigot.justlootit.util;
+package me.lauriichan.spigot.justlootit.compatibility;
 
 import java.util.Objects;
 
@@ -10,13 +10,13 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.lauriichan.laylib.reflection.StackTracker;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 
-public record CompatDependency(String name, int minMajor, int maxMajor, int minMinor, int maxMinor, DependencyExecutable enable,
-    DependencyExecutable disable) {
+public record CompatDependency(String name, int minMajor, int maxMajor, int minMinor, int maxMinor, IDependencyExecutable enable,
+    IDependencyExecutable disable) {
 
     @FunctionalInterface
-    public static interface DependencyExecutable {
+    public static interface IDependencyExecutable {
 
-        void execute(JustLootItPlugin justlootit, Plugin plugin);
+        void execute(JustLootItPlugin jli, Plugin plugin);
 
     }
 
@@ -59,8 +59,8 @@ public record CompatDependency(String name, int minMajor, int maxMajor, int minM
         }
     }
 
-    public CompatDependency(String name, int minMajor, int maxMajor, int minMinor, int maxMinor, DependencyExecutable enable,
-        DependencyExecutable disable) {
+    public CompatDependency(String name, int minMajor, int maxMajor, int minMinor, int maxMinor, IDependencyExecutable enable,
+        IDependencyExecutable disable) {
         this.name = name;
         this.minMajor = minMajor;
         this.maxMajor = maxMajor;
@@ -80,8 +80,16 @@ public record CompatDependency(String name, int minMajor, int maxMajor, int minM
         dependencies.add(this);
     }
 
-    public CompatDependency(String name, int major, int minor, DependencyExecutable enable, DependencyExecutable disable) {
+    public CompatDependency(String name, int major, int minor, IDependencyExecutable enable, IDependencyExecutable disable) {
         this(name, major, -1, minor, -1, enable, disable);
+    }
+
+    public CompatDependency(String name, int major, int minor, CompatProvider provider) {
+        this(name, major, minor, provider::onEnable, provider::onDisable);
+    }
+
+    public CompatDependency(String name, int minMajor, int maxMajor, int minMinor, int maxMinor, CompatProvider provider) {
+        this(name, minMajor, maxMajor, minMinor, maxMinor, provider::onEnable, provider::onDisable);
     }
 
     private boolean isSupported(Plugin plugin) {

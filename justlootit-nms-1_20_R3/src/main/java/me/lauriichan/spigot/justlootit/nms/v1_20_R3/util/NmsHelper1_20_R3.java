@@ -21,13 +21,14 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 public final class NmsHelper1_20_R3 {
+    
+    private static record Pair<A, B>(A first, B second) {}
 
     private static final MethodHandle GET_TILE_ENTITY = Access.getTileEntity();
-    private static final MethodHandle WRAP = Access.wrap();
+    private static final Pair<MethodHandle, Boolean> WRAP = Access.wrap();
     private static final VarHandle DATA_TYPE_REGISTRY = Access.dataTypeRegistry();
     private static final VarHandle TAGS = Access.tags();
     
-    private static volatile boolean wrapRequiresClass = true;
     private static volatile boolean dataTypeRegistrySetup = false;
 
     private static final class Access {
@@ -44,16 +45,17 @@ public final class NmsHelper1_20_R3 {
             return JavaAccess.accessMethod(method);
         }
 
-        static MethodHandle wrap() {
+        static Pair<MethodHandle, Boolean> wrap() {
             Method method = ClassUtil.getMethod(CraftPersistentDataTypeRegistry.class, "wrap", Class.class, Object.class);
+            Boolean requiresClass = true;
             if (method == null) {
+                requiresClass = false;
                 method = ClassUtil.getMethod(CraftPersistentDataTypeRegistry.class, "wrap", PersistentDataType.class, Object.class);
-                wrapRequiresClass = false;
                 if (method == null) {
                     throw new IllegalStateException("Couldn't find method 'wrap', JustLootIt won't work here.");
                 }
             }
-            return JavaAccess.accessMethod(method);
+            return new Pair<>(JavaAccess.accessMethod(method), requiresClass);
         }
 
         static VarHandle dataTypeRegistry() {
@@ -106,7 +108,7 @@ public final class NmsHelper1_20_R3 {
     
     private static <P> void wrap(CraftPersistentDataTypeRegistry registry, PersistentDataType<P, ?> type, P value) {
         try {
-            WRAP.invokeWithArguments(registry, wrapRequiresClass ? type.getPrimitiveType() : type, value);
+            WRAP.first().invokeWithArguments(registry, WRAP.second() ? type.getPrimitiveType() : type, value);
         } catch (Throwable e) {
             throw new RuntimeException("Failed to wrap primitive '" + type.getPrimitiveType().getName() + "'", e);
         }

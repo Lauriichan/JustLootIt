@@ -8,7 +8,7 @@ import org.bukkit.event.server.PluginEnableEvent;
 import me.lauriichan.minecraft.pluginbase.extension.Extension;
 import me.lauriichan.minecraft.pluginbase.listener.IListenerExtension;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
-import me.lauriichan.spigot.justlootit.util.CompatDependency;
+import me.lauriichan.spigot.justlootit.compatibility.CompatDependency;
 
 @Extension
 public final class CompatbilityListener implements IListenerExtension {
