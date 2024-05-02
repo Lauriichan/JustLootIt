@@ -46,6 +46,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelHeightAccessor;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Biomes;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -168,6 +169,9 @@ public class ProtoWorld1_20_R2 extends ProtoWorld implements LevelHeightAccessor
     }
 
     private void streamRegion(Path path, Counter counter, Consumer<ProtoChunk> consumer) {
+        int minSection = getMinSection();
+        int maxSection = getMaxSection();
+        int sectionCount = getSectionsCount();
         Path entityFilePath = entityPath.resolve(path.getFileName());
         try (RegionFile chunkRegion = new RegionFile(path, regionPath, false)) {
             RegionFile entityRegion = null;
@@ -184,14 +188,23 @@ public class ProtoWorld1_20_R2 extends ProtoWorld implements LevelHeightAccessor
                                 continue;
                             }
                             ListTag listTag = chunkTag.getList("sections", 10);
-                            LevelChunkSection[] sections = new LevelChunkSection[getSectionsCount()];
+                            LevelChunkSection[] sections = new LevelChunkSection[sectionCount];
+                            int sectionIndex = 0;
                             for (int i = 0; i < listTag.size(); i++) {
                                 CompoundTag sectionTag = listTag.getCompound(i);
-                                if (!sectionTag.contains("block_states", 10)) {
-                                    // We don't care about biomes
+                                byte y = sectionTag.getByte("Y");
+                                if (y < minSection || y > maxSection) {
                                     continue;
                                 }
-                                sections[i] = new LevelChunkSection(ChunkSerializer.BLOCK_STATE_CODEC
+                                if (!sectionTag.contains("block_states", 10)) {
+                                    sections[sectionIndex++] = new LevelChunkSection(
+                                        new PalettedContainer<>(Block.BLOCK_STATE_REGISTRY, Blocks.AIR.defaultBlockState(),
+                                            Strategy.SECTION_STATES),
+                                        new PalettedContainer<>(biomeRegistry.asHolderIdMap(),
+                                            biomeRegistry.getHolderOrThrow(Biomes.PLAINS), Strategy.SECTION_BIOMES));
+                                    continue;
+                                }
+                                sections[sectionIndex++] = new LevelChunkSection(ChunkSerializer.BLOCK_STATE_CODEC
                                     .parse(NbtOps.INSTANCE, sectionTag.getCompound("block_states")).promotePartial((sx) -> {
                                         logger.warning("Something went wrong when reading chunk section: " + sx);
                                     }).getOrThrow(false, (sx) -> {

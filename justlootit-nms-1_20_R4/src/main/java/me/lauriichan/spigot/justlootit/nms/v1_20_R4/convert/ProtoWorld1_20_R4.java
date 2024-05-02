@@ -179,6 +179,9 @@ public class ProtoWorld1_20_R4 extends ProtoWorld implements LevelHeightAccessor
     }
 
     private void streamRegion(Path path, Counter counter, Consumer<ProtoChunk> consumer) {
+        int minSection = getMinSection();
+        int maxSection = getMaxSection();
+        int sectionCount = getSectionsCount();
         Path entityFilePath = entityPath.resolve(path.getFileName());
         try (RegionFile chunkRegion = new RegionFile(regionInfo, path, regionPath, false)) {
             RegionFile entityRegion = null;
@@ -195,11 +198,16 @@ public class ProtoWorld1_20_R4 extends ProtoWorld implements LevelHeightAccessor
                                 continue;
                             }
                             ListTag listTag = chunkTag.getList("sections", 10);
-                            LevelChunkSection[] sections = new LevelChunkSection[getSectionsCount()];
+                            LevelChunkSection[] sections = new LevelChunkSection[sectionCount];
+                            int sectionIndex = 0;
                             for (int i = 0; i < listTag.size(); i++) {
                                 CompoundTag sectionTag = listTag.getCompound(i);
+                                byte y = sectionTag.getByte("Y");
+                                if (y < minSection || y > maxSection) {
+                                    continue;
+                                }
                                 if (!sectionTag.contains("block_states", 10)) {
-                                    sections[i] = new LevelChunkSection(
+                                    sections[sectionIndex++] = new LevelChunkSection(
                                         new PalettedContainer<>(Block.BLOCK_STATE_REGISTRY, Blocks.AIR.defaultBlockState(),
                                             Strategy.SECTION_STATES),
                                         new PalettedContainer<>(biomeRegistry.asHolderIdMap(),
@@ -207,7 +215,7 @@ public class ProtoWorld1_20_R4 extends ProtoWorld implements LevelHeightAccessor
                                     continue;
                                 }
                                 try {
-                                sections[i] = new LevelChunkSection(ChunkSerializer.BLOCK_STATE_CODEC
+                                sections[sectionIndex++] = new LevelChunkSection(ChunkSerializer.BLOCK_STATE_CODEC
                                     .parse(NbtOps.INSTANCE, sectionTag.getCompound("block_states")).promotePartial((sx) -> {
                                         logger.warning("Something went wrong when reading chunk section: " + sx);
                                     }).getOrThrow(), new PalettedContainer<>(biomeRegistry.asHolderIdMap(),
