@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>me.lauriichan.spigot.justlootit</groupId>
     <artifactId>justlootit-parent</artifactId>
-    <version>1.0.1</version>
+    <version>1.1.0</version>
     <packaging>pom</packaging>
     <name>JustLootIt</name>
     <modules>
