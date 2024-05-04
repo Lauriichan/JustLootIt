@@ -27,6 +27,7 @@ import me.lauriichan.spigot.justlootit.command.*;
 import me.lauriichan.spigot.justlootit.command.argument.*;
 import me.lauriichan.spigot.justlootit.command.impl.LootItActor;
 import me.lauriichan.spigot.justlootit.command.provider.PluginProvider;
+import me.lauriichan.spigot.justlootit.compatibility.data.CompatibilityDataExtension;
 import me.lauriichan.spigot.justlootit.compatibility.provider.CompatDependency;
 import me.lauriichan.spigot.justlootit.compatibility.provider.Compatibility;
 import me.lauriichan.spigot.justlootit.compatibility.provider.ICompatProvider;
@@ -180,6 +181,7 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
             }
             new CompatDependency(compatibility.name(), compatibility.minMajor(), compatibility.maxMajor(), compatibility.minMinor(), compatibility.maxMinor(), provider);
         });
+        extension(CompatibilityDataExtension.class, true);
     }
 
     @Override
