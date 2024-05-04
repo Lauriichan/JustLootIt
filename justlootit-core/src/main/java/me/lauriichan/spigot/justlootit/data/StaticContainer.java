@@ -3,6 +3,7 @@ package me.lauriichan.spigot.justlootit.data;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 
 import io.netty.buffer.ByteBuf;
@@ -85,7 +86,7 @@ public final class StaticContainer extends Container implements IInventoryContai
     }
 
     @Override
-    public void fill(final PlayerAdapter player, final Location location, final Inventory inventory) {
+    public void fill(final PlayerAdapter player, final InventoryHolder holder, final Location location, final Inventory inventory) {
         loadTo(inventory);
     }
 

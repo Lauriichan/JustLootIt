@@ -1,12 +1,13 @@
 # Storage Adapters
 
-| Id   | Name             | Availability    |
-|------|------------------|-----------------|
-| 0    | CachedInventory  | Player          |
-| 1    | CacheLookupTable | Player          |
-| 14   | FrameContainer   | Level Container |
-| 15   | StaticContainer  | Level Container |
-| 16   | VanillaContainer | Level Container |
+| Id   | Name                   | Availability    |
+|------|------------------------|-----------------|
+| 0    | CachedInventory        | Player          |
+| 1    | CacheLookupTable       | Player          |
+| 14   | FrameContainer         | Level Container |
+| 15   | StaticContainer        | Level Container |
+| 16   | VanillaContainer       | Level Container |
+| 17   | CompatibilityContainer | Level Container |
 
 # Player Storage
 

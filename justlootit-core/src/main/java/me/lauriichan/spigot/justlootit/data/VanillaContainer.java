@@ -7,6 +7,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.loot.LootTable;
 
 import io.netty.buffer.ByteBuf;
@@ -79,7 +80,7 @@ public final class VanillaContainer extends Container implements IInventoryConta
     }
 
     @Override
-    public void fill(final PlayerAdapter player, final Location location, final Inventory inventory) {
+    public void fill(final PlayerAdapter player, final InventoryHolder holder, final Location location, final Inventory inventory) {
         player.versionHandler().versionHelper().fill(inventory, player.asBukkit(), location, getLootTable(), seed);
     }
 

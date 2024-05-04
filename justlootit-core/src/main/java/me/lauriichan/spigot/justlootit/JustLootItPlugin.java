@@ -27,7 +27,9 @@ import me.lauriichan.spigot.justlootit.command.*;
 import me.lauriichan.spigot.justlootit.command.argument.*;
 import me.lauriichan.spigot.justlootit.command.impl.LootItActor;
 import me.lauriichan.spigot.justlootit.command.provider.PluginProvider;
-import me.lauriichan.spigot.justlootit.compatibility.CompatDependency;
+import me.lauriichan.spigot.justlootit.compatibility.provider.CompatDependency;
+import me.lauriichan.spigot.justlootit.compatibility.provider.Compatibility;
+import me.lauriichan.spigot.justlootit.compatibility.provider.ICompatProvider;
 import me.lauriichan.spigot.justlootit.convert.ConversionProperties;
 import me.lauriichan.spigot.justlootit.convert.JustLootItConverter;
 import me.lauriichan.spigot.justlootit.data.io.DataIO;
@@ -156,7 +158,7 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
             this::actor).inject();
         registerCommands(commandManager);
         // Initialize compatibilities
-        JustLootItCompatibilities.loadClass();
+        initializeCompatibilities();
     }
 
     private boolean doWorldConversion() {
@@ -168,6 +170,16 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
             return conversionWasDone;
         }
         return false;
+    }
+    
+    private void initializeCompatibilities() {
+        extension(ICompatProvider.class, true).callInstances(provider ->  {
+            Compatibility compatibility = provider.getClass().getAnnotation(Compatibility.class);
+            if (compatibility == null) {
+                return;
+            }
+            new CompatDependency(compatibility.name(), compatibility.minMajor(), compatibility.maxMajor(), compatibility.minMinor(), compatibility.maxMinor(), provider);
+        });
     }
 
     @Override

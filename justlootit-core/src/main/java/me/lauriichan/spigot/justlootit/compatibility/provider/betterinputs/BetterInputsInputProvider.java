@@ -1,4 +1,4 @@
-package me.lauriichan.spigot.justlootit.compatibility.betterinputs;
+package me.lauriichan.spigot.justlootit.compatibility.provider.betterinputs;
 
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;

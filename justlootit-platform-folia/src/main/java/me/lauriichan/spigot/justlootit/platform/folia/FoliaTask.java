@@ -21,12 +21,15 @@ public final class FoliaTask<E> extends Task<E> {
 
     @Override
     protected void doCancel() {
+        if (this.task == null) {
+            return;
+        }
         task.cancel();
     }
 
     @Override
     protected boolean isCancelled() {
-        return task.isCancelled();
+        return task == null || task.isCancelled();
     }
 
 }

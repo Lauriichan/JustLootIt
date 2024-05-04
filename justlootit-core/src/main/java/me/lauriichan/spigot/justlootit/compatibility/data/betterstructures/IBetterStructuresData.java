@@ -1,0 +1,30 @@
+package me.lauriichan.spigot.justlootit.compatibility.data.betterstructures;
+
+import org.bukkit.Location;
+import org.bukkit.block.BlockState;
+import org.bukkit.inventory.Inventory;
+
+import me.lauriichan.spigot.justlootit.compatibility.data.ICompatibilityData;
+import me.lauriichan.spigot.justlootit.compatibility.provider.CompatDependency;
+import me.lauriichan.spigot.justlootit.compatibility.provider.betterstructures.IBetterStructuresProvider;
+import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
+
+public interface IBetterStructuresData extends ICompatibilityData {
+    
+    String fileName();
+    
+    default boolean canFill(BlockState state, Location location) {
+        IBetterStructuresProvider provider = CompatDependency.getActiveProvider(extension().id(), IBetterStructuresProvider.class);
+        return provider != null && provider.access().hasLootForFile(fileName());
+    }
+    
+    @Override
+    default boolean fill(PlayerAdapter player, BlockState state, Location location, Inventory inventory) {
+        IBetterStructuresProvider provider = CompatDependency.getActiveProvider(extension().id(), IBetterStructuresProvider.class);
+        if (provider == null) {
+            return false;
+        }
+        return provider.access().fillWithLootForFile(inventory, fileName());
+    }
+
+}

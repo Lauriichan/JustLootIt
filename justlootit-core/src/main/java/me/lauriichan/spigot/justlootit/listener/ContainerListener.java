@@ -374,7 +374,7 @@ public class ContainerListener implements IListenerExtension {
                     updater.apply();
                     inventory.attrSet(LootUIHandler.ATTR_ID, lookupTable.acquire(entryId));
                     inventory.setHandler(LootUIHandler.LOOT_HANDLER);
-                    container.fill(player, location, inventory.getInventory());
+                    container.fill(player, inventoryHolder, location, inventory.getInventory());
                     inventory.open(bukkitPlayer);
                     if (inventoryHolder instanceof DoubleChest || inventoryHolder instanceof Lidded) {
                         inventory.attrSet(LootUIHandler.ATTR_LIDDED_LOCATION, location);

@@ -1,4 +1,4 @@
-package me.lauriichan.spigot.justlootit.compatibility;
+package me.lauriichan.spigot.justlootit.compatibility.provider;
 
 import java.util.Objects;
 
@@ -10,17 +10,10 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.lauriichan.laylib.reflection.StackTracker;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 
-public record CompatDependency(String name, int minMajor, int maxMajor, int minMinor, int maxMinor, IDependencyExecutable enable,
-    IDependencyExecutable disable) {
-
-    @FunctionalInterface
-    public static interface IDependencyExecutable {
-
-        void execute(JustLootItPlugin jli, Plugin plugin);
-
-    }
+public record CompatDependency(String name, int minMajor, int maxMajor, int minMinor, int maxMinor, ICompatProvider provider) {
 
     private static final Object2ObjectArrayMap<String, ObjectArrayList<CompatDependency>> DEPENDENCIES = new Object2ObjectArrayMap<>();
+    private static final Object2ObjectArrayMap<String, CompatDependency> ACTIVE_DEPENDENCY = new Object2ObjectArrayMap<>();
 
     public static void updateAll(JustLootItPlugin jliPlugin) {
         Class<?> caller = StackTracker.getCallerClass().orElse(null);
@@ -47,9 +40,23 @@ public record CompatDependency(String name, int minMajor, int maxMajor, int minM
         }
         for (CompatDependency dependency : dependencies) {
             if (dependency.isSupported(plugin)) {
-                justlootit.logger().info("{0} compatibility for {1}.", enabled ? "Enabling" : "Disabling", dependency.name());
+
                 try {
-                    (enabled ? dependency.enable() : dependency.disable()).execute(justlootit, plugin);
+                    if (enabled) {
+                        if (ACTIVE_DEPENDENCY.containsKey(dependency.name())) {
+                            break;
+                        }
+                        justlootit.logger().info("Enabling compatibility for {0}.", dependency.name());
+                        dependency.provider().onEnable(justlootit, plugin);
+                        ACTIVE_DEPENDENCY.put(dependency.name(), dependency);
+                        break;
+                    }
+                    if (!ACTIVE_DEPENDENCY.containsKey(dependency.name())) {
+                        break;
+                    }
+                    justlootit.logger().info("Disabling compatibility for {0}.", dependency.name());
+                    dependency.provider().onDisable(justlootit, plugin);
+                    ACTIVE_DEPENDENCY.remove(dependency.name());
                 } catch (Throwable exception) {
                     justlootit.logger().error("Failed to {0} compatibility for {1}.", exception, enabled ? "enable" : "disable",
                         dependency.name());
@@ -59,15 +66,49 @@ public record CompatDependency(String name, int minMajor, int maxMajor, int minM
         }
     }
 
-    public CompatDependency(String name, int minMajor, int maxMajor, int minMinor, int maxMinor, IDependencyExecutable enable,
-        IDependencyExecutable disable) {
+    public static CompatDependency getActive(String name) {
+        return ACTIVE_DEPENDENCY.get(name);
+    }
+
+    public static <P extends ICompatProvider> P getActiveProvider(String name, Class<P> providerType) {
+        CompatDependency dependency = ACTIVE_DEPENDENCY.get(name);
+        if (dependency == null) {
+            return null;
+        }
+        ICompatProvider provider = dependency.provider();
+        if (providerType.isAssignableFrom(provider.getClass())) {
+            return providerType.cast(provider);
+        }
+        return null;
+    }
+
+    public static boolean isActive(String name) {
+        return ACTIVE_DEPENDENCY.containsKey(name);
+    }
+
+    public static CompatDependency[] get(String name) {
+        ObjectArrayList<CompatDependency> list = DEPENDENCIES.get(name);
+        if (list == null) {
+            return new CompatDependency[0];
+        }
+        return list.toArray(CompatDependency[]::new);
+    }
+
+    public static boolean has(String name) {
+        return DEPENDENCIES.containsKey(name);
+    }
+
+    public CompatDependency(String name, int major, int minor, ICompatProvider provider) {
+        this(name, major, -1, minor, -1, provider);
+    }
+
+    public CompatDependency(String name, int minMajor, int maxMajor, int minMinor, int maxMinor, ICompatProvider provider) {
         this.name = name;
         this.minMajor = minMajor;
         this.maxMajor = maxMajor;
         this.minMinor = minMinor;
         this.maxMinor = maxMinor;
-        this.enable = Objects.requireNonNull(enable);
-        this.disable = Objects.requireNonNull(disable);
+        this.provider = Objects.requireNonNull(provider);
         Class<?> caller = StackTracker.getCallerClass().orElse(null);
         if (caller == null || JustLootItPlugin.class.getClassLoader() != caller.getClassLoader()) {
             throw new UnsupportedOperationException("Only JustLootIt is allowed to create JustLootIt dependencies");
@@ -78,18 +119,6 @@ public record CompatDependency(String name, int minMajor, int maxMajor, int minM
             DEPENDENCIES.put(name, dependencies);
         }
         dependencies.add(this);
-    }
-
-    public CompatDependency(String name, int major, int minor, IDependencyExecutable enable, IDependencyExecutable disable) {
-        this(name, major, -1, minor, -1, enable, disable);
-    }
-
-    public CompatDependency(String name, int major, int minor, CompatProvider provider) {
-        this(name, major, minor, provider::onEnable, provider::onDisable);
-    }
-
-    public CompatDependency(String name, int minMajor, int maxMajor, int minMinor, int maxMinor, CompatProvider provider) {
-        this(name, minMajor, maxMajor, minMinor, maxMinor, provider::onEnable, provider::onDisable);
     }
 
     private boolean isSupported(Plugin plugin) {

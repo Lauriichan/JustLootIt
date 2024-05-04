@@ -6,12 +6,16 @@ import me.lauriichan.spigot.justlootit.nms.util.Vec3i;
 
 public abstract class ProtoChunk {
     
+    public static long posAsLong(int x, int z) {
+        return (long) x & 4294967295L | ((long) z & 4294967295L) << 32;
+    }
+    
     public abstract int getX();
     
     public abstract int getZ();
     
     public long getPosAsLong() {
-        return (long) getX() & 4294967295L | ((long) getZ() & 4294967295L) << 32;
+        return posAsLong(getX(), getZ());
     }
     
     public abstract ObjectCollection<ProtoBlockEntity> getBlockEntities();
