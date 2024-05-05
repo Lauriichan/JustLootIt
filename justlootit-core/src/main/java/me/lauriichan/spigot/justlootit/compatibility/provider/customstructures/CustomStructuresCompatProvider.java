@@ -15,7 +15,7 @@ public class CustomStructuresCompatProvider implements ICustomStructuresProvider
     
     @Override
     public void onEnable(JustLootItPlugin jli, Plugin plugin) {
-        pluginManager().registerEvents(listener = new CustomStructuresListener(jli.versionHandler()), jli);
+        pluginManager().registerEvents(listener = new CustomStructuresListener(plugin.getName(), jli.versionHandler(), jli.configManager()), jli);
         access = new CustomStructuresAccess(plugin);
     }
 

@@ -15,7 +15,7 @@ public class BetterStructuresCompatProvider implements ICompatProvider {
     
     @Override
     public void onEnable(JustLootItPlugin jli, Plugin plugin) {
-        pluginManager().registerEvents(listener = new BetterStructuresListener(jli.versionHandler()), jli);
+        pluginManager().registerEvents(listener = new BetterStructuresListener(plugin.getName(), jli.versionHandler(), jli.configManager()), jli);
     }
 
     @Override

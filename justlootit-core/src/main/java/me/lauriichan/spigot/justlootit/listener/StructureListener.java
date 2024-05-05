@@ -25,6 +25,7 @@ import org.bukkit.util.BlockTransformer;
 import org.bukkit.util.EntityTransformer;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import me.lauriichan.minecraft.pluginbase.config.ConfigManager;
 import me.lauriichan.minecraft.pluginbase.extension.Extension;
 import me.lauriichan.minecraft.pluginbase.listener.IListenerExtension;
 import me.lauriichan.spigot.justlootit.JustLootItConstant;
@@ -32,6 +33,8 @@ import me.lauriichan.spigot.justlootit.JustLootItFlag;
 import me.lauriichan.spigot.justlootit.JustLootItKey;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.capability.StorageCapability;
+import me.lauriichan.spigot.justlootit.config.world.WorldConfig;
+import me.lauriichan.spigot.justlootit.config.world.WorldMultiConfig;
 import me.lauriichan.spigot.justlootit.data.FrameContainer;
 import me.lauriichan.spigot.justlootit.data.StaticContainer;
 import me.lauriichan.spigot.justlootit.data.VanillaContainer;
@@ -48,16 +51,22 @@ public class StructureListener implements IListenerExtension {
     private final Object2ObjectOpenHashMap<UUID, StructureTransformer> transformers = new Object2ObjectOpenHashMap<>();
 
     private final VersionHandler versionHandler;
+    private final ConfigManager configManager;
 
     public StructureListener(final JustLootItPlugin plugin) {
         this.versionHandler = plugin.versionHandler();
+        this.configManager = plugin.configManager();
     }
 
     @EventHandler
     public void onStructureGenerate(AsyncStructureGenerateEvent event) {
+        WorldConfig config = configManager.multiConfigOrCreate(WorldMultiConfig.class, event.getWorld());
+        if (config.isStructureBlacklisted(event.getStructure().getKey())) {
+            return;
+        }
         StructureTransformer transformer = transformers.get(event.getWorld().getUID());
         if (transformer == null || transformer.isTerminated()) {
-            transformers.put(event.getWorld().getUID(), transformer = new StructureTransformer(versionHandler.getLevel(event.getWorld())));
+            transformers.put(event.getWorld().getUID(), transformer = new StructureTransformer(versionHandler.getLevel(event.getWorld()), config));
         }
         event.setBlockTransformer(JustLootItKey.identity(), transformer);
         event.setEntityTransformer(JustLootItKey.identity(), transformer);
@@ -71,9 +80,11 @@ public class StructureListener implements IListenerExtension {
     private static final class StructureTransformer implements BlockTransformer, EntityTransformer {
 
         private final LevelAdapter level;
+        private final WorldConfig config;
 
-        public StructureTransformer(final LevelAdapter level) {
+        public StructureTransformer(final LevelAdapter level, final WorldConfig config) {
             this.level = level;
+            this.config = config;
         }
 
         public boolean isTerminated() {
@@ -93,6 +104,9 @@ public class StructureListener implements IListenerExtension {
                 }
                 level.getCapability(StorageCapability.class).ifPresent(capability -> {
                     if (current instanceof Lootable lootable && lootable.getLootTable() != null) {
+                        if (config.areVanillaContainersBlacklisted() || config.isLootTableBlacklisted(lootable.getLootTable().getKey())) {
+                            return;
+                        }
                         long id = getIdOfBlockState(region, x, y, z, capability.storage(), container);
                         capability.storage().write(new VanillaContainer(id, lootable.getLootTable(), lootable.getSeed()));
                         lootable.setSeed(0L);
@@ -114,6 +128,9 @@ public class StructureListener implements IListenerExtension {
                                 otherContainer.update();
                             }
                         }
+                        return;
+                    }
+                    if (config.areStaticContainersBlacklisted()) {
                         return;
                     }
                     long id = getIdOfBlockState(region, x, y, z, capability.storage(), container);
@@ -169,6 +186,9 @@ public class StructureListener implements IListenerExtension {
                 ItemStack itemStack = itemFrame.getItem();
                 if (itemStack != null && !itemStack.getType().isAir()) {
                     level.getCapability(StorageCapability.class).ifPresent(capability -> {
+                        if (config.areFrameContainersBlacklisted()) {
+                            return;
+                        }
                         long id = capability.storage().newId();
                         itemFrame.getPersistentDataContainer().set(JustLootItKey.identity(), PersistentDataType.LONG, id);
                         capability.storage().write(new FrameContainer(id, itemStack.clone()));
@@ -181,6 +201,9 @@ public class StructureListener implements IListenerExtension {
                 }
                 if (lootable.getLootTable() != null) {
                     level.getCapability(StorageCapability.class).ifPresent(capability -> {
+                        if (config.areVanillaContainersBlacklisted() || config.isLootTableBlacklisted(lootable.getLootTable().getKey())) {
+                            return;
+                        }
                         long id = capability.storage().newId();
                         entity.getPersistentDataContainer().set(JustLootItKey.identity(), PersistentDataType.LONG, id);
                         capability.storage().write(new VanillaContainer(id, lootable.getLootTable(), lootable.getSeed()));
@@ -191,6 +214,9 @@ public class StructureListener implements IListenerExtension {
                     Inventory inventory = boat.getInventory();
                     if (!inventory.isEmpty()) {
                         level.getCapability(StorageCapability.class).ifPresent(capability -> {
+                            if (config.areStaticContainersBlacklisted()) {
+                                return;
+                            }
                             long id = capability.storage().newId();
                             entity.getPersistentDataContainer().set(JustLootItKey.identity(), PersistentDataType.LONG, id);
                             capability.storage().write(new StaticContainer(id, inventory));

@@ -7,15 +7,15 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectCollection;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import me.lauriichan.minecraft.pluginbase.config.Configuration;
-import me.lauriichan.minecraft.pluginbase.config.IConfigExtension;
 import me.lauriichan.minecraft.pluginbase.config.IConfigHandler;
+import me.lauriichan.minecraft.pluginbase.config.ISingleConfigExtension;
 import me.lauriichan.minecraft.pluginbase.config.handler.JsonConfigHandler;
 import me.lauriichan.minecraft.pluginbase.extension.Extension;
 import me.lauriichan.spigot.justlootit.config.data.RefreshGroup;
 import me.lauriichan.spigot.justlootit.util.DataHelper;
 
 @Extension
-public class RefreshConfig implements IConfigExtension {
+public class RefreshConfig implements ISingleConfigExtension {
 
     private final Object2ObjectOpenHashMap<String, RefreshGroup> groups = new Object2ObjectOpenHashMap<>();
     private volatile boolean modified = false;

@@ -10,12 +10,15 @@ import org.bukkit.persistence.PersistentDataType;
 
 import com.ryandw11.structure.api.LootPopulateEvent;
 
+import me.lauriichan.minecraft.pluginbase.config.ConfigManager;
 import me.lauriichan.spigot.justlootit.JustLootItConstant;
 import me.lauriichan.spigot.justlootit.JustLootItFlag;
 import me.lauriichan.spigot.justlootit.JustLootItKey;
 import me.lauriichan.spigot.justlootit.capability.StorageCapability;
 import me.lauriichan.spigot.justlootit.compatibility.data.CompatibilityDataExtension;
 import me.lauriichan.spigot.justlootit.compatibility.data.customstructures.CustomStructuresDataExtension;
+import me.lauriichan.spigot.justlootit.config.world.WorldConfig;
+import me.lauriichan.spigot.justlootit.config.world.WorldMultiConfig;
 import me.lauriichan.spigot.justlootit.data.CompatibilityContainer;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.nms.util.Vec3i;
@@ -25,13 +28,19 @@ import me.lauriichan.spigot.justlootit.util.BlockUtil;
 import me.lauriichan.spigot.justlootit.util.SimpleDataType;
 
 public class CustomStructuresListener implements Listener {
-
-    private final VersionHandler versionHandler;
+    
     private final CustomStructuresDataExtension dataExtension = CompatibilityDataExtension.get("CustomStructures",
         CustomStructuresDataExtension.class);
+    
+    private final String pluginId;
 
-    public CustomStructuresListener(final VersionHandler versionHandler) {
+    private final VersionHandler versionHandler;
+    private final ConfigManager configManager;
+
+    public CustomStructuresListener(final String pluginId, final VersionHandler versionHandler, final ConfigManager configManager) {
+        this.pluginId = pluginId;
         this.versionHandler = versionHandler;
+        this.configManager = configManager;
     }
 
     @EventHandler
@@ -47,6 +56,12 @@ public class CustomStructuresListener implements Listener {
             && JustLootItConstant.UNSUPPORTED_CONTAINER_TYPES.contains(inventory.getType())) {
             return;
         }
+        WorldConfig config = configManager.multiConfigOrCreate(WorldMultiConfig.class, event.getLocation().getWorld());
+        if (config.isCompatibilityContainerBlacklisted(pluginId)
+            || config.isStructureBlacklisted(pluginId, event.getStructure().getName())) {
+            return;
+        }
+        event.setCanceled(true);
         if (state.getBlockData() instanceof Chest chest && chest.getType() != Chest.Type.SINGLE) {
             Container otherChest = BlockUtil.findChestAround(state.getWorld(), event.getLocation(), chest.getType(), chest.getFacing());
             if (otherChest.getBlockData() instanceof Chest) {
