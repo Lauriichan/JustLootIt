@@ -9,6 +9,7 @@ import me.lauriichan.laylib.localization.Key;
 import me.lauriichan.minecraft.pluginbase.extension.Extension;
 import me.lauriichan.minecraft.pluginbase.inventory.ChestSize;
 import me.lauriichan.minecraft.pluginbase.inventory.IGuiInventory;
+import me.lauriichan.minecraft.pluginbase.inventory.item.ColoredLoreEditor;
 import me.lauriichan.minecraft.pluginbase.inventory.item.ItemEditor;
 import me.lauriichan.minecraft.pluginbase.inventory.paged.PageContext;
 import me.lauriichan.minecraft.pluginbase.util.math.InventoryMath;
@@ -58,6 +59,9 @@ public final class ContainerOverviewPage extends ContainerPage {
         case VANILLA:
             onVanillaContainer((VanillaContainer) container, inventory, actor);
             break;
+        case COMPATIBILITY:
+            onCompatibilityContainer((CompatibilityContainer) container, inventory, actor);
+            break;
         default:
             break;
         }
@@ -98,6 +102,20 @@ public final class ContainerOverviewPage extends ContainerPage {
             .lore().set(actor.getTranslatedMessageAsString(UIInventoryNames.CONTAINER_MANAGE_PAGE_OVERVIEW_ITEM_CONTAINER_INFO_VANILLA_LORE,
                 Key.of("seed", container.getSeed()), Key.of("lootTable", container.getLootTableKey())).split("\n"))
             .apply());
+    }
+
+    private void onCompatibilityContainer(CompatibilityContainer container, IGuiInventory inventory, Actor<Player> actor) {
+        ColoredLoreEditor loreEditor = ItemEditor.ofHead(Textures.GEODE_BLANK)
+            .setName(actor.getTranslatedMessageAsString(UIInventoryNames.CONTAINER_MANAGE_PAGE_OVERVIEW_ITEM_CONTAINER_INFO_COMPATIBILITY_NAME)).lore();
+        loreEditor.clear();
+        container.getCompatibilityData()
+            .addInfoData(key -> loreEditor.add(actor.getTranslatedMessageAsString(
+                UIInventoryNames.CONTAINER_MANAGE_PAGE_OVERVIEW_ITEM_CONTAINER_INFO_COMPATIBILITY_LORE_FORMAT, Key.of("key", key.getKey()),
+                Key.of("value", key.getValue()))));
+        if (loreEditor.length() == 0) {
+            loreEditor.add(actor.getTranslatedMessageAsString(UIInventoryNames.CONTAINER_MANAGE_PAGE_OVERVIEW_ITEM_CONTAINER_INFO_COMPATIBILITY_LORE_NO_DATA_AVAILABLE));
+        }
+        inventory.set(2, 1, loreEditor.apply());
     }
 
     @Override

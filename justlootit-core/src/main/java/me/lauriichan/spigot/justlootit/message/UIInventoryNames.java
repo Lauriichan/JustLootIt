@@ -84,6 +84,20 @@ public final class UIInventoryNames implements IMessageExtension {
     })
     public static MessageProvider CONTAINER_MANAGE_PAGE_OVERVIEW_ITEM_CONTAINER_INFO_VANILLA_LORE;
 
+    @Message(id = "inventory.container-manage.page.overview.item.container-info.compatibility.name", content = "&7Information")
+    public static MessageProvider CONTAINER_MANAGE_PAGE_OVERVIEW_ITEM_CONTAINER_INFO_COMPATIBILITY_NAME;
+    @Message(id = "inventory.container-manage.page.overview.item.container-info.compatibility.lore.format", content = {
+        "&r",
+        "&8$key:",
+        "&8= &7$value"
+    })
+    public static MessageProvider CONTAINER_MANAGE_PAGE_OVERVIEW_ITEM_CONTAINER_INFO_COMPATIBILITY_LORE_FORMAT;
+    @Message(id = "inventory.container-manage.page.overview.item.container-info.compatibility.lore.no-data-available", content = {
+        "&r",
+        "&8No data available"
+    })
+    public static MessageProvider CONTAINER_MANAGE_PAGE_OVERVIEW_ITEM_CONTAINER_INFO_COMPATIBILITY_LORE_NO_DATA_AVAILABLE;
+
     @Message(id = "inventory.container-manage.page.inventory.name", content = "&7Container (&c$id&7): &fInventory")
     public static MessageProvider CONTAINER_MANAGE_PAGE_INVENTORY_NAME;
 

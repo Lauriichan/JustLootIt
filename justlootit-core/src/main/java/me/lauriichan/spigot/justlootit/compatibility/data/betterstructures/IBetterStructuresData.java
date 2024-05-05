@@ -1,9 +1,12 @@
 package me.lauriichan.spigot.justlootit.compatibility.data.betterstructures;
 
+import java.util.function.Consumer;
+
 import org.bukkit.Location;
 import org.bukkit.block.BlockState;
 import org.bukkit.inventory.Inventory;
 
+import me.lauriichan.laylib.localization.Key;
 import me.lauriichan.spigot.justlootit.compatibility.data.ICompatibilityData;
 import me.lauriichan.spigot.justlootit.compatibility.provider.CompatDependency;
 import me.lauriichan.spigot.justlootit.compatibility.provider.betterstructures.IBetterStructuresProvider;
@@ -25,6 +28,11 @@ public interface IBetterStructuresData extends ICompatibilityData {
             return false;
         }
         return provider.access().fillWithLootForFile(inventory, fileName());
+    }
+    
+    @Override
+    default void addInfoData(Consumer<Key> add) {
+        add.accept(Key.of("Settings file", fileName()));
     }
 
 }

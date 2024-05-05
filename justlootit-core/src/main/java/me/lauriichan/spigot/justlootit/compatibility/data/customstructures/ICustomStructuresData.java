@@ -1,9 +1,12 @@
 package me.lauriichan.spigot.justlootit.compatibility.data.customstructures;
 
+import java.util.function.Consumer;
+
 import org.bukkit.Location;
 import org.bukkit.block.BlockState;
 import org.bukkit.inventory.Inventory;
 
+import me.lauriichan.laylib.localization.Key;
 import me.lauriichan.spigot.justlootit.compatibility.data.ICompatibilityData;
 import me.lauriichan.spigot.justlootit.compatibility.provider.CompatDependency;
 import me.lauriichan.spigot.justlootit.compatibility.provider.customstructures.ICustomStructuresProvider;
@@ -27,6 +30,12 @@ public interface ICustomStructuresData extends ICompatibilityData {
             return false;
         }
         return provider.access().fillWithLootTable(inventory, state.getType(), location, structureName(), seed());
+    }
+    
+    @Override
+    default void addInfoData(Consumer<Key> add) {
+        add.accept(Key.of("Structure", structureName()));
+        add.accept(Key.of("Seed", seed()));
     }
 
 }
