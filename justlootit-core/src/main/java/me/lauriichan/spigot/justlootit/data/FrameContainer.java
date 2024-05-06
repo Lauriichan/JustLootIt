@@ -21,7 +21,12 @@ public final class FrameContainer extends Container {
 
         @Override
         protected FrameContainer deserializeSpecial(final long id, final ContainerData data, final ByteBuf buffer) {
-            return new FrameContainer(id, data, itemIO.deserialize(buffer));
+            IOHandler.Result<ItemStack> item = itemIO.deserialize(buffer); 
+            FrameContainer container = new FrameContainer(id, data, item.value());
+            if (item.dirty()) {
+                container.setDirty();
+            }
+            return container;
         }
     };
 

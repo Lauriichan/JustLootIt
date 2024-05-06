@@ -6,6 +6,16 @@ import io.netty.buffer.ByteBuf;
 
 public abstract class IOHandler<E> {
 
+    public static record Result<T>(T value, boolean dirty) {}
+
+    public static <T> Result<T> result(T value) {
+        return new Result<>(value, false);
+    }
+
+    public static <T> Result<T> result(T value, boolean dirty) {
+        return new Result<>(value, dirty);
+    }
+
     protected final Class<E> type;
 
     public IOHandler(final Class<E> type) {
@@ -17,13 +27,18 @@ public abstract class IOHandler<E> {
     }
 
     @SuppressWarnings("unchecked")
-    public E[] deserializeArray(final ByteBuf buffer) {
+    public Result<E[]> deserializeArray(final ByteBuf buffer) {
         final int amount = buffer.readInt();
         final E[] array = (E[]) Array.newInstance(type, amount);
+        boolean dirty = false;
         for (int index = 0; index < amount; index++) {
-            array[index] = deserialize(buffer);
+            Result<E> result = deserialize(buffer);
+            if (result.dirty()) {
+                dirty = true;
+            }
+            array[index] = result.value();
         }
-        return array;
+        return new Result<>(array, dirty);
     }
 
     public void serializeArray(final ByteBuf buffer, final E[] array) {
@@ -35,6 +50,6 @@ public abstract class IOHandler<E> {
 
     public abstract void serialize(ByteBuf buffer, E value);
 
-    public abstract E deserialize(ByteBuf buffer);
+    public abstract Result<E> deserialize(ByteBuf buffer);
 
 }

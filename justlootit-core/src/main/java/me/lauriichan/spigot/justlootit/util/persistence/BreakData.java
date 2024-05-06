@@ -24,8 +24,8 @@ public record BreakData(UUID playerId, OffsetDateTime time) {
         @Override
         public BreakData fromPrimitive(final byte[] primitive, final PersistentDataAdapterContext context) {
             final ByteBuf buffer = Unpooled.wrappedBuffer(primitive);
-            final UUID playerId = DataIO.UUID.deserialize(buffer);
-            final OffsetDateTime time = DataIO.OFFSET_DATE_TIME.deserialize(buffer);
+            final UUID playerId = DataIO.UUID.deserialize(buffer).value();
+            final OffsetDateTime time = DataIO.OFFSET_DATE_TIME.deserialize(buffer).value();
             return new BreakData(playerId, time);
         }
     };

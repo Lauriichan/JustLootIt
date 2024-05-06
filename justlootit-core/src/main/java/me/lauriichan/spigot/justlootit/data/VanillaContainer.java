@@ -27,7 +27,7 @@ public final class VanillaContainer extends Container implements IInventoryConta
 
         @Override
         protected VanillaContainer deserializeSpecial(final long id, final ContainerData data, final ByteBuf buffer) {
-            final NamespacedKey key = DataIO.NAMESPACED_KEY.deserialize(buffer);
+            final NamespacedKey key = DataIO.NAMESPACED_KEY.deserialize(buffer).value();
             final long seed = buffer.readLong();
             return new VanillaContainer(id, data, key, seed);
         }

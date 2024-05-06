@@ -64,8 +64,8 @@ public abstract class Container extends Storable implements IModifiable {
             final ContainerData data = new ContainerData(id, config);
             final int amount = buffer.readInt();
             for (int index = 0; index < amount; index++) {
-                final UUID uuid = DataIO.UUID.deserialize(buffer);
-                final OffsetDateTime time = DataIO.OFFSET_DATE_TIME.deserialize(buffer);
+                final UUID uuid = DataIO.UUID.deserialize(buffer).value();
+                final OffsetDateTime time = DataIO.OFFSET_DATE_TIME.deserialize(buffer).value();
                 data.playerAccess.put(uuid, time);
             }
             data.refreshGroupId = BufIO.readString(buffer);

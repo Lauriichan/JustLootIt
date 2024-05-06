@@ -34,39 +34,41 @@ public abstract class NbtIO1_20_R2<E, N extends Tag> extends IOHandler<E> {
     private static final DataFixer FIXER = DataFixers.getDataFixer();
 
     protected final TagType<N> tagType;
-    protected final E[] emptyArray;
+    protected final Result<E[]> emptyArray;
+    protected final Result<E[]> emptyArrayDirty;
 
     @SuppressWarnings("unchecked")
     public NbtIO1_20_R2(final Class<E> type, final TagType<N> tagType) {
         super(type);
         this.tagType = tagType;
-        this.emptyArray = (E[]) Array.newInstance(type, 0);
+        this.emptyArray = new Result<>((E[]) Array.newInstance(type, 0), false);
+        this.emptyArrayDirty = new Result<>(emptyArray.value(), true);
     }
     
     @SuppressWarnings("unchecked")
-    private N readTag(DataInputStream stream) throws IOException {
+    private Result<N> readTag(DataInputStream stream) throws IOException {
         CompoundTag compound = CompoundTag.TYPE.load(stream, NbtAccounter.unlimitedHeap());
         if (!compound.contains(VERSION_ID, 99)) {
             // This is a data tag and not a version tag
             // We should make sure this is the correct version now :/
-            return upgradeNbt(FIXER, (N) compound, MIN_VERSION, SERVER_VERSION);
+            return new Result<>(upgradeNbt(FIXER, (N) compound, MIN_VERSION, SERVER_VERSION), true);
         }
         int tagVersion = compound.getInt(VERSION_ID);
         N tag = (N) compound.get(DATA_ID);
         if (tagVersion < SERVER_VERSION) {
-            tag = upgradeNbt(FIXER, tag, tagVersion, SERVER_VERSION);
+            return new Result<>(upgradeNbt(FIXER, tag, tagVersion, SERVER_VERSION), true);
         } else if (tagVersion > SERVER_VERSION) {
             throw new IllegalStateException("Found unsupported data version on nbt data '" + tagVersion + "', did you downgrade your server?");
         }
-        return tag;
+        return new Result<>(tag, false);
     }
     
     @SuppressWarnings("unchecked")
-    private ListTag readListTag(DataInputStream stream, boolean readListDirectly) throws IOException, ReportedException {
+    private Result<ListTag> readListTag(DataInputStream stream, boolean readListDirectly) throws IOException, ReportedException {
         if (readListDirectly) {
             ListTag listTag = ListTag.TYPE.load(stream, NbtAccounter.unlimitedHeap());
             if (listTag.isEmpty()) {
-                return listTag;
+                return null;
             }
             if (!listTag.getType().equals(tagType)) {
                 throw new IllegalStateException("Invalid tag type on list, expected '" + tagType.getPrettyName() + "' but found '" + listTag.getType().getPrettyName() + "'");
@@ -74,11 +76,14 @@ public abstract class NbtIO1_20_R2<E, N extends Tag> extends IOHandler<E> {
             for (int i = 0; i < listTag.size(); i++) {
                 listTag.set(i, upgradeNbt(FIXER, (N) listTag.get(i), MIN_VERSION, SERVER_VERSION));
             }
-            return listTag;
+            return new Result<>(listTag, true);
         }
         CompoundTag compound = CompoundTag.TYPE.load(stream, NbtAccounter.unlimitedHeap());
         int tagVersion = compound.getInt(VERSION_ID);
         ListTag listTag = (ListTag) compound.get(DATA_ID);
+        if (listTag.isEmpty()) {
+            return null;
+        }
         if (!listTag.getType().equals(tagType)) {
             throw new IllegalStateException("Invalid tag type on list, expected '" + tagType.getPrettyName() + "' but found '" + listTag.getType().getPrettyName() + "'");
         }
@@ -86,10 +91,11 @@ public abstract class NbtIO1_20_R2<E, N extends Tag> extends IOHandler<E> {
             for (int i = 0; i < listTag.size(); i++) {
                 listTag.set(i, upgradeNbt(FIXER, (N) listTag.get(i), tagVersion, SERVER_VERSION));
             }
+            return new Result<>(listTag, true);
         } else if (tagVersion > SERVER_VERSION) {
             throw new IllegalStateException("Found unsupported data version on nbt data '" + tagVersion + "', did you downgrade your server?");
         }
-        return listTag;
+        return new Result<>(listTag, false);
     }
     
     private void writeTag(DataOutputStream stream, Tag tag) throws IOException {
@@ -100,57 +106,61 @@ public abstract class NbtIO1_20_R2<E, N extends Tag> extends IOHandler<E> {
     }
 
     @Override
-    public final E deserialize(final ByteBuf buffer) {
+    public final Result<E> deserialize(final ByteBuf buffer) {
         final int size = buffer.readInt();
         if (size == 0) {
             return null;
         }
         final byte[] data = new byte[size];
         buffer.readBytes(data);
-        N tag;
+        Result<N> result;
         try (DataInputStream stream = new DataInputStream(
             new FastBufferedInputStream(new GZIPInputStream(new FastByteArrayInputStream(data))))) {
-            tag = readTag(stream);
+            result = readTag(stream);
         } catch (final IOException e) {
             // Theoretically shouldn't happen
             return null;
         }
-        return fromNbt(tag);
+        return new Result<>(fromNbt(result.value()), result.dirty());
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public final E[] deserializeArray(final ByteBuf buffer) {
+    public final Result<E[]> deserializeArray(final ByteBuf buffer) {
         final int size = buffer.readInt();
         if (size == 0) {
             return emptyArray;
         }
         final byte[] data = new byte[size];
         buffer.readBytes(data);
-        ListTag list;
+        Result<ListTag> result;
         try {
             try (DataInputStream stream = new DataInputStream(
                 new FastBufferedInputStream(new GZIPInputStream(new FastByteArrayInputStream(data))))) {
-                list = readListTag(stream, false);
+                result = readListTag(stream, false);
             } catch(ReportedException exp) {
                 try (DataInputStream stream = new DataInputStream(
                 new FastBufferedInputStream(new GZIPInputStream(new FastByteArrayInputStream(data))))) {
-                    list = readListTag(stream, true);
+                    result = readListTag(stream, true);
                 }
             }
         } catch (final IOException e) {
             // Theoretically shouldn't happen
             return emptyArray;
         }
+        if (result == null) {
+            return emptyArrayDirty;
+        }
+        ListTag list = result.value();
         final int listSize = list.size();
         if (listSize == 0) {
-            return emptyArray;
+            return emptyArrayDirty;
         }
         final E[] array = (E[]) Array.newInstance(type, listSize);
         for (int index = 0; index < listSize; index++) {
             array[index] = fromNbt((N) list.get(index));
         }
-        return array;
+        return new Result<>(array, result.dirty());
     }
 
     @Override

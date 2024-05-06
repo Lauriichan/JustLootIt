@@ -46,10 +46,10 @@ public class CacheLookupTable extends Storable implements IModifiable {
                 final LookupEntry entry = new LookupEntry();
                 entry.tableId = index;
                 entry.entryId = buffer.readLong();
-                final UUID worldId = DataIO.UUID.deserialize(buffer);
+                final UUID worldId = DataIO.UUID.deserialize(buffer).value();
                 final long containerId = buffer.readLong();
                 entry.mappedId = new WorldEntry(worldId, containerId);
-                entry.cached = DataIO.OFFSET_DATE_TIME.deserialize(buffer);
+                entry.cached = DataIO.OFFSET_DATE_TIME.deserialize(buffer).value();
                 if(table.entryIds.contains(entry.entryId)) {
                     continue;
                 }

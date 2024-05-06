@@ -8,10 +8,11 @@ import io.netty.buffer.ByteBuf;
 import me.lauriichan.spigot.justlootit.data.io.BufIO;
 import me.lauriichan.spigot.justlootit.data.io.DataIO;
 import me.lauriichan.spigot.justlootit.nms.io.IOHandler;
+import me.lauriichan.spigot.justlootit.storage.IModifiable;
 import me.lauriichan.spigot.justlootit.storage.Storable;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapter;
 
-public final class CachedInventory extends Storable {
+public final class CachedInventory extends Storable implements IModifiable {
 
     public static final StorageAdapter<CachedInventory> ADAPTER = new StorageAdapter<>(CachedInventory.class, 0) {
         private final IOHandler<ItemStack> itemIO = DataIO.find(ItemStack.class);
@@ -25,8 +26,8 @@ public final class CachedInventory extends Storable {
         @Override
         public CachedInventory deserialize(final long id, final ByteBuf buffer) {
             final InventoryType type = fromString(BufIO.readString(buffer));
-            final ItemStack[] items = itemIO.deserializeArray(buffer);
-            return new CachedInventory(id, type, items);
+            final IOHandler.Result<ItemStack[]> items = itemIO.deserializeArray(buffer);
+            return new CachedInventory(id, type, items.value(), items.dirty());
         }
 
         private InventoryType fromString(final String string) {
@@ -41,6 +42,8 @@ public final class CachedInventory extends Storable {
 
     private final ItemStack[] items;
     private final InventoryType type;
+    
+    private final boolean dirty;
 
     public CachedInventory(final long id, final Inventory inventory) {
         super(id);
@@ -56,12 +59,14 @@ public final class CachedInventory extends Storable {
         }
         this.type = inventory.getType();
         this.items = items;
+        this.dirty = true;
     }
 
-    private CachedInventory(final long id, final InventoryType type, final ItemStack[] items) {
+    private CachedInventory(final long id, final InventoryType type, final ItemStack[] items, final boolean dirty) {
         super(id);
         this.type = type;
         this.items = items;
+        this.dirty = dirty;
     }
 
     public InventoryType getType() {
@@ -74,6 +79,11 @@ public final class CachedInventory extends Storable {
 
     public int size() {
         return items.length;
+    }
+    
+    @Override
+    public boolean isDirty() {
+        return dirty;
     }
 
 }

@@ -26,11 +26,11 @@ public final class DataIO {
         }
 
         @Override
-        public NamespacedKey deserialize(final ByteBuf buffer) {
+        public Result<NamespacedKey> deserialize(final ByteBuf buffer) {
             final String namespace = readString(buffer);
             final String key = readString(buffer);
             // Use fromString to prevent deprecation
-            return NamespacedKey.fromString(namespace + ':' + key);
+            return result(NamespacedKey.fromString(namespace + ':' + key));
         }
     };
 
@@ -42,10 +42,10 @@ public final class DataIO {
         }
 
         @Override
-        public java.util.UUID deserialize(final ByteBuf buffer) {
+        public Result<java.util.UUID> deserialize(final ByteBuf buffer) {
             final long most = buffer.readLong();
             final long least = buffer.readLong();
-            return new java.util.UUID(most, least);
+            return result(new java.util.UUID(most, least));
         }
     };
 
@@ -63,7 +63,7 @@ public final class DataIO {
         }
 
         @Override
-        public OffsetDateTime deserialize(final ByteBuf buffer) {
+        public Result<OffsetDateTime> deserialize(final ByteBuf buffer) {
             final ZoneOffset offset = ZoneOffset.ofTotalSeconds(buffer.readInt());
             final int year = buffer.readInt();
             final int month = buffer.readByte();
@@ -72,7 +72,7 @@ public final class DataIO {
             final int minute = buffer.readByte();
             final int second = buffer.readByte();
             final int nanoOfSecond = buffer.readInt();
-            return OffsetDateTime.of(year, month, dayOfMonth, hour, minute, second, nanoOfSecond, offset);
+            return result(OffsetDateTime.of(year, month, dayOfMonth, hour, minute, second, nanoOfSecond, offset));
         }
     };
 

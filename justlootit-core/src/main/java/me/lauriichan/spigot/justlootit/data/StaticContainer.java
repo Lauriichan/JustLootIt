@@ -26,7 +26,12 @@ public final class StaticContainer extends Container implements IInventoryContai
 
         @Override
         protected StaticContainer deserializeSpecial(final long id, final ContainerData data, final ByteBuf buffer) {
-            return new StaticContainer(id, data, itemIO.deserializeArray(buffer));
+            IOHandler.Result<ItemStack[]> items = itemIO.deserializeArray(buffer);
+            StaticContainer container = new StaticContainer(id, data, items.value());
+            if (items.dirty()) {
+                container.setDirty();
+            }
+            return container;
         }
     };
 
