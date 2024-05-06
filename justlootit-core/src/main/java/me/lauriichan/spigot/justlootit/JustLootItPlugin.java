@@ -188,6 +188,7 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     protected void onPluginReady() {
         mainWorldFolder = Bukkit.getWorlds().get(0).getWorldFolder();
         if (versionHandler != null) {
+            versionHandler.ready();
             registerPacketListeners();
         }
         // Update compatibilities

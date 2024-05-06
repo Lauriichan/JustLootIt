@@ -55,6 +55,10 @@ public abstract class VersionHandler {
         final PluginManager pluginManager = Bukkit.getPluginManager();
         onEnable(pluginManager);
         pluginManager.registerEvents(bukkitListener, serviceProvider.plugin());
+    }
+    
+    public final void ready() {
+        onReady();
         for (final World world : Bukkit.getWorlds()) {
             load(world);
         }
@@ -75,6 +79,8 @@ public abstract class VersionHandler {
     }
 
     protected void onEnable(final PluginManager pluginManager) {}
+    
+    protected void onReady() {}
 
     protected void onDisable() {}
 

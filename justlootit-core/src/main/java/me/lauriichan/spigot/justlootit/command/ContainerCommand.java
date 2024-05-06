@@ -113,7 +113,7 @@ public class ContainerCommand implements ICommandExtension {
             if (location == null) {
                 return null;
             }
-            id = plugin.scheduler().regional(location, () -> {
+            id = plugin.scheduler().syncRegional(location, () -> {
                 Block block = location.getBlock();
                 if (block.isEmpty()) {
                     return retrieveEntityContainer(plugin, location.getWorld(), actor, location.getBlockX(), location.getBlockY(),
@@ -256,7 +256,7 @@ public class ContainerCommand implements ICommandExtension {
             return;
         }
         final Location loc = CommandUtil.getLocation(actor, x, y, z, world);
-        plugin.scheduler().regional(loc, () -> {
+        plugin.scheduler().syncRegional(loc, () -> {
             if (type.blockCreator() == null || (useEntity && type.entityCreator() != null)) {
                 createEntityContainer(plugin, actor, type, loc);
                 return;
@@ -356,7 +356,7 @@ public class ContainerCommand implements ICommandExtension {
     private void runGroup(final JustLootItPlugin plugin, final Actor<?> actor, final RefreshGroup group, final Coord x, final Coord y,
         final Coord z, final World world) {
         final Location loc = CommandUtil.getLocation(actor, x, y, z, world);
-        plugin.scheduler().regional(loc, () -> {
+        plugin.scheduler().syncRegional(loc, () -> {
             Block block = loc.getBlock();
             if (block.isEmpty()) {
                 doGroupForEntityContainer(plugin, loc.getWorld(), actor, loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), group);
@@ -515,7 +515,7 @@ public class ContainerCommand implements ICommandExtension {
         @Argument(name = "z", optional = true, index = 2, params = @Param(name = "axis", stringValue = "z", type = Param.TYPE_STRING)) Coord z,
         @Argument(name = "world", optional = true, index = 3) World world) {
         final Location loc = CommandUtil.getLocation(actor, x, y, z, world);
-        plugin.scheduler().regional(loc, () -> {
+        plugin.scheduler().syncRegional(loc, () -> {
             Block block = loc.getBlock();
             if (block.isEmpty()) {
                 doInfoForEntityContainer(plugin, loc.getWorld(), actor, loc.getBlockX(), loc.getBlockY(), loc.getBlockZ());

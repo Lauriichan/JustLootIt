@@ -40,7 +40,7 @@ public class DebugCommand implements ICommandExtension {
         @Argument(name = "z", optional = true, index = 3, params = @Param(name = "axis", stringValue = "z", type = Param.TYPE_STRING)) final Coord z,
         @Argument(name = "world", optional = true, index = 4) World world) {
         final Location loc = CommandUtil.getLocation(actor, x, y, z, world);
-        plugin.scheduler().regional(loc, () -> {
+        plugin.scheduler().syncRegional(loc, () -> {
             Block block = loc.getBlock();
             if (checkEntity || block.isEmpty()) {
                 Collection<Entity> entities = loc.getWorld().getNearbyEntities(

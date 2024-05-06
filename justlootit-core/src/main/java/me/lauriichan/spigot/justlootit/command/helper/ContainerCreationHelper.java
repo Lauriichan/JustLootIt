@@ -136,7 +136,7 @@ public final class ContainerCreationHelper {
                                 return;
                             }
                             LootTable lootTable = LootTableArgument.parseLootTable(plugin.versionHelper(), rawLootTable);
-                            plugin.scheduler().entity(entity, () -> {
+                            plugin.scheduler().syncEntity(entity, () -> {
                                 if (entity.isDead()) {
                                     actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_CHANGED_ENTITY,
                                         Key.of("x", location.getBlockX()), Key.of("y", location.getBlockY()),
@@ -177,7 +177,7 @@ public final class ContainerCreationHelper {
                                 return;
                             }
                             LootTable lootTable = LootTableArgument.parseLootTable(plugin.versionHelper(), rawLootTable);
-                            plugin.scheduler().regional(location, () -> {
+                            plugin.scheduler().syncRegional(location, () -> {
                                 if (!(block.getBlock().getState() instanceof org.bukkit.block.Container blockContainer)) {
                                     actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_CHANGED_BLOCK,
                                         Key.of("x", location.getBlockX()), Key.of("y", location.getBlockY()),
