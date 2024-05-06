@@ -24,6 +24,10 @@ import me.lauriichan.spigot.justlootit.JustLootItConstant;
 import me.lauriichan.spigot.justlootit.JustLootItFlag;
 import me.lauriichan.spigot.justlootit.JustLootItKey;
 import me.lauriichan.spigot.justlootit.capability.StorageCapability;
+import me.lauriichan.spigot.justlootit.compatibility.data.CompatibilityDataExtension;
+import me.lauriichan.spigot.justlootit.compatibility.data.betterstructures.BetterStructuresDataExtension;
+import me.lauriichan.spigot.justlootit.compatibility.data.customstructures.CustomStructuresDataExtension;
+import me.lauriichan.spigot.justlootit.data.CompatibilityContainer;
 import me.lauriichan.spigot.justlootit.data.FrameContainer;
 import me.lauriichan.spigot.justlootit.data.StaticContainer;
 import me.lauriichan.spigot.justlootit.data.VanillaContainer;
@@ -88,11 +92,16 @@ public class LootinConverter extends ChunkConverter {
 
     private final ItemStack airPlaceholderItem = ItemEditor.of(Material.STICK)
         .applyItemMeta(meta -> meta.setDisplayName("This is temporary Item")).asItemStack();
-    
+
+    private final BetterStructuresDataExtension betterStructuresExtension = CompatibilityDataExtension.get("BetterStructures",
+        BetterStructuresDataExtension.class);
+    private final CustomStructuresDataExtension customStructuresExtension = CompatibilityDataExtension.get("CustomStructures",
+        CustomStructuresDataExtension.class);
+
     public LootinConverter(VersionHandler versionHandler, ConversionProperties properties) {
         super(versionHandler, properties);
     }
-    
+
     @Override
     public void convert(ProtoChunk chunk, Random random) {
         IStorage<Storable> storage = chunk.getWorld().getCapability(StorageCapability.class).map(StorageCapability::storage).get();
@@ -112,13 +121,16 @@ public class LootinConverter extends ChunkConverter {
                     return;
                 }
                 ICompoundTag tag = state.getNbt();
-                boolean loottable = dataContainer.has(loottableKey, PersistentDataType.STRING) || tag.has("LootTable", TagType.STRING);
+                boolean loottable = dataContainer.has(loottableKey, PersistentDataType.STRING)
+                    || dataContainer.has(betterStructuresKey, PersistentDataType.STRING)
+                    || dataContainer.has(customStructuresKey, PersistentDataType.STRING) || tag.has("LootTable", TagType.STRING);
                 ItemStack[] otherItems = null;
                 boolean otherItemsIsLeft = false;
                 if (state.getData() instanceof Chest chest && chest.getType() != Chest.Type.SINGLE) {
                     Vec3i otherLocation = BlockUtil.findChestLocationAround(state.getPos(), chest.getType(), chest.getFacing());
                     Vec3i location = state.getPos();
-                    ProtoBlockEntity otherState = pendingBlockEntities.stream().filter(pending -> pending.getPos().equals(otherLocation)).findFirst().orElse(null);
+                    ProtoBlockEntity otherState = pendingBlockEntities.stream().filter(pending -> pending.getPos().equals(otherLocation))
+                        .findFirst().orElse(null);
                     if (otherState == null) {
                         // We convert double chests to single chests in this process
                         // The reason why is that we can't convert chests that are across borders
@@ -142,9 +154,21 @@ public class LootinConverter extends ChunkConverter {
                 }
                 try {
                     if (loottable) {
-                        String lootTable = dataContainer.has(loottableKey, PersistentDataType.STRING) ? dataContainer.get(loottableKey, PersistentDataType.STRING) : tag.getString("LootTable");
+                        String lootTable = dataContainer.has(loottableKey, PersistentDataType.STRING)
+                            ? dataContainer.get(loottableKey, PersistentDataType.STRING)
+                            : tag.getString("LootTable");
                         long storageId = storage.newId();
-                        storage.write(new VanillaContainer(storageId, NamespacedKey.fromString(lootTable), tag.hasNumeric("LootTableSeed") ? tag.getLong("LootTableSeed") : random.nextLong()));
+                        if (dataContainer.has(betterStructuresKey, PersistentDataType.STRING)) {
+                            storage.write(new CompatibilityContainer(storageId,
+                                betterStructuresExtension.create(dataContainer.get(betterStructuresKey, PersistentDataType.STRING))));
+                        } else if (dataContainer.has(customStructuresKey, PersistentDataType.STRING)) {
+                            storage.write(new CompatibilityContainer(storageId,
+                                customStructuresExtension.create(dataContainer.get(customStructuresKey, PersistentDataType.STRING),
+                                    BlockUtil.getSeed(chunk, state.getPos()))));
+                        } else {
+                            storage.write(new VanillaContainer(storageId, NamespacedKey.fromString(lootTable),
+                                tag.hasNumeric("LootTableSeed") ? tag.getLong("LootTableSeed") : random.nextLong()));
+                        }
                         dataContainer.set(JustLootItKey.identity(), PersistentDataType.LONG, storageId);
                     } else {
                         ItemStack[] items = extractContents(dataContainer);
@@ -199,9 +223,12 @@ public class LootinConverter extends ChunkConverter {
                 try {
                     ICompoundTag tag = entity.getNbt();
                     if (dataContainer.has(loottableKey, PersistentDataType.STRING) || tag.has("LootTable", TagType.STRING)) {
-                        String lootTable = dataContainer.has(loottableKey, PersistentDataType.STRING) ? dataContainer.get(loottableKey, PersistentDataType.STRING) : tag.getString("LootTable");
+                        String lootTable = dataContainer.has(loottableKey, PersistentDataType.STRING)
+                            ? dataContainer.get(loottableKey, PersistentDataType.STRING)
+                            : tag.getString("LootTable");
                         long storageId = storage.newId();
-                        storage.write(new VanillaContainer(storageId, NamespacedKey.fromString(lootTable), tag.hasNumeric("LootTableSeed") ? tag.getLong("LootTableSeed") : random.nextLong()));
+                        storage.write(new VanillaContainer(storageId, NamespacedKey.fromString(lootTable),
+                            tag.hasNumeric("LootTableSeed") ? tag.getLong("LootTableSeed") : random.nextLong()));
                         dataContainer.set(JustLootItKey.identity(), PersistentDataType.LONG, storageId);
                         tag.remove("LootTable");
                         tag.remove("LootTableSeed");
@@ -225,7 +252,7 @@ public class LootinConverter extends ChunkConverter {
             }
         }
     }
-    
+
     private void clearLootinKeys(PersistentDataContainer container) {
         NamespacedKey[] keys = container.getKeys().toArray(NamespacedKey[]::new);
         for (NamespacedKey key : keys) {
@@ -237,9 +264,7 @@ public class LootinConverter extends ChunkConverter {
     }
 
     private boolean hasUnsupportedKey(PersistentDataContainer container) {
-        return container.has(rwgIdentityKey, PersistentDataType.BYTE) || container.has(rwgLoottableKey, PersistentDataType.STRING)
-            || container.has(betterStructuresKey, PersistentDataType.STRING)
-            || container.has(customStructuresKey, PersistentDataType.STRING);
+        return container.has(rwgIdentityKey, PersistentDataType.BYTE) || container.has(rwgLoottableKey, PersistentDataType.STRING);
     }
 
     private ItemStack[] extractContents(PersistentDataContainer container) {
@@ -272,7 +297,7 @@ public class LootinConverter extends ChunkConverter {
     boolean isEnabled() {
         return properties.isProperty(ConvProp.DO_LOOTIN_CONVERSION);
     }
-    
+
     @Override
     boolean isEnabledFor(ProtoWorld world) {
         return world.hasCapability(StorageCapability.class);

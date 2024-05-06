@@ -92,6 +92,10 @@ public final class BlockUtil {
         return location.getWorld().getSeed() | ProtoChunk.posAsLong(x >> 4, z >> 4) | Vec3i.packByte(x, z);
     }
 
+    public static long getSeed(ProtoChunk chunk, Vec3i location) {
+        return chunk.getWorld().getSeed() | chunk.getPosAsLong() | location.packByte();
+    }
+
     public static BlockState getBlockState(Location location) {
         Scheduler scheduler = JustLootItPlugin.get().platform().scheduler();
         if (scheduler.isRegional() || !Bukkit.isPrimaryThread()) {
