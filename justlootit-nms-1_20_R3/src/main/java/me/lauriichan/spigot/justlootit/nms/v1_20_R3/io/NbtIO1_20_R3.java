@@ -2,6 +2,7 @@ package me.lauriichan.spigot.justlootit.nms.v1_20_R3.io;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.zip.GZIPInputStream;
@@ -22,6 +23,7 @@ import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.ReportedNbtException;
 import net.minecraft.nbt.Tag;
 import net.minecraft.nbt.TagType;
+import net.minecraft.nbt.TagTypes;
 import net.minecraft.util.datafix.DataFixers;
 
 public abstract class NbtIO1_20_R3<E, N extends Tag> extends IOHandler<E> {
@@ -64,28 +66,38 @@ public abstract class NbtIO1_20_R3<E, N extends Tag> extends IOHandler<E> {
     }
     
     @SuppressWarnings("unchecked")
-    private Result<ListTag> readListTag(DataInputStream stream, boolean readListDirectly) throws IOException, ReportedNbtException {
+    private Result<ListTag> readListTag(DataInputStream stream, boolean readListDirectly) throws IOException {
         if (readListDirectly) {
             ListTag listTag = ListTag.TYPE.load(stream, NbtAccounter.unlimitedHeap());
             if (listTag.isEmpty()) {
                 return null;
             }
-            if (!listTag.getType().equals(tagType)) {
-                throw new IllegalStateException("Invalid tag type on list, expected '" + tagType.getPrettyName() + "' but found '" + listTag.getType().getPrettyName() + "'");
+            TagType<?> elementTagType = TagTypes.getType(listTag.getElementType());
+            if (!elementTagType.equals(tagType)) {
+                throw new IllegalStateException("Invalid tag type on list, expected '" + tagType.getPrettyName() + "' but found '" + elementTagType.getPrettyName() + "'");
             }
             for (int i = 0; i < listTag.size(); i++) {
                 listTag.set(i, upgradeNbt(FIXER, (N) listTag.get(i), MIN_VERSION, SERVER_VERSION));
             }
             return new Result<>(listTag, true);
         }
-        CompoundTag compound = CompoundTag.TYPE.load(stream, NbtAccounter.unlimitedHeap());
+        CompoundTag compound;
+        try {
+            compound = CompoundTag.TYPE.load(stream, NbtAccounter.unlimitedHeap());
+        } catch(ReportedNbtException | EOFException exp) {
+            return new Result<>(null, false);
+        }
+        if (!compound.contains(VERSION_ID, 99)) {
+            return new Result<>(null, false);
+        }
         int tagVersion = compound.getInt(VERSION_ID);
         ListTag listTag = (ListTag) compound.get(DATA_ID);
         if (listTag.isEmpty()) {
             return null;
         }
-        if (!listTag.getType().equals(tagType)) {
-            throw new IllegalStateException("Invalid tag type on list, expected '" + tagType.getPrettyName() + "' but found '" + listTag.getType().getPrettyName() + "'");
+        TagType<?> elementTagType = TagTypes.getType(listTag.getElementType());
+        if (!elementTagType.equals(tagType)) {
+            throw new IllegalStateException("Invalid tag type on list, expected '" + tagType.getPrettyName() + "' but found '" + elementTagType.getPrettyName() + "'");
         }
         if (tagVersion < SERVER_VERSION) {
             for (int i = 0; i < listTag.size(); i++) {
@@ -138,9 +150,10 @@ public abstract class NbtIO1_20_R3<E, N extends Tag> extends IOHandler<E> {
             try (DataInputStream stream = new DataInputStream(
                 new FastBufferedInputStream(new GZIPInputStream(new FastByteArrayInputStream(data))))) {
                 result = readListTag(stream, false);
-            } catch(ReportedNbtException exp) {
+            }
+            if (result.value() == null) {
                 try (DataInputStream stream = new DataInputStream(
-                new FastBufferedInputStream(new GZIPInputStream(new FastByteArrayInputStream(data))))) {
+                    new FastBufferedInputStream(new GZIPInputStream(new FastByteArrayInputStream(data))))) {
                     result = readListTag(stream, true);
                 }
             }
