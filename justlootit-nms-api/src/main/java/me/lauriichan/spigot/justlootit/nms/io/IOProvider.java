@@ -5,7 +5,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 public final class IOProvider {
 
     private final Object2ObjectOpenHashMap<Class<?>, IOHandler<?>> handlers = new Object2ObjectOpenHashMap<>();
-
+    
     public boolean register(final IOHandler<?> handler) {
         if (handler.type() == null || handlers.containsKey(handler.type())) {
             return false;

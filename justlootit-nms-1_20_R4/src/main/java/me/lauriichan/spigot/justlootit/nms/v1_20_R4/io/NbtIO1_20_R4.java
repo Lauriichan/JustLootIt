@@ -7,19 +7,31 @@ import java.lang.reflect.Array;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
+import com.mojang.datafixers.DataFixer;
+
 import io.netty.buffer.ByteBuf;
 import it.unimi.dsi.fastutil.io.FastBufferedInputStream;
 import it.unimi.dsi.fastutil.io.FastBufferedOutputStream;
 import it.unimi.dsi.fastutil.io.FastByteArrayInputStream;
 import it.unimi.dsi.fastutil.io.FastByteArrayOutputStream;
 import me.lauriichan.spigot.justlootit.nms.io.IOHandler;
+import net.minecraft.SharedConstants;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtAccounter;
+import net.minecraft.nbt.ReportedNbtException;
 import net.minecraft.nbt.Tag;
 import net.minecraft.nbt.TagType;
-import net.minecraft.nbt.TagTypes;
+import net.minecraft.util.datafix.DataFixers;
 
 public abstract class NbtIO1_20_R4<E, N extends Tag> extends IOHandler<E> {
+    
+    public static final String VERSION_ID = "jli:version";
+    public static final String DATA_ID = "jli:data";
+    
+    private static final int MIN_VERSION = 3578;
+    private static final int SERVER_VERSION = SharedConstants.getCurrentVersion().getDataVersion().getVersion();
+    private static final DataFixer FIXER = DataFixers.getDataFixer();
 
     protected final TagType<N> tagType;
     protected final E[] emptyArray;
@@ -29,6 +41,62 @@ public abstract class NbtIO1_20_R4<E, N extends Tag> extends IOHandler<E> {
         super(type);
         this.tagType = tagType;
         this.emptyArray = (E[]) Array.newInstance(type, 0);
+    }
+    
+    @SuppressWarnings("unchecked")
+    private N readTag(DataInputStream stream) throws IOException {
+        CompoundTag compound = CompoundTag.TYPE.load(stream, NbtAccounter.unlimitedHeap());
+        if (!compound.contains(VERSION_ID, 99)) {
+            // This is a data tag and not a version tag
+            // We should make sure this is the correct version now :/
+            return upgradeNbt(FIXER, (N) compound, MIN_VERSION, SERVER_VERSION);
+        }
+        int tagVersion = compound.getInt(VERSION_ID);
+        N tag = (N) compound.get(DATA_ID);
+        if (tagVersion < SERVER_VERSION) {
+            tag = upgradeNbt(FIXER, tag, tagVersion, SERVER_VERSION);
+        } else if (tagVersion > SERVER_VERSION) {
+            throw new IllegalStateException("Found unsupported data version on nbt data '" + tagVersion + "', did you downgrade your server?");
+        }
+        return tag;
+    }
+    
+    @SuppressWarnings("unchecked")
+    private ListTag readListTag(DataInputStream stream, boolean readListDirectly) throws IOException, ReportedNbtException {
+        if (readListDirectly) {
+            ListTag listTag = ListTag.TYPE.load(stream, NbtAccounter.unlimitedHeap());
+            if (listTag.isEmpty()) {
+                return listTag;
+            }
+            if (!listTag.getType().equals(tagType)) {
+                throw new IllegalStateException("Invalid tag type on list, expected '" + tagType.getPrettyName() + "' but found '" + listTag.getType().getPrettyName() + "'");
+            }
+            for (int i = 0; i < listTag.size(); i++) {
+                listTag.set(i, upgradeNbt(FIXER, (N) listTag.get(i), MIN_VERSION, SERVER_VERSION));
+            }
+            return listTag;
+        }
+        CompoundTag compound = CompoundTag.TYPE.load(stream, NbtAccounter.unlimitedHeap());
+        int tagVersion = compound.getInt(VERSION_ID);
+        ListTag listTag = (ListTag) compound.get(DATA_ID);
+        if (!listTag.getType().equals(tagType)) {
+            throw new IllegalStateException("Invalid tag type on list, expected '" + tagType.getPrettyName() + "' but found '" + listTag.getType().getPrettyName() + "'");
+        }
+        if (tagVersion < SERVER_VERSION) {
+            for (int i = 0; i < listTag.size(); i++) {
+                listTag.set(i, upgradeNbt(FIXER, (N) listTag.get(i), tagVersion, SERVER_VERSION));
+            }
+        } else if (tagVersion > SERVER_VERSION) {
+            throw new IllegalStateException("Found unsupported data version on nbt data '" + tagVersion + "', did you downgrade your server?");
+        }
+        return listTag;
+    }
+    
+    private void writeTag(DataOutputStream stream, Tag tag) throws IOException {
+        CompoundTag compound = new CompoundTag();
+        compound.putInt(VERSION_ID, SERVER_VERSION);
+        compound.put(DATA_ID, tag);
+        compound.write(stream);
     }
 
     @Override
@@ -42,7 +110,7 @@ public abstract class NbtIO1_20_R4<E, N extends Tag> extends IOHandler<E> {
         N tag;
         try (DataInputStream stream = new DataInputStream(
             new FastBufferedInputStream(new GZIPInputStream(new FastByteArrayInputStream(data))))) {
-            tag = tagType.load(stream, NbtAccounter.unlimitedHeap());
+            tag = readTag(stream);
         } catch (final IOException e) {
             // Theoretically shouldn't happen
             return null;
@@ -60,9 +128,16 @@ public abstract class NbtIO1_20_R4<E, N extends Tag> extends IOHandler<E> {
         final byte[] data = new byte[size];
         buffer.readBytes(data);
         ListTag list;
-        try (DataInputStream stream = new DataInputStream(
-            new FastBufferedInputStream(new GZIPInputStream(new FastByteArrayInputStream(data))))) {
-            list = ListTag.TYPE.load(stream, NbtAccounter.unlimitedHeap());
+        try {
+            try (DataInputStream stream = new DataInputStream(
+                new FastBufferedInputStream(new GZIPInputStream(new FastByteArrayInputStream(data))))) {
+                list = readListTag(stream, false);
+            } catch(ReportedNbtException exp) {
+                try (DataInputStream stream = new DataInputStream(
+                new FastBufferedInputStream(new GZIPInputStream(new FastByteArrayInputStream(data))))) {
+                    list = readListTag(stream, true);
+                }
+            }
         } catch (final IOException e) {
             // Theoretically shouldn't happen
             return emptyArray;
@@ -70,10 +145,6 @@ public abstract class NbtIO1_20_R4<E, N extends Tag> extends IOHandler<E> {
         final int listSize = list.size();
         if (listSize == 0) {
             return emptyArray;
-        }
-        final TagType<?> foundType = TagTypes.getType(list.getElementType());
-        if (foundType != tagType) {
-            return emptyArray; // Invalid type
         }
         final E[] array = (E[]) Array.newInstance(type, listSize);
         for (int index = 0; index < listSize; index++) {
@@ -91,7 +162,7 @@ public abstract class NbtIO1_20_R4<E, N extends Tag> extends IOHandler<E> {
         }
         final FastByteArrayOutputStream output = new FastByteArrayOutputStream();
         try (DataOutputStream stream = new DataOutputStream(new FastBufferedOutputStream(new GZIPOutputStream(output)))) {
-            tag.write(stream);
+            writeTag(stream, tag);
         } catch (final IOException e) {
             // Theoretically shouldn't happen
             buffer.writeInt(0);
@@ -113,7 +184,7 @@ public abstract class NbtIO1_20_R4<E, N extends Tag> extends IOHandler<E> {
         }
         final FastByteArrayOutputStream output = new FastByteArrayOutputStream();
         try (DataOutputStream stream = new DataOutputStream(new FastBufferedOutputStream(new GZIPOutputStream(output)))) {
-            listTag.write(stream);
+            writeTag(stream, listTag);
         } catch (final IOException e) {
             // Theoretically shouldn't happen
             buffer.writeInt(0);
@@ -126,5 +197,7 @@ public abstract class NbtIO1_20_R4<E, N extends Tag> extends IOHandler<E> {
     public abstract N asNbt(E value);
 
     public abstract E fromNbt(N tag);
+    
+    public abstract N upgradeNbt(DataFixer fixer, N tag, int tagVersion, int serverVersion);
 
 }

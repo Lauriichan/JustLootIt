@@ -4,11 +4,16 @@ import java.lang.invoke.MethodHandle;
 
 import org.bukkit.craftbukkit.v1_20_R4.inventory.CraftItemStack;
 
+import com.mojang.datafixers.DataFixer;
+import com.mojang.serialization.Dynamic;
+
 import me.lauriichan.laylib.reflection.ClassUtil;
 import me.lauriichan.laylib.reflection.JavaAccess;
 import me.lauriichan.spigot.justlootit.nms.v1_20_R4.util.NmsHelper1_20_R4;
 import net.minecraft.core.RegistryAccess.Frozen;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.util.datafix.fixes.References;
 import net.minecraft.world.item.ItemStack;
 
 public final class ItemStackIO1_20_R4 extends NbtIO1_20_R4<org.bukkit.inventory.ItemStack, CompoundTag> {
@@ -57,6 +62,11 @@ public final class ItemStackIO1_20_R4 extends NbtIO1_20_R4<org.bukkit.inventory.
             return ItemStack.EMPTY;
         }
         return CraftItemStack.asNMSCopy(itemStack);
+    }
+    
+    @Override
+    public CompoundTag upgradeNbt(DataFixer fixer, CompoundTag tag, int tagVersion, int serverVersion) {
+        return (CompoundTag) fixer.update(References.ITEM_STACK, new Dynamic<>(NbtOps.INSTANCE, tag), tagVersion, serverVersion).getValue();
     }
 
 }
