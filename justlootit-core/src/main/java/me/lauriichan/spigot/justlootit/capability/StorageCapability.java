@@ -4,6 +4,7 @@ import java.io.File;
 
 import me.lauriichan.spigot.justlootit.data.CacheLookupTable;
 import me.lauriichan.spigot.justlootit.data.CachedInventory;
+import me.lauriichan.spigot.justlootit.data.CompatibilityContainer;
 import me.lauriichan.spigot.justlootit.data.FrameContainer;
 import me.lauriichan.spigot.justlootit.data.StaticContainer;
 import me.lauriichan.spigot.justlootit.data.VanillaContainer;
@@ -36,6 +37,7 @@ public abstract class StorageCapability implements ICapability {
         }
         
         private void setupStorage() {
+            storage.register(CompatibilityContainer.ADAPTER);
             storage.register(VanillaContainer.ADAPTER);
             storage.register(StaticContainer.ADAPTER);
             storage.register(FrameContainer.ADAPTER);
