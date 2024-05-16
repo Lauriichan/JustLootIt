@@ -16,7 +16,7 @@ public final class Messages implements IMessageExtension {
      * Plugin
      */
 
-    @Message(id = "plugin.name", content = "&#2964EAJust&#EA2964Loot&#64EA29It")
+    @Message(id = "plugin.name", content = "&#[EA288C-C66CF7]JustLootIt")
     public static MessageProvider NAME;
     @Message(id = "plugin.prefix", content = "$#plugin.name &8|&7")
     public static MessageProvider PREFIX;

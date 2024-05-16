@@ -24,7 +24,7 @@ import me.lauriichan.laylib.localization.Key;
 import me.lauriichan.minecraft.pluginbase.extension.Extension;
 import me.lauriichan.minecraft.pluginbase.inventory.IGuiInventory;
 import me.lauriichan.minecraft.pluginbase.inventory.item.ItemEditor;
-import me.lauriichan.minecraft.pluginbase.message.component.Component;
+import me.lauriichan.minecraft.pluginbase.message.component.ComponentBuilder;
 import me.lauriichan.spigot.justlootit.JustLootItKey;
 import me.lauriichan.spigot.justlootit.JustLootItPermission;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
@@ -580,10 +580,11 @@ public class ContainerCommand implements ICommandExtension {
                 actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_INFO_CONTAINER_VANILLA, Key.of("seed", vanilla.getSeed()),
                     Key.of("lootTable", vanilla.getLootTableKey()));
             } else if (container instanceof FrameContainer frame) {
-                Component component = Component.of(actor.getTranslatedMessageAsString(Messages.COMMAND_CONTAINER_INFO_CONTAINER_FRAME,
-                    Key.of("itemName", ItemEditor.of(frame.getItem()).getItemName())));
-                component.hover(new HoverEvent(HoverEvent.Action.SHOW_ITEM, plugin.versionHelper().createItemHover(frame.getItem())));
-                component.send(actor);
+                ComponentBuilder.create()
+                    .appendContent(actor.getTranslatedMessageAsString(Messages.COMMAND_CONTAINER_INFO_CONTAINER_FRAME,
+                        Key.of("itemName", ItemEditor.of(frame.getItem()).getItemName())))
+                    .hover(new HoverEvent(HoverEvent.Action.SHOW_ITEM, plugin.versionHelper().createItemHover(frame.getItem()))).finish()
+                    .send(actor);
             }
         }, () -> actor.sendTranslatedMessage(Messages.COMMAND_SYSTEM_ERROR_STORAGE_ACCESS_LEVEL, Key.of("level", world.getName())));
     }

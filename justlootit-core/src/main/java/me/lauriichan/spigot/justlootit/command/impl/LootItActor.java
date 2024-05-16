@@ -6,9 +6,10 @@ import org.bukkit.inventory.ItemStack;
 
 import me.lauriichan.laylib.command.Action;
 import me.lauriichan.laylib.command.ActionMessage;
-import me.lauriichan.laylib.localization.MessageManager;
 import me.lauriichan.minecraft.pluginbase.command.BukkitActor;
-import me.lauriichan.minecraft.pluginbase.message.component.ComponentParser;
+import me.lauriichan.minecraft.pluginbase.message.component.ComponentBuilder;
+import me.lauriichan.minecraft.pluginbase.message.component.SubComponentBuilder;
+import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.nms.VersionHelper;
 import net.md_5.bungee.api.chat.ClickEvent;
@@ -17,21 +18,23 @@ import net.md_5.bungee.api.chat.hover.content.Text;
 
 public class LootItActor<P extends CommandSender> extends BukkitActor<P> {
 
-    private final VersionHelper versionHelper;
+    public LootItActor(final P handle, final JustLootItPlugin plugin) {
+        super(handle, plugin);
+    }
+    
+    @Override
+    public JustLootItPlugin plugin() {
+        return (JustLootItPlugin) super.plugin();
+    }
 
-    public LootItActor(final P handle, final MessageManager messageManager, final VersionHelper versionHelper) {
-        super(handle, messageManager);
-        this.versionHelper = versionHelper;
-    }
-    
     public VersionHandler versionHandler() {
-        return versionHelper.handler();
+        return plugin().versionHandler();
     }
-    
+
     public VersionHelper versionHelper() {
-        return versionHelper;
+        return plugin().versionHelper();
     }
-    
+
     @Override
     public void sendActionMessage(final ActionMessage message) {
         if (message == null) {
@@ -73,23 +76,21 @@ public class LootItActor<P extends CommandSender> extends BukkitActor<P> {
             final Action hoverAction = message.hoverAction();
             switch (hoverAction.getType()) {
             case HOVER_SHOW:
-                if (versionHelper == null) {
-                    break;
-                }
                 if (hoverAction.getValue() instanceof final ItemStack item) {
-                    hover = new HoverEvent(HoverEvent.Action.SHOW_ITEM, versionHelper.createItemHover(item));
+                    hover = new HoverEvent(HoverEvent.Action.SHOW_ITEM, versionHelper().createItemHover(item));
                 } else if (hoverAction.getValue() instanceof final Entity entity) {
-                    hover = new HoverEvent(HoverEvent.Action.SHOW_ENTITY, versionHelper.createEntityHover(entity));
+                    hover = new HoverEvent(HoverEvent.Action.SHOW_ENTITY, versionHelper().createEntityHover(entity));
                 }
                 break;
             case HOVER_TEXT:
-                hover = new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(ComponentParser.parse(hoverAction.getValueAsString())));
+                hover = new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                    new Text(ComponentBuilder.parse(hoverAction.getValueAsString()).buildComponentArray()));
                 break;
             default:
                 break;
             }
         }
-        handle.spigot().sendMessage(ComponentParser.parse(message.message(), click, hover));
+        handle.spigot().sendMessage(SubComponentBuilder.parse(message.message()).click(click).hover(hover).finish().buildComponentArray());
     }
 
 }

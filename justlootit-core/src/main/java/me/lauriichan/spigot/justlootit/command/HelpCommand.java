@@ -20,8 +20,7 @@ import me.lauriichan.laylib.command.util.Triple;
 import me.lauriichan.laylib.localization.Key;
 import me.lauriichan.laylib.reflection.ClassUtil;
 import me.lauriichan.minecraft.pluginbase.extension.Extension;
-import me.lauriichan.minecraft.pluginbase.message.component.Component;
-import me.lauriichan.minecraft.pluginbase.message.component.ComponentCompound;
+import me.lauriichan.minecraft.pluginbase.message.component.ComponentBuilder;
 import me.lauriichan.spigot.justlootit.JustLootItPermission;
 import me.lauriichan.spigot.justlootit.message.Messages;
 
@@ -195,19 +194,19 @@ public class HelpCommand implements ICommandExtension {
         }
         actor.sendMessage(""); // Add one space
         if (actor.getId() != Actor.IMPL_ID) {
-            ComponentCompound component = ComponentCompound.create();
+            ComponentBuilder<?, ?> component = ComponentBuilder.create();
             if (page != 1) {
-                component.add(Component.of(Messages.COMMAND_SYSTEM_ARROW_LEFT, actor.getLanguage())
+                component.appendContent(Messages.COMMAND_SYSTEM_ARROW_LEFT, actor.getLanguage())
                     .clickRun(arrowCommandFormat, commandManager.getPrefix() + "help", helpText, page - 1)
-                    .hoverText(Messages.COMMAND_SYSTEM_PAGE_PREVIOUS, actor.getLanguage()));
+                    .hoverText(Messages.COMMAND_SYSTEM_PAGE_PREVIOUS, actor.getLanguage()).finish();
             }
             if (page != maxPage) {
                 if (page != 1) {
-                    component.add(Component.of(Messages.COMMAND_SYSTEM_ARROW_SEPERATOR, actor.getLanguage()));
+                    component.appendContent(Messages.COMMAND_SYSTEM_ARROW_SEPERATOR, actor.getLanguage()).finish();
                 }
-                component.add(Component.of(Messages.COMMAND_SYSTEM_ARROW_RIGHT, actor.getLanguage())
+                component.appendContent(Messages.COMMAND_SYSTEM_ARROW_RIGHT, actor.getLanguage())
                     .clickRun(arrowCommandFormat, commandManager.getPrefix() + "help", helpText, page + 1)
-                    .hoverText(Messages.COMMAND_SYSTEM_PAGE_NEXT, actor.getLanguage()));
+                    .hoverText(Messages.COMMAND_SYSTEM_PAGE_NEXT, actor.getLanguage()).finish();
             }
             if (!component.isEmpty()) {
                 component.send(actor);

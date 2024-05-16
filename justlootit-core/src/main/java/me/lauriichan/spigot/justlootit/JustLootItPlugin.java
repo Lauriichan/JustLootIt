@@ -13,11 +13,11 @@ import org.bukkit.plugin.Plugin;
 import me.lauriichan.laylib.command.Actor;
 import me.lauriichan.laylib.command.ArgumentRegistry;
 import me.lauriichan.laylib.command.CommandManager;
-import me.lauriichan.laylib.localization.MessageManager;
 import me.lauriichan.laylib.reflection.ClassUtil;
 import me.lauriichan.laylib.reflection.JavaAccess;
 import me.lauriichan.minecraft.pluginbase.BasePlugin;
 import me.lauriichan.minecraft.pluginbase.ConditionConstant;
+import me.lauriichan.minecraft.pluginbase.IBukkitReflection;
 import me.lauriichan.minecraft.pluginbase.command.bridge.BukkitCommandInjectableBridge;
 import me.lauriichan.minecraft.pluginbase.command.bridge.BukkitCommandInjectableBridge.CommandDefinition;
 import me.lauriichan.minecraft.pluginbase.command.processor.IBukkitCommandProcessor;
@@ -121,6 +121,11 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     /*
      * Start
      */
+    
+    @Override
+    protected IBukkitReflection createBukkitReflection() {
+        return new JustLootItPlatformReflection(platform);
+    }
 
     @Override
     protected void onConditionMapSetup(IConditionMap conditionMap) {
@@ -154,7 +159,7 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         }
         commandManager = new CommandManager(logger(), argumentRegistry());
         commandManager.setPrefix("/jli ");
-        commandBridge = new BukkitCommandInjectableBridge<>(IBukkitCommandProcessor.commandLine(), commandManager, messageManager(), this,
+        commandBridge = new BukkitCommandInjectableBridge<>(IBukkitCommandProcessor.commandLine(), commandManager, this,
             CommandDefinition.of("justlootit").alias("jloot").alias("jli").description("command.description.justlootit.parent").build(this),
             this::actor).inject();
         registerCommands(commandManager);
@@ -172,14 +177,15 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         }
         return false;
     }
-    
+
     private void initializeCompatibilities() {
-        extension(ICompatProvider.class, true).callInstances(provider ->  {
+        extension(ICompatProvider.class, true).callInstances(provider -> {
             Compatibility compatibility = provider.getClass().getAnnotation(Compatibility.class);
             if (compatibility == null) {
                 return;
             }
-            new CompatDependency(compatibility.name(), compatibility.minMajor(), compatibility.maxMajor(), compatibility.minMinor(), compatibility.maxMinor(), provider);
+            new CompatDependency(compatibility.name(), compatibility.minMajor(), compatibility.maxMajor(), compatibility.minMinor(),
+                compatibility.maxMinor(), provider);
         });
         extension(CompatibilityDataExtension.class, true);
     }
@@ -284,11 +290,11 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     }
 
     public <T extends CommandSender> LootItActor<T> actor(final T sender) {
-        return actor(sender, messageManager());
+        return actor(sender, this);
     }
 
-    public <T extends CommandSender> LootItActor<T> actor(final T sender, final MessageManager manager) {
-        return new LootItActor<>(sender, manager, versionHelper);
+    private <T extends CommandSender> LootItActor<T> actor(final T sender, final BasePlugin<?> plugin) {
+        return new LootItActor<>(sender, (JustLootItPlugin) plugin);
     }
 
     /*
