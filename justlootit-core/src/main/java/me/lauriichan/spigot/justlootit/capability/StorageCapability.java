@@ -29,13 +29,12 @@ public abstract class StorageCapability implements ICapability {
                 new File(adapter.asBukkit().getWorldFolder(), "justlootit/containers"))));
             setupStorage();
         }
-        
+
         public LevelContainerImpl(final VersionHandler handler, final ProtoWorld world) {
-            super(new CachedStorage<>(new RAFMultiStorage<>(handler.logger(), Storable.class,
-                new File(world.getWorldFolder(), "justlootit/containers"))));
+            super(new RAFMultiStorage<>(handler.logger(), Storable.class, new File(world.getWorldFolder(), "justlootit/containers")));
             setupStorage();
         }
-        
+
         private void setupStorage() {
             storage.register(CompatibilityContainer.ADAPTER);
             storage.register(VanillaContainer.ADAPTER);

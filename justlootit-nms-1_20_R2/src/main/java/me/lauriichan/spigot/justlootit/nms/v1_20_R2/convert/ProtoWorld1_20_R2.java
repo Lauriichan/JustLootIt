@@ -190,12 +190,26 @@ public class ProtoWorld1_20_R2 extends ProtoWorld implements LevelHeightAccessor
                             ListTag listTag = chunkTag.getList("sections", 10);
                             LevelChunkSection[] sections = new LevelChunkSection[sectionCount];
                             int sectionIndex = 0;
+                            int sectionOffset = 0;
+                            int chunkSectionCount = 0;
+                            int chunkY = chunkTag.getInt("yPos");
+                            if (chunkY != minSection) {
+                                sectionOffset = -chunkY;
+                                for (int i = 0; i < sectionOffset; i++) {
+                                    sections[i] = new LevelChunkSection(
+                                        new PalettedContainer<>(Block.BLOCK_STATE_REGISTRY, Blocks.AIR.defaultBlockState(),
+                                            Strategy.SECTION_STATES),
+                                        new PalettedContainer<>(biomeRegistry.asHolderIdMap(),
+                                            biomeRegistry.getHolderOrThrow(Biomes.PLAINS), Strategy.SECTION_BIOMES));
+                                }
+                            }
                             for (int i = 0; i < listTag.size(); i++) {
                                 CompoundTag sectionTag = listTag.getCompound(i);
                                 byte y = sectionTag.getByte("Y");
                                 if (y < minSection || y > maxSection) {
                                     continue;
                                 }
+                                chunkSectionCount++;
                                 if (!sectionTag.contains("block_states", 10)) {
                                     sections[sectionIndex++] = new LevelChunkSection(
                                         new PalettedContainer<>(Block.BLOCK_STATE_REGISTRY, Blocks.AIR.defaultBlockState(),
@@ -211,6 +225,15 @@ public class ProtoWorld1_20_R2 extends ProtoWorld implements LevelHeightAccessor
                                         logger.warning("Something went wrong when reading chunk section: " + sx);
                                     }), new PalettedContainer<>(biomeRegistry.asHolderIdMap(),
                                         biomeRegistry.getHolderOrThrow(Biomes.PLAINS), Strategy.SECTION_BIOMES));
+                            }
+                            if (chunkSectionCount != sectionCount) {
+                                for (int i = chunkSectionCount; i < sectionCount; i++) {
+                                    sections[i] = new LevelChunkSection(
+                                        new PalettedContainer<>(Block.BLOCK_STATE_REGISTRY, Blocks.AIR.defaultBlockState(),
+                                            Strategy.SECTION_STATES),
+                                        new PalettedContainer<>(biomeRegistry.asHolderIdMap(),
+                                            biomeRegistry.getHolderOrThrow(Biomes.PLAINS), Strategy.SECTION_BIOMES));
+                                }
                             }
                             int cx = chunkTag.getInt("xPos"), cz = chunkTag.getInt("zPos");
                             net.minecraft.world.level.chunk.ProtoChunk chunk = new net.minecraft.world.level.chunk.ProtoChunk(
@@ -239,14 +262,19 @@ public class ProtoWorld1_20_R2 extends ProtoWorld implements LevelHeightAccessor
                                 for (ProtoBlockEntity rawBlock : protoChunk.getBlockEntities()) {
                                     blockEntityListTag.add(((ProtoBlockEntity1_20_R2) rawBlock).tag());
                                 }
+                                sectionIndex = 0;
                                 for (int i = 0; i < listTag.size(); i++) {
-                                    LevelChunkSection section = sections[i];
                                     CompoundTag sectionTag = listTag.getCompound(i);
+                                    byte y = sectionTag.getByte("Y");
+                                    if (y < minSection || y > maxSection) {
+                                        continue;
+                                    }
                                     if (!sectionTag.contains("block_states", 10)) {
+                                        sectionIndex++;
                                         continue;
                                     }
                                     sectionTag.put("block_states", ChunkSerializer.BLOCK_STATE_CODEC
-                                        .encodeStart(NbtOps.INSTANCE, section.getStates()).getOrThrow(false, (sx) -> {
+                                        .encodeStart(NbtOps.INSTANCE, sections[sectionOffset + sectionIndex++].getStates()).getOrThrow(false, (sx) -> {
                                             logger.warning("Something went wrong when writing chunk section: " + sx);
                                         }));
                                 }

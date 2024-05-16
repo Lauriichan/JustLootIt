@@ -49,12 +49,12 @@ public class VanillaConverter extends ChunkConverter {
             while (!pendingBlockEntities.isEmpty()) {
                 ProtoBlockEntity state = pendingBlockEntities.remove(0);
                 if (!state.hasInventory()) {
-                    return;
+                    continue;
                 }
                 Inventory inventory = state.getInventory();
                 if (!JustLootItFlag.TILE_ENTITY_CONTAINERS.isSet()
                     && JustLootItConstant.UNSUPPORTED_CONTAINER_TYPES.contains(inventory.getType())) {
-                    return;
+                    continue;
                 }
                 PersistentDataContainer dataContainer = state.getContainer();
                 if (dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {

@@ -114,11 +114,11 @@ public class LootinConverter extends ChunkConverter {
                 }
                 if (!JustLootItFlag.TILE_ENTITY_CONTAINERS.isSet()
                     && JustLootItConstant.UNSUPPORTED_CONTAINER_TYPES.contains(state.getInventory().getType())) {
-                    return;
+                    continue;
                 }
                 PersistentDataContainer dataContainer = state.getContainer();
                 if (!dataContainer.has(identityKey, PersistentDataType.STRING) || hasUnsupportedKey(dataContainer)) {
-                    return;
+                    continue;
                 }
                 ICompoundTag tag = state.getNbt();
                 boolean loottable = dataContainer.has(loottableKey, PersistentDataType.STRING)
@@ -183,6 +183,12 @@ public class LootinConverter extends ChunkConverter {
                             }
                             items = tmpItems;
                         }
+                        if (items == null) {
+                            items = state.getInventory().getContents();
+                            if (items == null) {
+                                continue;
+                            }
+                        }
                         for (int i = 0; i < items.length; i++) {
                             ItemStack item = items[i];
                             if (items[i] == null || !item.getType().isAir()) {
@@ -204,7 +210,7 @@ public class LootinConverter extends ChunkConverter {
             if (EntityUtil.isItemFrame(entity.getType())) {
                 PersistentDataContainer dataContainer = entity.getContainer();
                 if (!dataContainer.has(elytraKey, PersistentDataType.INTEGER)) {
-                    return;
+                    continue;
                 }
                 try {
                     long storageId = storage.newId();
@@ -218,7 +224,7 @@ public class LootinConverter extends ChunkConverter {
             } else if (EntityUtil.isSuppportedEntity(entity.getType())) {
                 PersistentDataContainer dataContainer = entity.getContainer();
                 if (!dataContainer.has(identityKey, PersistentDataType.STRING) || hasUnsupportedKey(dataContainer)) {
-                    return;
+                    continue;
                 }
                 try {
                     ICompoundTag tag = entity.getNbt();

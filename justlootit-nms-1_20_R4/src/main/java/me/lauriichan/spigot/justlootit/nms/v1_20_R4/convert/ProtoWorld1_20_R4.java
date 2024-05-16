@@ -87,13 +87,13 @@ public class ProtoWorld1_20_R4 extends ProtoWorld implements LevelHeightAccessor
     private final Path entityPath;
 
     private final DataFixer fixerUpper = DataFixers.getDataFixer();
-    
+
     private final RegionStorageInfo regionInfo, entityInfo;
-    
+
     private final Frozen registry;
 
-    public ProtoWorld1_20_R4(final ExecutorService executor, final ISimpleLogger logger,
-        final LevelStorageAccess session, final boolean closeSession, final ResourceKey<LevelStem> dimensionKey, WorldData worldData) {
+    public ProtoWorld1_20_R4(final ExecutorService executor, final ISimpleLogger logger, final LevelStorageAccess session,
+        final boolean closeSession, final ResourceKey<LevelStem> dimensionKey, WorldData worldData) {
         this.registry = NmsHelper1_20_R4.getServer().registryAccess();
         this.executor = executor;
         this.logger = logger;
@@ -111,7 +111,7 @@ public class ProtoWorld1_20_R4 extends ProtoWorld implements LevelHeightAccessor
         this.regionInfo = new RegionStorageInfo(session.getLevelId(), worldKey, "region");
         this.entityInfo = new RegionStorageInfo(session.getLevelId(), worldKey, "entities");
         this.chunkStorage = new ChunkStorage(regionInfo, null, DataFixers.getDataFixer(), false);
-        
+
         // Apply patches
         PlatformHelper1_20_R4.patchCraftBlockDataEnumValues();
 
@@ -200,14 +200,28 @@ public class ProtoWorld1_20_R4 extends ProtoWorld implements LevelHeightAccessor
                             ListTag listTag = chunkTag.getList("sections", 10);
                             LevelChunkSection[] sections = new LevelChunkSection[sectionCount];
                             int sectionIndex = 0;
+                            int sectionOffset = 0;
+                            int chunkSectionCount = 0;
+                            int chunkY = chunkTag.getInt("yPos");
+                            if (chunkY != minSection) {
+                                sectionOffset = -chunkY;
+                                for (int i = 0; i < sectionOffset; i++) {
+                                    sections[i] = new LevelChunkSection(
+                                        new PalettedContainer<>(Block.BLOCK_STATE_REGISTRY, Blocks.AIR.defaultBlockState(),
+                                            Strategy.SECTION_STATES),
+                                        new PalettedContainer<>(biomeRegistry.asHolderIdMap(),
+                                            biomeRegistry.getHolderOrThrow(Biomes.PLAINS), Strategy.SECTION_BIOMES));
+                                }
+                            }
                             for (int i = 0; i < listTag.size(); i++) {
                                 CompoundTag sectionTag = listTag.getCompound(i);
                                 byte y = sectionTag.getByte("Y");
                                 if (y < minSection || y > maxSection) {
                                     continue;
                                 }
+                                chunkSectionCount++;
                                 if (!sectionTag.contains("block_states", 10)) {
-                                    sections[sectionIndex++] = new LevelChunkSection(
+                                    sections[sectionOffset + sectionIndex++] = new LevelChunkSection(
                                         new PalettedContainer<>(Block.BLOCK_STATE_REGISTRY, Blocks.AIR.defaultBlockState(),
                                             Strategy.SECTION_STATES),
                                         new PalettedContainer<>(biomeRegistry.asHolderIdMap(),
@@ -215,13 +229,22 @@ public class ProtoWorld1_20_R4 extends ProtoWorld implements LevelHeightAccessor
                                     continue;
                                 }
                                 try {
-                                sections[sectionIndex++] = new LevelChunkSection(ChunkSerializer.BLOCK_STATE_CODEC
-                                    .parse(NbtOps.INSTANCE, sectionTag.getCompound("block_states")).promotePartial((sx) -> {
-                                        logger.warning("Something went wrong when reading chunk section: " + sx);
-                                    }).getOrThrow(), new PalettedContainer<>(biomeRegistry.asHolderIdMap(),
-                                        biomeRegistry.getHolderOrThrow(Biomes.PLAINS), Strategy.SECTION_BIOMES));
-                                } catch(IllegalStateException ise) {
+                                    sections[sectionOffset + sectionIndex++] = new LevelChunkSection(ChunkSerializer.BLOCK_STATE_CODEC
+                                        .parse(NbtOps.INSTANCE, sectionTag.getCompound("block_states")).promotePartial((sx) -> {
+                                            logger.warning("Something went wrong when reading chunk section: " + sx);
+                                        }).getOrThrow(), new PalettedContainer<>(biomeRegistry.asHolderIdMap(),
+                                            biomeRegistry.getHolderOrThrow(Biomes.PLAINS), Strategy.SECTION_BIOMES));
+                                } catch (IllegalStateException ise) {
                                     logger.warning("Something went wrong when reading chunk section", ise);
+                                }
+                            }
+                            if (chunkSectionCount != sectionCount) {
+                                for (int i = chunkSectionCount; i < sectionCount; i++) {
+                                    sections[i] = new LevelChunkSection(
+                                        new PalettedContainer<>(Block.BLOCK_STATE_REGISTRY, Blocks.AIR.defaultBlockState(),
+                                            Strategy.SECTION_STATES),
+                                        new PalettedContainer<>(biomeRegistry.asHolderIdMap(),
+                                            biomeRegistry.getHolderOrThrow(Biomes.PLAINS), Strategy.SECTION_BIOMES));
                                 }
                             }
                             int cx = chunkTag.getInt("xPos"), cz = chunkTag.getInt("zPos");
@@ -252,16 +275,23 @@ public class ProtoWorld1_20_R4 extends ProtoWorld implements LevelHeightAccessor
                                 for (ProtoBlockEntity rawBlock : protoChunk.getBlockEntities()) {
                                     blockEntityListTag.add(((ProtoBlockEntity1_20_R4) rawBlock).tag());
                                 }
+                                sectionIndex = 0;
                                 for (int i = 0; i < listTag.size(); i++) {
-                                    LevelChunkSection section = sections[i];
                                     CompoundTag sectionTag = listTag.getCompound(i);
+                                    byte y = sectionTag.getByte("Y");
+                                    if (y < minSection || y > maxSection) {
+                                        continue;
+                                    }
                                     if (!sectionTag.contains("block_states", 10)) {
+                                        sectionIndex++;
                                         continue;
                                     }
                                     try {
-                                    sectionTag.put("block_states", ChunkSerializer.BLOCK_STATE_CODEC
-                                        .encodeStart(NbtOps.INSTANCE, section.getStates()).getOrThrow());
-                                    } catch(IllegalStateException ise) {
+                                        sectionTag.put("block_states",
+                                            ChunkSerializer.BLOCK_STATE_CODEC
+                                                .encodeStart(NbtOps.INSTANCE, sections[sectionOffset + sectionIndex++].getStates())
+                                                .getOrThrow());
+                                    } catch (IllegalStateException ise) {
                                         logger.warning("Something went wrong when writing chunk section", ise);
                                     }
                                 }
@@ -328,7 +358,7 @@ public class ProtoWorld1_20_R4 extends ProtoWorld implements LevelHeightAccessor
         }
         return Pair.of(DataFixTypes.ENTITY_CHUNK.updateToCurrentVersion(fixerUpper, tag, NbtUtils.getDataVersion(tag, -1)), "Entities");
     }
-    
+
     final Frozen registry() {
         return registry;
     }
