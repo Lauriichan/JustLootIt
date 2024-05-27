@@ -221,7 +221,7 @@ public class ProtoWorld1_20_R3 extends ProtoWorld implements LevelHeightAccessor
                                             biomeRegistry.getHolderOrThrow(Biomes.PLAINS), Strategy.SECTION_BIOMES));
                                     continue;
                                 }
-                                sections[sectionIndex++] = new LevelChunkSection(ChunkSerializer.BLOCK_STATE_CODEC
+                                sections[sectionOffset + sectionIndex++] = new LevelChunkSection(ChunkSerializer.BLOCK_STATE_CODEC
                                     .parse(NbtOps.INSTANCE, sectionTag.getCompound("block_states")).promotePartial((sx) -> {
                                         logger.warning("Something went wrong when reading chunk section: " + sx);
                                     }).getOrThrow(false, (sx) -> {
