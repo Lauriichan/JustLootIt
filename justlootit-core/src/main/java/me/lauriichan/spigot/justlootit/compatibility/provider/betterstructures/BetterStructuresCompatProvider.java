@@ -4,10 +4,12 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
 
+import me.lauriichan.minecraft.pluginbase.extension.Extension;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.compatibility.provider.Compatibility;
 import me.lauriichan.spigot.justlootit.compatibility.provider.ICompatProvider;
 
+@Extension
 @Compatibility(name = "BetterStructures", minMajor = 1, minMinor = 0)
 public class BetterStructuresCompatProvider implements ICompatProvider {
     

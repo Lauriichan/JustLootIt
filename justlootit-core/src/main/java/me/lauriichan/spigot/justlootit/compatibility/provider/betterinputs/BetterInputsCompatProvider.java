@@ -2,12 +2,14 @@ package me.lauriichan.spigot.justlootit.compatibility.provider.betterinputs;
 
 import org.bukkit.plugin.Plugin;
 
+import me.lauriichan.minecraft.pluginbase.extension.Extension;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.compatibility.provider.Compatibility;
 import me.lauriichan.spigot.justlootit.compatibility.provider.ICompatProvider;
 import me.lauriichan.spigot.justlootit.input.InputProvider;
 import me.lauriichan.spigot.justlootit.input.SimpleChatInputProvider;
 
+@Extension
 @Compatibility(name = "BetterInputs", minMajor = 0, minMinor = 3)
 public final class BetterInputsCompatProvider implements ICompatProvider {
     
