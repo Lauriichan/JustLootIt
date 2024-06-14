@@ -47,6 +47,7 @@ import me.lauriichan.spigot.justlootit.platform.JustLootItPlatform;
 import me.lauriichan.spigot.justlootit.platform.folia.FoliaPlatform;
 import me.lauriichan.spigot.justlootit.platform.paper.PaperPlatform;
 import me.lauriichan.spigot.justlootit.platform.spigot.SpigotPlatform;
+import me.lauriichan.spigot.justlootit.util.JLIInitializationException;
 
 public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> implements IServiceProvider {
 
@@ -102,12 +103,14 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
             packetManager = versionHandler.packetManager();
             logger().info("Initialized version support for " + platform.version().coreVersion());
             return true;
-        } catch (final Exception exp) {
+        } catch (final JLIInitializationException exp) {
             logger().error("Failed to initialize version support for " + platform.version().coreVersion());
             logger().error("Reason: '" + exp.getMessage() + "'");
             logger().error("");
             logger().error("Can't work like this, disabling...");
-            logger().error(exp);
+            if (exp.getCause() != null) {
+                logger().error(exp.getCause());
+            }
             actDisabled(true);
             return false;
         }
@@ -317,20 +320,20 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
      * Init Version Handler
      */
 
-    private VersionHandler initVersionHandler() {
+    private VersionHandler initVersionHandler() throws JLIInitializationException {
         final String path = String.format(VERSION_PATH, platform.version().packageVersion(), platform.version().coreVersion());
         final Class<?> clazz = ClassUtil.findClass(path);
         if (clazz == null || !VersionHandler.class.isAssignableFrom(clazz)) {
-            throw new IllegalStateException("Couldn't find class '" + path + "'!");
+            throw new JLIInitializationException("Couldn't find class '" + path + "'!");
         }
         final Constructor<?> constructor = ClassUtil.getConstructor(clazz, IServiceProvider.class);
         if (constructor == null) {
-            throw new IllegalStateException("Couldn't find valid constructor for class '" + path + "'!");
+            throw new JLIInitializationException("Couldn't find valid constructor for class '" + path + "'!");
         }
         try {
             return (VersionHandler) JavaAccess.instanceThrows(constructor, this);
         } catch (Throwable throwable) {
-            throw new IllegalStateException("Failed to initialize VersionHandler!", throwable);
+            throw new JLIInitializationException("Failed to initialize VersionHandler!", throwable);
         }
     }
 
