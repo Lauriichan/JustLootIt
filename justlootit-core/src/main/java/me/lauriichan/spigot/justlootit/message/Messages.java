@@ -95,6 +95,8 @@ public final class Messages implements IMessageExtension {
     public static MessageProvider CONTAINER_ACCESS_NOT_REPEATABLE;
     @Message(id = "container.access.not-accessible", content = "&7Not accessible for $time&7.")
     public static MessageProvider CONTAINER_ACCESS_NOT_ACCESSIBLE;
+    @Message(id = "container.access.wait-for-access", content = "$#plugin.prefix Please wait a moment for JLI to process your last container access.")
+    public static MessageProvider CONTAINER_ACCESS_WAIT_FOR_ACCESS;
 
     @Message(id = "container.break.unpermitted.block", content = "$#plugin.prefix This entity is a loot container can not be removed.")
     public static MessageProvider CONTAINER_BREAK_UNPERMITTED_BLOCK;

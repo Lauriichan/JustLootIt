@@ -85,5 +85,52 @@ public final class CachedInventory extends Storable implements IModifiable {
     public boolean isDirty() {
         return dirty;
     }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        } else if (obj instanceof CachedInventory other) {
+            if (other.type != type || other.items.length != items.length) {
+                return false;
+            }
+            ItemStack is1, is2;
+            for (int i = 0; i < items.length; i++) {
+                is1 = items[i];
+                is2 = other.items[i];
+                if ((is1 == null || is2 == null) && is1 != is2) {
+                    return false;
+                }
+                if (is1.getAmount() != is2.getAmount() && is1.isSimilar(is2)) {
+                    return false;
+                }
+            }
+            return true;
+        } else if (obj instanceof Inventory inventory) {
+            if (type != inventory.getType() || items.length != inventory.getSize()) {
+                return false;
+            }
+            ItemStack[] contents = inventory.getContents();
+            ItemStack is1, is2;
+            for (int i = 0; i < contents.length; i++) {
+                is1 = items[i];
+                is2 = contents[i];
+                if (is2 != null && is2.getType().isAir()) {
+                    is2 = null;
+                }
+                if (is1 == null || is2 == null) {
+                    if (is1 == is2) {
+                        continue;
+                    }
+                    return false;
+                }
+                if (is1.getAmount() != is2.getAmount() && !is1.isSimilar(is2)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
+    }
 
 }

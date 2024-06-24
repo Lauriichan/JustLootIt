@@ -303,9 +303,23 @@ public class ContainerListener implements IListenerExtension {
 
     private void accessContainer(final Location location, final InventoryHolder inventoryHolder, final PersistentDataContainer data,
         final Cancellable event, final Player bukkitPlayer, final long id) {
-        final WorldEntry entryId = new WorldEntry(location.getWorld(), id);
+        final PlayerAdapter player = plugin.versionHandler().getPlayer(bukkitPlayer);
         final LootItActor<?> actor = plugin.actor(bukkitPlayer);
-        final PlayerAdapter player = actor.versionHandler().getPlayer(bukkitPlayer);
+        if (player.hasData(LootUIHandler.PLAYER_DATA_LOOTING)) {
+            int value = player.getData(LootUIHandler.PLAYER_DATA_LOOTING, Number.class).intValue();
+            if (value != 0) {
+                player.setData(LootUIHandler.PLAYER_DATA_LOOTING, value - 1);
+                actor.sendTranslatedMessage(Messages.CONTAINER_ACCESS_WAIT_FOR_ACCESS);
+                return;
+            }
+            // Force close loot ui handler if open after second access
+            player.getCapability(PlayerGUICapability.class).ifPresent(guiCapability -> {
+                if (guiCapability.gui().getHandler() instanceof LootUIHandler handler) {
+                    handler.onEventClose(bukkitPlayer, guiCapability.gui());
+                }
+            });
+        }
+        final WorldEntry entryId = new WorldEntry(location.getWorld(), id);
         final UUID playerId = bukkitPlayer.getUniqueId();
         actor.versionHandler().getLevel(location.getWorld()).getCapability(StorageCapability.class).ifPresentOrElse(capability -> {
             final Container dataContainer = (Container) capability.storage().read(id);
@@ -334,6 +348,7 @@ public class ContainerListener implements IListenerExtension {
                                         updater.type(cachedInventory.getType());
                                     }
                                     updater.apply();
+                                    player.setData(LootUIHandler.PLAYER_DATA_LOOTING, LootUIHandler.PLAYER_DATA_LOOTING_VALUE);
                                     inventory.attrSet(LootUIHandler.ATTR_ID, cachedInventory.id());
                                     inventory.setHandler(LootUIHandler.LOOT_HANDLER);
                                     inventory.getInventory().setContents(cachedInventory.getItems());
@@ -372,6 +387,7 @@ public class ContainerListener implements IListenerExtension {
                         updater.type(holderInventory.getType());
                     }
                     updater.apply();
+                    player.setData(LootUIHandler.PLAYER_DATA_LOOTING, LootUIHandler.PLAYER_DATA_LOOTING_VALUE);
                     inventory.attrSet(LootUIHandler.ATTR_ID, lookupTable.acquire(entryId));
                     inventory.setHandler(LootUIHandler.LOOT_HANDLER);
                     container.fill(player, inventoryHolder, location, inventory.getInventory());

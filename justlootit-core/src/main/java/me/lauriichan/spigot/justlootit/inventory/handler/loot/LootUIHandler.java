@@ -18,10 +18,13 @@ public final class LootUIHandler implements IHandler {
     public static final LootUIHandler LOOT_HANDLER = new LootUIHandler();
     public static final String ATTR_ID = "PlayerStorageId";
     public static final String ATTR_LIDDED_LOCATION = "LiddedBlockLocation";
+    
+    public static final String PLAYER_DATA_LOOTING = "PlayerIsLooting";
+    public static final int PLAYER_DATA_LOOTING_VALUE = 2;
 
     private final JustLootItPlugin plugin = JustLootItPlugin.get();
     private final VersionHandler versionHandler = plugin.versionHandler();
-    
+
     private LootUIHandler() {}
 
     @Override
@@ -35,15 +38,21 @@ public final class LootUIHandler implements IHandler {
         if (player == null) {
             return false;
         }
+        player.removeData(PLAYER_DATA_LOOTING);
         final Location blockLocation = inventory.attrUnset(ATTR_LIDDED_LOCATION, Location.class);
         if (blockLocation != null) {
             BlockUtil.sendBlockClose(player.asBukkit(), blockLocation);
         }
         player.getCapability(StorageCapability.class).ifPresent(capability -> {
+            CachedInventory cached = (CachedInventory) capability.storage().read(id);
+            if (cached != null && cached.equals(inventory.getInventory())) {
+                return;
+            }
             try {
                 capability.storage().write(new CachedInventory(id, inventory.getInventory()));
             } catch (Throwable throwable) {
-                throwable.printStackTrace();
+                plugin.logger().error("Failed to save cached inventory with id {0} for player {1} ({2})", throwable, id, entity.getName(),
+                    entity.getUniqueId());
             }
         });
         return false;
