@@ -7,10 +7,8 @@ import java.util.Objects;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
-import me.lauriichan.laylib.command.Actor;
 import me.lauriichan.laylib.command.ArgumentRegistry;
 import me.lauriichan.laylib.command.CommandManager;
 import me.lauriichan.laylib.reflection.ClassUtil;
@@ -285,11 +283,6 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
 
     public NamespacedKey key(final String name) {
         return new NamespacedKey(this, name);
-    }
-
-    @Override
-    public Actor<Player> playerActor(Player player) {
-        return actor(player);
     }
 
     public <T extends CommandSender> LootItActor<T> actor(final T sender) {

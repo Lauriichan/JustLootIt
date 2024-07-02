@@ -41,6 +41,7 @@ import me.lauriichan.spigot.justlootit.JustLootItFlag;
 import me.lauriichan.spigot.justlootit.JustLootItKey;
 import me.lauriichan.spigot.justlootit.JustLootItPermission;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
+import me.lauriichan.spigot.justlootit.capability.ActorCapability;
 import me.lauriichan.spigot.justlootit.capability.PlayerGUICapability;
 import me.lauriichan.spigot.justlootit.capability.StorageCapability;
 import me.lauriichan.spigot.justlootit.command.impl.LootItActor;
@@ -132,7 +133,7 @@ public class ContainerListener implements IListenerExtension {
         }
         event.setCancelled(true);
         Player player = event.getPlayer();
-        LootItActor<?> actor = plugin.actor(player);
+        LootItActor<?> actor = ActorCapability.actor(plugin, player);
         if (!player.hasPermission(JustLootItPermission.ACTION_REMOVE_CONTAINER_BLOCK)) {
             actor.sendTranslatedMessage(Messages.CONTAINER_BREAK_UNPERMITTED_BLOCK);
             return;
@@ -198,7 +199,7 @@ public class ContainerListener implements IListenerExtension {
             return;
         }
         Player player = (Player) attacker;
-        LootItActor<?> actor = plugin.actor(player);
+        LootItActor<?> actor = ActorCapability.actor(plugin, player);
         if (!player.hasPermission(JustLootItPermission.ACTION_REMOVE_CONTAINER_ENTITY)) {
             actor.sendTranslatedMessage(Messages.CONTAINER_BREAK_UNPERMITTED_ENTITY);
             return;
@@ -304,10 +305,11 @@ public class ContainerListener implements IListenerExtension {
     private void accessContainer(final Location location, final InventoryHolder inventoryHolder, final PersistentDataContainer data,
         final Cancellable event, final Player bukkitPlayer, final long id) {
         final PlayerAdapter player = plugin.versionHandler().getPlayer(bukkitPlayer);
-        final LootItActor<?> actor = plugin.actor(bukkitPlayer);
+        final LootItActor<?> actor = ActorCapability.actor(player);
         if (player.hasData(LootUIHandler.PLAYER_DATA_LOOTING)) {
             int value = player.getData(LootUIHandler.PLAYER_DATA_LOOTING, Number.class).intValue();
             if (value != 0) {
+                event.setCancelled(true);
                 player.setData(LootUIHandler.PLAYER_DATA_LOOTING, value - 1);
                 actor.sendTranslatedMessage(Messages.CONTAINER_ACCESS_WAIT_FOR_ACCESS);
                 return;
@@ -341,7 +343,7 @@ public class ContainerListener implements IListenerExtension {
                             if (((columnAmount != 9) || ((rowAmount <= 6) && (rowAmount >= 1)))) {
                                 player.getCapability(PlayerGUICapability.class).ifPresent(guiCapability -> {
                                     final IGuiInventory inventory = guiCapability.gui();
-                                    IGuiInventoryUpdater updater = inventory.updater().title(plugin.actor(bukkitPlayer).getTranslatedMessageAsString(UIInventoryNames.LOOT_UI_NAME));
+                                    IGuiInventoryUpdater updater = inventory.updater().title(actor.getTranslatedMessageAsString(UIInventoryNames.LOOT_UI_NAME));
                                     if (columnAmount == 9) {
                                         updater.chestSize(CHEST_VALUES[rowAmount - 1]);
                                     } else {
@@ -380,7 +382,7 @@ public class ContainerListener implements IListenerExtension {
                     }
                     final Inventory holderInventory = inventoryHolder.getInventory();
                     int columnAmount = IGuiInventory.getColumnAmount(holderInventory.getType());
-                    IGuiInventoryUpdater updater = inventory.updater().title(plugin.actor(bukkitPlayer).getTranslatedMessageAsString(UIInventoryNames.LOOT_UI_NAME));
+                    IGuiInventoryUpdater updater = inventory.updater().title(actor.getTranslatedMessageAsString(UIInventoryNames.LOOT_UI_NAME));
                     if (columnAmount == 9) {
                         updater.chestSize(CHEST_VALUES[(InventoryUtil.getSize(holderInventory) / columnAmount) - 1]);
                     } else {

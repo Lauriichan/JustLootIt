@@ -11,6 +11,7 @@ import org.bukkit.inventory.InventoryHolder;
 import io.netty.buffer.ByteBuf;
 import me.lauriichan.laylib.localization.Key;
 import me.lauriichan.minecraft.pluginbase.inventory.item.ItemEditor;
+import me.lauriichan.spigot.justlootit.capability.ActorCapability;
 import me.lauriichan.spigot.justlootit.compatibility.data.CompatibilityDataExtension;
 import me.lauriichan.spigot.justlootit.compatibility.data.ICompatibilityData;
 import me.lauriichan.spigot.justlootit.data.io.BufIO;
@@ -76,37 +77,37 @@ public class CompatibilityContainer extends Container implements IInventoryConta
     @Override
     public void fill(final PlayerAdapter player, final InventoryHolder holder, final Location location, final Inventory inventory) {
         if (!compatibilityData.extension().isActive()) {
-            player.actor().sendTranslatedMessage(Messages.CONTAINER_COMPATIBILITY_NOT_ACTIVE,
+            ActorCapability.actor(player).sendTranslatedMessage(Messages.CONTAINER_COMPATIBILITY_NOT_ACTIVE,
                 Key.of("plugin", compatibilityData.extension().id()));
             return;
         }
         try {
             if (holder instanceof Entity entity) {
                 if (!compatibilityData.canFill(entity, location)) {
-                    player.actor().sendTranslatedMessage(Messages.CONTAINER_COMPATIBILITY_FILL_NOT_AVAILABLE,
+                    ActorCapability.actor(player).sendTranslatedMessage(Messages.CONTAINER_COMPATIBILITY_FILL_NOT_AVAILABLE,
                         Key.of("plugin", compatibilityData.extension().id()));
                     return;
                 }
                 if (!compatibilityData.fill(player, entity, location, inventory)) {
-                    player.actor().sendTranslatedMessage(Messages.CONTAINER_COMPATIBILITY_FILL_FAILED,
+                    ActorCapability.actor(player).sendTranslatedMessage(Messages.CONTAINER_COMPATIBILITY_FILL_FAILED,
                         Key.of("plugin", compatibilityData.extension().id()));
                     return;
                 }
             } else {
                 BlockState state = (BlockState) holder;
                 if (!compatibilityData.canFill(state, location)) {
-                    player.actor().sendTranslatedMessage(Messages.CONTAINER_COMPATIBILITY_FILL_NOT_AVAILABLE,
+                    ActorCapability.actor(player).sendTranslatedMessage(Messages.CONTAINER_COMPATIBILITY_FILL_NOT_AVAILABLE,
                         Key.of("plugin", compatibilityData.extension().id()));
                     return;
                 }
                 if (!compatibilityData.fill(player, state, location, inventory)) {
-                    player.actor().sendTranslatedMessage(Messages.CONTAINER_COMPATIBILITY_FILL_FAILED,
+                    ActorCapability.actor(player).sendTranslatedMessage(Messages.CONTAINER_COMPATIBILITY_FILL_FAILED,
                         Key.of("plugin", compatibilityData.extension().id()));
                     return;
                 }
             }
         } catch (RuntimeException exp) {
-            player.actor().sendTranslatedMessage(Messages.CONTAINER_COMPATIBILITY_FILL_FAILED,
+            ActorCapability.actor(player).sendTranslatedMessage(Messages.CONTAINER_COMPATIBILITY_FILL_FAILED,
                 Key.of("plugin", compatibilityData.extension().id()));
             player.versionHandler().logger().error("Failed to fill compatibility container for plugin '{0}' with data version {1}.", exp,
                 compatibilityData.extension().id(), compatibilityData.version());

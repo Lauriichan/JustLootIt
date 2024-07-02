@@ -7,9 +7,7 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
-import me.lauriichan.laylib.command.Actor;
 import me.lauriichan.spigot.justlootit.nms.capability.Capable;
-import me.lauriichan.spigot.justlootit.nms.capability.impl.ActorCapability;
 import me.lauriichan.spigot.justlootit.nms.packet.AbstractPacketOut;
 
 public abstract class PlayerAdapter extends Capable<PlayerAdapter> {
@@ -31,10 +29,6 @@ public abstract class PlayerAdapter extends Capable<PlayerAdapter> {
 
     public final UUID getUniqueId() {
         return uniqueId;
-    }
-    
-    public final Actor<Player> actor() {
-        return getCapability(ActorCapability.class).map(ActorCapability::actor).orElse(null);
     }
 
     public final void removeData(final String key) {

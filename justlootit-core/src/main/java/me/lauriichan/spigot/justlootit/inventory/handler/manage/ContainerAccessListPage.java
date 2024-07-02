@@ -22,7 +22,7 @@ import me.lauriichan.minecraft.pluginbase.inventory.item.ItemEditor;
 import me.lauriichan.minecraft.pluginbase.inventory.paged.PageContext;
 import me.lauriichan.minecraft.pluginbase.util.math.InventoryMath;
 import me.lauriichan.spigot.justlootit.JustLootItKey;
-import me.lauriichan.spigot.justlootit.JustLootItPlugin;
+import me.lauriichan.spigot.justlootit.capability.ActorCapability;
 import me.lauriichan.spigot.justlootit.config.data.RefreshGroup;
 import me.lauriichan.spigot.justlootit.data.Container;
 import me.lauriichan.spigot.justlootit.inventory.ItemHelper;
@@ -38,15 +38,9 @@ public final class ContainerAccessListPage extends ContainerPage {
     private static final String ATTR_PAGE = "AccessPage";
     private static final String ATTR_MAX_PAGE = "AccessMaxPage";
 
-    private final JustLootItPlugin plugin;
-
-    public ContainerAccessListPage(JustLootItPlugin plugin) {
-        this.plugin = plugin;
-    }
-
     @Override
     public void onPageUpdate(PageContext<ContainerPage, PlayerAdapter> context, boolean changed) {
-        Actor<Player> actor = plugin.actor(context.player().asBukkit());
+        Actor<Player> actor = ActorCapability.actor(context.player());
         IGuiInventory inventory = context.inventory();
         Container container = inventory.attr(ContainerPageHandler.ATTR_CONTAINER, Container.class);
         if (inventory.updater().chestSize(ChestSize.GRID_5x9)

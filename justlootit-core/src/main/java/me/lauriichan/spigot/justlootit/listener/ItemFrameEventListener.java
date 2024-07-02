@@ -22,6 +22,7 @@ import me.lauriichan.minecraft.pluginbase.listener.IListenerExtension;
 import me.lauriichan.spigot.justlootit.JustLootItKey;
 import me.lauriichan.spigot.justlootit.JustLootItPermission;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
+import me.lauriichan.spigot.justlootit.capability.ActorCapability;
 import me.lauriichan.spigot.justlootit.capability.StorageCapability;
 import me.lauriichan.spigot.justlootit.command.impl.LootItActor;
 import me.lauriichan.spigot.justlootit.config.MainConfig;
@@ -91,7 +92,7 @@ public class ItemFrameEventListener implements IListenerExtension {
             accessFrame(entity, type, player, container);
             return;
         }
-        LootItActor<Player> actor = plugin.actor(player);
+        LootItActor<Player> actor = ActorCapability.actor(plugin, player);
         if (!player.hasPermission(JustLootItPermission.ACTION_REMOVE_CONTAINER_ENTITY)) {
             actor.sendTranslatedMessage(Messages.CONTAINER_BREAK_UNPERMITTED_ENTITY);
             return;
@@ -121,7 +122,7 @@ public class ItemFrameEventListener implements IListenerExtension {
     }
     
     private void accessFrame(Entity entity, EntityType type, Player player, PersistentDataContainer container) {
-        final LootItActor<?> actor = plugin.actor(player);
+        final LootItActor<?> actor = ActorCapability.actor(plugin, player);
         final long id = container.get(JustLootItKey.identity(), PersistentDataType.LONG);
         actor.versionHandler().getLevel(entity.getWorld()).getCapability(StorageCapability.class).ifPresent(capability -> {
             final Storable storable = capability.storage().read(id);

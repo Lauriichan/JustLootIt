@@ -13,7 +13,7 @@ import me.lauriichan.minecraft.pluginbase.inventory.item.ColoredLoreEditor;
 import me.lauriichan.minecraft.pluginbase.inventory.item.ItemEditor;
 import me.lauriichan.minecraft.pluginbase.inventory.paged.PageContext;
 import me.lauriichan.minecraft.pluginbase.util.math.InventoryMath;
-import me.lauriichan.spigot.justlootit.JustLootItPlugin;
+import me.lauriichan.spigot.justlootit.capability.ActorCapability;
 import me.lauriichan.spigot.justlootit.data.*;
 import me.lauriichan.spigot.justlootit.inventory.Textures;
 import me.lauriichan.spigot.justlootit.message.UIInventoryNames;
@@ -26,12 +26,6 @@ public final class ContainerOverviewPage extends ContainerPage {
 
     // TODO: Make vanilla lootable changable
 
-    private final JustLootItPlugin plugin;
-
-    public ContainerOverviewPage(JustLootItPlugin plugin) {
-        this.plugin = plugin;
-    }
-
     @Override
     public boolean defaultPage() {
         return true;
@@ -39,7 +33,7 @@ public final class ContainerOverviewPage extends ContainerPage {
 
     @Override
     public void onPageUpdate(PageContext<ContainerPage, PlayerAdapter> context, boolean changed) {
-        Actor<Player> actor = plugin.actor(context.player().asBukkit());
+        Actor<Player> actor = ActorCapability.actor(context.player());
         IGuiInventory inventory = context.inventory();
         Container container = inventory.attr(ContainerPageHandler.ATTR_CONTAINER, Container.class);
         if (inventory.updater().chestSize(ChestSize.GRID_4x9)

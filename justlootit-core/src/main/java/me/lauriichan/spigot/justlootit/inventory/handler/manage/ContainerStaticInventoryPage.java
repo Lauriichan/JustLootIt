@@ -10,7 +10,7 @@ import me.lauriichan.minecraft.pluginbase.inventory.ChestSize;
 import me.lauriichan.minecraft.pluginbase.inventory.IGuiInventory;
 import me.lauriichan.minecraft.pluginbase.inventory.IGuiInventoryUpdater;
 import me.lauriichan.minecraft.pluginbase.inventory.paged.PageContext;
-import me.lauriichan.spigot.justlootit.JustLootItPlugin;
+import me.lauriichan.spigot.justlootit.capability.ActorCapability;
 import me.lauriichan.spigot.justlootit.data.Container;
 import me.lauriichan.spigot.justlootit.data.ContainerType;
 import me.lauriichan.spigot.justlootit.data.StaticContainer;
@@ -24,12 +24,6 @@ public final class ContainerStaticInventoryPage extends ContainerPage {
 
     private static final ChestSize[] SIZES = ChestSize.values();
 
-    private final JustLootItPlugin plugin;
-
-    public ContainerStaticInventoryPage(JustLootItPlugin plugin) {
-        this.plugin = plugin;
-    }
-
     @Override
     public void onPageOpen(PageContext<ContainerPage, PlayerAdapter> context) {
         Container container = context.inventory().attr(ContainerPageHandler.ATTR_CONTAINER, Container.class);
@@ -42,7 +36,7 @@ public final class ContainerStaticInventoryPage extends ContainerPage {
 
     @Override
     public void onPageUpdate(PageContext<ContainerPage, PlayerAdapter> context, boolean changed) {
-        Actor<Player> actor = plugin.actor(context.player().asBukkit());
+        Actor<Player> actor = ActorCapability.actor(context.player());
         IGuiInventory inventory = context.inventory();
         StaticContainer container = inventory.attr(ContainerPageHandler.ATTR_CONTAINER, StaticContainer.class);
         if (updateInventory(inventory, actor, container.amount(), container.id())) {
