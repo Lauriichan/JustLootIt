@@ -290,6 +290,20 @@ public final class Messages implements IMessageExtension {
         "&8| &7Item: &f$itemName&r &8(&7Hover for more info&8)"
     })
     public static MessageProvider COMMAND_CONTAINER_INFO_CONTAINER_FRAME;
+    @Message(id = "command.container.info.container.compatibility.header", content = {
+        "&8|",
+        "&8| &7Plugin: &c$plugin",
+    })
+    public static MessageProvider COMMAND_CONTAINER_INFO_CONTAINER_COMPATIBILITY_HEADER;
+    @Message(id = "command.container.info.container.compatibility.no-data", content = {
+        "&8|",
+        "&8| &7No extra data provided by compatibility"
+    })
+    public static MessageProvider COMMAND_CONTAINER_INFO_CONTAINER_COMPATIBILITY_NO_DATA;
+    @Message(id = "command.container.info.container.compatibility.format", content = {
+        "&8| &7$key: &c$value"
+    })
+    public static MessageProvider COMMAND_CONTAINER_INFO_CONTAINER_COMPATIBILITY_FORMAT;
     
     @Message(id = "command.container.create.already-container.entity", content = "$#plugin.prefix Entity at &c$x $y $z &7in &c$world &7is already linked to a JustLootIt Container.")
     public static MessageProvider COMMAND_CONTAINER_CREATE_ALREADY_CONTAINER_ENTITY;

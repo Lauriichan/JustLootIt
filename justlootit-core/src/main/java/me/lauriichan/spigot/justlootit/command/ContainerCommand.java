@@ -32,6 +32,7 @@ import me.lauriichan.spigot.justlootit.capability.PlayerGUICapability;
 import me.lauriichan.spigot.justlootit.capability.StorageCapability;
 import me.lauriichan.spigot.justlootit.command.argument.CoordinateArgument.Coord;
 import me.lauriichan.spigot.justlootit.config.data.RefreshGroup;
+import me.lauriichan.spigot.justlootit.data.CompatibilityContainer;
 import me.lauriichan.spigot.justlootit.data.Container;
 import me.lauriichan.spigot.justlootit.data.ContainerType;
 import me.lauriichan.spigot.justlootit.data.FrameContainer;
@@ -576,16 +577,7 @@ public class ContainerCommand implements ICommandExtension {
                 Key.of("refreshGroup", refreshGroup == null || refreshGroup.isEmpty() ? "None" : refreshGroup),
                 Key.of("type", TypeName.ofContainer(container)), Key.of("x", loc.getX()), Key.of("y", loc.getY()), Key.of("z", loc.getZ()),
                 Key.of("world", world.getName()));
-            if (container instanceof VanillaContainer vanilla) {
-                actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_INFO_CONTAINER_VANILLA, Key.of("seed", vanilla.getSeed()),
-                    Key.of("lootTable", vanilla.getLootTableKey()));
-            } else if (container instanceof FrameContainer frame) {
-                ComponentBuilder.create()
-                    .appendContent(actor.getTranslatedMessageAsString(Messages.COMMAND_CONTAINER_INFO_CONTAINER_FRAME,
-                        Key.of("itemName", ItemEditor.of(frame.getItem()).getItemName())))
-                    .hover(new HoverEvent(HoverEvent.Action.SHOW_ITEM, plugin.versionHelper().createItemHover(frame.getItem()))).finish()
-                    .send(actor);
-            }
+            sendAdditionalContainerInfo(plugin, actor, container);
         }, () -> actor.sendTranslatedMessage(Messages.COMMAND_SYSTEM_ERROR_STORAGE_ACCESS_LEVEL, Key.of("level", world.getName())));
     }
 
@@ -664,11 +656,36 @@ public class ContainerCommand implements ICommandExtension {
                 Key.of("refreshGroup", refreshGroup == null ? "None" : refreshGroup), Key.of("type", TypeName.ofContainer(container)),
                 Key.of("x", location.getBlockX()), Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()),
                 Key.of("world", world.getName()));
-            if (container instanceof VanillaContainer vanilla) {
-                actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_INFO_CONTAINER_VANILLA, Key.of("seed", vanilla.getSeed()),
-                    Key.of("lootTable", vanilla.getLootTableKey()));
-            }
+            sendAdditionalContainerInfo(plugin, actor, container);
         }, () -> actor.sendTranslatedMessage(Messages.COMMAND_SYSTEM_ERROR_STORAGE_ACCESS_LEVEL, Key.of("level", world.getName())));
+    }
+
+    private void sendAdditionalContainerInfo(JustLootItPlugin plugin, Actor<?> actor, Container container) {
+        if (container instanceof VanillaContainer vanilla) {
+            actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_INFO_CONTAINER_VANILLA, Key.of("seed", vanilla.getSeed()),
+                Key.of("lootTable", vanilla.getLootTableKey()));
+        } else if (container instanceof FrameContainer frame) {
+            ComponentBuilder.create()
+                .appendContent(actor.getTranslatedMessageAsString(Messages.COMMAND_CONTAINER_INFO_CONTAINER_FRAME,
+                    Key.of("itemName", ItemEditor.of(frame.getItem()).getItemName())))
+                .hover(new HoverEvent(HoverEvent.Action.SHOW_ITEM, plugin.versionHelper().createItemHover(frame.getItem()))).finish()
+                .send(actor);
+        } else if (container instanceof CompatibilityContainer compat) {
+            ComponentBuilder<?, ?> root = ComponentBuilder.create();
+            root.appendContent(actor.getTranslatedMessageAsString(Messages.COMMAND_CONTAINER_INFO_CONTAINER_COMPATIBILITY_HEADER,
+                Key.of("plugin", compat.getCompatibilityData().extension().id()))).finish();
+            ComponentBuilder<?, ?> compatData = ComponentBuilder.create();
+            compat.getCompatibilityData()
+                .addInfoData(key -> compatData
+                    .appendContent(actor.getTranslatedMessageAsString(Messages.COMMAND_CONTAINER_INFO_CONTAINER_COMPATIBILITY_FORMAT,
+                        Key.of("key", key.getKey()), Key.of("value", key.getValue())))
+                    .finish());
+            root.send(actor);
+            if (compatData.isEmpty()) {
+                compatData.appendContent(Messages.COMMAND_CONTAINER_INFO_CONTAINER_COMPATIBILITY_NO_DATA, actor).finish();
+            }
+            compatData.send(actor);
+        }
     }
 
 }

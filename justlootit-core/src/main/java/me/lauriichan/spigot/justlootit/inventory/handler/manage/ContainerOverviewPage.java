@@ -105,9 +105,9 @@ public final class ContainerOverviewPage extends ContainerPage {
         container.getCompatibilityData()
             .addInfoData(key -> loreEditor.add(actor.getTranslatedMessageAsString(
                 UIInventoryNames.CONTAINER_MANAGE_PAGE_OVERVIEW_ITEM_CONTAINER_INFO_COMPATIBILITY_LORE_FORMAT, Key.of("key", key.getKey()),
-                Key.of("value", key.getValue()))));
+                Key.of("value", key.getValue())).split("\n")));
         if (loreEditor.length() == 0) {
-            loreEditor.add(actor.getTranslatedMessageAsString(UIInventoryNames.CONTAINER_MANAGE_PAGE_OVERVIEW_ITEM_CONTAINER_INFO_COMPATIBILITY_LORE_NO_DATA_AVAILABLE));
+            loreEditor.add(actor.getTranslatedMessageAsString(UIInventoryNames.CONTAINER_MANAGE_PAGE_OVERVIEW_ITEM_CONTAINER_INFO_COMPATIBILITY_LORE_NO_DATA_AVAILABLE).split("\n"));
         }
         inventory.set(2, 1, loreEditor.apply());
     }

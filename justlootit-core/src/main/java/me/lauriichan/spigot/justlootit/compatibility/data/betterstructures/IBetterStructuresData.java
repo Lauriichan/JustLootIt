@@ -24,10 +24,7 @@ public interface IBetterStructuresData extends ICompatibilityData {
     @Override
     default boolean fill(PlayerAdapter player, BlockState state, Location location, Inventory inventory) {
         IBetterStructuresProvider provider = CompatDependency.getActiveProvider(extension().id(), IBetterStructuresProvider.class);
-        if (provider == null) {
-            return false;
-        }
-        return provider.access().fillWithLootForFile(inventory, fileName());
+        return provider != null && provider.access().fillWithLootForFile(inventory, fileName());
     }
     
     @Override
