@@ -25,6 +25,8 @@ import me.lauriichan.minecraft.pluginbase.extension.Extension;
 import me.lauriichan.minecraft.pluginbase.inventory.IGuiInventory;
 import me.lauriichan.minecraft.pluginbase.inventory.item.ItemEditor;
 import me.lauriichan.minecraft.pluginbase.message.component.ComponentBuilder;
+import me.lauriichan.spigot.justlootit.JustLootItConstant;
+import me.lauriichan.spigot.justlootit.JustLootItFlag;
 import me.lauriichan.spigot.justlootit.JustLootItKey;
 import me.lauriichan.spigot.justlootit.JustLootItPermission;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
@@ -42,7 +44,9 @@ import me.lauriichan.spigot.justlootit.message.Messages;
 import me.lauriichan.spigot.justlootit.nms.util.Vec3i;
 import me.lauriichan.spigot.justlootit.storage.IStorage;
 import me.lauriichan.spigot.justlootit.storage.Storable;
+import me.lauriichan.spigot.justlootit.util.BlockUtil;
 import me.lauriichan.spigot.justlootit.util.CommandUtil;
+import me.lauriichan.spigot.justlootit.util.DataHelper;
 import me.lauriichan.spigot.justlootit.util.EntityUtil;
 import me.lauriichan.spigot.justlootit.util.SimpleDataType;
 import me.lauriichan.spigot.justlootit.util.TypeName;
@@ -154,7 +158,7 @@ public class ContainerCommand implements ICommandExtension {
             return null;
         }
         List<Entity> validEntities = entities.stream()
-            .filter(entity -> EntityUtil.isSuppportedEntity(entity) || EntityUtil.isItemFrame(entity)).toList();
+            .filter(entity -> EntityUtil.isSupportedEntity(entity) || EntityUtil.isItemFrame(entity)).toList();
         if (validEntities.isEmpty()) {
             actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_ENTITY, Key.of("x", x), Key.of("y", y), Key.of("z", z),
                 Key.of("world", world.getName()));
@@ -228,14 +232,141 @@ public class ContainerCommand implements ICommandExtension {
         return dataContainer.get(JustLootItKey.identity(), PersistentDataType.LONG);
     }
 
+    @Action("link entity")
+    public void linkEntity(final JustLootItPlugin plugin, final Actor<?> actor,
+        @Argument(name = "id", index = 0, params = @Param(name = "minimum", longValue = 0, type = Param.TYPE_LONG)) Long id,
+        @Argument(name = "x", optional = true, index = 1, params = @Param(name = "axis", stringValue = "x", type = Param.TYPE_STRING)) final Coord x,
+        @Argument(name = "y", optional = true, index = 2, params = @Param(name = "axis", stringValue = "y", type = Param.TYPE_STRING)) final Coord y,
+        @Argument(name = "z", optional = true, index = 3, params = @Param(name = "axis", stringValue = "z", type = Param.TYPE_STRING)) final Coord z,
+        @Argument(name = "world", optional = true, index = 4) World world) {
+        runLink(plugin, actor, id, x, y, z, world, true);
+    }
+
+    @Action("link")
+    public void link(final JustLootItPlugin plugin, final Actor<?> actor,
+        @Argument(name = "id", index = 0, params = @Param(name = "minimum", longValue = 0, type = Param.TYPE_LONG)) Long id,
+        @Argument(name = "x", optional = true, index = 1, params = @Param(name = "axis", stringValue = "x", type = Param.TYPE_STRING)) final Coord x,
+        @Argument(name = "y", optional = true, index = 2, params = @Param(name = "axis", stringValue = "y", type = Param.TYPE_STRING)) final Coord y,
+        @Argument(name = "z", optional = true, index = 3, params = @Param(name = "axis", stringValue = "z", type = Param.TYPE_STRING)) final Coord z,
+        @Argument(name = "world", optional = true, index = 4) World world) {
+        runLink(plugin, actor, id, x, y, z, world, false);
+    }
+
+    private void runLink(final JustLootItPlugin plugin, final Actor<?> actor, final Long id, final Coord x, final Coord y, final Coord z,
+        final World world, final boolean useEntity) {
+        StorageCapability capability = plugin.versionHandler().getLevel(world).getCapability(StorageCapability.class).orElse(null);
+        if (capability == null) {
+            actor.sendTranslatedMessage(Messages.COMMAND_SYSTEM_ERROR_STORAGE_ACCESS_LEVEL, Key.of("level", world.getName()));
+            return;
+        }
+        Container container = (Container) capability.storage().read(id.longValue());
+        if (container == null) {
+            actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_ID, Key.of("id", id));
+            return;
+        }
+        ContainerType type = container.type();
+        if (type.blockCreator() == null && type.entityCreator() == null) {
+            actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_LINK_NOT_LINKABLE, Key.of("type", type));
+            return;
+        }
+        final Location loc = CommandUtil.getLocation(actor, x, y, z, world);
+        plugin.scheduler().syncRegional(loc, () -> {
+            if (type.blockCreator() == null || (useEntity && type.entityCreator() != null)) {
+                linkEntityContainer(plugin, actor, type, container.id(), loc);
+                return;
+            }
+            linkBlockContainer(plugin, actor, type, container.id(), loc);
+        });
+    }
+
+    private void linkEntityContainer(final JustLootItPlugin plugin, final Actor<?> actor, final ContainerType type, final long id,
+        final Location location) {
+        final Location centerLocation = new Location(location.getWorld(), location.getBlockX() + 0.5d, location.getBlockY() + 0.5d,
+            location.getBlockZ() + 0.5d);
+        Collection<Entity> entities = location.getWorld().getNearbyEntities(centerLocation, 1.5d, 1.5d, 1.5d);
+        if (entities.isEmpty()) {
+            actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_LINK_NOT_FOUND_ENTITY, Key.of("x", location.getBlockX()),
+                Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld().getName()));
+            return;
+        }
+        List<Entity> validEntities = entities.stream()
+            .filter(entity -> EntityUtil.isSupportedEntity(entity) || EntityUtil.isItemFrame(entity)).toList();
+        if (validEntities.isEmpty()) {
+            actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_LINK_NOT_FOUND_ENTITY, Key.of("x", location.getBlockX()),
+                Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld().getName()));
+            return;
+        }
+        double distance = Double.MAX_VALUE;
+        Entity closest = null;
+        for (Entity entity : validEntities) {
+            Location current = entity.getLocation();
+            double dist = centerLocation.distanceSquared(current);
+            if (dist < distance) {
+                closest = entity;
+                distance = dist;
+            }
+        }
+        if (!type.entityCreator().supportedTest().test(closest)) {
+            actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_LINK_UNSUPPORTED_ENTITY, Key.of("x", location.getBlockX()),
+                Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()),
+                Key.of("type", type));
+            return;
+        }
+        PersistentDataContainer container = closest.getPersistentDataContainer();
+        if (DataHelper.hasIdentity(container)) {
+            actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_LINK_ALREADY_CONTAINER_ENTITY, Key.of("x", location.getBlockX()),
+                Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()));
+            return;
+        }
+        container.set(JustLootItKey.identity(), PersistentDataType.LONG, id);
+        actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_LINK_SUCCESS_ENTITY, Key.of("x", location.getBlockX()),
+            Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld().getName()),
+            Key.of("type", type), Key.of("id", id));
+    }
+
+    private void linkBlockContainer(final JustLootItPlugin plugin, final Actor<?> actor, final ContainerType type, final long id,
+        final Location location) {
+        Block block = location.getBlock();
+        if (block.isEmpty()) {
+            actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_LINK_NOT_FOUND_BLOCK, Key.of("x", location.getBlockX()),
+                Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()));
+            return;
+        }
+        BlockState state = block.getState();
+        if (!(state instanceof org.bukkit.block.Container stateContainer) || (!JustLootItFlag.TILE_ENTITY_CONTAINERS.isSet()
+            && JustLootItConstant.UNSUPPORTED_CONTAINER_TYPES.contains(stateContainer.getInventory().getType()))) {
+            actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_LINK_NOT_FOUND_BLOCK, Key.of("x", location.getBlockX()),
+                Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()));
+            return;
+        }
+        if (!type.blockCreator().supportedTest().test(stateContainer)) {
+            actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_LINK_UNSUPPORTED_BLOCK, Key.of("x", location.getBlockX()),
+                Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()),
+                Key.of("type", type));
+            return;
+        }
+        PersistentDataContainer container = stateContainer.getPersistentDataContainer();
+        if (DataHelper.hasIdentityOrOffset(container)) {
+            actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_LINK_ALREADY_CONTAINER_BLOCK, Key.of("x", location.getBlockX()),
+                Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()));
+            return;
+        }
+        BlockUtil.setContainerOffsetToNearbyChest(stateContainer);
+        container.set(JustLootItKey.identity(), PersistentDataType.LONG, id);
+        stateContainer.update(false, false);
+        actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_LINK_SUCCESS_BLOCK, Key.of("x", location.getBlockX()),
+            Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld().getName()),
+            Key.of("type", type), Key.of("id", id));
+    }
+
     @Action("create entity")
     @Description("$#command.description.justlootit.container.create.entity")
     public void createEntity(final JustLootItPlugin plugin, final Actor<?> actor,
         @Argument(name = "type", index = 0, params = @Param(name = "type", classValue = ContainerType.class, type = Param.TYPE_CLASS)) final ContainerType type,
-        @Argument(name = "x", optional = true, index = 2, params = @Param(name = "axis", stringValue = "x", type = Param.TYPE_STRING)) final Coord x,
-        @Argument(name = "y", optional = true, index = 3, params = @Param(name = "axis", stringValue = "y", type = Param.TYPE_STRING)) final Coord y,
-        @Argument(name = "z", optional = true, index = 4, params = @Param(name = "axis", stringValue = "z", type = Param.TYPE_STRING)) final Coord z,
-        @Argument(name = "world", optional = true, index = 5) World world) {
+        @Argument(name = "x", optional = true, index = 1, params = @Param(name = "axis", stringValue = "x", type = Param.TYPE_STRING)) final Coord x,
+        @Argument(name = "y", optional = true, index = 2, params = @Param(name = "axis", stringValue = "y", type = Param.TYPE_STRING)) final Coord y,
+        @Argument(name = "z", optional = true, index = 3, params = @Param(name = "axis", stringValue = "z", type = Param.TYPE_STRING)) final Coord z,
+        @Argument(name = "world", optional = true, index = 4) World world) {
         runCreate(plugin, actor, type, x, y, z, world, true);
     }
 
@@ -243,10 +374,10 @@ public class ContainerCommand implements ICommandExtension {
     @Description("$#command.description.justlootit.container.create.any")
     public void create(final JustLootItPlugin plugin, final Actor<?> actor,
         @Argument(name = "type", index = 0, params = @Param(name = "type", classValue = ContainerType.class, type = Param.TYPE_CLASS)) final ContainerType type,
-        @Argument(name = "x", optional = true, index = 2, params = @Param(name = "axis", stringValue = "x", type = Param.TYPE_STRING)) final Coord x,
-        @Argument(name = "y", optional = true, index = 3, params = @Param(name = "axis", stringValue = "y", type = Param.TYPE_STRING)) final Coord y,
-        @Argument(name = "z", optional = true, index = 4, params = @Param(name = "axis", stringValue = "z", type = Param.TYPE_STRING)) final Coord z,
-        @Argument(name = "world", optional = true, index = 5) World world) {
+        @Argument(name = "x", optional = true, index = 1, params = @Param(name = "axis", stringValue = "x", type = Param.TYPE_STRING)) final Coord x,
+        @Argument(name = "y", optional = true, index = 2, params = @Param(name = "axis", stringValue = "y", type = Param.TYPE_STRING)) final Coord y,
+        @Argument(name = "z", optional = true, index = 3, params = @Param(name = "axis", stringValue = "z", type = Param.TYPE_STRING)) final Coord z,
+        @Argument(name = "world", optional = true, index = 4) World world) {
         runCreate(plugin, actor, type, x, y, z, world, false);
     }
 
@@ -277,7 +408,7 @@ public class ContainerCommand implements ICommandExtension {
             return;
         }
         List<Entity> validEntities = entities.stream()
-            .filter(entity -> EntityUtil.isSuppportedEntity(entity) || EntityUtil.isItemFrame(entity)).toList();
+            .filter(entity -> EntityUtil.isSupportedEntity(entity) || EntityUtil.isItemFrame(entity)).toList();
         if (validEntities.isEmpty()) {
             actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_NOT_FOUND_ENTITY, Key.of("x", location.getBlockX()),
                 Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld().getName()));
@@ -315,7 +446,8 @@ public class ContainerCommand implements ICommandExtension {
             return;
         }
         BlockState state = block.getState();
-        if (!(state instanceof org.bukkit.block.Container stateContainer)) {
+        if (!(state instanceof org.bukkit.block.Container stateContainer) || (!JustLootItFlag.TILE_ENTITY_CONTAINERS.isSet()
+            && JustLootItConstant.UNSUPPORTED_CONTAINER_TYPES.contains(stateContainer.getInventory().getType()))) {
             actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_UNSUPPORTED_BLOCK, Key.of("x", location.getBlockX()),
                 Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()),
                 Key.of("type", type));
@@ -380,7 +512,7 @@ public class ContainerCommand implements ICommandExtension {
             return;
         }
         List<Entity> validEntities = entities.stream()
-            .filter(entity -> EntityUtil.isSuppportedEntity(entity) || EntityUtil.isItemFrame(entity)).toList();
+            .filter(entity -> EntityUtil.isSupportedEntity(entity) || EntityUtil.isItemFrame(entity)).toList();
         if (validEntities.isEmpty()) {
             actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_ENTITY, Key.of("x", x), Key.of("y", y), Key.of("z", z),
                 Key.of("world", world.getName()));
@@ -539,7 +671,7 @@ public class ContainerCommand implements ICommandExtension {
             return;
         }
         List<Entity> validEntities = entities.stream()
-            .filter(entity -> EntityUtil.isSuppportedEntity(entity) || EntityUtil.isItemFrame(entity)).toList();
+            .filter(entity -> EntityUtil.isSupportedEntity(entity) || EntityUtil.isItemFrame(entity)).toList();
         if (validEntities.isEmpty()) {
             actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_BLOCK, Key.of("x", x), Key.of("y", y), Key.of("z", z),
                 Key.of("world", world.getName()));
@@ -678,7 +810,7 @@ public class ContainerCommand implements ICommandExtension {
             compat.getCompatibilityData()
                 .addInfoData(key -> compatData
                     .appendContent(actor.getTranslatedMessageAsString(Messages.COMMAND_CONTAINER_INFO_CONTAINER_COMPATIBILITY_FORMAT,
-                        Key.of("key", key.getKey()), Key.of("value", key.getValue())))
+                        Key.of("key", key.getKey()), Key.of("value", key.getValue()))).appendChar('\n')
                     .finish());
             root.send(actor);
             if (compatData.isEmpty()) {

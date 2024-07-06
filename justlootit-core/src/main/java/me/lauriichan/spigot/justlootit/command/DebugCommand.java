@@ -51,7 +51,7 @@ public class DebugCommand implements ICommandExtension {
                     return;
                 }
                 List<Entity> validEntities = entities.stream()
-                    .filter(entity -> EntityUtil.isSuppportedEntity(entity) || EntityUtil.isItemFrame(entity)).toList();
+                    .filter(entity -> EntityUtil.isSupportedEntity(entity) || EntityUtil.isItemFrame(entity)).toList();
                 if (validEntities.isEmpty()) {
                     actor.sendTranslatedMessage(Messages.COMMAND_DEBUG_PDC_DATA_EMPTY_BLOCK, Key.of("x", loc.getBlockX()),
                         Key.of("y", loc.getBlockY()), Key.of("z", loc.getBlockZ()), Key.of("world", loc.getWorld().getName()));

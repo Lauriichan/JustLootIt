@@ -10,9 +10,12 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Container;
 import org.bukkit.block.ShulkerBox;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.type.Chest;
 import org.bukkit.block.data.type.Chest.Type;
 import org.bukkit.entity.Player;
 
+import me.lauriichan.spigot.justlootit.JustLootItKey;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoChunk;
 import me.lauriichan.spigot.justlootit.nms.util.Vec3i;
@@ -35,6 +38,23 @@ public final class BlockUtil {
             location.addZ(chestType == Type.LEFT ? chestFace.getModX() : -chestFace.getModX());
         }
         return location;
+    }
+    
+    public static void setContainerOffsetToNearbyChest(Container container) {
+        BlockData data = container.getBlockData();
+        if (!(data instanceof Chest chest) || chest.getType() == Type.SINGLE) {
+            return;
+        }
+        Container otherContainer = BlockUtil.findChestAround(container.getWorld(), container.getX(), container.getY(), container.getZ(),
+            chest.getType(), chest.getFacing());
+        if (otherContainer == null) {
+            return;
+        }
+        otherContainer.getPersistentDataContainer().set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR,
+            new Vec3i(otherContainer.getLocation()).subtractOf(container.getLocation()));
+        otherContainer.update(false, false);
+        container.getPersistentDataContainer().set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR,
+            new Vec3i(container.getLocation()).subtractOf(otherContainer.getLocation()));
     }
 
     public static Container findChestAround(RegionAccessor region, int x, int y, int z, Type chestType, BlockFace chestFace) {

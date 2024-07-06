@@ -221,7 +221,7 @@ public class LootinConverter extends ChunkConverter {
                     clearLootinKeys(dataContainer);
                     chunk.updateEntity(entity);
                 }
-            } else if (EntityUtil.isSuppportedEntity(entity.getType())) {
+            } else if (EntityUtil.isSupportedEntity(entity.getType())) {
                 PersistentDataContainer dataContainer = entity.getContainer();
                 if (!dataContainer.has(identityKey, PersistentDataType.STRING) || hasUnsupportedKey(dataContainer)) {
                     continue;

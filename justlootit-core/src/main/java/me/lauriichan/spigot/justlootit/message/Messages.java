@@ -304,6 +304,25 @@ public final class Messages implements IMessageExtension {
         "&8| &7$key: &c$value"
     })
     public static MessageProvider COMMAND_CONTAINER_INFO_CONTAINER_COMPATIBILITY_FORMAT;
+
+    @Message(id = "command.container.link.already-container.entity", content = "$#plugin.prefix Entity at &c$x $y $z &7in &c$world &7is already linked to a JustLootIt Container.")
+    public static MessageProvider COMMAND_CONTAINER_LINK_ALREADY_CONTAINER_ENTITY;
+    @Message(id = "command.container.link.already-container.block", content = "$#plugin.prefix Block at &c$x $y $z &7in &c$world &7is already linked to a JustLootIt Container.")
+    public static MessageProvider COMMAND_CONTAINER_LINK_ALREADY_CONTAINER_BLOCK;
+    @Message(id = "command.container.link.unsupported.block", content = "$#plugin.prefix Block at &c$x $y $z &7in &c$world &7is not supported to be used as &c$type container&7!")
+    public static MessageProvider COMMAND_CONTAINER_LINK_UNSUPPORTED_BLOCK;
+    @Message(id = "command.container.link.unsupported.entity", content = "$#plugin.prefix Entity at &c$x $y $z &7in &c$world &7is not supported to be used as &c$type container&7!")
+    public static MessageProvider COMMAND_CONTAINER_LINK_UNSUPPORTED_ENTITY;
+    @Message(id = "command.container.link.success.block", content = "$#plugin.prefix Successfully linked block at &c$x $y $z &7in &c$world &7to a &c$type container &8(&c$id&8)&7.")
+    public static MessageProvider COMMAND_CONTAINER_LINK_SUCCESS_BLOCK;
+    @Message(id = "command.container.link.success.entity", content = "$#plugin.prefix Successfully linked entity at &c$x $y $z &7in &c$world &7to a &c$type container &8(&c$id&8)&7.")
+    public static MessageProvider COMMAND_CONTAINER_LINK_SUCCESS_ENTITY;
+    @Message(id = "command.container.link.not-found.block", content = "$#plugin.prefix No block found at &c$x $y $z &7in &c$world&7.")
+    public static MessageProvider COMMAND_CONTAINER_LINK_NOT_FOUND_BLOCK;
+    @Message(id = "command.container.link.not-found.entity", content = "$#plugin.prefix No valid entity around &c$x $y $z &7in &c$world&7.")
+    public static MessageProvider COMMAND_CONTAINER_LINK_NOT_FOUND_ENTITY;
+    @Message(id = "command.container.link.not-linkable", content = "$#plugin.prefix The &c$type container &7can not be linked manually.")
+    public static MessageProvider COMMAND_CONTAINER_LINK_NOT_LINKABLE;
     
     @Message(id = "command.container.create.already-container.entity", content = "$#plugin.prefix Entity at &c$x $y $z &7in &c$world &7is already linked to a JustLootIt Container.")
     public static MessageProvider COMMAND_CONTAINER_CREATE_ALREADY_CONTAINER_ENTITY;

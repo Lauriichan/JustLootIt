@@ -2,8 +2,11 @@ package me.lauriichan.spigot.justlootit.util;
 
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
+import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
 
 import me.lauriichan.spigot.justlootit.JustLootItFlag;
+import me.lauriichan.spigot.justlootit.JustLootItKey;
 
 public final class EntityUtil {
 
@@ -11,11 +14,17 @@ public final class EntityUtil {
         throw new UnsupportedOperationException();
     }
 
-    public static boolean isSuppportedEntity(Entity entity) {
-        return isSuppportedEntity(entity.getType());
+    public static boolean hasContainerId(Entity entity) {
+        PersistentDataContainer data = entity.getPersistentDataContainer();
+        return data.has(JustLootItKey.identity(), PersistentDataType.LONG)
+            || data.has(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR);
     }
 
-    public static boolean isSuppportedEntity(EntityType type) {
+    public static boolean isSupportedEntity(Entity entity) {
+        return isSupportedEntity(entity.getType());
+    }
+
+    public static boolean isSupportedEntity(EntityType type) {
         return type == EntityType.CHEST_BOAT || type == EntityType.MINECART_CHEST
             || JustLootItFlag.TILE_ENTITY_CONTAINERS.isSet() && type == EntityType.MINECART_HOPPER;
     }

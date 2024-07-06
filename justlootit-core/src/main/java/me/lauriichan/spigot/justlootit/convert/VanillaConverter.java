@@ -148,7 +148,7 @@ public class VanillaConverter extends ChunkConverter {
                 dataContainer.set(JustLootItKey.identity(), PersistentDataType.LONG, storageId);
                 continue;
             }
-            if (EntityUtil.isSuppportedEntity(type)) {
+            if (EntityUtil.isSupportedEntity(type)) {
                 if (tag.has("LootTable", TagType.STRING)) {
                     long storageId = storage.newId();
                     storage.write(new VanillaContainer(storageId, NamespacedKey.fromString(tag.getString("LootTable")),

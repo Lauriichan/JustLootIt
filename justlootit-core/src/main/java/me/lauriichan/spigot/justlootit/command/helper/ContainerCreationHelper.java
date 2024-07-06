@@ -2,6 +2,7 @@ package me.lauriichan.spigot.justlootit.command.helper;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
@@ -24,9 +25,19 @@ import me.lauriichan.spigot.justlootit.data.FrameContainer;
 import me.lauriichan.spigot.justlootit.data.StaticContainer;
 import me.lauriichan.spigot.justlootit.data.VanillaContainer;
 import me.lauriichan.spigot.justlootit.message.Messages;
+import me.lauriichan.spigot.justlootit.util.BlockUtil;
+import me.lauriichan.spigot.justlootit.util.DataHelper;
 import me.lauriichan.spigot.justlootit.util.EntityUtil;
 
 public final class ContainerCreationHelper {
+
+    @SuppressWarnings("rawtypes")
+    private static final Predicate ALLOW_ALL_PREDICATE = any -> true;
+
+    @SuppressWarnings("unchecked")
+    public static <T> Predicate<T> allowAll() {
+        return ALLOW_ALL_PREDICATE;
+    }
 
     public static final class BlockContainerCreator {
 
@@ -38,10 +49,17 @@ public final class ContainerCreationHelper {
 
         private final Class<? extends Container> containerType;
         private final CreatorFunction function;
+        private final Predicate<org.bukkit.block.Container> supportedTest;
 
         public BlockContainerCreator(Class<? extends Container> containerType, CreatorFunction function) {
+            this(containerType, function, allowAll());
+        }
+
+        public BlockContainerCreator(Class<? extends Container> containerType, CreatorFunction function,
+            Predicate<org.bukkit.block.Container> supportedTest) {
             this.containerType = containerType;
             this.function = function;
+            this.supportedTest = supportedTest;
         }
 
         public Class<? extends Container> containerType() {
@@ -50,6 +68,10 @@ public final class ContainerCreationHelper {
 
         public CreatorFunction function() {
             return function;
+        }
+
+        public Predicate<org.bukkit.block.Container> supportedTest() {
+            return supportedTest;
         }
 
     }
@@ -64,10 +86,16 @@ public final class ContainerCreationHelper {
 
         private final Class<? extends Container> containerType;
         private final CreatorFunction function;
+        private final Predicate<Entity> supportedTest;
 
         public EntityContainerCreator(Class<? extends Container> containerType, CreatorFunction function) {
+            this(containerType, function, allowAll());
+        }
+
+        public EntityContainerCreator(Class<? extends Container> containerType, CreatorFunction function, Predicate<Entity> supportedTest) {
             this.containerType = containerType;
             this.function = function;
+            this.supportedTest = supportedTest;
         }
 
         public Class<? extends Container> containerType() {
@@ -78,6 +106,10 @@ public final class ContainerCreationHelper {
             return function;
         }
 
+        public Predicate<Entity> supportedTest() {
+            return supportedTest;
+        }
+
     }
 
     private ContainerCreationHelper() {
@@ -86,13 +118,14 @@ public final class ContainerCreationHelper {
 
     public static final EntityContainerCreator ENTITY_FRAME = new EntityContainerCreator(FrameContainer.class,
         (plugin, actor, location, entity, creator) -> {
+            // We check for ItemFrame here since we need the interface, but theoretically we shouldn't need to and could just cast.
             if (!(entity instanceof ItemFrame itemFrame)) {
                 actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_UNSUPPORTED_ENTITY, Key.of("x", location.getBlockX()),
                     Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()),
                     Key.of("type", ContainerType.FRAME));
                 return;
             }
-            if (itemFrame.getPersistentDataContainer().has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+            if (DataHelper.hasIdentity(itemFrame.getPersistentDataContainer())) {
                 actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_ALREADY_CONTAINER_ENTITY, Key.of("x", location.getBlockX()),
                     Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()));
                 return;
@@ -108,18 +141,12 @@ public final class ContainerCreationHelper {
                 itemFrame.setItem(null);
                 return new FrameContainer(id, itemStack.clone());
             });
-        });
+        }, EntityUtil::isItemFrame);
 
     public static final EntityContainerCreator ENTITY_VANILLA = new EntityContainerCreator(VanillaContainer.class,
         (plugin, actor, location, entity, creator) -> {
-            if (!EntityUtil.isSuppportedEntity(entity)) {
-                actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_UNSUPPORTED_ENTITY, Key.of("x", location.getBlockX()),
-                    Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()),
-                    Key.of("type", ContainerType.VANILLA));
-                return;
-            }
             PersistentDataContainer dataContainer = entity.getPersistentDataContainer();
-            if (dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+            if (DataHelper.hasIdentity(dataContainer)) {
                 actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_ALREADY_CONTAINER_ENTITY, Key.of("x", location.getBlockX()),
                     Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()));
                 return;
@@ -157,10 +184,10 @@ public final class ContainerCreationHelper {
                             });
                         });
                 });
-        });
+        }, EntityUtil::isSupportedEntity);
     public static final BlockContainerCreator BLOCK_VANILLA = new BlockContainerCreator(VanillaContainer.class,
         (plugin, actor, location, block, creator) -> {
-            if (block.getPersistentDataContainer().has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+            if (DataHelper.hasIdentityOrOffset(block.getPersistentDataContainer())) {
                 actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_ALREADY_CONTAINER_BLOCK, Key.of("x", location.getBlockX()),
                     Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()));
                 return;
@@ -192,6 +219,7 @@ public final class ContainerCreationHelper {
                                     return;
                                 }
                                 creator.accept((id) -> {
+                                    BlockUtil.setContainerOffsetToNearbyChest(blockContainer);
                                     dataContainer.set(JustLootItKey.identity(), PersistentDataType.LONG, id);
                                     blockContainer.update(false, false);
                                     blockContainer.getInventory().clear();
@@ -204,14 +232,8 @@ public final class ContainerCreationHelper {
 
     public static final EntityContainerCreator ENTITY_STATIC = new EntityContainerCreator(StaticContainer.class,
         (plugin, actor, location, entity, creator) -> {
-            if (!EntityUtil.isSuppportedEntity(entity)) {
-                actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_UNSUPPORTED_ENTITY, Key.of("x", location.getBlockX()),
-                    Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()),
-                    Key.of("type", ContainerType.STATIC));
-                return;
-            }
             PersistentDataContainer dataContainer = entity.getPersistentDataContainer();
-            if (dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+            if (DataHelper.hasIdentity(dataContainer)) {
                 actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_ALREADY_CONTAINER_ENTITY, Key.of("x", location.getBlockX()),
                     Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()));
                 return;
@@ -225,19 +247,20 @@ public final class ContainerCreationHelper {
                     inventory.clear();
                 }
             });
-        });
+        }, EntityUtil::isSupportedEntity);
     public static final BlockContainerCreator BLOCK_STATIC = new BlockContainerCreator(StaticContainer.class,
         (plugin, actor, location, block, creator) -> {
             PersistentDataContainer dataContainer = block.getPersistentDataContainer();
-            if (block.getPersistentDataContainer().has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+            if (DataHelper.hasIdentityOrOffset(dataContainer)) {
                 actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_ALREADY_CONTAINER_BLOCK, Key.of("x", location.getBlockX()),
                     Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()));
                 return;
             }
             creator.accept((id) -> {
+                BlockUtil.setContainerOffsetToNearbyChest(block);
+                dataContainer.set(JustLootItKey.identity(), PersistentDataType.LONG, id);
                 Inventory inventory = block.getInventory();
                 try {
-                    dataContainer.set(JustLootItKey.identity(), PersistentDataType.LONG, id);
                     return new StaticContainer(id, inventory);
                 } finally {
                     block.update(false, false);
@@ -245,5 +268,4 @@ public final class ContainerCreationHelper {
                 }
             });
         });
-
 }

@@ -6,6 +6,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
 
 import me.lauriichan.laylib.command.Actor;
 import me.lauriichan.laylib.localization.Key;
@@ -15,17 +16,25 @@ import me.lauriichan.spigot.justlootit.message.Messages;
 import me.lauriichan.spigot.justlootit.util.persistence.BreakData;
 
 public final class DataHelper {
-    
 
     public static final long DAY_IN_SECONDS = TimeUnit.DAYS.toSeconds(1);
     public static final long HOUR_IN_SECONDS = TimeUnit.HOURS.toSeconds(1);
     public static final long MINUTE_IN_SECONDS = TimeUnit.MINUTES.toSeconds(1);
-    
+
     public static final long MILLISECOND_IN_NANOSECONDS = TimeUnit.MILLISECONDS.toNanos(1);
     public static final long MILLISECOND_IN_MICROSECONDS = TimeUnit.MILLISECONDS.toMicros(1);
 
     private DataHelper() {
         throw new UnsupportedOperationException();
+    }
+
+    public static boolean hasIdentity(PersistentDataContainer container) {
+        return container.has(JustLootItKey.identity(), PersistentDataType.LONG);
+    }
+
+    public static boolean hasIdentityOrOffset(PersistentDataContainer container) {
+        return container.has(JustLootItKey.identity(), PersistentDataType.LONG)
+            || container.has(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR);
     }
 
     public static boolean canBreakContainer(PersistentDataContainer container, UUID uuid) {
@@ -95,7 +104,7 @@ public final class DataHelper {
                 return 0;
             }
             return Math.floorDiv(time, MILLISECOND_IN_MICROSECONDS);
-        } else if(unit == TimeUnit.NANOSECONDS) {
+        } else if (unit == TimeUnit.NANOSECONDS) {
             if (time < MILLISECOND_IN_NANOSECONDS) {
                 return 0;
             }

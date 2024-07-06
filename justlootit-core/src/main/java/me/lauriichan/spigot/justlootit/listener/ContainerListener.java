@@ -186,7 +186,7 @@ public class ContainerListener implements IListenerExtension {
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
     public void onVehicleDamage(final VehicleDamageEvent event) {
         Vehicle vehicle = event.getVehicle();
-        if (!EntityUtil.isSuppportedEntity(vehicle)) {
+        if (!EntityUtil.isSupportedEntity(vehicle)) {
             return;
         }
         PersistentDataContainer dataContainer = vehicle.getPersistentDataContainer();
@@ -291,7 +291,7 @@ public class ContainerListener implements IListenerExtension {
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
     public void onInteractEntity(final PlayerInteractEntityEvent event) {
         final Entity entity = event.getRightClicked();
-        if (!EntityUtil.isSuppportedEntity(entity)) {
+        if (!EntityUtil.isSupportedEntity(entity)) {
             return;
         }
         final PersistentDataContainer dataContainer = entity.getPersistentDataContainer();
