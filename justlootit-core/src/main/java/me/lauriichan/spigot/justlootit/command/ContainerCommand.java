@@ -57,8 +57,6 @@ import net.md_5.bungee.api.chat.HoverEvent;
 @Permission(JustLootItPermission.COMMAND_CONTAINER)
 public class ContainerCommand implements ICommandExtension {
 
-    // TODO: [IDEA] Command to view and modify existing containers (Preferably with Inventory UI)
-
     @Action("manage")
     @Description("$#command.description.justlootit.container.manage.id")
     public void manage(final JustLootItPlugin plugin, final Actor<?> rawActor,
@@ -74,7 +72,7 @@ public class ContainerCommand implements ICommandExtension {
             if (container == null) {
                 return;
             }
-            openManageInventory(plugin, actor, container);
+            openManageInventory(plugin, actor, container, world);
         });
     }
 
@@ -96,15 +94,16 @@ public class ContainerCommand implements ICommandExtension {
             if (container == null) {
                 return;
             }
-            openManageInventory(plugin, actor, container);
+            openManageInventory(plugin, actor, container, world);
         });
     }
 
-    private void openManageInventory(final JustLootItPlugin plugin, final Actor<Player> actor, final Container container) {
+    private void openManageInventory(final JustLootItPlugin plugin, final Actor<Player> actor, final Container container, final World world) {
         plugin.scheduler().sync(() -> {
             plugin.versionHandler().getPlayer(actor.getHandle()).getCapability(PlayerGUICapability.class).ifPresent(guiCapability -> {
                 final IGuiInventory inventory = guiCapability.gui();
                 inventory.attrSet(ContainerPageHandler.ATTR_CONTAINER, container);
+                inventory.attrSet(ContainerPageHandler.ATTR_WORLD, CommandUtil.getLocation(actor, null, null, null, world).getWorld());
                 inventory.setHandler(plugin.pagedInventoryRegistry().get(ContainerPageHandler.class));
                 inventory.open(actor.getHandle());
             });
@@ -254,9 +253,10 @@ public class ContainerCommand implements ICommandExtension {
 
     private void runLink(final JustLootItPlugin plugin, final Actor<?> actor, final Long id, final Coord x, final Coord y, final Coord z,
         final World world, final boolean useEntity) {
-        StorageCapability capability = plugin.versionHandler().getLevel(world).getCapability(StorageCapability.class).orElse(null);
+        final Location loc = CommandUtil.getLocation(actor, x, y, z, world);
+        StorageCapability capability = plugin.versionHandler().getLevel(loc.getWorld()).getCapability(StorageCapability.class).orElse(null);
         if (capability == null) {
-            actor.sendTranslatedMessage(Messages.COMMAND_SYSTEM_ERROR_STORAGE_ACCESS_LEVEL, Key.of("level", world.getName()));
+            actor.sendTranslatedMessage(Messages.COMMAND_SYSTEM_ERROR_STORAGE_ACCESS_LEVEL, Key.of("level", loc.getWorld().getName()));
             return;
         }
         Container container = (Container) capability.storage().read(id.longValue());
@@ -269,7 +269,6 @@ public class ContainerCommand implements ICommandExtension {
             actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_LINK_NOT_LINKABLE, Key.of("type", type));
             return;
         }
-        final Location loc = CommandUtil.getLocation(actor, x, y, z, world);
         plugin.scheduler().syncRegional(loc, () -> {
             if (type.blockCreator() == null || (useEntity && type.entityCreator() != null)) {
                 linkEntityContainer(plugin, actor, type, container.id(), loc);
