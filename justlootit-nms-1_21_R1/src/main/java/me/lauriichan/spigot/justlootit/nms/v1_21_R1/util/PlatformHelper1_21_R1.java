@@ -1,8 +1,8 @@
 package me.lauriichan.spigot.justlootit.nms.v1_21_R1.util;
 
 import java.lang.invoke.MethodHandle;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -28,13 +28,17 @@ public final class PlatformHelper1_21_R1 {
         }
 
         static MethodHandle getEntityLookup() {
-            Class<?> entityLookup = ClassUtil.findClass("io.papermc.paper.chunk.system.entity.EntityLookup");
+            Class<?> chunkSystemLevel = ClassUtil.findClass("ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemLevel");
+            if (chunkSystemLevel == null) {
+                return null;
+            }
+            Class<?> entityLookup = ClassUtil.findClass("ca.spottedleaf.moonrise.patches.chunk_system.level.entity.EntityLookup");
             if (entityLookup == null) {
                 return null;
             }
-            Method method = ClassUtil.getMethod(ServerLevel.class, "getEntityLookup");
+            Method method = ClassUtil.getMethod(chunkSystemLevel, "moonrise$getEntityLookup");
             if (method == null || !entityLookup.isAssignableFrom(method.getReturnType())) {
-                throw new IllegalStateException("Couldn't find method 'getEntityLookup', JustLootIt won't work here.");
+                throw new IllegalStateException("Couldn't find method 'moonrise$getEntityLookup', JustLootIt won't work here.");
             }
             return JavaAccess.accessMethod(method);
         }
