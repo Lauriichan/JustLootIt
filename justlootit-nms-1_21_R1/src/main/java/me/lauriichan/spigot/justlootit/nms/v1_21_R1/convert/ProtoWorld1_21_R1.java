@@ -5,6 +5,7 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -172,6 +173,7 @@ public class ProtoWorld1_21_R1 extends ProtoWorld implements LevelHeightAccessor
                 compositeCounter.add(counter);
                 futures.add(CompletableFuture.runAsync(() -> streamRegion(path, counter, consumer), executor));
             });
+        } catch (NoSuchFileException ignore) {
         } catch (IOException e) {
             logger.error("Failed to convert level '{0}'!", e, worldData.getLevelName());
         }

@@ -1,5 +1,7 @@
 package me.lauriichan.spigot.justlootit.command;
 
+import java.io.File;
+
 import org.bukkit.Bukkit;
 import org.bukkit.command.ConsoleCommandSender;
 
@@ -76,7 +78,7 @@ public class ConvertCommand implements ICommandExtension {
                 actor.getTranslatedMessageAsString(Messages.INPUT_PROMPT_CONVERT_VANILLA_STATIC_CONTAINERS),
                 actor.getTranslatedMessageAsString(Messages.INPUT_RETRY_BOOLEAN), this::propertyVanillaStatic);
         } else {
-            runConversion(actor);
+            blacklistWorldPrompt(actor);
         }
     }
 
@@ -101,7 +103,7 @@ public class ConvertCommand implements ICommandExtension {
                 actor.getTranslatedMessageAsString(Messages.INPUT_PROMPT_CONVERT_VANILLA_ELYTRA_FRAMES_ONLY),
                 actor.getTranslatedMessageAsString(Messages.INPUT_RETRY_BOOLEAN), this::propertyVanillaElytraFrames);
         } else {
-            runConversion(actor);
+            blacklistWorldPrompt(actor);
         }
     }
 
@@ -111,7 +113,25 @@ public class ConvertCommand implements ICommandExtension {
             return;
         }
         properties.setProperty(ConvProp.VANILLA_ALLOW_ONLY_ELYTRA_FRAME, state);
-        runConversion(actor);
+        blacklistWorldPrompt(actor);
+    }
+    
+    private void blacklistWorldPrompt(Actor<?> actor) {
+        inputProvider.getStringInput(actor, actor.getTranslatedMessageAsString(Messages.INPUT_PROMPT_CONVERT_BLACKLIST_WORLD), null, this::blacklistWorldSubmit);
+    }
+    
+    private void blacklistWorldSubmit(Actor<?> actor, String worldName) {
+        if (worldName.equalsIgnoreCase("#start") || worldName.isBlank()) {
+            runConversion(actor);
+            return;
+        }
+        File world = new File(Bukkit.getWorldContainer(), worldName);
+        if (!world.isDirectory()) {
+            actor.sendTranslatedMessage(Messages.INPUT_PROMPT_FAILED_CONVERT_BLACKLIST_WORLD, Key.of("worldName", worldName));
+        } else {
+            properties.addPropertyEntry(ConvProp.BLACKLISTED_WORLDS, worldName);
+        }
+        blacklistWorldPrompt(actor);
     }
 
     private void runConversion(Actor<?> actor) {

@@ -242,14 +242,14 @@ public class WorldConfig implements IConfigExtension {
     }
     
     public boolean areFrameContainersBlacklisted() {
-        return blacklistStaticContainers;
+        return blacklistFrameContainers;
     }
     
     public void setFrameContainersBlacklisted(boolean blacklisted) {
-        if (this.blacklistStaticContainers == blacklisted) {
+        if (this.blacklistFrameContainers == blacklisted) {
             return;
         }
-        this.blacklistStaticContainers = blacklisted;
+        this.blacklistFrameContainers = blacklisted;
         setDirty();
     }
     

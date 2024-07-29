@@ -6,10 +6,15 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Properties;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 import me.lauriichan.laylib.logger.ISimpleLogger;
 
 public final class ConversionProperties {
 
+    private static final String ENTRY_SPLITTER = ";#;";
+    
     private final ISimpleLogger logger;
 
     private final File file;
@@ -41,6 +46,10 @@ public final class ConversionProperties {
     public boolean isAvailable() {
         return properties != null;
     }
+    
+    public boolean hasProperty(String name) {
+        return properties.containsKey(name);
+    }
 
     public boolean isProperty(String name) {
         return isProperty(name, false);
@@ -53,9 +62,36 @@ public final class ConversionProperties {
         }
         return Boolean.valueOf(propertyValue);
     }
+    
+    public ObjectList<String> getPropertyEntries(String name) {
+        if (!properties.containsKey(name)) {
+            return ObjectLists.emptyList();
+        }
+        String[] entries = properties.getProperty(name, "").split(ENTRY_SPLITTER);
+        ObjectArrayList<String> list = new ObjectArrayList<>(entries.length);
+        for (String entry : entries) {
+            if (entry.isBlank()) {
+                continue;
+            }
+            list.add(entry);
+        }
+        return ObjectLists.unmodifiable(list);
+    }
+    
+    public void resetProperty(String name) {
+        properties.remove(name);
+    }
 
     public void setProperty(String name, boolean state) {
         properties.setProperty(name, Boolean.toString(state));
+    }
+    
+    public void addPropertyEntry(String name, String entry) {
+        if (!properties.containsKey(name)) {
+            properties.setProperty(name, entry);
+            return;
+        }
+        properties.setProperty(name, properties.getProperty(name) + ENTRY_SPLITTER + entry);
     }
 
     public void save() {

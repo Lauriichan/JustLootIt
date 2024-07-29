@@ -11,6 +11,7 @@ import java.util.function.Consumer;
 import org.bukkit.Bukkit;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.laylib.reflection.StackTracker;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
@@ -55,8 +56,9 @@ public final class JustLootItConverter {
         File[] possibleWorldFiles = worldContainer.listFiles();
         boolean somethingWasConverted = false;
         ISimpleLogger logger = versionHandler.logger();
+        ObjectList<String> blacklistedWorldNames = properties.getPropertyEntries(ConvProp.BLACKLISTED_WORLDS);
         for (File file : possibleWorldFiles) {
-            if (!file.isDirectory()) {
+            if (!file.isDirectory() || blacklistedWorldNames.contains(file.getName())) {
                 continue;
             }
             try (ProtoWorld world = conversionAdapter.getWorld(file)) {
@@ -74,7 +76,12 @@ public final class JustLootItConverter {
                     }
                 };
                 somethingWasConverted = true;
+                logger.info("Starting conversion of level '{0}'...", world.getName());
                 ConversionProgress progress = world.streamChunks(chunkConsumer);
+                if (!progress.hasNext()) {
+                    logger.info("Skipping level '{0}', couldn't find any regions.", world.getName());
+                    continue;
+                }
                 loop:
                 while (true) {
                     logger.info("Converting level '{0}'... ({2}) [{1} / {3} Chunks]", world.getName(), progress.counter().current(), PROGRESS_FORMAT.format(progress.counter().progress()), progress.counter().max());
@@ -88,7 +95,8 @@ public final class JustLootItConverter {
                     } catch (InterruptedException | ExecutionException | TimeoutException e) {
                         continue;
                     }
-                }
+                } 
+                logger.info("Conversion of level '{0}' done! [{3} Chunks]", world.getName(), progress.counter().max());
             }
         }
         return somethingWasConverted;

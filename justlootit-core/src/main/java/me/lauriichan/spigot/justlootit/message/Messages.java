@@ -80,6 +80,17 @@ public final class Messages implements IMessageExtension {
         "&4WARNING: &cDoing this in a world with player created blocks might cause them to be recognized as Loot containers!"
     })
     public static MessageProvider INPUT_PROMPT_CONVERT_VANILLA_STATIC_CONTAINERS;
+    @Message(id = "input.prompt.convert.blacklist-world", content = {
+        "&7If you want to blacklist a world from the conversion process do so now.",
+        "&7Once you're done press enter or type '#start' to start the process."
+    })
+    public static MessageProvider INPUT_PROMPT_CONVERT_BLACKLIST_WORLD;
+    
+    // Prompt failure
+    @Message(id = "input.prompt-failed.convert.blacklist-world", content = {
+        "&7The world folder '&c$worldName&7' doesn't exist."
+    })
+    public static MessageProvider INPUT_PROMPT_FAILED_CONVERT_BLACKLIST_WORLD;
     
     /*
      * Container

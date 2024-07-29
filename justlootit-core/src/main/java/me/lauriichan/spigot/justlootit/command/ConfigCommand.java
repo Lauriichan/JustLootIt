@@ -30,7 +30,9 @@ public class ConfigCommand implements ICommandExtension {
         if (choosenWrapper == null) {
             actor.sendTranslatedMessage(Messages.COMMAND_CONFIG_SAVE_ALL_START);
             int saved = 0, skipped = 0;
+            int amount = 0;
             for (Object2IntMap.Entry<ConfigWrapper<?>> entry : configManager.save().object2IntEntrySet()) {
+                amount++;
                 int state = sendSaveInfo(actor, TypeName.ofConfig(entry.getKey().config()), entry.getIntValue());
                 if (state == 1) {
                     saved++;
@@ -38,7 +40,6 @@ public class ConfigCommand implements ICommandExtension {
                     skipped++;
                 }
             }
-            int amount = configManager.amount();
             actor.sendTranslatedMessage(Messages.COMMAND_CONFIG_SAVE_ALL_END, Key.of("total", amount), Key.of("success", saved),
                 Key.of("skipped", skipped), Key.of("failed", (amount - saved - skipped)));
             return;
@@ -68,7 +69,9 @@ public class ConfigCommand implements ICommandExtension {
         if (choosenWrapper == null) {
             actor.sendTranslatedMessage(Messages.COMMAND_CONFIG_RELOAD_ALL_START);
             int reloaded = 0, skipped = 0;
+            int amount = 0;
             for (Object2IntMap.Entry<ConfigWrapper<?>> entry : configManager.reload().object2IntEntrySet()) {
+                amount++;
                 int state = sendReloadInfo(actor, TypeName.ofConfig(entry.getKey().config()), entry.getIntValue());
                 if (state == 1) {
                     reloaded++;
@@ -76,7 +79,6 @@ public class ConfigCommand implements ICommandExtension {
                     skipped++;
                 }
             }
-            int amount = configManager.amount();
             actor.sendTranslatedMessage(Messages.COMMAND_CONFIG_RELOAD_ALL_END, Key.of("total", amount), Key.of("success", reloaded),
                 Key.of("skipped", skipped), Key.of("failed", (amount - reloaded - skipped)));
             return;
