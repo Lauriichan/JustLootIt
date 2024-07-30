@@ -62,6 +62,10 @@ public class CachedStorage<S extends Storable> implements IStorage<S> {
             logger.warning("Couldn't save resource with id '" + Long.toHexString(key) + "'!", exp);
         }
     }
+    
+    public final Long2ObjectMapCache<CacheObject<S>> cache() {
+        return cache;
+    }
 
     @Override
     public ISimpleLogger logger() {

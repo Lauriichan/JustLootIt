@@ -3,6 +3,7 @@ package me.lauriichan.spigot.justlootit.nms;
 import java.io.File;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -94,6 +95,13 @@ public abstract class VersionHandler {
             adapter.send(packets);
         }
     }
+    
+    public final void forEachPlayer(Consumer<PlayerAdapter> action) {
+        final PlayerAdapter[] adapters = players.values().toArray(PlayerAdapter[]::new);
+        for (PlayerAdapter adapter : adapters) {
+            action.accept(adapter);
+        }
+    }
 
     public final PlayerAdapter getPlayer(final UUID playerId) {
         if (players.containsKey(playerId)) {
@@ -144,6 +152,13 @@ public abstract class VersionHandler {
     /*
      * Level management
      */
+    
+    public final void forEachLevel(Consumer<LevelAdapter> action) {
+        final LevelAdapter[] adapters = levels.values().toArray(LevelAdapter[]::new);
+        for (LevelAdapter adapter : adapters) {
+            action.accept(adapter);
+        }
+    }
 
     public final LevelAdapter getLevel(final UUID levelId) {
         if (levels.containsKey(levelId)) {

@@ -13,12 +13,18 @@ import me.lauriichan.minecraft.pluginbase.config.handler.JsonConfigHandler;
 import me.lauriichan.minecraft.pluginbase.extension.Extension;
 import me.lauriichan.spigot.justlootit.config.data.RefreshGroup;
 import me.lauriichan.spigot.justlootit.util.DataHelper;
+import me.lauriichan.spigot.justlootit.util.TypeName;
 
 @Extension
 public class RefreshConfig implements ISingleConfigExtension {
 
     private final Object2ObjectOpenHashMap<String, RefreshGroup> groups = new Object2ObjectOpenHashMap<>();
     private volatile boolean modified = false;
+    
+    @Override
+    public String name() {
+        return TypeName.ofConfig(this);
+    }
 
     @Override
     public IConfigHandler handler() {

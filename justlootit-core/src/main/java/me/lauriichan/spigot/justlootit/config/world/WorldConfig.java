@@ -18,6 +18,7 @@ import me.lauriichan.minecraft.pluginbase.config.Configuration;
 import me.lauriichan.minecraft.pluginbase.config.IConfigExtension;
 import me.lauriichan.minecraft.pluginbase.config.IConfigHandler;
 import me.lauriichan.minecraft.pluginbase.config.handler.JsonConfigHandler;
+import me.lauriichan.spigot.justlootit.util.TypeName;
 
 public class WorldConfig implements IConfigExtension {
     
@@ -31,6 +32,11 @@ public class WorldConfig implements IConfigExtension {
     private volatile boolean blacklistFrameContainers = false;
     
     private volatile boolean modified = false;
+    
+    @Override
+    public String name() {
+        return TypeName.ofConfig(this);
+    }
     
     @Override
     public IConfigHandler handler() {

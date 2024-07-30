@@ -45,6 +45,7 @@ import me.lauriichan.spigot.justlootit.platform.JustLootItPlatform;
 import me.lauriichan.spigot.justlootit.platform.folia.FoliaPlatform;
 import me.lauriichan.spigot.justlootit.platform.paper.PaperPlatform;
 import me.lauriichan.spigot.justlootit.platform.spigot.SpigotPlatform;
+import me.lauriichan.spigot.justlootit.storage.util.cache.CacheTickTimer;
 import me.lauriichan.spigot.justlootit.util.JLIInitializationException;
 
 public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> implements IServiceProvider {
@@ -60,6 +61,9 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     }
 
     private static final String VERSION_PATH = JustLootItPlugin.class.getPackageName() + ".nms.%s.VersionHandler%s";
+    
+    private final CacheTickTimer levelTickTimer = new CacheTickTimer();
+    private final CacheTickTimer playerTickTimer = new CacheTickTimer();
 
     private volatile JustLootItPlatform platform;
 
@@ -198,6 +202,7 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
             versionHandler.ready();
             registerPacketListeners();
         }
+        startTimers();
         // Update compatibilities
         CompatDependency.updateAll(this);
     }
@@ -210,6 +215,11 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         // Register packet listener
         itemFrameContainer = packetManager.register(new ItemFramePacketListener(versionHandler)).setGlobal(true);
     }
+    
+    private void startTimers() {
+        levelTickTimer.start();
+        playerTickTimer.start();
+    }
 
     /*
      * Stop
@@ -217,6 +227,7 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
 
     @Override
     public void onPluginDisable() {
+        stopTimers();
         if (versionHandler != null) {
             packetManager.unregister(itemFrameContainer);
             versionHandler.disable();
@@ -226,6 +237,13 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         }
         // Ignore any stats here
         configManager().save();
+    }
+    
+    private void stopTimers() {
+        levelTickTimer.stop();
+        levelTickTimer.clear();
+        playerTickTimer.stop();
+        playerTickTimer.clear();
     }
 
     /*
@@ -239,6 +257,14 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     /*
      * Getter
      */
+    
+    public CacheTickTimer levelTickTimer() {
+        return levelTickTimer;
+    }
+    
+    public CacheTickTimer playerTickTimer() {
+        return playerTickTimer;
+    }
 
     public JustLootItPlatform platform() {
         return platform;

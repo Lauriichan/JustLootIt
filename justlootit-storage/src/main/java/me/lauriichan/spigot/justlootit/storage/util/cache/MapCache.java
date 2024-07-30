@@ -124,7 +124,7 @@ public abstract class MapCache<K, V> extends Cache {
         int purged = 0;
         for (final K key : keys) {
             final CachedValue<V> entry = getEntry(key);
-            if (entry.tick() < cacheTime) {
+            if (entry.time() < cacheTime) {
                 continue;
             }
             purged++;

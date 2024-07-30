@@ -1,13 +1,13 @@
 package me.lauriichan.spigot.justlootit.storage.util.cache;
 
-import java.util.ArrayList;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.lauriichan.spigot.justlootit.storage.util.tick.AbstractTickTimer;
 
 public final class CacheTickTimer extends AbstractTickTimer {
 
-    private final ArrayList<Cache> caches = new ArrayList<>();
+    private final ObjectArrayList<Cache> caches = new ObjectArrayList<>();
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
     public void add(final Cache cache) {
@@ -48,6 +48,15 @@ public final class CacheTickTimer extends AbstractTickTimer {
         lock.writeLock().lock();
         try {
             caches.add(cache);
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+    
+    public void clear() {
+        lock.writeLock().lock();
+        try {
+            caches.clear();
         } finally {
             lock.writeLock().unlock();
         }

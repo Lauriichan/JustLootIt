@@ -98,7 +98,7 @@ public class CacheLookupTable extends Storable implements IModifiable {
 
     public CacheLookupTable(int size) {
         super(ID);
-        this.maxSize = Math.max(size, config.cacheSize());
+        this.maxSize = Math.max(size, config.playerInventoryCacheSize());
         this.maxEntryId = MIN_ENTRY_ID + maxSize;
         this.tableToMapped = new Int2ObjectArrayMap<>(maxSize);
         this.mappedToTable = new Object2ObjectArrayMap<>(maxSize);
@@ -111,8 +111,8 @@ public class CacheLookupTable extends Storable implements IModifiable {
     }
 
     public void update() {
-        int days = config.days();
-        this.maxSize = config.cacheSize();
+        int days = config.playerInventoryDayTimeout();
+        this.maxSize = config.playerInventoryCacheSize();
         this.maxEntryId = MIN_ENTRY_ID + maxSize;
         if (days == 0) {
             return;
