@@ -16,6 +16,30 @@ public abstract class AbstractTickTimer {
 
     private volatile long length = MILLI_IN_NANOS * 50L;
     private volatile long pauseLength = MILLI_IN_NANOS * 250L;
+    
+    private volatile String name = null;
+    
+    public final void setName(final String name) {
+        this.name = name;
+        updateName();
+    }
+    
+    public final String getName() {
+        return name;
+    }
+    
+    public final boolean hasName() {
+        return name != null;
+    }
+    
+    private final void updateName() {
+        Thread thread = this.timerThread;
+        String name = this.name;
+        if (thread == null || name == null || name.isBlank()) {
+            return;
+        }
+        thread.setName("TickTimer - " + name);
+    }
 
     public final void setPauseLength(final long pauseLength, final TimeUnit unit) {
         this.pauseLength = Math.max(unit.toNanos(pauseLength), MILLI_IN_NANOS * 10L);
@@ -61,7 +85,7 @@ public abstract class AbstractTickTimer {
         state.compareAndSet(0, 1);
         timerThread = new Thread(this::tickThread);
         timerThread.setDaemon(true);
-        timerThread.setName("TickTimer");
+        updateName();
         timerThread.start();
     }
 

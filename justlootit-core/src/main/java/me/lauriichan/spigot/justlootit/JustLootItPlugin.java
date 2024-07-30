@@ -3,6 +3,7 @@ package me.lauriichan.spigot.justlootit;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
@@ -96,6 +97,7 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         }
         DataIO.setup(versionHandler.io());
         setupCapabilities();
+        setupTimers();
     }
 
     private boolean setupVersionHandler() {
@@ -121,6 +123,15 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     private void setupCapabilities() {
         final CapabilityManager capabilities = versionHandler.capabilities();
         capabilities.add(JustLootItCapabilityProvider.CAPABILITY_PROVIDER);
+    }
+    
+    private void setupTimers() {
+        playerTickTimer.setLength(1, TimeUnit.SECONDS);
+        playerTickTimer.setPauseLength(50, TimeUnit.MILLISECONDS);
+        playerTickTimer.setName("Cache (Player)");
+        levelTickTimer.setLength(1, TimeUnit.SECONDS);
+        levelTickTimer.setPauseLength(5, TimeUnit.SECONDS);
+        levelTickTimer.setName("Cache (Level)");
     }
 
     /*
