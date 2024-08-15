@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -64,6 +65,10 @@ import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.dimension.LevelStem;
 
 public class ProtoWorld1_21_R1 extends ProtoWorld implements LevelHeightAccessor {
+    
+    // This is not relevant for Spigot therefore we can just put garbage in there that we can cache
+    // The functionality won't change on Paper either, it just fixes an NPE
+    private static final Path PAPER_CHUNK_STORAGE_PATH_FIX = Paths.get("path");
 
     private final ExecutorService executor;
     private final ISimpleLogger logger;
@@ -111,7 +116,7 @@ public class ProtoWorld1_21_R1 extends ProtoWorld implements LevelHeightAccessor
         this.closeSession = closeSession;
         this.regionInfo = new RegionStorageInfo(session.getLevelId(), worldKey, "region");
         this.entityInfo = new RegionStorageInfo(session.getLevelId(), worldKey, "entities");
-        this.chunkStorage = new ChunkStorage(regionInfo, null, DataFixers.getDataFixer(), false);
+        this.chunkStorage = new ChunkStorage(regionInfo, PAPER_CHUNK_STORAGE_PATH_FIX, DataFixers.getDataFixer(), false);
 
         // Apply patches
         PlatformHelper1_21_R1.patchCraftBlockDataEnumValues();
