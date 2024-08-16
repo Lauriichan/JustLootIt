@@ -1,5 +1,6 @@
 package me.lauriichan.spigot.justlootit.nms.v1_21_R1.nbt;
 
+import java.util.Set;
 import java.util.UUID;
 
 import me.lauriichan.spigot.justlootit.nms.nbt.ICompoundTag;
@@ -31,6 +32,15 @@ public final class CompoundTag1_21_R1 implements ICompoundTag {
             return null;
         }
         return TagType.getType(tag.getId());
+    }
+    
+    @Override
+    public TagType<?> getListType(String key) {
+        Tag tag = compoundTag.get(key);
+        if (tag == null || tag.getId() != TagType.LIST.tagId()) {
+            return null;
+        }
+        return TagType.getType(((ListTag) tag).getElementType());
     }
     
     @Override
@@ -134,6 +144,15 @@ public final class CompoundTag1_21_R1 implements ICompoundTag {
         }
         return null;
     }
+    
+    @Override
+    public IListTag<?> getList(String key) {
+        if (compoundTag.contains(key, TagType.LIST.tagId())) {
+            ListTag listTag = (ListTag) compoundTag.get(key);
+            return new ListTag1_21_R1<>(listTag, TagType.getType(listTag.getElementType()));
+        }
+        return null;
+    }
 
     @Override
     public <T> IListTag<T> getList(String key, TagType<T> type) {
@@ -228,6 +247,11 @@ public final class CompoundTag1_21_R1 implements ICompoundTag {
     @Override
     public void remove(String key) {
         compoundTag.remove(key);
+    }
+    
+    @Override
+    public Set<String> keys() {
+        return compoundTag.getAllKeys();
     }
     
     @Override

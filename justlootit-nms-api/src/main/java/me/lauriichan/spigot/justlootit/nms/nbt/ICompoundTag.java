@@ -1,10 +1,13 @@
 package me.lauriichan.spigot.justlootit.nms.nbt;
 
+import java.util.Set;
 import java.util.UUID;
 
 public interface ICompoundTag {
     
     TagType<?> getType(String key);
+    
+    TagType<?> getListType(String key);
     
     boolean has(String key);
     
@@ -40,6 +43,8 @@ public interface ICompoundTag {
     
     ICompoundTag getCompound(String key);
     
+    IListTag<?> getList(String key);
+    
     <T> IListTag<T> getList(String key, TagType<T> type);
     
     void set(String key, byte value);
@@ -71,6 +76,8 @@ public interface ICompoundTag {
     void set(String key, IListTag<?> list);
     
     void remove(String key);
+    
+    Set<String> keys();
     
     int size();
     
