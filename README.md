@@ -98,67 +98,25 @@ The server will now restart (you may need to manually start the server if you di
 
 ### JustLootIt as Maven Dependency
 
-To get started with maven you first need to setup your environment to get access to the api maven package.
-To do that simply go into your `.m2` folder which can be found at `%appData%\..\..\.m2` (Open `Run` on Windows and just paste the path into there and click `Ok`).
-Afterwards if the file doesn't exist yet create the file `settings.xml` in the folder.
-Then put following stuff into the file:
+#### Add repository
 ```XML
-<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
-                      http://maven.apache.org/xsd/settings-1.0.0.xsd">
-
-	<activeProfiles>
-		<activeProfile>github</activeProfile>
-	</activeProfiles>
-
-	<profiles>
-		<profile>
-			<id>github</id>
-			<repositories>
-				<repository>
-					<id>central</id>
-					<url>https://repo1.maven.org/maven2</url>
-				</repository>
-				<repository>
-					<id>github0</id>
-					<url>https://maven.pkg.github.com/Lauriichan/*</url>
-					<snapshots>
-						<enabled>true</enabled>
-					</snapshots>
-				</repository>
-			</repositories>
-		</profile>
-	</profiles>
-
-	<servers>
-		<server>
-			<id>github0</id>
-			<username>YOUR_GITHUB_USERNAME</username>
-			<password>A_GITHUB_TOKEN</password>
-		</server>
-	</servers>
-</settings>
+<repositories>
+  <repository>
+    <id>lauriichan-release</id>
+    <url>https://maven.lauriichan.me/release</url>
+  </repository>
+</repositories>
 ```
-Now replace `YOUR_GITHUB_USERNAME` with your github username.<br>
-Then go to your Github account settings and scroll down until you see `Developer settings`.<br>
-Go into the `Developer settings` and then click on `Personal access tokens`.<br>
-Once you are there click on the `Generate new token` button.<br>
-I would recommend you to enter `Maven packages` into the `Note` field and set the epiration to `No expiration`.<br>
-Then you need to enable `repo:status` and `read:packages`. <br>
-Once you enabled those click on `Generate Token` at the bottom.<br>
-Now github should show you the token, simply copy the token and replace `A_GITHUB_TOKEN` with it.<br>
-The token can be used for multiple servers so if you want to have access to another repository hosted on github simply copy the `github0` repository replace `MrNemo64` with the authors' name and copy the `github0` server. Be sure to rename the repository and server id to for example `github1` or something similar (they have to match up).<br>
 
 Once this is setup you can simply add the dependency like this in your `pom.xml`:
 ```xml
 <dependency>
   <groupId>me.lauriichan.spigot.justlootit</groupId>
   <artifactId>justlootit-core</artifactId>
-  <version>1.0.0</version>
+  <version>VERSION_HERE</version>
 </dependency>
 ```
-You can get the [latest version here](https://github.com/Lauriichan/JustLootIt/) (Comming soon)
+You can get the [latest version here](https://maven.lauriichan.me/#/release/me/lauriichan/spigot/justlootit/justlootit-core).
 
 <!-- ROADMAP -->
 ## Roadmap

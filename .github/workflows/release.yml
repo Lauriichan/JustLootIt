@@ -16,4 +16,4 @@ jobs:
         java-version: '21'
         distribution: 'adopt'
     - name: Build and publish
-      run: mvn deploy -s ${{ github.workspace }}/.m2/settings.xml -P publish
+      run: mvn deploy -s ${{ github.workspace }}/.m2/settings.xml -P release
