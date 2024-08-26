@@ -98,7 +98,7 @@ The server will now restart (you may need to manually start the server if you di
 
 ### JustLootIt as Maven Dependency
 
-#### Add repository
+First you need to add the repository that JLI is published to:
 ```XML
 <repositories>
   <repository>
@@ -108,7 +108,7 @@ The server will now restart (you may need to manually start the server if you di
 </repositories>
 ```
 
-Once this is setup you can simply add the dependency like this in your `pom.xml`:
+Afterwards you can simply add the dependency like this in your `pom.xml`:
 ```xml
 <dependency>
   <groupId>me.lauriichan.spigot.justlootit</groupId>
