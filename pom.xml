@@ -44,8 +44,8 @@
 
     <repositories>
         <repository>
-            <id>lauriichan</id>
-            <url>https://maven.lauriichan.com/release/</url>
+            <id>lauriichan-snapshot</id>
+            <url>https://maven.lauriichan.com/snapshot/</url>
         </repository>
         <repository>
             <id>spigot-repo</id>
