@@ -5,7 +5,7 @@ import org.bukkit.loot.LootTable;
 import me.lauriichan.maven.justlootit.annotation.Event;
 import me.lauriichan.maven.justlootit.annotation.EventField;
 
-@Event(cancellable = true)
+@Event
 public abstract class AsyncJLIPlayerVanillaLootGenerateEventTmp extends AsyncJLIPlayerEventTmp {
     
     @EventField(setter = true)
