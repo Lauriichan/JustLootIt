@@ -13,8 +13,8 @@ public interface IInventoryContainer {
 
     void fill(PlayerAdapter player, InventoryHolder holder, Location location, Inventory inventory);
 
-    default void awaitProvidedEvent(PlayerAdapter player, IGuiInventory inventory) {
-        new AsyncJLIPlayerLootProvidedEvent((JustLootItPlugin) player.versionHandler().plugin(), player, inventory).call().join();
+    default void awaitProvidedEvent(PlayerAdapter player, IGuiInventory inventory, InventoryHolder entryHolder, Location entryLocation) {
+        new AsyncJLIPlayerLootProvidedEvent((JustLootItPlugin) player.versionHandler().plugin(), player, inventory, entryHolder, entryLocation).call().join();
     }
 
 }

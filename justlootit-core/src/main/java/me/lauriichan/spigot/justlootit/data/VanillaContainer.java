@@ -91,10 +91,10 @@ public final class VanillaContainer extends Container implements IInventoryConta
     }
     
     @Override
-    public void awaitProvidedEvent(PlayerAdapter player, IGuiInventory inventory) {
+    public void awaitProvidedEvent(PlayerAdapter player, IGuiInventory inventory, InventoryHolder entryHolder, Location entryLocation) {
         // This does not use the loot table and seed set by the previous event
         // This should be kept in mind when using it
-        new AsyncJLIPlayerVanillaLootProvidedEvent((JustLootItPlugin) player.versionHandler().plugin(), player, inventory, getLootTable(), seed).call().join();
+        new AsyncJLIPlayerVanillaLootProvidedEvent((JustLootItPlugin) player.versionHandler().plugin(), player, inventory, entryHolder, entryLocation, getLootTable(), seed).call().join();
     }
 
     @Override
