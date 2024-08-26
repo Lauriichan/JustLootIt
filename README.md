@@ -114,6 +114,8 @@ Afterwards you can simply add the dependency like this in your `pom.xml`:
   <groupId>me.lauriichan.spigot.justlootit</groupId>
   <artifactId>justlootit-core</artifactId>
   <version>VERSION_HERE</version>
+  <classifier>shaded</classifier>
+  <scope>provided</scope>
 </dependency>
 ```
 You can get the [latest version here](https://maven.lauriichan.me/#/release/me/lauriichan/spigot/justlootit/justlootit-core).
