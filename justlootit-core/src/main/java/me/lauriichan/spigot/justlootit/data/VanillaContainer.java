@@ -12,6 +12,8 @@ import org.bukkit.loot.LootTable;
 
 import io.netty.buffer.ByteBuf;
 import me.lauriichan.minecraft.pluginbase.inventory.item.ItemEditor;
+import me.lauriichan.spigot.justlootit.JustLootItPlugin;
+import me.lauriichan.spigot.justlootit.api.event.player.AsyncJLIPlayerVanillaLootGenerateEvent;
 import me.lauriichan.spigot.justlootit.data.io.DataIO;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapter;
@@ -81,7 +83,9 @@ public final class VanillaContainer extends Container implements IInventoryConta
 
     @Override
     public void fill(final PlayerAdapter player, final InventoryHolder holder, final Location location, final Inventory inventory) {
-        player.versionHandler().versionHelper().fill(inventory, player.asBukkit(), location, getLootTable(), seed);
+        AsyncJLIPlayerVanillaLootGenerateEvent event = new AsyncJLIPlayerVanillaLootGenerateEvent((JustLootItPlugin) player.versionHandler().plugin(), player, getLootTable(), seed);
+        event.call().join();
+        player.versionHandler().versionHelper().fill(inventory, player.asBukkit(), location, event.lootTable(), event.seed());
     }
 
     @Override

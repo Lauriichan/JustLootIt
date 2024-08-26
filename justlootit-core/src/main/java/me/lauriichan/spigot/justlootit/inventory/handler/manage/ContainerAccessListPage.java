@@ -54,10 +54,10 @@ public final class ContainerAccessListPage extends ContainerPage {
 
         int amount = container.accessAmount();
         int maxPage = Math.max(Math.floorDiv(amount, 14), 1);
-        inventory.attrSet(ATTR_MAX_PAGE, maxPage);
         if (amount > 14 && amount % 14 != 0) {
             maxPage++;
         }
+        inventory.attrSet(ATTR_MAX_PAGE, maxPage);
         int page = Math.min(inventory.attrOrDefault(ATTR_PAGE, Number.class, 1).intValue(), maxPage);
         inventory.attrSet(ATTR_PAGE, page);
         if (page > 1) {
@@ -65,7 +65,8 @@ public final class ContainerAccessListPage extends ContainerPage {
                 inventory.set(4, 1, ItemHelper.firstPage(actor));
             }
             inventory.set(4, 2, ItemHelper.pageCount(ItemHelper.previousPage(actor), page, maxPage, PageType.PREVIOUS));
-        } else if (page != maxPage) {
+        }
+        if (page != maxPage) {
             if (page + 1 != maxPage) {
                 inventory.set(4, 7, ItemHelper.pageCount(ItemHelper.lastPage(actor), page, maxPage, PageType.LAST));
             }

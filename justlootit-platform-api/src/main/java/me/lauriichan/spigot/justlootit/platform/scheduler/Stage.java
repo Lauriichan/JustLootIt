@@ -2,6 +2,7 @@ package me.lauriichan.spigot.justlootit.platform.scheduler;
 
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 abstract class Stage<E> {
 
@@ -29,6 +30,29 @@ abstract class Stage<E> {
         @Override
         public void start(Task<E> task) {
             LockSupport.park();
+        }
+
+    }
+
+    public static class MapStage<E, T> extends Stage<E> {
+
+        private volatile Function<E, T> mapper;
+        private volatile Task<T> targetTask;
+
+        public MapStage(Function<E, T> mapper, Task<T> targetTask) {
+            this.mapper = mapper;
+            this.targetTask = targetTask;
+        }
+
+        @Override
+        public void done(E value) {
+            if (this.mapper == null || this.targetTask == null) {
+                return;
+            }
+            T targetValue = this.mapper.apply(value);
+            this.mapper = null;
+            this.targetTask.complete(targetValue);
+            this.targetTask = null;
         }
 
     }

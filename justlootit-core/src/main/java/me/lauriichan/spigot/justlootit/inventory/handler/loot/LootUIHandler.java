@@ -27,6 +27,7 @@ public final class LootUIHandler implements IHandler {
 
     private LootUIHandler() {}
 
+    @SuppressWarnings("unlikely-arg-type")
     @Override
     public boolean onEventClose(final HumanEntity entity, final IGuiInventory inventory) {
         inventory.setHandler(null);

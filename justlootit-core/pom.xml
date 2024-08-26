@@ -5,7 +5,7 @@
     <parent>
         <groupId>me.lauriichan.spigot.justlootit</groupId>
         <artifactId>justlootit-parent</artifactId>
-        <version>1.6.1</version>
+        <version>1.7.0</version>
     </parent>
     <artifactId>justlootit-core</artifactId>
 
@@ -244,6 +244,10 @@
                             <generators>
                                 <generator>
                                     <className>
+                                        me.lauriichan.maven.justlootit.generator.JLIEventGenerator</className>
+                                </generator>
+                                <generator>
+                                    <className>
                                         me.lauriichan.maven.justlootit.generator.ContainerTypeGenerator</className>
                                 </generator>
                             </generators>
@@ -286,6 +290,7 @@
                         <configuration>
                             <includes>
                                 <include>me/lauriichan/spigot/justlootit/**/*Template.class</include>
+                                <include>me/lauriichan/spigot/justlootit/**/*Tmp.class</include>
                                 <include>me/lauriichan/maven/justlootit/**/*.class</include>
                             </includes>
                             <purgeEmptyPackages>true</purgeEmptyPackages>

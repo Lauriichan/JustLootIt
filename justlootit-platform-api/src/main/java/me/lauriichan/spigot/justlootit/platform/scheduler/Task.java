@@ -4,6 +4,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
 import me.lauriichan.laylib.logger.ISimpleLogger;
@@ -111,6 +112,12 @@ public abstract class Task<E> {
     public final Task<E> thenRun(Runnable runnable) {
         pushStage(new Stage.RunStage<>(runnable));
         return this;
+    }
+
+    public final <T> Task<T> thenMap(Function<E, T> mapper) {
+        SimpleTask<T> task = new SimpleTask<>(logger);
+        pushStage(new Stage.MapStage<>(mapper, task));
+        return task;
     }
 
     public final Task<E> thenConsume(Consumer<E> consumer) {

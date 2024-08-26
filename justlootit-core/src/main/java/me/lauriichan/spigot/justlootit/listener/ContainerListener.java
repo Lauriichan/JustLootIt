@@ -41,6 +41,7 @@ import me.lauriichan.spigot.justlootit.JustLootItFlag;
 import me.lauriichan.spigot.justlootit.JustLootItKey;
 import me.lauriichan.spigot.justlootit.JustLootItPermission;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
+import me.lauriichan.spigot.justlootit.api.event.player.AsyncJLIPlayerLootProvidedEvent;
 import me.lauriichan.spigot.justlootit.capability.ActorCapability;
 import me.lauriichan.spigot.justlootit.capability.PlayerGUICapability;
 import me.lauriichan.spigot.justlootit.capability.StorageCapability;
@@ -393,6 +394,7 @@ public class ContainerListener implements IListenerExtension {
                     inventory.attrSet(LootUIHandler.ATTR_ID, lookupTable.acquire(entryId));
                     inventory.setHandler(LootUIHandler.LOOT_HANDLER);
                     container.fill(player, inventoryHolder, location, inventory.getInventory());
+                    new AsyncJLIPlayerLootProvidedEvent(plugin, player, inventory).call().join();
                     inventory.open(bukkitPlayer);
                     if (inventoryHolder instanceof DoubleChest || inventoryHolder instanceof Lidded) {
                         inventory.attrSet(LootUIHandler.ATTR_LIDDED_LOCATION, location);
