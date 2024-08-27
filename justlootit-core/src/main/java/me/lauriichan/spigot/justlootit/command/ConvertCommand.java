@@ -117,7 +117,7 @@ public class ConvertCommand implements ICommandExtension {
     }
     
     private void blacklistWorldPrompt(Actor<?> actor) {
-        inputProvider.getStringInput(actor, actor.getTranslatedMessageAsString(Messages.INPUT_PROMPT_CONVERT_BLACKLIST_WORLD), null, this::blacklistWorldSubmit);
+        inputProvider.getStringInput(actor, actor.getTranslatedMessageAsString(Messages.INPUT_PROMPT_CONVERT_BLACKLIST_WORLD_INFO), null, this::blacklistWorldSubmit);
     }
     
     private void blacklistWorldSubmit(Actor<?> actor, String worldName) {
@@ -127,11 +127,11 @@ public class ConvertCommand implements ICommandExtension {
         }
         File world = new File(Bukkit.getWorldContainer(), worldName);
         if (!world.isDirectory()) {
-            actor.sendTranslatedMessage(Messages.INPUT_PROMPT_FAILED_CONVERT_BLACKLIST_WORLD, Key.of("worldName", worldName));
+            inputProvider.getStringInput(actor, actor.getTranslatedMessageAsString(Messages.INPUT_PROMPT_CONVERT_BLACKLIST_WORLD_FAILED, Key.of("worldName", worldName)), null, this::blacklistWorldSubmit);
         } else {
             properties.addPropertyEntry(ConvProp.BLACKLISTED_WORLDS, worldName);
+            inputProvider.getStringInput(actor, actor.getTranslatedMessageAsString(Messages.INPUT_PROMPT_CONVERT_BLACKLIST_WORLD_ADDED, Key.of("worldName", worldName)), null, this::blacklistWorldSubmit);
         }
-        blacklistWorldPrompt(actor);
     }
 
     private void runConversion(Actor<?> actor) {
