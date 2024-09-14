@@ -96,7 +96,7 @@ public final class JustLootItConverter {
                         continue;
                     }
                 } 
-                logger.info("Conversion of level '{0}' done! [{3} Chunks]", world.getName(), progress.counter().max());
+                logger.info("Conversion of level '{0}' done! [{1} Chunks]", world.getName(), progress.counter().max());
             }
         }
         return somethingWasConverted;

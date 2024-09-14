@@ -82,7 +82,7 @@ public final class BlockUtil {
         } else if (type == Material.ENDER_CHEST) {
             player.playSound(location, Sound.BLOCK_ENDER_CHEST_OPEN, SoundCategory.BLOCKS, 0.5f, 1f);
             return;
-        } else if (state instanceof ShulkerBox shulker) {
+        } else if (state instanceof ShulkerBox) {
             player.playSound(location, Sound.BLOCK_SHULKER_BOX_OPEN, SoundCategory.BLOCKS, 0.5f, 1f);
             return;
         }
@@ -100,7 +100,7 @@ public final class BlockUtil {
         } else if (type == Material.ENDER_CHEST) {
             player.playSound(location, Sound.BLOCK_ENDER_CHEST_CLOSE, SoundCategory.BLOCKS, 0.5f, 1f);
             return;
-        } else if (state instanceof ShulkerBox shulker) {
+        } else if (state instanceof ShulkerBox) {
             player.playSound(location, Sound.BLOCK_SHULKER_BOX_CLOSE, SoundCategory.BLOCKS, 0.5f, 1f);
             return;
         }

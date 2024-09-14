@@ -16,7 +16,7 @@ public class TypeName {
     }
     
     public static String ofConfig(IConfigExtension extension) {
-        if (extension instanceof MessageConfig config) {
+        if (extension instanceof MessageConfig) {
             return "message";
         }
         String name = ClassUtil.getClassName(extension.getClass()).toLowerCase();

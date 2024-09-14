@@ -115,7 +115,7 @@ public class ProtoChunk1_20_R4 extends ProtoChunk {
         if (protoBlock instanceof ProtoBlock1_20_R4 block) {
             BlockState state = block.state();
             chunk.setBlockState(block.pos(), state, false);
-            if (state.getBlock() instanceof EntityBlock entityBlock) {
+            if (state.getBlock() instanceof EntityBlock) {
                 short id = packShort(block.pos());
                 if (!blockEntities.containsKey(id)) {
                     CompoundTag tag = new CompoundTag();
@@ -132,7 +132,7 @@ public class ProtoChunk1_20_R4 extends ProtoChunk {
         } else if (protoBlock instanceof ProtoBlockEntity1_20_R4 blockEntity) {
             BlockState state = blockEntity.state();
             chunk.setBlockState(blockEntity.pos(), state, false);
-            if (!(state.getBlock() instanceof EntityBlock entityBlock)) {
+            if (!(state.getBlock() instanceof EntityBlock)) {
                 blockEntities.remove(packShort(blockEntity.pos()));
             } else {
                 blockEntity.tag().putString("id", state.getBlockHolder().unwrapKey().get().location().toString());

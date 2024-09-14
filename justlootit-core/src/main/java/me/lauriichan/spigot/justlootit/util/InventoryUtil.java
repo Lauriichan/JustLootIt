@@ -26,7 +26,7 @@ public final class InventoryUtil {
     }
     
     public static int getSize(Inventory inventory) {
-        if(inventory.getHolder() instanceof DoubleChest doubleChest) {
+        if(inventory.getHolder() instanceof DoubleChest) {
             return ChestSize.GRID_6x9.inventorySize();
         }
         return inventory.getSize();

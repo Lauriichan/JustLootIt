@@ -78,19 +78,21 @@ public class VanillaConverter extends ChunkConverter {
                     Vec3i location = state.getPos();
                     ProtoBlockEntity otherState = pendingBlockEntities.stream().filter(pending -> pending.getPos().equals(otherLocation)).findFirst().orElse(null);
                     otherItemsIsLeft = chest.getType() == Type.RIGHT;
-                    if (otherState == null) {
+                    if (otherState == null || !(otherState.hasInventory() && otherState.getData() instanceof Chest)) {
+                        if (lootTable == null && !properties.isProperty(ConvProp.VANILLA_ALLOW_STATIC_CONTAINER)) {
+                            continue;
+                        }
                         // We convert double chests to single chests in this process
                         // The reason why is that we can't convert chests that are across borders
                         // Therefore we don't know how to convert this
                         Chest otherChest = (Chest) chest.clone();
                         otherChest.setType(Chest.Type.SINGLE);
                         state.setData(otherChest);
-                    } else if (otherState.hasInventory() && otherState.getData() instanceof Chest) {
+                    } else {
                         pendingBlockEntities.remove(otherState);
                         PersistentDataContainer otherDataContainer = otherState.getContainer();
                         otherDataContainer.set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR, otherLocation.subtract(location));
                         dataContainer.set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR, location.subtract(otherLocation));
-                        chunk.updateBlock(otherState);
                         if (lootTable == null) {
                             otherItems = otherState.getInventory().getContents();
                             if (otherState.getNbt().has("LootTable", TagType.STRING)) {
@@ -100,6 +102,16 @@ public class VanillaConverter extends ChunkConverter {
                                 }
                             }
                         }
+                        if (lootTable == null) {
+                            if (!properties.isProperty(ConvProp.VANILLA_ALLOW_STATIC_CONTAINER)) {
+                                continue;
+                            }
+                            otherState.getInventory().clear();
+                        } else {
+                            otherState.getNbt().remove("LootTable");
+                            otherState.getNbt().remove("LootTableSeed");
+                        }
+                        chunk.updateBlock(otherState);
                     }
                 } else if (lootTable == null && !properties.isProperty(ConvProp.VANILLA_ALLOW_STATIC_CONTAINER)) {
                     continue;
@@ -108,6 +120,9 @@ public class VanillaConverter extends ChunkConverter {
                     long storageId = storage.newId();
                     storage.write(new VanillaContainer(storageId, lootTable, seed == null ? random.nextLong() : seed));
                     dataContainer.set(JustLootItKey.identity(), PersistentDataType.LONG, storageId);
+                    state.getNbt().remove("LootTable");
+                    state.getNbt().remove("LootTableSeed");
+                    chunk.updateBlock(state);
                 } else {
                     ItemStack[] items = state.getInventory().getContents();
                     if (otherItems != null) {
@@ -124,6 +139,8 @@ public class VanillaConverter extends ChunkConverter {
                     long storageId = storage.newId();
                     storage.write(new StaticContainer(storageId, items));
                     dataContainer.set(JustLootItKey.identity(), PersistentDataType.LONG, storageId);
+                    state.getInventory().clear();
+                    chunk.updateBlock(state);
                 }
             }
         }
@@ -146,6 +163,7 @@ public class VanillaConverter extends ChunkConverter {
                 long storageId = storage.newId();
                 storage.write(new FrameContainer(storageId, item));
                 dataContainer.set(JustLootItKey.identity(), PersistentDataType.LONG, storageId);
+                chunk.updateEntity(entity);
                 continue;
             }
             if (EntityUtil.isSupportedEntity(type)) {
@@ -156,6 +174,7 @@ public class VanillaConverter extends ChunkConverter {
                     dataContainer.set(JustLootItKey.identity(), PersistentDataType.LONG, storageId);
                     tag.remove("LootTable");
                     tag.remove("LootTableSeed");
+                    chunk.updateEntity(entity);
                     continue;
                 } else if (!properties.isProperty(ConvProp.VANILLA_ALLOW_STATIC_CONTAINER) || !tag.hasList("Items", TagType.COMPOUND)) {
                     continue;
@@ -185,6 +204,7 @@ public class VanillaConverter extends ChunkConverter {
                 long storageId = storage.newId();
                 storage.write(new StaticContainer(storageId, items));
                 dataContainer.set(JustLootItKey.identity(), PersistentDataType.LONG, storageId);
+                chunk.updateEntity(entity);
                 continue;
             }
         }
