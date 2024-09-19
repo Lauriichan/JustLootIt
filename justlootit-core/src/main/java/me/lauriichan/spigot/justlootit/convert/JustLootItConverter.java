@@ -30,6 +30,7 @@ public final class JustLootItConverter {
     }
 
     private static void createConverters(ObjectArrayList<ChunkConverter> converters, VersionHandler versionHandler, ConversionProperties properties) {
+        addConverter(converters, new MigrationConverter(versionHandler, properties));
         addConverter(converters, new LootinConverter(versionHandler, properties));
         addConverter(converters, new VanillaConverter(versionHandler, properties));
     }

@@ -20,6 +20,29 @@ public abstract class SimpleDataType<P, C> implements PersistentDataType<P, C> {
             return primitive == 1;
         }
     };
+    public static final SimpleDataType<Byte, Vec3i> LEGACY_OFFSET_VECTOR = new SimpleDataType<>(Byte.class, Vec3i.class) {
+        @Override
+        public Byte toPrimitive(Vec3i complex, PersistentDataAdapterContext context) {
+            throw new UnsupportedOperationException("Write is no longer supported");
+        }
+
+        @Override
+        public Vec3i fromPrimitive(Byte primitive, PersistentDataAdapterContext context) {
+            if (primitive == -16) {
+                return new Vec3i(0, 0, -1);
+            }
+            if (primitive == 16) {
+                return new Vec3i(0, 0, 1);
+            }
+            if (primitive == 1) {
+                return new Vec3i(1, 0, 0);
+            }
+            if (primitive == 15) {
+                return new Vec3i(-1, 0, 0);
+            }
+            throw new UnsupportedOperationException("Unsupported value: " + primitive);
+        }
+    };
     public static final SimpleDataType<Byte, Vec3i> OFFSET_VECTOR = new SimpleDataType<>(Byte.class, Vec3i.class) {
         @Override
         public Byte toPrimitive(Vec3i complex, PersistentDataAdapterContext context) {
@@ -28,7 +51,7 @@ public abstract class SimpleDataType<P, C> implements PersistentDataType<P, C> {
 
         @Override
         public Vec3i fromPrimitive(Byte primitive, PersistentDataAdapterContext context) {
-            return new Vec3i(primitive);
+            return Vec3i.unpackByte(primitive);
         }
     };
     public static final SimpleDataType<long[], UUID> UUID = new SimpleDataType<>(long[].class, UUID.class) {

@@ -80,6 +80,12 @@ public final class Messages implements IMessageExtension {
         "&4WARNING: &cDoing this in a world with player created blocks might cause them to be recognized as Loot containers!"
     })
     public static MessageProvider INPUT_PROMPT_CONVERT_VANILLA_STATIC_CONTAINERS;
+    @Message(id = "input.prompt.convert.do-migration", content = {
+        "&7Do you want to run the container migration conversion?",
+        "&7Recommended: yes",
+        "&cINFO: Especially when updating this should be run, it can't hurt to run it."
+    })
+    public static MessageProvider INPUT_PROMPT_CONVERT_DO_MIGRATION;
     @Message(id = "input.prompt.convert.blacklist-world.info", content = {
         "&7If you want to blacklist a world from the conversion process do so now.",
         "&7Once you're done press enter or type '#start' to start the process."
@@ -238,6 +244,31 @@ public final class Messages implements IMessageExtension {
         "&a$data"
     })
     public static MessageProvider COMMAND_DEBUG_PDC_DATA_FORMAT_ENTITY;
+
+    @Message(id = "command.debug.jlidata.empty.block", content = "$#plugin.prefix Block at &c$x $y $z &7in &c$world&7 doesn't have any data.")
+    public static MessageProvider COMMAND_DEBUG_JLIDATA_EMPTY_BLOCK;
+    @Message(id = "command.debug.jlidata.empty.entity", content = "$#plugin.prefix Entity at &c$x $y $z &7in &c$world&7 doesn't have any data.")
+    public static MessageProvider COMMAND_DEBUG_JLIDATA_EMPTY_ENTITY;
+    @Message(id = "command.debug.jlidata.format.block", content = {
+        "&8| $#plugin.name",
+        "&8|",
+        "&8| &7Data of block at &c$x $y $z &7in &c$world&7:",
+        "&8|",
+        "&8| &8Id: &a$id",
+        "&8| &8Offset: &a$offset",
+        "&8| &8Offset (Legacy): &a$legacy.offset",
+        "&8| &8Break: &a$break"
+    })
+    public static MessageProvider COMMAND_DEBUG_JLIDATA_FORMAT_BLOCK;
+    @Message(id = "command.debug.jlidata.format.entity", content = {
+        "&8| $#plugin.name",
+        "&8|",
+        "&8| &7Data of entity at &c$x $y $z &7in &c$world&7:",
+        "&8|",
+        "&8| &8Id: &a$id",
+        "&8| &8Break: &a$break"
+    })
+    public static MessageProvider COMMAND_DEBUG_JLIDATA_FORMAT_ENTITY;
     
     // Group
     
@@ -404,8 +435,19 @@ public final class Messages implements IMessageExtension {
     public static MessageProvider COMMAND_CONFIG_RELOAD_RESULT_FAILED;
     
     // Convert
-    
-    @Message(id = "command.convert.proccess-on-going", content = "$#plugin.prefix &cThere is already a conversion process setup on-going!")
+
+    @Message(id = "command.convert.proccess.user.request", content = {
+        "$#plugin.prefix &7Your request to start a conversion process has been aknowledged.",
+        "$#plugin.prefix &7Please confirm your request by using '/jli convert' in your console in the next 3 minutes."
+    })
+    public static MessageProvider COMMAND_CONVERT_PROCESS_USER_REQUEST;
+    @Message(id = "command.convert.proccess.user.confirmed.player", content = "$#plugin.prefix &7Your conversion request has been aknowledged, starting setup...")
+    public static MessageProvider COMMAND_CONVERT_PROCESS_USER_CONFIRMED_PLAYER;
+    @Message(id = "command.convert.proccess.user.confirmed.console", content = "$#plugin.prefix &7You confirmed the conversion request of &c$name&7.")
+    public static MessageProvider COMMAND_CONVERT_PROCESS_USER_CONFIRMED_CONSOLE;
+    @Message(id = "command.convert.proccess.user.expired", content = "$#plugin.prefix &7The current conversion request expired, to start a conversion process in console please re-enter the command.")
+    public static MessageProvider COMMAND_CONVERT_PROCESS_USER_EXPIRED;
+    @Message(id = "command.convert.proccess-on-going", content = "$#plugin.prefix &cThere is already a conversion process setup on-going and run by &4$name&c!")
     public static MessageProvider COMMAND_CONVERT_PROCESS_ONGOING;
     @Message(id = "command.convert.process-done", content = "$#plugin.prefix &7Successfully set up conversion process, restarting server in 5 seconds (might require manual start)")
     public static MessageProvider COMMAND_CONVERT_PROCESS_DONE;

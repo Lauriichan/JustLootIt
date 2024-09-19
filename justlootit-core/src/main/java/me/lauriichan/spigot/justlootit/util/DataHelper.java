@@ -6,12 +6,11 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import org.bukkit.persistence.PersistentDataContainer;
-import org.bukkit.persistence.PersistentDataType;
 
 import me.lauriichan.laylib.command.Actor;
 import me.lauriichan.laylib.localization.Key;
 import me.lauriichan.laylib.localization.MessageProvider;
-import me.lauriichan.spigot.justlootit.JustLootItKey;
+import me.lauriichan.spigot.justlootit.JustLootItAccess;
 import me.lauriichan.spigot.justlootit.message.Messages;
 import me.lauriichan.spigot.justlootit.util.persistence.BreakData;
 
@@ -28,27 +27,18 @@ public final class DataHelper {
         throw new UnsupportedOperationException();
     }
 
-    public static boolean hasIdentity(PersistentDataContainer container) {
-        return container.has(JustLootItKey.identity(), PersistentDataType.LONG);
-    }
-
-    public static boolean hasIdentityOrOffset(PersistentDataContainer container) {
-        return container.has(JustLootItKey.identity(), PersistentDataType.LONG)
-            || container.has(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR);
-    }
-
     public static boolean canBreakContainer(PersistentDataContainer container, UUID uuid) {
-        BreakData data = container.getOrDefault(JustLootItKey.breakData(), BreakData.BREAK_DATA_TYPE, null);
+        BreakData data = JustLootItAccess.getBreakData(container);
         OffsetDateTime now = OffsetDateTime.now();
         if (data == null) {
-            container.set(JustLootItKey.breakData(), BreakData.BREAK_DATA_TYPE, new BreakData(uuid, now));
+            JustLootItAccess.setBreakData(container, new BreakData(uuid, now.plusMinutes(2)));
             return false;
         }
         if (!data.playerId().equals(uuid) || now.isBefore(data.time())) {
-            container.set(JustLootItKey.breakData(), BreakData.BREAK_DATA_TYPE, new BreakData(uuid, now.plusMinutes(2)));
+            JustLootItAccess.setBreakData(container, new BreakData(uuid, now.plusMinutes(2)));
             return false;
         }
-        container.remove(JustLootItKey.breakData());
+        JustLootItAccess.removeBreakData(container);
         return true;
     }
 

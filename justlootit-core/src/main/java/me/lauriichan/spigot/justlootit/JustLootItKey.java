@@ -9,24 +9,30 @@ public final class JustLootItKey {
     }
 
     private static NamespacedKey identity;
-    private static NamespacedKey chestData;
+    private static NamespacedKey legacyChestOffset;
+    private static NamespacedKey chestOffset;
     private static NamespacedKey breakData;
 
     public static void setup(final JustLootItPlugin plugin) {
         identity = plugin.key("id");
-        chestData = plugin.key("chest");
+        legacyChestOffset = plugin.key("chest");
+        chestOffset = plugin.key("chest_offset");
         breakData = plugin.key("break");
     }
 
-    public static NamespacedKey identity() {
+    public final static NamespacedKey identity() {
         return identity;
     }
     
-    public static NamespacedKey chestData() {
-        return chestData;
+    public final static NamespacedKey legacyChestOffset() {
+        return legacyChestOffset;
+    }
+    
+    public final static NamespacedKey chestOffset() {
+        return chestOffset;
     }
 
-    public static NamespacedKey breakData() {
+    public final static NamespacedKey breakData() {
         return breakData;
     }
 

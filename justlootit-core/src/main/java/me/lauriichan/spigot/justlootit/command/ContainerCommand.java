@@ -1,5 +1,7 @@
 package me.lauriichan.spigot.justlootit.command;
 
+import static me.lauriichan.spigot.justlootit.JustLootItAccess.*;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -11,7 +13,6 @@ import org.bukkit.block.data.type.Chest;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.persistence.PersistentDataContainer;
-import org.bukkit.persistence.PersistentDataType;
 
 import me.lauriichan.laylib.command.Actor;
 import me.lauriichan.laylib.command.annotation.Action;
@@ -27,7 +28,6 @@ import me.lauriichan.minecraft.pluginbase.inventory.item.ItemEditor;
 import me.lauriichan.minecraft.pluginbase.message.component.ComponentBuilder;
 import me.lauriichan.spigot.justlootit.JustLootItConstant;
 import me.lauriichan.spigot.justlootit.JustLootItFlag;
-import me.lauriichan.spigot.justlootit.JustLootItKey;
 import me.lauriichan.spigot.justlootit.JustLootItPermission;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.capability.PlayerGUICapability;
@@ -41,14 +41,11 @@ import me.lauriichan.spigot.justlootit.data.FrameContainer;
 import me.lauriichan.spigot.justlootit.data.VanillaContainer;
 import me.lauriichan.spigot.justlootit.inventory.handler.manage.ContainerPageHandler;
 import me.lauriichan.spigot.justlootit.message.Messages;
-import me.lauriichan.spigot.justlootit.nms.util.Vec3i;
 import me.lauriichan.spigot.justlootit.storage.IStorage;
 import me.lauriichan.spigot.justlootit.storage.Storable;
 import me.lauriichan.spigot.justlootit.util.BlockUtil;
 import me.lauriichan.spigot.justlootit.util.CommandUtil;
-import me.lauriichan.spigot.justlootit.util.DataHelper;
 import me.lauriichan.spigot.justlootit.util.EntityUtil;
-import me.lauriichan.spigot.justlootit.util.SimpleDataType;
 import me.lauriichan.spigot.justlootit.util.TypeName;
 import net.md_5.bungee.api.chat.HoverEvent;
 
@@ -98,7 +95,8 @@ public class ContainerCommand implements ICommandExtension {
         });
     }
 
-    private void openManageInventory(final JustLootItPlugin plugin, final Actor<Player> actor, final Container container, final World world) {
+    private void openManageInventory(final JustLootItPlugin plugin, final Actor<Player> actor, final Container container,
+        final World world) {
         plugin.scheduler().sync(() -> {
             plugin.versionHandler().getPlayer(actor.getHandle()).getCapability(PlayerGUICapability.class).ifPresent(guiCapability -> {
                 final IGuiInventory inventory = guiCapability.gui();
@@ -176,59 +174,42 @@ public class ContainerCommand implements ICommandExtension {
         }
         Location loc = closest.getLocation();
         PersistentDataContainer dataContainer = closest.getPersistentDataContainer();
-        if (!dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+        if (!hasIdentity(dataContainer)) {
             actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_ENTITY, Key.of("x", loc.getX()),
                 Key.of("y", loc.getY()), Key.of("z", loc.getZ()), Key.of("world", world.getName()));
             return null;
         }
-        return dataContainer.get(JustLootItKey.identity(), PersistentDataType.LONG);
+        return getIdentity(dataContainer);
     }
 
     private Long retrieveBlockContainer(JustLootItPlugin plugin, Block block, org.bukkit.block.Container stateContainer, World world,
         Actor<?> actor) {
         Location location = block.getLocation();
         PersistentDataContainer dataContainer = stateContainer.getPersistentDataContainer();
-        if (!dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)
-            && dataContainer.has(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR)) {
-            if (!(stateContainer.getBlockData() instanceof Chest chest) || chest.getType() == Chest.Type.SINGLE) {
-                actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_BLOCK, Key.of("x", location.getBlockX()),
-                    Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld().getName()));
-                dataContainer.remove(JustLootItKey.chestData());
-                stateContainer.update(false, false);
-                return null;
-            }
-            Vec3i vector = dataContainer.get(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR);
-            block = location.getWorld().getBlockAt(vector.addOn(location));
-            if (block.isEmpty()) {
-                actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_BLOCK, Key.of("x", location.getBlockX()),
-                    Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld().getName()));
-                dataContainer.remove(JustLootItKey.chestData());
-                stateContainer.update(false, false);
-                return null;
-            }
-            if (!(block.getState() instanceof org.bukkit.block.Container stateContainer0)) {
-                actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_BLOCK, Key.of("x", location.getBlockX()),
-                    Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld().getName()));
-                dataContainer.remove(JustLootItKey.chestData());
-                stateContainer.update(false, false);
-                return null;
-            }
-            if (!stateContainer0.getPersistentDataContainer().has(JustLootItKey.identity(), PersistentDataType.LONG)) {
-                actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_BLOCK, Key.of("x", location.getBlockX()),
-                    Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld().getName()));
-                dataContainer.remove(JustLootItKey.chestData());
-                stateContainer.update(false, false);
-                return null;
-            }
-            stateContainer = stateContainer0;
-            dataContainer = stateContainer.getPersistentDataContainer();
+        if (hasIdentity(dataContainer)) {
+            return getIdentity(dataContainer);
         }
-        if (!dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+        org.bukkit.block.Container otherContainer = BlockUtil.getContainerByOffset(stateContainer);
+        if (!(stateContainer.getBlockData() instanceof Chest chest) || chest.getType() == Chest.Type.SINGLE) {
             actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_BLOCK, Key.of("x", location.getBlockX()),
                 Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld().getName()));
             return null;
         }
-        return dataContainer.get(JustLootItKey.identity(), PersistentDataType.LONG);
+        if (otherContainer == null) {
+            actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_BLOCK, Key.of("x", location.getBlockX()),
+                Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld().getName()));
+            return null;
+        }
+        if (!hasIdentity(otherContainer.getPersistentDataContainer())) {
+            actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_BLOCK, Key.of("x", location.getBlockX()),
+                Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld().getName()));
+            removeOffset(dataContainer);
+            removeOffset(otherContainer.getPersistentDataContainer());
+            stateContainer.update(false, false);
+            otherContainer.update(false, false);
+            return null;
+        }
+        return getIdentity(otherContainer.getPersistentDataContainer());
     }
 
     @Action("link entity")
@@ -312,12 +293,12 @@ public class ContainerCommand implements ICommandExtension {
             return;
         }
         PersistentDataContainer container = closest.getPersistentDataContainer();
-        if (DataHelper.hasIdentity(container)) {
+        if (hasIdentity(container)) {
             actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_LINK_ALREADY_CONTAINER_ENTITY, Key.of("x", location.getBlockX()),
                 Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()));
             return;
         }
-        container.set(JustLootItKey.identity(), PersistentDataType.LONG, id);
+        setIdentity(container, id);
         actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_LINK_SUCCESS_ENTITY, Key.of("x", location.getBlockX()),
             Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld().getName()),
             Key.of("type", type), Key.of("id", id));
@@ -345,13 +326,13 @@ public class ContainerCommand implements ICommandExtension {
             return;
         }
         PersistentDataContainer container = stateContainer.getPersistentDataContainer();
-        if (DataHelper.hasIdentityOrOffset(container)) {
+        if (hasIdentity(container) || hasAnyOffset(container)) {
             actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_LINK_ALREADY_CONTAINER_BLOCK, Key.of("x", location.getBlockX()),
                 Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()));
             return;
         }
         BlockUtil.setContainerOffsetToNearbyChest(stateContainer);
-        container.set(JustLootItKey.identity(), PersistentDataType.LONG, id);
+        setIdentity(container, id);
         stateContainer.update(false, false);
         actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_LINK_SUCCESS_BLOCK, Key.of("x", location.getBlockX()),
             Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld().getName()),
@@ -530,16 +511,16 @@ public class ContainerCommand implements ICommandExtension {
         }
         Location loc = closest.getLocation();
         PersistentDataContainer dataContainer = closest.getPersistentDataContainer();
-        if (!dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+        if (!hasIdentity(dataContainer)) {
             actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_ENTITY, Key.of("x", loc.getX()),
                 Key.of("y", loc.getY()), Key.of("z", loc.getZ()), Key.of("world", world.getName()));
             return;
         }
-        long id = dataContainer.get(JustLootItKey.identity(), PersistentDataType.LONG);
+        long id = getIdentity(dataContainer);
         plugin.versionHandler().getLevel(world).getCapability(StorageCapability.class).ifPresentOrElse(capability -> {
             Container container = (Container) capability.storage().read(id);
             if (container == null) {
-                dataContainer.remove(JustLootItKey.identity());
+                removeIdentity(dataContainer);
                 actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_ENTITY, Key.of("x", loc.getX()),
                     Key.of("y", loc.getY()), Key.of("z", loc.getZ()), Key.of("world", world.getName()));
                 return;
@@ -560,68 +541,44 @@ public class ContainerCommand implements ICommandExtension {
         Actor<?> actor, int x, int y, int z, RefreshGroup group) {
         PersistentDataContainer dataContainer = stateContainer.getPersistentDataContainer();
         Location location = block.getLocation();
-        org.bukkit.block.Container otherContainer = stateContainer;
-        if (!dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)
-            && dataContainer.has(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR)) {
+        org.bukkit.block.Container otherContainer = BlockUtil.getContainerByOffset(stateContainer);
+        long id;
+        if (!hasIdentity(dataContainer)) {
             if (!(stateContainer.getBlockData() instanceof Chest chest) || chest.getType() == Chest.Type.SINGLE) {
-                actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_BLOCK, Key.of("x", x), Key.of("y", y),
-                    Key.of("z", z), Key.of("world", world.getName()));
-                dataContainer.remove(JustLootItKey.chestData());
-                stateContainer.update(false, false);
+                actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_BLOCK, Key.of("x", location.getBlockX()),
+                    Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld().getName()));
                 return;
             }
-            Vec3i vector = dataContainer.get(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR);
-            block = world.getBlockAt(vector.addOn(location));
-            if (block.isEmpty()) {
-                actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_BLOCK, Key.of("x", x), Key.of("y", y),
-                    Key.of("z", z), Key.of("world", world.getName()));
-                dataContainer.remove(JustLootItKey.chestData());
-                stateContainer.update(false, false);
+            if (otherContainer == null) {
+                actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_BLOCK, Key.of("x", location.getBlockX()),
+                    Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld().getName()));
                 return;
             }
-            if (!(block.getState() instanceof org.bukkit.block.Container stateContainer0)) {
-                actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_BLOCK, Key.of("x", x), Key.of("y", y),
-                    Key.of("z", z), Key.of("world", world.getName()));
-                dataContainer.remove(JustLootItKey.chestData());
+            if (!hasIdentity(otherContainer.getPersistentDataContainer())) {
+                actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_BLOCK, Key.of("x", location.getBlockX()),
+                    Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld().getName()));
+                removeOffset(dataContainer);
+                removeOffset(otherContainer.getPersistentDataContainer());
                 stateContainer.update(false, false);
+                otherContainer.update(false, false);
                 return;
             }
-            if (!stateContainer0.getPersistentDataContainer().has(JustLootItKey.identity(), PersistentDataType.LONG)) {
-                actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_BLOCK, Key.of("x", x), Key.of("y", y),
-                    Key.of("z", z), Key.of("world", world.getName()));
-                dataContainer.remove(JustLootItKey.chestData());
-                stateContainer.update(false, false);
-                return;
-            }
-            stateContainer = stateContainer0;
-            dataContainer = stateContainer.getPersistentDataContainer();
+            id = getIdentity(otherContainer.getPersistentDataContainer());
+        } else {
+            id = getIdentity(dataContainer);
         }
-        if (!dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
-            actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_BLOCK, Key.of("x", location.getBlockX()),
-                Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", world.getName()));
-            return;
-        }
-        long id = dataContainer.get(JustLootItKey.identity(), PersistentDataType.LONG);
-        final org.bukkit.block.Container finalContainer = stateContainer;
         plugin.versionHandler().getLevel(world).getCapability(StorageCapability.class).ifPresentOrElse(capability -> {
             Container container = (Container) capability.storage().read(id);
             if (container == null) {
-                PersistentDataContainer finalDataContainer = finalContainer.getPersistentDataContainer();
-                if (finalContainer != otherContainer) {
-                    otherContainer.getPersistentDataContainer().remove(JustLootItKey.chestData());
+                if (otherContainer != null) {
+                    PersistentDataContainer otherDataContainer = otherContainer.getPersistentDataContainer();
+                    removeIdentity(otherDataContainer);
+                    removeOffset(otherDataContainer);
                     otherContainer.update(false, false);
-                } else if (finalDataContainer.has(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR)) {
-                    final Block finalBlock = world
-                        .getBlockAt(finalDataContainer.get(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR).addOn(location));
-                    final BlockState finalState = finalBlock.getState();
-                    if (finalState instanceof org.bukkit.block.Container finalOtherContainer) {
-                        finalOtherContainer.getPersistentDataContainer().remove(JustLootItKey.chestData());
-                        finalOtherContainer.update(false, false);
-                    }
                 }
-                finalDataContainer.remove(JustLootItKey.chestData());
-                finalDataContainer.remove(JustLootItKey.identity());
-                finalContainer.update(false, false);
+                removeIdentity(dataContainer);
+                removeOffset(dataContainer);
+                stateContainer.update(false, false);
                 actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_BLOCK, Key.of("x", location.getBlockX()),
                     Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", world.getName()));
                 return;
@@ -689,16 +646,16 @@ public class ContainerCommand implements ICommandExtension {
         }
         Location loc = closest.getLocation();
         PersistentDataContainer dataContainer = closest.getPersistentDataContainer();
-        if (!dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+        if (!hasIdentity(dataContainer)) {
             actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_ENTITY, Key.of("x", loc.getX()),
                 Key.of("y", loc.getY()), Key.of("z", loc.getZ()), Key.of("world", world.getName()));
             return;
         }
-        long id = dataContainer.get(JustLootItKey.identity(), PersistentDataType.LONG);
+        long id = getIdentity(dataContainer);
         plugin.versionHandler().getLevel(world).getCapability(StorageCapability.class).ifPresentOrElse(capability -> {
             Container container = (Container) capability.storage().read(id);
             if (container == null) {
-                dataContainer.remove(JustLootItKey.identity());
+                removeIdentity(dataContainer);
                 actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_ENTITY, Key.of("x", loc.getX()),
                     Key.of("y", loc.getY()), Key.of("z", loc.getZ()), Key.of("world", world.getName()));
                 return;
@@ -716,68 +673,44 @@ public class ContainerCommand implements ICommandExtension {
         Actor<?> actor, int x, int y, int z) {
         PersistentDataContainer dataContainer = stateContainer.getPersistentDataContainer();
         Location location = block.getLocation();
-        org.bukkit.block.Container otherContainer = stateContainer;
-        if (!dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)
-            && dataContainer.has(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR)) {
+        org.bukkit.block.Container otherContainer = BlockUtil.getContainerByOffset(stateContainer);
+        long id;
+        if (!hasIdentity(dataContainer)) {
             if (!(stateContainer.getBlockData() instanceof Chest chest) || chest.getType() == Chest.Type.SINGLE) {
-                actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_BLOCK, Key.of("x", x), Key.of("y", y),
-                    Key.of("z", z), Key.of("world", world.getName()));
-                dataContainer.remove(JustLootItKey.chestData());
-                stateContainer.update(false, false);
+                actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_BLOCK, Key.of("x", location.getBlockX()),
+                    Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld().getName()));
                 return;
             }
-            Vec3i vector = dataContainer.get(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR);
-            block = world.getBlockAt(vector.addOn(location));
-            if (block.isEmpty()) {
-                actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_BLOCK, Key.of("x", x), Key.of("y", y),
-                    Key.of("z", z), Key.of("world", world.getName()));
-                dataContainer.remove(JustLootItKey.chestData());
-                stateContainer.update(false, false);
+            if (otherContainer == null) {
+                actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_BLOCK, Key.of("x", location.getBlockX()),
+                    Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld().getName()));
                 return;
             }
-            if (!(block.getState() instanceof org.bukkit.block.Container stateContainer0)) {
-                actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_BLOCK, Key.of("x", x), Key.of("y", y),
-                    Key.of("z", z), Key.of("world", world.getName()));
-                dataContainer.remove(JustLootItKey.chestData());
+            if (!hasIdentity(otherContainer.getPersistentDataContainer())) {
+                actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_BLOCK, Key.of("x", location.getBlockX()),
+                    Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld().getName()));
+                removeOffset(dataContainer);
+                removeOffset(otherContainer.getPersistentDataContainer());
                 stateContainer.update(false, false);
+                otherContainer.update(false, false);
                 return;
             }
-            if (!stateContainer0.getPersistentDataContainer().has(JustLootItKey.identity(), PersistentDataType.LONG)) {
-                actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_BLOCK, Key.of("x", x), Key.of("y", y),
-                    Key.of("z", z), Key.of("world", world.getName()));
-                dataContainer.remove(JustLootItKey.chestData());
-                stateContainer.update(false, false);
-                return;
-            }
-            stateContainer = stateContainer0;
-            dataContainer = stateContainer.getPersistentDataContainer();
+            id = getIdentity(otherContainer.getPersistentDataContainer());
+        } else {
+            id = getIdentity(dataContainer);
         }
-        if (!dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
-            actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_BLOCK, Key.of("x", location.getBlockX()),
-                Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", world.getName()));
-            return;
-        }
-        long id = dataContainer.get(JustLootItKey.identity(), PersistentDataType.LONG);
-        final org.bukkit.block.Container finalContainer = stateContainer;
         plugin.versionHandler().getLevel(world).getCapability(StorageCapability.class).ifPresentOrElse(capability -> {
             Container container = (Container) capability.storage().read(id);
             if (container == null) {
-                PersistentDataContainer finalDataContainer = finalContainer.getPersistentDataContainer();
-                if (finalContainer != otherContainer) {
-                    otherContainer.getPersistentDataContainer().remove(JustLootItKey.chestData());
+                if (otherContainer != null) {
+                    PersistentDataContainer otherDataContainer = otherContainer.getPersistentDataContainer();
+                    removeIdentity(otherDataContainer);
+                    removeOffset(otherDataContainer);
                     otherContainer.update(false, false);
-                } else if (finalDataContainer.has(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR)) {
-                    final Block finalBlock = world
-                        .getBlockAt(finalDataContainer.get(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR).addOn(location));
-                    final BlockState finalState = finalBlock.getState();
-                    if (finalState instanceof org.bukkit.block.Container finalOtherContainer) {
-                        finalOtherContainer.getPersistentDataContainer().remove(JustLootItKey.chestData());
-                        finalOtherContainer.update(false, false);
-                    }
                 }
-                finalDataContainer.remove(JustLootItKey.chestData());
-                finalDataContainer.remove(JustLootItKey.identity());
-                finalContainer.update(false, false);
+                removeIdentity(dataContainer);
+                removeOffset(dataContainer);
+                stateContainer.update(false, false);
                 actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_BLOCK, Key.of("x", location.getBlockX()),
                     Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", world.getName()));
                 return;
@@ -809,8 +742,8 @@ public class ContainerCommand implements ICommandExtension {
             compat.getCompatibilityData()
                 .addInfoData(key -> compatData
                     .appendContent(actor.getTranslatedMessageAsString(Messages.COMMAND_CONTAINER_INFO_CONTAINER_COMPATIBILITY_FORMAT,
-                        Key.of("key", key.getKey()), Key.of("value", key.getValue()))).appendChar('\n')
-                    .finish());
+                        Key.of("key", key.getKey()), Key.of("value", key.getValue())))
+                    .appendChar('\n').finish());
             root.send(actor);
             if (compatData.isEmpty()) {
                 compatData.appendContent(Messages.COMMAND_CONTAINER_INFO_CONTAINER_COMPATIBILITY_NO_DATA, actor).finish();

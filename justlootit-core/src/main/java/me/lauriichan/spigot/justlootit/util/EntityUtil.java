@@ -2,22 +2,13 @@ package me.lauriichan.spigot.justlootit.util;
 
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
-import org.bukkit.persistence.PersistentDataContainer;
-import org.bukkit.persistence.PersistentDataType;
 
 import me.lauriichan.spigot.justlootit.JustLootItFlag;
-import me.lauriichan.spigot.justlootit.JustLootItKey;
 
 public final class EntityUtil {
 
     private EntityUtil() {
         throw new UnsupportedOperationException();
-    }
-
-    public static boolean hasContainerId(Entity entity) {
-        PersistentDataContainer data = entity.getPersistentDataContainer();
-        return data.has(JustLootItKey.identity(), PersistentDataType.LONG)
-            || data.has(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR);
     }
 
     public static boolean isSupportedEntity(Entity entity) {

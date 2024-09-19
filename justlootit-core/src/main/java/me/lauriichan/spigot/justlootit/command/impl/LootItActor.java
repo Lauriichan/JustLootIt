@@ -8,12 +8,15 @@ import me.lauriichan.laylib.command.Action;
 import me.lauriichan.laylib.command.ActionMessage;
 import me.lauriichan.laylib.command.Action.ActionType;
 import me.lauriichan.minecraft.pluginbase.command.BukkitActor;
+import me.lauriichan.minecraft.pluginbase.util.attribute.Attributes;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.nms.VersionHelper;
 
 public class LootItActor<P extends CommandSender> extends BukkitActor<P> {
 
+    private final Attributes attributes = new Attributes();
+    
     public LootItActor(final P handle, final JustLootItPlugin plugin) {
         super(handle, plugin);
     }
@@ -29,6 +32,10 @@ public class LootItActor<P extends CommandSender> extends BukkitActor<P> {
 
     public VersionHelper versionHelper() {
         return plugin().versionHelper();
+    }
+    
+    public Attributes attributes() {
+        return attributes;
     }
 
     @Override

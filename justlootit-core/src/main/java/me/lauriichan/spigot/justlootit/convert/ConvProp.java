@@ -14,6 +14,8 @@ public final class ConvProp {
     public static final String VANILLA_ALLOW_ITEM_FRAME = "VanillaAllowItemFrameConversion";
     public static final String VANILLA_ALLOW_ONLY_ELYTRA_FRAME = "VanillaAllowOnlyElytraFrameConversion";
     
+    public static final String DO_MIGRATION_CONVERSION = "DoMigrationConversion";
+    
     public static final String BLACKLISTED_WORLDS = "BlacklistedWorlds";
 
 }

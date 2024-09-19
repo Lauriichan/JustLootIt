@@ -3,9 +3,8 @@ package me.lauriichan.spigot.justlootit.listener;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.persistence.PersistentDataContainer;
-import org.bukkit.persistence.PersistentDataType;
 
-import me.lauriichan.spigot.justlootit.JustLootItKey;
+import me.lauriichan.spigot.justlootit.JustLootItAccess;
 import me.lauriichan.spigot.justlootit.capability.StorageCapability;
 import me.lauriichan.spigot.justlootit.data.FrameContainer;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
@@ -39,10 +38,10 @@ public class ItemFramePacketListener implements IPacketListener {
             return;
         }
         final PersistentDataContainer container = entity.getPersistentDataContainer();
-        if (!container.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+        if (!JustLootItAccess.hasIdentity(container)) {
             return;
         }
-        final long id = container.get(JustLootItKey.identity(), PersistentDataType.LONG);
+        final long id = JustLootItAccess.getIdentity(container);
         player.getLevel().getCapability(StorageCapability.class).ifPresent(capability -> {
             final Storable storable = capability.storage().read(id);
             if (storable instanceof final FrameContainer frame) {

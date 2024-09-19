@@ -10,12 +10,11 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataContainer;
-import org.bukkit.persistence.PersistentDataType;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import me.lauriichan.spigot.justlootit.JustLootItAccess;
 import me.lauriichan.spigot.justlootit.JustLootItConstant;
 import me.lauriichan.spigot.justlootit.JustLootItFlag;
-import me.lauriichan.spigot.justlootit.JustLootItKey;
 import me.lauriichan.spigot.justlootit.capability.StorageCapability;
 import me.lauriichan.spigot.justlootit.data.FrameContainer;
 import me.lauriichan.spigot.justlootit.data.StaticContainer;
@@ -32,8 +31,8 @@ import me.lauriichan.spigot.justlootit.nms.util.Vec3i;
 import me.lauriichan.spigot.justlootit.storage.IStorage;
 import me.lauriichan.spigot.justlootit.storage.Storable;
 import me.lauriichan.spigot.justlootit.util.BlockUtil;
+import me.lauriichan.spigot.justlootit.util.ConverterDataHelper;
 import me.lauriichan.spigot.justlootit.util.EntityUtil;
-import me.lauriichan.spigot.justlootit.util.SimpleDataType;
 
 public class VanillaConverter extends ChunkConverter {
 
@@ -45,6 +44,7 @@ public class VanillaConverter extends ChunkConverter {
     public void convert(ProtoChunk chunk, Random random) {
         IStorage<Storable> storage = chunk.getWorld().getCapability(StorageCapability.class).map(StorageCapability::storage).get();
         if (!chunk.getBlockEntities().isEmpty()) {
+            ObjectArrayList<ProtoBlockEntity> allEntities = new ObjectArrayList<>(chunk.getBlockEntities());
             ObjectArrayList<ProtoBlockEntity> pendingBlockEntities = new ObjectArrayList<>(chunk.getBlockEntities());
             while (!pendingBlockEntities.isEmpty()) {
                 ProtoBlockEntity state = pendingBlockEntities.remove(0);
@@ -57,7 +57,7 @@ public class VanillaConverter extends ChunkConverter {
                     continue;
                 }
                 PersistentDataContainer dataContainer = state.getContainer();
-                if (dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+                if (JustLootItAccess.hasIdentity(dataContainer)) {
                     continue;
                 }
                 ItemStack[] otherItems = null;
@@ -71,12 +71,12 @@ public class VanillaConverter extends ChunkConverter {
                     }
                 }
                 if (state.getData() instanceof Chest chest && chest.getType() != Type.SINGLE) {
-                    if (dataContainer.has(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR)) {
+                    if (JustLootItAccess.hasAnyOffset(dataContainer)) {
                         continue;
                     }
-                    Vec3i otherLocation = BlockUtil.findChestLocationAround(state.getPos(), chest.getType(), chest.getFacing());
                     Vec3i location = state.getPos();
-                    ProtoBlockEntity otherState = pendingBlockEntities.stream().filter(pending -> pending.getPos().equals(otherLocation)).findFirst().orElse(null);
+                    Vec3i otherLocation = BlockUtil.findChestLocationAround(location.copy(), chest.getType(), chest.getFacing());
+                    ProtoBlockEntity otherState = allEntities.stream().filter(pending -> pending.getPos().equals(otherLocation)).findFirst().orElse(null);
                     otherItemsIsLeft = chest.getType() == Type.RIGHT;
                     if (otherState == null || !(otherState.hasInventory() && otherState.getData() instanceof Chest)) {
                         if (lootTable == null && !properties.isProperty(ConvProp.VANILLA_ALLOW_STATIC_CONTAINER)) {
@@ -91,8 +91,7 @@ public class VanillaConverter extends ChunkConverter {
                     } else {
                         pendingBlockEntities.remove(otherState);
                         PersistentDataContainer otherDataContainer = otherState.getContainer();
-                        otherDataContainer.set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR, otherLocation.subtract(location));
-                        dataContainer.set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR, location.subtract(otherLocation));
+                        ConverterDataHelper.setOffset(dataContainer, otherDataContainer, location, otherLocation);
                         if (lootTable == null) {
                             otherItems = otherState.getInventory().getContents();
                             if (otherState.getNbt().has("LootTable", TagType.STRING)) {
@@ -119,7 +118,7 @@ public class VanillaConverter extends ChunkConverter {
                 if (lootTable != null) {
                     long storageId = storage.newId();
                     storage.write(new VanillaContainer(storageId, lootTable, seed == null ? random.nextLong() : seed));
-                    dataContainer.set(JustLootItKey.identity(), PersistentDataType.LONG, storageId);
+                    JustLootItAccess.setIdentity(dataContainer, storageId);
                     state.getNbt().remove("LootTable");
                     state.getNbt().remove("LootTableSeed");
                     chunk.updateBlock(state);
@@ -138,7 +137,7 @@ public class VanillaConverter extends ChunkConverter {
                     }
                     long storageId = storage.newId();
                     storage.write(new StaticContainer(storageId, items));
-                    dataContainer.set(JustLootItKey.identity(), PersistentDataType.LONG, storageId);
+                    JustLootItAccess.setIdentity(dataContainer, storageId);
                     state.getInventory().clear();
                     chunk.updateBlock(state);
                 }
@@ -146,7 +145,7 @@ public class VanillaConverter extends ChunkConverter {
         }
         for (ProtoEntity entity : chunk.getEntities()) {
             PersistentDataContainer dataContainer = entity.getContainer();
-            if (dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+            if (JustLootItAccess.hasIdentity(dataContainer)) {
                 continue;
             }
             ICompoundTag tag = entity.getNbt();
@@ -162,7 +161,7 @@ public class VanillaConverter extends ChunkConverter {
                 }
                 long storageId = storage.newId();
                 storage.write(new FrameContainer(storageId, item));
-                dataContainer.set(JustLootItKey.identity(), PersistentDataType.LONG, storageId);
+                JustLootItAccess.setIdentity(dataContainer, storageId);
                 chunk.updateEntity(entity);
                 continue;
             }
@@ -171,7 +170,7 @@ public class VanillaConverter extends ChunkConverter {
                     long storageId = storage.newId();
                     storage.write(new VanillaContainer(storageId, NamespacedKey.fromString(tag.getString("LootTable")),
                         tag.hasNumeric("LootTableSeed") ? tag.getLong("LootTableSeed") : random.nextLong()));
-                    dataContainer.set(JustLootItKey.identity(), PersistentDataType.LONG, storageId);
+                    JustLootItAccess.setIdentity(dataContainer, storageId);
                     tag.remove("LootTable");
                     tag.remove("LootTableSeed");
                     chunk.updateEntity(entity);
@@ -203,7 +202,7 @@ public class VanillaConverter extends ChunkConverter {
                 tag.remove("Items");
                 long storageId = storage.newId();
                 storage.write(new StaticContainer(storageId, items));
-                dataContainer.set(JustLootItKey.identity(), PersistentDataType.LONG, storageId);
+                JustLootItAccess.setIdentity(dataContainer, storageId);
                 chunk.updateEntity(entity);
                 continue;
             }

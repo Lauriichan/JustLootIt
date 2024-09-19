@@ -14,8 +14,9 @@ import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.type.Chest;
 import org.bukkit.block.data.type.Chest.Type;
 import org.bukkit.entity.Player;
+import org.bukkit.persistence.PersistentDataContainer;
 
-import me.lauriichan.spigot.justlootit.JustLootItKey;
+import me.lauriichan.spigot.justlootit.JustLootItAccess;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoChunk;
 import me.lauriichan.spigot.justlootit.nms.util.Vec3i;
@@ -40,6 +41,15 @@ public final class BlockUtil {
         return location;
     }
     
+    public static Container getNearbyChest(Container container) {
+        BlockData data = container.getBlockData();
+        if (!(data instanceof Chest chest) || chest.getType() == Type.SINGLE) {
+            return null;
+        }
+        return BlockUtil.findChestAround(container.getWorld(), container.getX(), container.getY(), container.getZ(),
+            chest.getType(), chest.getFacing());
+    }
+    
     public static void setContainerOffsetToNearbyChest(Container container) {
         BlockData data = container.getBlockData();
         if (!(data instanceof Chest chest) || chest.getType() == Type.SINGLE) {
@@ -50,13 +60,63 @@ public final class BlockUtil {
         if (otherContainer == null) {
             return;
         }
-        otherContainer.getPersistentDataContainer().set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR,
-            new Vec3i(otherContainer.getLocation()).subtractOf(container.getLocation()));
+        JustLootItAccess.setOffset(otherContainer.getPersistentDataContainer(), new Vec3i(otherContainer.getLocation()).subtractOf(container.getLocation()));
+        JustLootItAccess.setOffset(container.getPersistentDataContainer(), new Vec3i(container.getLocation()).subtractOf(otherContainer.getLocation()));
         otherContainer.update(false, false);
-        container.getPersistentDataContainer().set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR,
-            new Vec3i(container.getLocation()).subtractOf(otherContainer.getLocation()));
+        // The container this is executed on needs to be updated afterwards.
+    }
+    
+    public static void setContainerOffset(Container container, Container otherContainer, boolean update) {
+        JustLootItAccess.setOffset(otherContainer.getPersistentDataContainer(), new Vec3i(otherContainer.getLocation()).subtractOf(container.getLocation()));
+        JustLootItAccess.setOffset(container.getPersistentDataContainer(), new Vec3i(container.getLocation()).subtractOf(otherContainer.getLocation()));
+        if (update) {
+            otherContainer.update(false, false);
+            container.update(false, false);
+        }
     }
 
+    public static Container getContainerByOffset(Container otherContainer) {
+        PersistentDataContainer otherDataContainer = otherContainer.getPersistentDataContainer();
+        Vec3i offset;
+        boolean legacy = false;
+        if (!JustLootItAccess.hasOffset(otherDataContainer)) {
+            if (!JustLootItAccess.hasLegacyOffset(otherDataContainer)) {
+                return null;
+            }
+            offset = JustLootItAccess.getLegacyOffset(otherDataContainer);
+            JustLootItAccess.removeLegacyOffset(otherDataContainer);
+            JustLootItAccess.setOffset(otherDataContainer, offset);
+            legacy = true;
+        } else {
+            offset = JustLootItAccess.getOffset(otherDataContainer);
+        }
+        if (!(otherContainer.getBlockData() instanceof Chest chest) || chest.getType() == Chest.Type.SINGLE){
+            JustLootItAccess.removeOffset(otherDataContainer);
+            otherContainer.update(false, false);
+            return null;
+        }
+        Location blockLocation = offset.addOn(otherContainer.getLocation());
+        BlockState state = blockLocation.getWorld().getBlockState(blockLocation);
+        if (state instanceof Container container) {
+            if (legacy) {
+                PersistentDataContainer dataContainer = container.getPersistentDataContainer();
+                if (JustLootItAccess.hasLegacyOffset(dataContainer)) {
+                    offset = JustLootItAccess.getLegacyOffset(dataContainer);
+                    JustLootItAccess.removeLegacyOffset(dataContainer);
+                    JustLootItAccess.setOffset(dataContainer, offset);
+                    container.update(false, false);
+                } else if(!JustLootItAccess.hasOffset(dataContainer)) {
+                    JustLootItAccess.setOffset(dataContainer, new Vec3i(blockLocation).subtractOf(otherContainer.getLocation()));
+                }
+                otherContainer.update(false, false);
+            }
+            return container;
+        }
+        JustLootItAccess.removeOffset(otherDataContainer);
+        otherContainer.update(false, false);
+        return null;
+    }
+    
     public static Container findChestAround(RegionAccessor region, int x, int y, int z, Type chestType, BlockFace chestFace) {
         if (chestFace.getModZ() != 0) {
             x += chestType == Type.LEFT ? -chestFace.getModZ() : chestFace.getModZ();
@@ -109,11 +169,11 @@ public final class BlockUtil {
     public static long getSeed(Location location) {
         int x = location.getBlockX();
         int z = location.getBlockZ();
-        return location.getWorld().getSeed() | ProtoChunk.posAsLong(x >> 4, z >> 4) | Vec3i.packByte(x, z);
+        return location.getWorld().getSeed() | ProtoChunk.posAsLong(x >> 4, z >> 4) | Vec3i.packUnsignedByte(x, z);
     }
 
     public static long getSeed(ProtoChunk chunk, Vec3i location) {
-        return chunk.getWorld().getSeed() | chunk.getPosAsLong() | location.packByte();
+        return chunk.getWorld().getSeed() | chunk.getPosAsLong() | location.packUnsignedByte();
     }
 
     public static BlockState getBlockState(Location location) {

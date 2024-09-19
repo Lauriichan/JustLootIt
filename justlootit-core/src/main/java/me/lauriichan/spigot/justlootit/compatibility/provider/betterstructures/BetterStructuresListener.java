@@ -2,13 +2,11 @@ package me.lauriichan.spigot.justlootit.compatibility.provider.betterstructures;
 
 import org.bukkit.Location;
 import org.bukkit.block.Container;
-import org.bukkit.block.data.type.Chest;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.persistence.PersistentDataContainer;
-import org.bukkit.persistence.PersistentDataType;
 
 import com.magmaguy.betterstructures.api.BuildPlaceEvent;
 import com.magmaguy.betterstructures.api.ChestFillEvent;
@@ -23,9 +21,9 @@ import it.unimi.dsi.fastutil.objects.ObjectArraySet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import it.unimi.dsi.fastutil.objects.ObjectSets;
 import me.lauriichan.minecraft.pluginbase.config.ConfigManager;
+import me.lauriichan.spigot.justlootit.JustLootItAccess;
 import me.lauriichan.spigot.justlootit.JustLootItConstant;
 import me.lauriichan.spigot.justlootit.JustLootItFlag;
-import me.lauriichan.spigot.justlootit.JustLootItKey;
 import me.lauriichan.spigot.justlootit.capability.StorageCapability;
 import me.lauriichan.spigot.justlootit.compatibility.data.CompatibilityDataExtension;
 import me.lauriichan.spigot.justlootit.compatibility.data.betterstructures.BetterStructuresDataExtension;
@@ -34,11 +32,9 @@ import me.lauriichan.spigot.justlootit.config.world.WorldMultiConfig;
 import me.lauriichan.spigot.justlootit.data.CompatibilityContainer;
 import me.lauriichan.spigot.justlootit.data.StaticContainer;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
-import me.lauriichan.spigot.justlootit.nms.util.Vec3i;
 import me.lauriichan.spigot.justlootit.storage.IStorage;
 import me.lauriichan.spigot.justlootit.storage.Storable;
 import me.lauriichan.spigot.justlootit.util.BlockUtil;
-import me.lauriichan.spigot.justlootit.util.SimpleDataType;
 
 public class BetterStructuresListener implements Listener {
 
@@ -68,8 +64,7 @@ public class BetterStructuresListener implements Listener {
         }
         Location location = container.getLocation();
         PersistentDataContainer dataContainer = container.getPersistentDataContainer();
-        if (dataContainer.has(JustLootItKey.identity(), PersistentDataType.LONG)
-            || dataContainer.has(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR)) {
+        if (JustLootItAccess.hasIdentity(dataContainer) || JustLootItAccess.hasAnyOffset(dataContainer)) {
             lootFileNameMap.remove(location);
             return;
         }
@@ -80,20 +75,12 @@ public class BetterStructuresListener implements Listener {
             return;
         }
         String fileName = lootFileNameMap.remove(location);
-        Container otherChest;
-        if (container.getBlockData() instanceof Chest chest && chest.getType() != Chest.Type.SINGLE) {
-            otherChest = BlockUtil.findChestAround(container.getWorld(), container.getLocation(), chest.getType(), chest.getFacing());
-            if (otherChest.getBlockData() instanceof Chest) {
-                otherChest.getPersistentDataContainer().set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR,
-                    new Vec3i(container.getLocation()).subtractOf(otherChest.getLocation()));
-                container.getPersistentDataContainer().set(JustLootItKey.chestData(), SimpleDataType.OFFSET_VECTOR,
-                    new Vec3i(otherChest.getLocation()).subtractOf(container.getLocation()));
-                if (fileName == null) {
-                    fileName = lootFileNameMap.remove(otherChest.getLocation());
-                }
+        Container otherContainer = BlockUtil.getNearbyChest(container);
+        if (otherContainer != null) {
+            BlockUtil.setContainerOffset(container, otherContainer, false);
+            if (fileName == null) {
+                fileName = lootFileNameMap.remove(otherContainer.getLocation());
             }
-        } else {
-            otherChest = null;
         }
         String fFileName = fileName;
         versionHandler.getLevel(container.getWorld()).getCapability(StorageCapability.class).ifPresent(capability -> {
@@ -105,10 +92,10 @@ public class BetterStructuresListener implements Listener {
                 IStorage<Storable> storage = capability.storage();
                 long id = storage.newId();
                 storage.write(new StaticContainer(id, inventory));
-                dataContainer.set(JustLootItKey.identity(), PersistentDataType.LONG, id);
+                JustLootItAccess.setIdentity(dataContainer, id);
                 container.update();
-                if (otherChest != null) {
-                    otherChest.update();
+                if (otherContainer != null) {
+                    otherContainer.update();
                 }
                 return;
             }
@@ -119,10 +106,10 @@ public class BetterStructuresListener implements Listener {
             IStorage<Storable> storage = capability.storage();
             long id = storage.newId();
             storage.write(new CompatibilityContainer(id, dataExtension.create(fFileName)));
-            dataContainer.set(JustLootItKey.identity(), PersistentDataType.LONG, id);
+            JustLootItAccess.setIdentity(dataContainer, id);
             container.update();
-            if (otherChest != null) {
-                otherChest.update();
+            if (otherContainer != null) {
+                otherContainer.update();
             }
         });
     }

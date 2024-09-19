@@ -14,12 +14,11 @@ import org.bukkit.event.hanging.HangingBreakEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataContainer;
-import org.bukkit.persistence.PersistentDataType;
 
 import me.lauriichan.laylib.localization.Key;
 import me.lauriichan.minecraft.pluginbase.extension.Extension;
 import me.lauriichan.minecraft.pluginbase.listener.IListenerExtension;
-import me.lauriichan.spigot.justlootit.JustLootItKey;
+import me.lauriichan.spigot.justlootit.JustLootItAccess;
 import me.lauriichan.spigot.justlootit.JustLootItPermission;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.capability.ActorCapability;
@@ -55,7 +54,7 @@ public class ItemFrameEventListener implements IListenerExtension {
             return;
         }
         final PersistentDataContainer container = entity.getPersistentDataContainer();
-        if (!container.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+        if (!JustLootItAccess.hasIdentity(container)) {
             return;
         }
         event.setCancelled(true);
@@ -68,7 +67,7 @@ public class ItemFrameEventListener implements IListenerExtension {
         if (entity == null || (type = entity.getType()) != EntityType.ITEM_FRAME && type != EntityType.GLOW_ITEM_FRAME) {
             return;
         }
-        event.setCancelled(entity.getPersistentDataContainer().has(JustLootItKey.identity(), PersistentDataType.LONG));
+        event.setCancelled(JustLootItAccess.hasIdentity(entity.getPersistentDataContainer()));
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -79,7 +78,7 @@ public class ItemFrameEventListener implements IListenerExtension {
             return;
         }
         final PersistentDataContainer container = entity.getPersistentDataContainer();
-        if (!container.has(JustLootItKey.identity(), PersistentDataType.LONG)) {
+        if (!JustLootItAccess.hasIdentity(container)) {
             return;
         }
         event.setCancelled(true);
@@ -105,9 +104,8 @@ public class ItemFrameEventListener implements IListenerExtension {
             actor.sendTranslatedMessage(Messages.CONTAINER_BREAK_CONFIRMATION_ENTITY);
             return;
         }
-        final long id = container.get(JustLootItKey.identity(), PersistentDataType.LONG);
-        container.remove(JustLootItKey.identity());
-        container.remove(JustLootItKey.breakData());
+        final long id = JustLootItAccess.getIdentity(container);
+        JustLootItAccess.removeIdentity(container);
         actor.sendTranslatedMessage(Messages.CONTAINER_BREAK_REMOVED_ENTITY, Key.of("id", id));
         actor.versionHandler().broadcast(
             actor.versionHandler().packetManager().createPacket(new ArgumentMap().set("entity", entity), PacketOutSetEntityData.class));
@@ -123,7 +121,7 @@ public class ItemFrameEventListener implements IListenerExtension {
     
     private void accessFrame(Entity entity, EntityType type, Player player, PersistentDataContainer container) {
         final LootItActor<?> actor = ActorCapability.actor(plugin, player);
-        final long id = container.get(JustLootItKey.identity(), PersistentDataType.LONG);
+        final long id = JustLootItAccess.getIdentity(container);
         actor.versionHandler().getLevel(entity.getWorld()).getCapability(StorageCapability.class).ifPresent(capability -> {
             final Storable storable = capability.storage().read(id);
             if (storable instanceof final FrameContainer frame) {
