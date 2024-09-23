@@ -50,12 +50,12 @@ public final class BlockUtil {
             chest.getType(), chest.getFacing());
     }
     
-    public static void setContainerOffsetToNearbyChest(Container container) {
+    public static void setContainerOffsetToNearbyChest(RegionAccessor region, Container container) {
         BlockData data = container.getBlockData();
         if (!(data instanceof Chest chest) || chest.getType() == Type.SINGLE) {
             return;
         }
-        Container otherContainer = BlockUtil.findChestAround(container.getWorld(), container.getX(), container.getY(), container.getZ(),
+        Container otherContainer = BlockUtil.findChestAround(region, container.getX(), container.getY(), container.getZ(),
             chest.getType(), chest.getFacing());
         if (otherContainer == null) {
             return;
@@ -64,6 +64,10 @@ public final class BlockUtil {
         JustLootItAccess.setOffset(container.getPersistentDataContainer(), new Vec3i(container.getLocation()).subtractOf(otherContainer.getLocation()));
         otherContainer.update(false, false);
         // The container this is executed on needs to be updated afterwards.
+    }
+    
+    public static void setContainerOffsetToNearbyChest(Container container) {
+        setContainerOffsetToNearbyChest(container.getWorld(), container);
     }
     
     public static void setContainerOffset(Container container, Container otherContainer, boolean update) {

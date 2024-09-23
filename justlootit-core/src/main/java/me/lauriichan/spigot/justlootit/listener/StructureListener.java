@@ -130,7 +130,7 @@ public class StructureListener implements IListenerExtension {
         }
 
         private long getIdOfBlockState(LimitedRegion region, int x, int y, int z, IStorage<?> storage, Container container) {
-            BlockUtil.setContainerOffsetToNearbyChest(container);
+            BlockUtil.setContainerOffsetToNearbyChest(region, container);
             return idFromData(storage, container.getPersistentDataContainer());
         }
 
