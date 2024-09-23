@@ -5,7 +5,7 @@ import org.bukkit.loot.LootTable;
 import me.lauriichan.maven.justlootit.annotation.Event;
 import me.lauriichan.maven.justlootit.annotation.EventField;
 
-@Event
+@Event(isIndependent = false)
 public abstract class AsyncJLIPlayerVanillaLootProvidedEventTmp extends AsyncJLIPlayerLootProvidedEventTmp {
     
     @EventField

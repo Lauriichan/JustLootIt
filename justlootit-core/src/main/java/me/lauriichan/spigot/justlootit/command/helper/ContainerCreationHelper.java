@@ -1,7 +1,5 @@
 package me.lauriichan.spigot.justlootit.command.helper;
 
-import static me.lauriichan.spigot.justlootit.JustLootItAccess.*;
-
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -17,6 +15,7 @@ import org.bukkit.persistence.PersistentDataContainer;
 
 import me.lauriichan.laylib.command.Actor;
 import me.lauriichan.laylib.localization.Key;
+import me.lauriichan.spigot.justlootit.JustLootItAccess;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.command.argument.LootTableArgument;
 import me.lauriichan.spigot.justlootit.data.Container;
@@ -124,7 +123,7 @@ public final class ContainerCreationHelper {
                     Key.of("type", ContainerType.FRAME));
                 return;
             }
-            if (hasIdentity(itemFrame.getPersistentDataContainer())) {
+            if (JustLootItAccess.hasIdentity(itemFrame.getPersistentDataContainer())) {
                 actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_ALREADY_CONTAINER_ENTITY, Key.of("x", location.getBlockX()),
                     Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()));
                 return;
@@ -136,7 +135,7 @@ public final class ContainerCreationHelper {
                 return;
             }
             creator.accept((id) -> {
-                setIdentity(itemFrame.getPersistentDataContainer(), id);
+                JustLootItAccess.setIdentity(itemFrame.getPersistentDataContainer(), id);
                 itemFrame.setItem(null);
                 return new FrameContainer(id, itemStack.clone());
             });
@@ -145,7 +144,7 @@ public final class ContainerCreationHelper {
     public static final EntityContainerCreator ENTITY_VANILLA = new EntityContainerCreator(VanillaContainer.class,
         (plugin, actor, location, entity, creator) -> {
             PersistentDataContainer dataContainer = entity.getPersistentDataContainer();
-            if (hasIdentity(dataContainer)) {
+            if (JustLootItAccess.hasIdentity(dataContainer)) {
                 actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_ALREADY_CONTAINER_ENTITY, Key.of("x", location.getBlockX()),
                     Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()));
                 return;
@@ -169,14 +168,14 @@ public final class ContainerCreationHelper {
                                         Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()));
                                     return;
                                 }
-                                if (hasIdentity(dataContainer)) {
+                                if (JustLootItAccess.hasIdentity(dataContainer)) {
                                     actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_ALREADY_CONTAINER_ENTITY,
                                         Key.of("x", location.getBlockX()), Key.of("y", location.getBlockY()),
                                         Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()));
                                     return;
                                 }
                                 creator.accept((id) -> {
-                                    setIdentity(dataContainer, id);
+                                    JustLootItAccess.setIdentity(dataContainer, id);
                                     ((InventoryHolder) entity).getInventory().clear();
                                     return new VanillaContainer(id, lootTable, seed);
                                 });
@@ -187,7 +186,7 @@ public final class ContainerCreationHelper {
     public static final BlockContainerCreator BLOCK_VANILLA = new BlockContainerCreator(VanillaContainer.class,
         (plugin, actor, location, block, creator) -> {
             PersistentDataContainer blockData = block.getPersistentDataContainer();
-            if (hasIdentity(blockData) || hasAnyOffset(blockData)) {
+            if (JustLootItAccess.hasIdentity(blockData) || JustLootItAccess.hasAnyOffset(blockData)) {
                 actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_ALREADY_CONTAINER_BLOCK, Key.of("x", location.getBlockX()),
                     Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()));
                 return;
@@ -212,7 +211,7 @@ public final class ContainerCreationHelper {
                                     return;
                                 }
                                 PersistentDataContainer dataContainer = blockContainer.getPersistentDataContainer();
-                                if (hasIdentity(dataContainer)) {
+                                if (JustLootItAccess.hasIdentity(dataContainer)) {
                                     actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_ALREADY_CONTAINER_BLOCK,
                                         Key.of("x", location.getBlockX()), Key.of("y", location.getBlockY()),
                                         Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()));
@@ -220,7 +219,7 @@ public final class ContainerCreationHelper {
                                 }
                                 creator.accept((id) -> {
                                     BlockUtil.setContainerOffsetToNearbyChest(blockContainer);
-                                    setIdentity(dataContainer, id);
+                                    JustLootItAccess.setIdentity(dataContainer, id);
                                     blockContainer.update(false, false);
                                     blockContainer.getInventory().clear();
                                     return new VanillaContainer(id, lootTable, seed);
@@ -233,7 +232,7 @@ public final class ContainerCreationHelper {
     public static final EntityContainerCreator ENTITY_STATIC = new EntityContainerCreator(StaticContainer.class,
         (plugin, actor, location, entity, creator) -> {
             PersistentDataContainer dataContainer = entity.getPersistentDataContainer();
-            if (hasIdentity(dataContainer)) {
+            if (JustLootItAccess.hasIdentity(dataContainer)) {
                 actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_ALREADY_CONTAINER_ENTITY, Key.of("x", location.getBlockX()),
                     Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()));
                 return;
@@ -241,7 +240,7 @@ public final class ContainerCreationHelper {
             creator.accept((id) -> {
                 Inventory inventory = ((InventoryHolder) entity).getInventory();
                 try {
-                    setIdentity(dataContainer, id);
+                    JustLootItAccess.setIdentity(dataContainer, id);
                     return new StaticContainer(id, inventory);
                 } finally {
                     inventory.clear();
@@ -251,14 +250,14 @@ public final class ContainerCreationHelper {
     public static final BlockContainerCreator BLOCK_STATIC = new BlockContainerCreator(StaticContainer.class,
         (plugin, actor, location, block, creator) -> {
             PersistentDataContainer dataContainer = block.getPersistentDataContainer();
-            if (hasIdentity(dataContainer) || hasAnyOffset(dataContainer)) {
+            if (JustLootItAccess.hasIdentity(dataContainer) || JustLootItAccess.hasAnyOffset(dataContainer)) {
                 actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_ALREADY_CONTAINER_BLOCK, Key.of("x", location.getBlockX()),
                     Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()));
                 return;
             }
             creator.accept((id) -> {
                 BlockUtil.setContainerOffsetToNearbyChest(block);
-                setIdentity(dataContainer, id);
+                JustLootItAccess.setIdentity(dataContainer, id);
                 Inventory inventory = block.getInventory();
                 try {
                     return new StaticContainer(id, inventory);

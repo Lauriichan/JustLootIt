@@ -149,7 +149,7 @@ public final class StaticContainer extends Container implements IInventoryContai
     }
 
     @Override
-    public void fill(final PlayerAdapter player, final InventoryHolder holder, final Location location, final Inventory inventory) {
+    public void fillNoResult(final PlayerAdapter player, final InventoryHolder holder, final Location location, final Inventory inventory) {
         loadTo(inventory);
     }
 

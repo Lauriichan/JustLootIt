@@ -21,6 +21,8 @@ import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapter;
 
 public final class VanillaContainer extends Container implements IInventoryContainer {
+    
+    public static final record VanillaResult(LootTable lootTable, long seed) implements IResult {}
 
     public static final StorageAdapter<VanillaContainer> ADAPTER = new BaseAdapter<>(VanillaContainer.class, 16) {
         @Override
@@ -84,17 +86,25 @@ public final class VanillaContainer extends Container implements IInventoryConta
     }
 
     @Override
-    public void fill(final PlayerAdapter player, final InventoryHolder holder, final Location location, final Inventory inventory) {
+    public VanillaResult fill(final PlayerAdapter player, final InventoryHolder holder, final Location location, final Inventory inventory) {
         AsyncJLIPlayerVanillaLootGenerateEvent event = new AsyncJLIPlayerVanillaLootGenerateEvent((JustLootItPlugin) player.versionHandler().plugin(), player, getLootTable(), seed);
         event.call().join();
         player.versionHandler().versionHelper().fill(inventory, player.asBukkit(), location, event.lootTable(), event.seed());
+        return new VanillaResult(event.lootTable(), event.seed());
     }
     
     @Override
-    public void awaitProvidedEvent(PlayerAdapter player, IGuiInventory inventory, InventoryHolder entryHolder, Location entryLocation) {
+    public void awaitProvidedEvent(PlayerAdapter player, IGuiInventory inventory, InventoryHolder entryHolder, Location entryLocation,
+        IResult result) {
         // This does not use the loot table and seed set by the previous event
         // This should be kept in mind when using it
-        new AsyncJLIPlayerVanillaLootProvidedEvent((JustLootItPlugin) player.versionHandler().plugin(), player, inventory, entryHolder, entryLocation, getLootTable(), seed).call().join();
+        if (result instanceof VanillaResult vanillaResult) {
+            new AsyncJLIPlayerVanillaLootProvidedEvent((JustLootItPlugin) player.versionHandler().plugin(), player, inventory, entryHolder,
+                entryLocation, vanillaResult.lootTable(), vanillaResult.seed()).call().join();
+            return;
+        }
+        new AsyncJLIPlayerVanillaLootProvidedEvent((JustLootItPlugin) player.versionHandler().plugin(), player, inventory, entryHolder,
+            entryLocation, getLootTable(), seed).call().join();
     }
 
     @Override

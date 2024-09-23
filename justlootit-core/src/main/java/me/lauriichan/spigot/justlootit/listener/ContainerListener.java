@@ -49,6 +49,7 @@ import me.lauriichan.spigot.justlootit.data.CacheLookupTable;
 import me.lauriichan.spigot.justlootit.data.CachedInventory;
 import me.lauriichan.spigot.justlootit.data.Container;
 import me.lauriichan.spigot.justlootit.data.IInventoryContainer;
+import me.lauriichan.spigot.justlootit.data.IInventoryContainer.IResult;
 import me.lauriichan.spigot.justlootit.data.CacheLookupTable.WorldEntry;
 import me.lauriichan.spigot.justlootit.inventory.handler.loot.LootUIHandler;
 import me.lauriichan.spigot.justlootit.message.Messages;
@@ -376,8 +377,8 @@ public class ContainerListener implements IListenerExtension {
                     player.setData(LootUIHandler.PLAYER_DATA_LOOTING, LootUIHandler.PLAYER_DATA_LOOTING_VALUE);
                     inventory.attrSet(LootUIHandler.ATTR_ID, lookupTable.acquire(entryId));
                     inventory.setHandler(LootUIHandler.LOOT_HANDLER);
-                    container.fill(player, inventoryHolder, location, inventory.getInventory());
-                    container.awaitProvidedEvent(player, inventory, inventoryHolder, location);
+                    IResult result = container.fill(player, inventoryHolder, location, inventory.getInventory());
+                    container.awaitProvidedEvent(player, inventory, inventoryHolder, location, result);
                     inventory.open(bukkitPlayer);
                     if (inventoryHolder instanceof DoubleChest || inventoryHolder instanceof Lidded) {
                         inventory.attrSet(LootUIHandler.ATTR_LIDDED_LOCATION, location);

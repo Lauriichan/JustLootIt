@@ -58,8 +58,12 @@ public class JLIEventGenerator implements ISourceGenerator {
         newSource.setVisibility(Visibility.PUBLIC);
         newSource.setAbstract(getBoolean(eventAnnotation, "isAbstract", Event.DEFAULT_IS_ABSTRACT));
 
-        SourceTransformerUtils.importClass(newSource, "org.bukkit.event.HandlerList");
-        newSource.addField("private static final HandlerList handlers = new HandlerList();");
+        boolean independent = getBoolean(eventAnnotation, "isIndependent", Event.DEFAULT_IS_INDEPENDENT);
+        
+        if (independent) {
+            SourceTransformerUtils.importClass(newSource, "org.bukkit.event.HandlerList");
+            newSource.addField("private static final HandlerList handlers = new HandlerList();");
+        }
 
         ObjectArrayList<ConstructorParam> params = new ObjectArrayList<>();
         AtomicBoolean canBeCancellable = new AtomicBoolean(true);
@@ -162,8 +166,10 @@ public class JLIEventGenerator implements ISourceGenerator {
             newSource.addMethod("@Override public final void setCancelled(final boolean cancelled) { this.cancelled = cancelled; }");
         }
 
-        newSource.addMethod("@Override public HandlerList getHandlers() { return handlers; }");
-        newSource.addMethod("public static HandlerList getHandlerList() { return handlers; }");
+        if (independent) {
+            newSource.addMethod("@Override public HandlerList getHandlers() { return handlers; }");
+            newSource.addMethod("public static HandlerList getHandlerList() { return handlers; }");
+        }
 
         copyJavaDoc(newSource, source);
         source.getNestedTypes().forEach(newSource::addNestedType);

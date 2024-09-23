@@ -18,7 +18,6 @@ public final class ContainerTypeGenerator implements ISourceGenerator {
     public void generateSources(SourcePackage root) {
         SourcePackage pkg = root.getOrCreatePackage("me.lauriichan.spigot.justlootit.data");
         JavaEnumSource source = pkg.createEnum("ContainerType");
-        source.addAnnotation(SuppressWarnings.class).setStringValue("unused");
         JavaClassSource container = pkg.findClass("Container").orElse(null);
         if (container == null) {
             return;

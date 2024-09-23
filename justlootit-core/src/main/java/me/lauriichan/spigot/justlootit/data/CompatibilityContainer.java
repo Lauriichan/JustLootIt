@@ -75,7 +75,7 @@ public class CompatibilityContainer extends Container implements IInventoryConta
     }
 
     @Override
-    public void fill(final PlayerAdapter player, final InventoryHolder holder, final Location location, final Inventory inventory) {
+    public void fillNoResult(final PlayerAdapter player, final InventoryHolder holder, final Location location, final Inventory inventory) {
         if (!compatibilityData.extension().isActive()) {
             ActorCapability.actor(player).sendTranslatedMessage(Messages.CONTAINER_COMPATIBILITY_NOT_ACTIVE,
                 Key.of("plugin", compatibilityData.extension().id()));
