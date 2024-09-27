@@ -20,7 +20,7 @@ body:
       description: Please provide the list of authors of your translation
     validations:
       required: true
-  - type: input
+  - type: textarea
     id: translation
     attributes:
       label: The translation
