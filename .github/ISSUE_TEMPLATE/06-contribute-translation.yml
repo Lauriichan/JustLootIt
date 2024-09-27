@@ -24,9 +24,9 @@ body:
     id: translation
     attributes:
       label: The translation
-      description: Please provide your translation files here.
-    validations:
-      required: true
+      description: Please provide your translation files here along with their language.
+    value: |
+      *English:* 
   - type: textarea
     id: additional-information
     attributes:
