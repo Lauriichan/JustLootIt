@@ -1,0 +1,34 @@
+name: Contribute translation
+description: Provide a community translation
+labels: ["Translation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to translate JustLootIt!
+  - type: input
+    id: plugin-version
+    attributes:
+      label: Plugin version
+      description: The version of the plugin that this translation is for
+    validations:
+      required: false
+  - type: input
+    id: authors
+    attributes:
+      label: The author(s)
+      description: Please provide the list of authors of your translation
+    validations:
+      required: true
+  - type: input
+    id: translation
+    attributes:
+      label: The translation
+      description: Please provide your translation files here.
+    validations:
+      required: true
+  - type: textarea
+    id: additional-information
+    attributes:
+      label: Additional Information
+      description: Any additional information that you would like to share.
