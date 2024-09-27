@@ -95,7 +95,7 @@ public final class ConversionAdapter1_20_R3 extends ConversionAdapter {
         WorldLoader.DataLoadContext context = server.worldLoader;
         LevelDataAndDimensions levelData = LevelStorageSource.getLevelDataAndDimensions(dynamic, context.dataConfiguration(),
             context.datapackDimensions().registryOrThrow(Registries.LEVEL_STEM), context.datapackWorldgen());
-        return handler.applyCapabilities(new ProtoWorld1_20_R3(workerPool(), logger, new ChunkStorage(null, DataFixers.getDataFixer(), false),
+        return handler.applyCapabilities(new ProtoWorld1_20_R3(workerPool(logger), logger, new ChunkStorage(null, DataFixers.getDataFixer(), false),
             session, closeSession, dimensionKey, levelData.worldData()));
     }
 

@@ -1,5 +1,6 @@
 package me.lauriichan.spigot.justlootit.nms.v1_20_R4.convert;
 
+import java.util.List;
 import java.util.Objects;
 
 import org.bukkit.block.data.BlockData;
@@ -13,6 +14,7 @@ import me.lauriichan.spigot.justlootit.nms.convert.ProtoBlockEntity;
 import me.lauriichan.spigot.justlootit.nms.nbt.ICompoundTag;
 import me.lauriichan.spigot.justlootit.nms.util.Vec3i;
 import me.lauriichan.spigot.justlootit.nms.v1_20_R4.nbt.CompoundTag1_20_R4;
+import me.lauriichan.spigot.justlootit.nms.v1_20_R4.util.NonNullItemList1_20_R4;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.RegistryAccess.Frozen;
@@ -103,7 +105,14 @@ public class ProtoBlockEntity1_20_R4 extends ProtoBlockEntity {
     public void save() {
         tag.handle().put("PublicBukkitValues", container.toTagCompound());
         if (inventory != null) {
-            ContainerHelper.saveAllItems(tag.handle(), (NonNullList<ItemStack>) inventory.getInventory().getContents(), registry);
+            List<ItemStack> list = inventory.getInventory().getContents();
+            NonNullList<ItemStack> saveList;
+            if (list instanceof NonNullList<ItemStack> nonNull) {
+                saveList = nonNull;
+            } else {
+                saveList = NonNullItemList1_20_R4.of(list);
+            }
+            ContainerHelper.saveAllItems(tag.handle(), saveList, registry);
         }
     }
     

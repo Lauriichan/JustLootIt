@@ -76,7 +76,7 @@ public final class ConversionAdapter1_20_R2 extends ConversionAdapter {
         Pair<WorldData, WorldDimensions.Complete> pair = session.getDataTag(RegistryOps.create(NbtOps.INSTANCE, context.datapackWorldgen()),
             context.dataConfiguration(), context.datapackDimensions().registryOrThrow(Registries.LEVEL_STEM),
             context.datapackWorldgen().allRegistriesLifecycle());
-        return handler.applyCapabilities(new ProtoWorld1_20_R2(workerPool(), logger, new ChunkStorage(null, DataFixers.getDataFixer(), false),
+        return handler.applyCapabilities(new ProtoWorld1_20_R2(workerPool(logger), logger, new ChunkStorage(null, DataFixers.getDataFixer(), false),
             session, closeSession, dimensionKey, pair.getFirst()));
     }
 

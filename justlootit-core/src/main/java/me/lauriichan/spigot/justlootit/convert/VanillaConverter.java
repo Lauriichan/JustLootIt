@@ -109,8 +109,8 @@ public class VanillaConverter extends ChunkConverter {
                         } else {
                             otherState.getNbt().remove("LootTable");
                             otherState.getNbt().remove("LootTableSeed");
+                            chunk.updateBlock(otherState);
                         }
-                        chunk.updateBlock(otherState);
                     }
                 } else if (lootTable == null && !properties.isProperty(ConvProp.VANILLA_ALLOW_STATIC_CONTAINER)) {
                     continue;
@@ -138,8 +138,7 @@ public class VanillaConverter extends ChunkConverter {
                     long storageId = storage.newId();
                     storage.write(new StaticContainer(storageId, items));
                     JustLootItAccess.setIdentity(dataContainer, storageId);
-                    state.getInventory().clear();
-                    chunk.updateBlock(state);
+                    clearInventoryAndUpdate(chunk, state);
                 }
             }
         }
@@ -207,6 +206,16 @@ public class VanillaConverter extends ChunkConverter {
                 continue;
             }
         }
+    }
+    
+    private void clearInventoryAndUpdate(ProtoChunk chunk, ProtoBlockEntity entity) {
+        if (entity.getData().getMaterial() != Material.JUKEBOX) {
+            entity.getInventory().clear();
+            chunk.updateBlock(entity);
+            return;
+        }
+        chunk.updateBlock(entity);
+        entity.getNbt().remove("Items");
     }
 
     @Override

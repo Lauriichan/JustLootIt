@@ -24,7 +24,7 @@ public final class ListTag1_21_R1<T> implements IListTag<T> {
 
         @Override
         public T next() {
-            return tag.get(index);
+            return tag.get(index++);
         }
 
     }

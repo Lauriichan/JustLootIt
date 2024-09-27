@@ -10,6 +10,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.lauriichan.laylib.command.ArgumentRegistry;
 import me.lauriichan.laylib.command.CommandManager;
 import me.lauriichan.laylib.reflection.ClassUtil;
@@ -20,6 +21,8 @@ import me.lauriichan.minecraft.pluginbase.IBukkitReflection;
 import me.lauriichan.minecraft.pluginbase.command.bridge.BukkitCommandInjectableBridge;
 import me.lauriichan.minecraft.pluginbase.command.bridge.BukkitCommandInjectableBridge.CommandDefinition;
 import me.lauriichan.minecraft.pluginbase.command.processor.IBukkitCommandProcessor;
+import me.lauriichan.minecraft.pluginbase.config.startup.IPropertyIO;
+import me.lauriichan.minecraft.pluginbase.config.startup.Property;
 import me.lauriichan.minecraft.pluginbase.extension.IConditionMap;
 import me.lauriichan.spigot.justlootit.capability.JustLootItCapabilityProvider;
 import me.lauriichan.spigot.justlootit.command.*;
@@ -78,6 +81,8 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     private BukkitCommandInjectableBridge<?> commandBridge;
 
     private volatile InputProvider inputProvider = SimpleChatInputProvider.CHAT;
+    
+    private final Property<Boolean> keepConversionFile = new Property<>("debug.conversion", "If set to true, the conversion will never delete its property file.", IPropertyIO.BOOLEAN, false);
 
     /*
      * PacketContainers
@@ -88,6 +93,11 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     /*
      * Setup
      */
+    
+    @Override
+    protected void onPluginProperties(ObjectArrayList<Property<?>> properties) {
+        properties.add(keepConversionFile);
+    }
 
     @Override
     protected void onPluginLoad() throws Throwable {
@@ -187,9 +197,12 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         ConversionProperties properties = new ConversionProperties(logger(), getConversionPropertyFile(), false);
         if (properties.isAvailable()) {
             boolean conversionWasDone = JustLootItConverter.convert(versionHandler, properties);
-            properties.delete();
+            if (!keepConversionFile.value()) {
+                properties.delete();
+            }
             // We only want to return true if the conversion was done, otherwise there is no need to restart
-            return conversionWasDone;
+            // Prevent server from starting normally if keepConversionFile is set to true
+            return conversionWasDone || keepConversionFile.value();
         }
         return false;
     }

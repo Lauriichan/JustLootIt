@@ -21,6 +21,14 @@ public final class ConversionProgress {
         return counter;
     }
     
+    public int futureCount() {
+        return futures.size();
+    }
+    
+    public int futureIndex() {
+        return index;
+    }
+    
     public CompletableFuture<Void> future() {
         return futures.get(index);
     }
@@ -31,6 +39,10 @@ public final class ConversionProgress {
         }
         index += 1;
         return true;
+    }
+    
+    public boolean hasRegions() {
+        return !futures.isEmpty();
     }
     
     public boolean hasNext() {
