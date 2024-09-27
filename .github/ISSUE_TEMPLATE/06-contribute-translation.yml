@@ -25,8 +25,8 @@ body:
     attributes:
       label: The translation
       description: Please provide your translation files here along with their language.
-    value: |
-      *English:* 
+      value: |
+        *English:* 
   - type: textarea
     id: additional-information
     attributes:
