@@ -166,8 +166,9 @@ public class DebugCommand implements ICommandExtension {
 
             actor.sendTranslatedMessage(Messages.COMMAND_DEBUG_JLIDATA_FORMAT_BLOCK,
                 getIdentityKey("id", container, "N/A"),
+                getLegacyOffsetKey("legacy.offset", container, "N/A"),
+                getOffsetV1Key("old.offset", container, "N/A"),
                 getOffsetKey("offset", container, "N/A"),
-                getLegacyOffsetKey("legacy_offset", container, "N/A"),
                 getBreakDataKey("break", container, "N/A"), Key.of("x", loc.getBlockX()),
                 Key.of("y", loc.getBlockY()), Key.of("z", loc.getBlockZ()), Key.of("world", loc.getWorld().getName()));
         });

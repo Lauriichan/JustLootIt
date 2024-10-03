@@ -22,11 +22,15 @@ public final class JustLootItAccess {
     }
 
     public static boolean hasAnyOffset(PersistentDataContainer container) {
-        return hasOffset(container) || hasLegacyOffset(container);
+        return hasOffset(container) || hasOffsetV1(container) || hasLegacyOffset(container);
     }
 
     public static boolean hasOffset(PersistentDataContainer container) {
         return container.has(JustLootItKey.chestOffset(), SimpleDataType.OFFSET_VECTOR);
+    }
+
+    public static boolean hasOffsetV1(PersistentDataContainer container) {
+        return container.has(JustLootItKey.chestOffsetV1(), SimpleDataType.OFFSET_VECTOR_V1);
     }
 
     public static boolean hasLegacyOffset(PersistentDataContainer container) {
@@ -50,12 +54,23 @@ public final class JustLootItAccess {
         if (offset != null) {
             return offset;
         }
+        offset = getOffsetV1(container);
+        if (offset != null) {
+            return offset;
+        }
         return getLegacyOffset(container);
     }
 
     public static Vec3i getOffset(PersistentDataContainer container) {
         if (container.has(JustLootItKey.chestOffset(), SimpleDataType.OFFSET_VECTOR)) {
             return container.get(JustLootItKey.chestOffset(), SimpleDataType.OFFSET_VECTOR);
+        }
+        return null;
+    }
+
+    public static Vec3i getOffsetV1(PersistentDataContainer container) {
+        if (container.has(JustLootItKey.chestOffsetV1(), SimpleDataType.OFFSET_VECTOR_V1)) {
+            return container.get(JustLootItKey.chestOffsetV1(), SimpleDataType.OFFSET_VECTOR_V1);
         }
         return null;
     }
@@ -93,6 +108,14 @@ public final class JustLootItAccess {
         return Key.of(key, vec);
     }
 
+    public static Key getOffsetV1Key(String key, PersistentDataContainer container, String fallback) {
+        Vec3i vec = getOffsetV1(container);
+        if (vec == null) {
+            return Key.of(key, fallback);
+        }
+        return Key.of(key, vec);
+    }
+
     public static Key getLegacyOffsetKey(String key, PersistentDataContainer container, String fallback) {
         Vec3i vec = getLegacyOffset(container);
         if (vec == null) {
@@ -119,6 +142,10 @@ public final class JustLootItAccess {
 
     public static void removeOffset(PersistentDataContainer container) {
         container.remove(JustLootItKey.chestOffset());
+    }
+
+    public static void removeOffsetV1(PersistentDataContainer container) {
+        container.remove(JustLootItKey.chestOffsetV1());
     }
 
     public static void removeLegacyOffset(PersistentDataContainer container) {

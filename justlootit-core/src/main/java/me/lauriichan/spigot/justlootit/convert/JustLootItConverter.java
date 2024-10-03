@@ -32,9 +32,9 @@ public final class JustLootItConverter {
         throw new UnsupportedOperationException();
     }
 
-    private static void createConverters(ObjectArrayList<ChunkConverter> converters, VersionHandler versionHandler,
+    private static void createConverters(ObjectArrayList<ChunkConverter> converters, JustLootItPlugin plugin, VersionHandler versionHandler,
         ConversionProperties properties) {
-        addConverter(converters, new MigrationConverter(versionHandler, properties));
+        addConverter(converters, new MigrationConverter(plugin, versionHandler, properties));
         addConverter(converters, new LootinConverter(versionHandler, properties));
         addConverter(converters, new VanillaConverter(versionHandler, properties));
     }
@@ -46,13 +46,13 @@ public final class JustLootItConverter {
         converters.add(converter);
     }
 
-    public static boolean convert(VersionHandler versionHandler, ConversionProperties properties) {
+    public static boolean convert(JustLootItPlugin plugin, VersionHandler versionHandler, ConversionProperties properties) {
         Class<?> clazz = StackTracker.getCallerClass().orElse(null);
         if (clazz != JustLootItPlugin.class) {
             throw new UnsupportedOperationException();
         }
         ObjectArrayList<ChunkConverter> converters = new ObjectArrayList<>();
-        createConverters(converters, versionHandler, properties);
+        createConverters(converters, plugin, versionHandler, properties);
         if (converters.isEmpty()) {
             return false;
         }
@@ -148,6 +148,7 @@ public final class JustLootItConverter {
                 logger.info("  ├► STATE:  IDLE");
                 logger.info("  │");
                 logger.info("  └──► {0}", thread.getName());
+                logger.info(" ");
                 continue;
             }
             logger.info("  ├► STATE:  WORKING");

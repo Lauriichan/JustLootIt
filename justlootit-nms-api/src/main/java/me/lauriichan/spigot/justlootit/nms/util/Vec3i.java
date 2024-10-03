@@ -60,6 +60,13 @@ public final class Vec3i {
     public int z() {
         return z;
     }
+    
+    public Vec3i multiply(final int multiplier) {
+        this.x *= multiplier;
+        this.y *= multiplier;
+        this.z *= multiplier;
+        return this;
+    }
 
     public Vec3i addX(final int x) {
         this.x += x;

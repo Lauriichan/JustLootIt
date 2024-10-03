@@ -20,6 +20,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.vehicle.VehicleDamageEvent;
@@ -365,18 +366,19 @@ public class ContainerListener implements IListenerExtension {
                         return;
                     }
                     final Inventory holderInventory = inventoryHolder.getInventory();
-                    int columnAmount = IGuiInventory.getColumnAmount(holderInventory.getType());
+                    final InventoryType type = holderInventory.getType();
+                    int columnAmount = IGuiInventory.getColumnAmount(type);
                     IGuiInventoryUpdater updater = inventory.updater()
                         .title(actor.getTranslatedMessageAsString(UIInventoryNames.LOOT_UI_NAME));
                     if (columnAmount == 9) {
                         updater.chestSize(CHEST_VALUES[(InventoryUtil.getSize(holderInventory) / columnAmount) - 1]);
                     } else {
-                        updater.type(holderInventory.getType());
+                        updater.type(type);
                     }
-                    updater.apply();
                     player.setData(LootUIHandler.PLAYER_DATA_LOOTING, LootUIHandler.PLAYER_DATA_LOOTING_VALUE);
                     inventory.attrSet(LootUIHandler.ATTR_ID, lookupTable.acquire(entryId));
                     inventory.setHandler(LootUIHandler.LOOT_HANDLER);
+                    updater.apply();
                     IResult result = container.fill(player, inventoryHolder, location, inventory.getInventory());
                     container.awaitProvidedEvent(player, inventory, inventoryHolder, location, result);
                     inventory.open(bukkitPlayer);

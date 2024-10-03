@@ -27,6 +27,7 @@ public interface IInventoryContainer {
     }
 
     default IResult fill(PlayerAdapter player, InventoryHolder holder, Location location, Inventory inventory) {
+        fillNoResult(player, holder, location, inventory);
         return IResult.empty();
     }
     

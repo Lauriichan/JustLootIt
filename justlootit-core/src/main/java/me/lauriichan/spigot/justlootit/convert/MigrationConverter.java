@@ -1,69 +1,86 @@
 package me.lauriichan.spigot.justlootit.convert;
 
+import java.util.Comparator;
 import java.util.Random;
-
-import org.bukkit.block.data.type.Chest;
-import org.bukkit.persistence.PersistentDataContainer;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import me.lauriichan.spigot.justlootit.JustLootItAccess;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
+import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.capability.StorageCapability;
+import me.lauriichan.spigot.justlootit.convert.migration.provider.IBlockEntityMigration;
+import me.lauriichan.spigot.justlootit.convert.migration.provider.IChunkMigration;
+import me.lauriichan.spigot.justlootit.convert.migration.provider.IEntityMigration;
+import me.lauriichan.spigot.justlootit.convert.migration.provider.IProtoMigration;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoBlockEntity;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoChunk;
+import me.lauriichan.spigot.justlootit.nms.convert.ProtoEntity;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoWorld;
-import me.lauriichan.spigot.justlootit.nms.util.Vec3i;
-import me.lauriichan.spigot.justlootit.util.BlockUtil;
-import me.lauriichan.spigot.justlootit.util.ConverterDataHelper;
 
 public class MigrationConverter extends ChunkConverter {
 
-    public MigrationConverter(VersionHandler versionHandler, ConversionProperties properties) {
+    private final ObjectList<IChunkMigration> chunkMigrations;
+    private final ObjectList<IBlockEntityMigration> blockMigrations;
+    private final ObjectList<IEntityMigration> entityMigrations;
+
+    public MigrationConverter(JustLootItPlugin plugin, VersionHandler versionHandler, ConversionProperties properties) {
         super(versionHandler, properties);
+        ObjectList<IChunkMigration> chunkMigrations = new ObjectArrayList<>();
+        ObjectList<IBlockEntityMigration> blockMigrations = new ObjectArrayList<>();
+        ObjectList<IEntityMigration> entityMigrations = new ObjectArrayList<>();
+        plugin.extension(IProtoMigration.class, true).callInstances(migration -> {
+            if (migration instanceof IChunkMigration chunk) {
+                chunkMigrations.add(chunk);
+            }
+            if (migration instanceof IBlockEntityMigration block) {
+                blockMigrations.add(block);
+            }
+            if (migration instanceof IEntityMigration entity) {
+                entityMigrations.add(entity);
+            }
+        });
+        Comparator<IProtoMigration> comparator = (a, b) -> Integer.compare(a.priority(), b.priority());
+        chunkMigrations.sort(comparator);
+        blockMigrations.sort(comparator);
+        entityMigrations.sort(comparator);
+        this.chunkMigrations = ObjectLists.unmodifiable(chunkMigrations);
+        this.blockMigrations = ObjectLists.unmodifiable(blockMigrations);
+        this.entityMigrations = ObjectLists.unmodifiable(entityMigrations);
     }
 
     @Override
     public void convert(ProtoChunk chunk, Random random) {
-        if (!chunk.getBlockEntities().isEmpty()) {
-            ObjectArrayList<ProtoBlockEntity> allEntities = new ObjectArrayList<>(chunk.getBlockEntities());
-            ObjectArrayList<ProtoBlockEntity> pendingBlockEntities = new ObjectArrayList<>(chunk.getBlockEntities());
-            while (!pendingBlockEntities.isEmpty()) {
-                ProtoBlockEntity state = pendingBlockEntities.remove(0);
-                if (!(state.getData() instanceof Chest chest) || chest.getType() == Chest.Type.SINGLE) {
-                    continue;
+        if (!blockMigrations.isEmpty() && !chunk.getBlockEntities().isEmpty()) {
+            ObjectArrayList<ProtoBlockEntity> allEntities = new ObjectArrayList<>();
+            ObjectArrayList<ProtoBlockEntity> pendingBlockEntities = new ObjectArrayList<>();
+            Consumer<ProtoBlockEntity> queueRemover = pendingBlockEntities::remove;
+            Function<Predicate<ProtoBlockEntity>, ProtoBlockEntity> findFilter = (predicate) -> allEntities.stream().filter(predicate)
+                .findFirst().orElse(null);
+            for (IBlockEntityMigration migration : blockMigrations) {
+                allEntities.clear();
+                allEntities.addAll(chunk.getBlockEntities());
+                pendingBlockEntities.addAll(allEntities);
+                while (!pendingBlockEntities.isEmpty()) {
+                    migration.migrate(chunk, pendingBlockEntities.remove(0), random, queueRemover, findFilter);
                 }
-                PersistentDataContainer dataContainer = state.getContainer();
-                if (!JustLootItAccess.hasLegacyOffset(dataContainer)) {
-                    continue;
+            }
+        }
+        if (!entityMigrations.isEmpty() && !chunk.getEntities().isEmpty()) {
+            ObjectArrayList<ProtoEntity> pendingEntities = new ObjectArrayList<>();
+            for (IEntityMigration migration : entityMigrations) {
+                pendingEntities.addAll(chunk.getEntities());
+                while (!pendingEntities.isEmpty()) {
+                    migration.migrate(chunk, pendingEntities.remove(0), random);
                 }
-                JustLootItAccess.removeLegacyOffset(dataContainer);
-                Vec3i location = state.getPos();
-                Vec3i otherLocation = BlockUtil.findChestLocationAround(location.copy(), chest.getType(), chest.getFacing());
-                ProtoBlockEntity otherState = allEntities.stream().filter(pending -> pending.getPos().equals(otherLocation))
-                    .findFirst().orElse(null);
-                if (otherState == null || !(otherState.getData() instanceof Chest otherChest)) {
-                    // We convert double chests to single chests in this process
-                    // The reason why is that we can't convert chests that are across borders
-                    // Therefore we don't know how to convert this
-                    Chest newChest = (Chest) chest.clone();
-                    newChest.setType(Chest.Type.SINGLE);
-                    state.setData(newChest);
-                    chunk.updateBlock(state);
-                    continue;
-                }
-                if (otherChest.getType() == Chest.Type.SINGLE) {
-                    Chest newChest = (Chest) chest.clone();
-                    newChest.setType(Chest.Type.SINGLE);
-                    state.setData(newChest);
-                    chunk.updateBlock(state);
-                    continue;
-                }
-                pendingBlockEntities.remove(otherState);
-                PersistentDataContainer otherDataContainer = otherState.getContainer();
-                JustLootItAccess.removeLegacyOffset(otherDataContainer);
-                ConverterDataHelper.setOffset(dataContainer, otherDataContainer, location, otherLocation);
-                chunk.updateBlock(state);
-                chunk.updateBlock(otherState);
+            }
+        }
+        if (!chunkMigrations.isEmpty()) {
+            for (IChunkMigration migration : chunkMigrations) {
+                migration.migrate(chunk, random);
             }
         }
     }

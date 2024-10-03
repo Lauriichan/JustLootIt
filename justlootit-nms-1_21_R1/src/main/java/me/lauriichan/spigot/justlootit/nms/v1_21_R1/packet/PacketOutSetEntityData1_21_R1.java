@@ -10,7 +10,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.inventory.ItemStack;
 
 import me.lauriichan.laylib.reflection.ClassUtil;
-import me.lauriichan.laylib.reflection.JavaAccess;
+import me.lauriichan.laylib.reflection.JavaLookup;
 import me.lauriichan.spigot.justlootit.nms.model.IEntityData;
 import me.lauriichan.spigot.justlootit.nms.model.IItemEntityData;
 import me.lauriichan.spigot.justlootit.nms.packet.PacketOutSetEntityData;
@@ -24,8 +24,8 @@ import net.minecraft.network.syncher.SynchedEntityData.DataValue;
 
 public class PacketOutSetEntityData1_21_R1 extends PacketOutSetEntityData {
 
-    private static final MethodHandle EntityData_map = JavaAccess
-        .accessFieldGetter(ClassUtil.getField(SynchedEntityData.class, false, DataItem[].class));
+    private static final MethodHandle EntityData_map = JavaLookup.PLATFORM
+        .unreflectGetter(ClassUtil.getField(SynchedEntityData.class, false, DataItem[].class));
 
     private static List<DataValue<?>> extractValues(final SynchedEntityData data) {
         DataItem<?>[] map;

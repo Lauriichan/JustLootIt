@@ -10,6 +10,7 @@ import org.bukkit.craftbukkit.v1_20_R4.block.data.CraftBlockData;
 
 import me.lauriichan.laylib.reflection.ClassUtil;
 import me.lauriichan.laylib.reflection.JavaAccess;
+import me.lauriichan.laylib.reflection.JavaLookup;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.entity.LevelEntityGetter;
@@ -36,7 +37,7 @@ public final class PlatformHelper1_20_R4 {
             if (method == null || !entityLookup.isAssignableFrom(method.getReturnType())) {
                 throw new IllegalStateException("Couldn't find method 'getEntityLookup', JustLootIt won't work here.");
             }
-            return JavaAccess.accessMethod(method);
+            return JavaLookup.PLATFORM.unreflect(method);
         }
         
         static Field enumValues() {
@@ -70,10 +71,10 @@ public final class PlatformHelper1_20_R4 {
             return;
         }
         blockDataPatchApplied = true;
-        if (JavaAccess.getStaticValue(ENUM_VALUES) instanceof ConcurrentHashMap) {
+        if (JavaAccess.PLATFORM.getValue(ENUM_VALUES) instanceof ConcurrentHashMap) {
             return;
         }
-        JavaAccess.setStaticValue(ENUM_VALUES, new ConcurrentHashMap());
+        JavaAccess.PLATFORM.setValue(ENUM_VALUES, new ConcurrentHashMap());
     }
 
 }

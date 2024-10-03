@@ -13,8 +13,12 @@ public final class ConverterDataHelper {
 
     public static void setOffset(PersistentDataContainer container, PersistentDataContainer otherContainer, Vec3i location,
         Vec3i otherLocation) {
-        JustLootItAccess.setOffset(otherContainer, location.copy().subtract(otherLocation));
-        JustLootItAccess.setOffset(container, otherLocation.copy().subtract(location));
+        JustLootItAccess.setOffset(otherContainer, calculateOffset(otherLocation, location));
+        JustLootItAccess.setOffset(container, calculateOffset(location, otherLocation));
+    }
+    
+    public static Vec3i calculateOffset(Vec3i origin, Vec3i other) {
+        return other.copy().subtract(origin);
     }
 
 }

@@ -13,6 +13,7 @@ import org.bukkit.plugin.Plugin;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.lauriichan.laylib.command.ArgumentRegistry;
 import me.lauriichan.laylib.command.CommandManager;
+import me.lauriichan.laylib.reflection.AccessFailedException;
 import me.lauriichan.laylib.reflection.ClassUtil;
 import me.lauriichan.laylib.reflection.JavaAccess;
 import me.lauriichan.minecraft.pluginbase.BasePlugin;
@@ -196,7 +197,7 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     private boolean doWorldConversion() {
         ConversionProperties properties = new ConversionProperties(logger(), getConversionPropertyFile(), false);
         if (properties.isAvailable()) {
-            boolean conversionWasDone = JustLootItConverter.convert(versionHandler, properties);
+            boolean conversionWasDone = JustLootItConverter.convert(this, versionHandler, properties);
             if (!keepConversionFile.value()) {
                 properties.delete();
             }
@@ -374,9 +375,9 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
             throw new JLIInitializationException("Couldn't find valid constructor for class '" + path + "'!");
         }
         try {
-            return (VersionHandler) JavaAccess.instanceThrows(constructor, this);
-        } catch (Throwable throwable) {
-            throw new JLIInitializationException("Failed to initialize VersionHandler!", throwable);
+            return JavaAccess.PLATFORM.invoke(constructor, this);
+        } catch (AccessFailedException exception) {
+            throw new JLIInitializationException("Failed to initialize VersionHandler!", exception.getCause());
         }
     }
 

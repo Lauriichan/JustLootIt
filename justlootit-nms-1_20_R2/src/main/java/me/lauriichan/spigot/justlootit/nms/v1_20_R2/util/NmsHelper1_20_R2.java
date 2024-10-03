@@ -15,7 +15,7 @@ import org.bukkit.craftbukkit.v1_20_R2.persistence.CraftPersistentDataTypeRegist
 import org.bukkit.persistence.PersistentDataContainer;
 
 import me.lauriichan.laylib.reflection.ClassUtil;
-import me.lauriichan.laylib.reflection.JavaAccess;
+import me.lauriichan.laylib.reflection.JavaLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -39,7 +39,7 @@ public final class NmsHelper1_20_R2 {
             if (method == null || !BlockEntity.class.isAssignableFrom(method.getReturnType())) {
                 throw new IllegalStateException("Couldn't find method 'getTileEntity', JustLootIt won't work here.");
             }
-            return JavaAccess.accessMethod(method);
+            return JavaLookup.PLATFORM.unreflect(method);
         }
 
         static VarHandle dataTypeRegistry() {
@@ -47,7 +47,7 @@ public final class NmsHelper1_20_R2 {
             if (field == null || !CraftPersistentDataTypeRegistry.class.isAssignableFrom(field.getType())) {
                 throw new IllegalStateException("Couldn't find field 'DATA_TYPE_REGISTRY', JustLootIt won't be able to convert anything here.");
             }
-            return JavaAccess.accessField(field);
+            return JavaLookup.PLATFORM.unreflect(field);
         }
 
         static VarHandle tags() {
@@ -55,7 +55,7 @@ public final class NmsHelper1_20_R2 {
             if (field == null) {
                 throw new IllegalStateException("Couldn't find field 'tags', JustLootIt won't be able to convert anything here.");
             }
-            return JavaAccess.accessField(field);
+            return JavaLookup.PLATFORM.unreflect(field);
         }
 
     }

@@ -8,7 +8,7 @@ import com.mojang.datafixers.DataFixer;
 import com.mojang.serialization.Dynamic;
 
 import me.lauriichan.laylib.reflection.ClassUtil;
-import me.lauriichan.laylib.reflection.JavaAccess;
+import me.lauriichan.laylib.reflection.JavaLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.util.datafix.fixes.References;
@@ -18,7 +18,8 @@ public final class ItemStackIO1_20_R3 extends NbtIO1_20_R3<org.bukkit.inventory.
 
     public static final ItemStackIO1_20_R3 ITEM_STACK = new ItemStackIO1_20_R3();
 
-    private static final MethodHandle CraftItemStack_handle = JavaAccess.accessFieldGetter(ClassUtil.getField(CraftItemStack.class, "handle"));
+    private static final MethodHandle CraftItemStack_handle = JavaLookup.PLATFORM
+        .unreflectGetter(ClassUtil.getField(CraftItemStack.class, "handle"));
 
     private ItemStackIO1_20_R3() {
         super(org.bukkit.inventory.ItemStack.class, CompoundTag.TYPE);
@@ -59,7 +60,7 @@ public final class ItemStackIO1_20_R3 extends NbtIO1_20_R3<org.bukkit.inventory.
         }
         return CraftItemStack.asNMSCopy(itemStack);
     }
-    
+
     @Override
     public CompoundTag upgradeNbt(DataFixer fixer, CompoundTag tag, int tagVersion, int serverVersion) {
         return (CompoundTag) fixer.update(References.ITEM_STACK, new Dynamic<>(NbtOps.INSTANCE, tag), tagVersion, serverVersion).getValue();

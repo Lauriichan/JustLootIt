@@ -43,6 +43,17 @@ public abstract class SimpleDataType<P, C> implements PersistentDataType<P, C> {
             throw new UnsupportedOperationException("Unsupported value: " + primitive);
         }
     };
+    public static final SimpleDataType<Byte, Vec3i> OFFSET_VECTOR_V1 = new SimpleDataType<>(Byte.class, Vec3i.class) {
+        @Override
+        public Byte toPrimitive(Vec3i complex, PersistentDataAdapterContext context) {
+            throw new UnsupportedOperationException("Write is no longer supported");
+        }
+
+        @Override
+        public Vec3i fromPrimitive(Byte primitive, PersistentDataAdapterContext context) {
+            return Vec3i.unpackByte(primitive).multiply(-1);
+        }
+    };
     public static final SimpleDataType<Byte, Vec3i> OFFSET_VECTOR = new SimpleDataType<>(Byte.class, Vec3i.class) {
         @Override
         public Byte toPrimitive(Vec3i complex, PersistentDataAdapterContext context) {

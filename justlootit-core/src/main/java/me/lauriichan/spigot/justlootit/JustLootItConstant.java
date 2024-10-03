@@ -9,7 +9,7 @@ import java.util.Map;
 import org.bukkit.event.inventory.InventoryType;
 
 import me.lauriichan.laylib.reflection.ClassUtil;
-import me.lauriichan.laylib.reflection.JavaAccess;
+import me.lauriichan.laylib.reflection.JavaLookup;
 
 public final class JustLootItConstant {
 
@@ -21,13 +21,14 @@ public final class JustLootItConstant {
 
     static {
         // UNSUPPORTED_CONTAINER_TYPES
-        Class<?> CraftInventoryCreator_class = ClassUtil.findClass(JustLootItPlugin.get().platform().version().craftClassPath("inventory.util.CraftInventoryCreator"));
-        MethodHandle CraftInventoryCreator_INSTANCE = JavaAccess
-            .accessFieldGetter(ClassUtil.getField(CraftInventoryCreator_class, "INSTANCE"));
-        MethodHandle CraftInventoryCreator_DEFAULT_CONVERTER = JavaAccess
-            .accessFieldGetter(ClassUtil.getField(CraftInventoryCreator_class, "DEFAULT_CONVERTER"));
-        MethodHandle CraftInventoryCreator_converterMap = JavaAccess
-            .accessFieldGetter(ClassUtil.getField(CraftInventoryCreator_class, "converterMap"));
+        Class<?> CraftInventoryCreator_class = ClassUtil
+            .findClass(JustLootItPlugin.get().platform().version().craftClassPath("inventory.util.CraftInventoryCreator"));
+        MethodHandle CraftInventoryCreator_INSTANCE = JavaLookup.PLATFORM
+            .unreflectGetter(ClassUtil.getField(CraftInventoryCreator_class, "INSTANCE"));
+        MethodHandle CraftInventoryCreator_DEFAULT_CONVERTER = JavaLookup.PLATFORM
+            .unreflectGetter(ClassUtil.getField(CraftInventoryCreator_class, "DEFAULT_CONVERTER"));
+        MethodHandle CraftInventoryCreator_converterMap = JavaLookup.PLATFORM
+            .unreflectGetter(ClassUtil.getField(CraftInventoryCreator_class, "converterMap"));
 
         List<InventoryType> unsupportedContainerTypes;
         try {

@@ -256,6 +256,7 @@ public final class Messages implements IMessageExtension {
         "&8|",
         "&8| &8Id: &a$id",
         "&8| &8Offset: &a$offset",
+        "&8| &8Offset (V1): &a$old.offset",
         "&8| &8Offset (Legacy): &a$legacy.offset",
         "&8| &8Break: &a$break"
     })

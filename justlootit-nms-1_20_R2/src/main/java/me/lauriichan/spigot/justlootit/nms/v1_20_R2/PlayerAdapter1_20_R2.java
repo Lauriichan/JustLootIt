@@ -11,7 +11,7 @@ import org.bukkit.inventory.ItemStack;
 
 import io.netty.channel.Channel;
 import me.lauriichan.laylib.reflection.ClassUtil;
-import me.lauriichan.laylib.reflection.JavaAccess;
+import me.lauriichan.laylib.reflection.JavaLookup;
 import me.lauriichan.spigot.justlootit.nms.LevelAdapter;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.nms.packet.AbstractPacketOut;
@@ -29,8 +29,8 @@ import net.minecraft.world.inventory.AnvilMenu;
 
 public final class PlayerAdapter1_20_R2 extends PlayerAdapter {
 
-    private static final MethodHandle PlayerConnection_connection = JavaAccess
-        .accessFieldGetter(ClassUtil.getField(ServerCommonPacketListenerImpl.class, false, Connection.class));
+    private static final MethodHandle PlayerConnection_connection = JavaLookup.PLATFORM
+        .unreflectGetter(ClassUtil.getField(ServerCommonPacketListenerImpl.class, false, Connection.class));
 
     private final VersionHandler1_20_R2 versionHandler;
     private final PlayerNetwork1_20_R2 network;
@@ -68,7 +68,8 @@ public final class PlayerAdapter1_20_R2 extends PlayerAdapter {
     @Override
     public int createAnvilMenu(final String name, final ItemStack itemStack) {
         if (!Bukkit.isPrimaryThread()) {
-            return CompletableFuture.supplyAsync(() -> createAnvilMenu(name, itemStack), network.packetManager().scheduler().syncExecutor()).join();
+            return CompletableFuture.supplyAsync(() -> createAnvilMenu(name, itemStack), network.packetManager().scheduler().syncExecutor())
+                .join();
         }
         final AnvilMenu menu = new AnvilMenu(minecraft.nextContainerCounter(), minecraft.getInventory(),
             MinecraftConstant1_20_R2.BETTER_NULL);

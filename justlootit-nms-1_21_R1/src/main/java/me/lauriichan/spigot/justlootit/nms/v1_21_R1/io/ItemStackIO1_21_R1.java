@@ -8,7 +8,7 @@ import com.mojang.datafixers.DataFixer;
 import com.mojang.serialization.Dynamic;
 
 import me.lauriichan.laylib.reflection.ClassUtil;
-import me.lauriichan.laylib.reflection.JavaAccess;
+import me.lauriichan.laylib.reflection.JavaLookup;
 import me.lauriichan.spigot.justlootit.nms.v1_21_R1.util.NmsHelper1_21_R1;
 import net.minecraft.core.RegistryAccess.Frozen;
 import net.minecraft.nbt.CompoundTag;
@@ -20,7 +20,7 @@ public final class ItemStackIO1_21_R1 extends NbtIO1_21_R1<org.bukkit.inventory.
 
     public static final ItemStackIO1_21_R1 ITEM_STACK = new ItemStackIO1_21_R1();
 
-    private static final MethodHandle CraftItemStack_handle = JavaAccess.accessFieldGetter(ClassUtil.getField(CraftItemStack.class, "handle"));
+    private static final MethodHandle CraftItemStack_handle = JavaLookup.PLATFORM.unreflectGetter(ClassUtil.getField(CraftItemStack.class, "handle"));
     
     private final Frozen registry = NmsHelper1_21_R1.getServer().registryAccess();
 

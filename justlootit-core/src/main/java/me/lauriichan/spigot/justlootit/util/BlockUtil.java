@@ -60,8 +60,8 @@ public final class BlockUtil {
         if (otherContainer == null) {
             return;
         }
-        JustLootItAccess.setOffset(otherContainer.getPersistentDataContainer(), new Vec3i(otherContainer.getLocation()).subtractOf(container.getLocation()));
-        JustLootItAccess.setOffset(container.getPersistentDataContainer(), new Vec3i(container.getLocation()).subtractOf(otherContainer.getLocation()));
+        JustLootItAccess.setOffset(otherContainer.getPersistentDataContainer(), calculateOffset(otherContainer.getLocation(), container.getLocation()));
+        JustLootItAccess.setOffset(container.getPersistentDataContainer(), calculateOffset(container.getLocation(), otherContainer.getLocation()));
         otherContainer.update(false, false);
         // The container this is executed on needs to be updated afterwards.
     }
@@ -71,8 +71,8 @@ public final class BlockUtil {
     }
     
     public static void setContainerOffset(Container container, Container otherContainer, boolean update) {
-        JustLootItAccess.setOffset(otherContainer.getPersistentDataContainer(), new Vec3i(otherContainer.getLocation()).subtractOf(container.getLocation()));
-        JustLootItAccess.setOffset(container.getPersistentDataContainer(), new Vec3i(container.getLocation()).subtractOf(otherContainer.getLocation()));
+        JustLootItAccess.setOffset(otherContainer.getPersistentDataContainer(), calculateOffset(otherContainer.getLocation(), container.getLocation()));
+        JustLootItAccess.setOffset(container.getPersistentDataContainer(), calculateOffset(container.getLocation(), otherContainer.getLocation()));
         if (update) {
             otherContainer.update(false, false);
             container.update(false, false);
@@ -83,16 +83,22 @@ public final class BlockUtil {
         PersistentDataContainer otherDataContainer = otherContainer.getPersistentDataContainer();
         Vec3i offset;
         boolean legacy = false;
-        if (!JustLootItAccess.hasOffset(otherDataContainer)) {
-            if (!JustLootItAccess.hasLegacyOffset(otherDataContainer)) {
+        if (JustLootItAccess.hasOffset(otherDataContainer)) {
+            offset = JustLootItAccess.getOffset(otherDataContainer);
+        } else {
+            if (JustLootItAccess.hasOffsetV1(otherDataContainer)) {
+                offset = JustLootItAccess.getOffsetV1(otherDataContainer);
+                JustLootItAccess.removeOffsetV1(otherDataContainer);
+                JustLootItAccess.setOffset(otherDataContainer, offset);
+                legacy = true;
+            } else if (JustLootItAccess.hasLegacyOffset(otherDataContainer)) {
+                offset = JustLootItAccess.getLegacyOffset(otherDataContainer);
+                JustLootItAccess.removeLegacyOffset(otherDataContainer);
+                JustLootItAccess.setOffset(otherDataContainer, offset);
+                legacy = true;
+            } else {
                 return null;
             }
-            offset = JustLootItAccess.getLegacyOffset(otherDataContainer);
-            JustLootItAccess.removeLegacyOffset(otherDataContainer);
-            JustLootItAccess.setOffset(otherDataContainer, offset);
-            legacy = true;
-        } else {
-            offset = JustLootItAccess.getOffset(otherDataContainer);
         }
         if (!(otherContainer.getBlockData() instanceof Chest chest) || chest.getType() == Chest.Type.SINGLE){
             JustLootItAccess.removeOffset(otherDataContainer);
@@ -109,8 +115,14 @@ public final class BlockUtil {
                     JustLootItAccess.removeLegacyOffset(dataContainer);
                     JustLootItAccess.setOffset(dataContainer, offset);
                     container.update(false, false);
+                } else if(!JustLootItAccess.hasOffsetV1(dataContainer)) {
+                    offset = JustLootItAccess.getOffsetV1(dataContainer);
+                    JustLootItAccess.removeOffsetV1(dataContainer);
+                    JustLootItAccess.setOffset(dataContainer, offset);
+                    container.update(false, false);
                 } else if(!JustLootItAccess.hasOffset(dataContainer)) {
-                    JustLootItAccess.setOffset(dataContainer, new Vec3i(blockLocation).subtractOf(otherContainer.getLocation()));
+                    JustLootItAccess.setOffset(dataContainer, calculateOffset(blockLocation, otherContainer.getLocation()));
+                    container.update(false, false);
                 }
                 otherContainer.update(false, false);
             }
@@ -119,6 +131,10 @@ public final class BlockUtil {
         JustLootItAccess.removeOffset(otherDataContainer);
         otherContainer.update(false, false);
         return null;
+    }
+    
+    public static Vec3i calculateOffset(Location origin, Location other) {
+        return new Vec3i(other).subtractOf(origin);
     }
     
     public static Container findChestAround(RegionAccessor region, int x, int y, int z, Type chestType, BlockFace chestFace) {

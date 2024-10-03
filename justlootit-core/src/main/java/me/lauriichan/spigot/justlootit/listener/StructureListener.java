@@ -4,6 +4,8 @@ import java.util.UUID;
 
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Container;
+import org.bukkit.block.data.type.Chest;
+import org.bukkit.block.data.type.Chest.Type;
 import org.bukkit.entity.ChestBoat;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -96,6 +98,28 @@ public class StructureListener implements IListenerExtension {
                 if (!JustLootItFlag.TILE_ENTITY_CONTAINERS.isSet()
                     && JustLootItConstant.UNSUPPORTED_CONTAINER_TYPES.contains(inventory.getType())) {
                     return current;
+                }
+                PersistentDataContainer dataContainer = container.getPersistentDataContainer();
+                if (JustLootItAccess.hasAnyOffset(dataContainer)) {
+                    if (current instanceof Lootable lootable && lootable.getLootTable() != null) {
+                        lootable.setLootTable(null);
+                        lootable.setSeed(0);
+                        container.update();
+                    }
+                    return current;
+                } else if (current.getBlockData() instanceof Chest chest && chest.getType() != Type.SINGLE) {
+                    Container otherContainer = BlockUtil.findChestAround(region, x, y, z, chest.getType(), chest.getFacing());
+                    if (otherContainer != null) {
+                        if (JustLootItAccess.hasIdentity(otherContainer.getPersistentDataContainer())) {
+                            if (current instanceof Lootable lootable && lootable.getLootTable() != null) {
+                                lootable.setLootTable(null);
+                                lootable.setSeed(0);
+                                container.update();
+                            }
+                            BlockUtil.setContainerOffset(container, otherContainer, true);
+                            return current;
+                        }
+                    }
                 }
                 level.getCapability(StorageCapability.class).ifPresent(capability -> {
                     if (current instanceof Lootable lootable && lootable.getLootTable() != null) {

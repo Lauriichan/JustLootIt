@@ -34,7 +34,7 @@ public final class DataHelper {
             JustLootItAccess.setBreakData(container, new BreakData(uuid, now.plusMinutes(2)));
             return false;
         }
-        if (!data.playerId().equals(uuid) || now.isBefore(data.time())) {
+        if (!data.playerId().equals(uuid) || now.isAfter(data.time())) {
             JustLootItAccess.setBreakData(container, new BreakData(uuid, now.plusMinutes(2)));
             return false;
         }
