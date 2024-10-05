@@ -1,14 +1,15 @@
-package me.lauriichan.spigot.justlootit.storage.randomaccessfile;
+package me.lauriichan.spigot.justlootit.storage.randomaccessfile.old;
 
-import static me.lauriichan.spigot.justlootit.storage.randomaccessfile.RAFSettings.INVALID_HEADER_OFFSET;
-import static me.lauriichan.spigot.justlootit.storage.randomaccessfile.RAFSettings.LOOKUP_AMOUNT_SIZE;
-import static me.lauriichan.spigot.justlootit.storage.randomaccessfile.RAFSettings.LOOKUP_ENTRY_SIZE;
-import static me.lauriichan.spigot.justlootit.storage.randomaccessfile.RAFSettings.VALUE_HEADER_ID_SIZE;
-import static me.lauriichan.spigot.justlootit.storage.randomaccessfile.RAFSettings.VALUE_HEADER_SIZE;
+import static me.lauriichan.spigot.justlootit.storage.randomaccessfile.old.RAFSettings.INVALID_HEADER_OFFSET;
+import static me.lauriichan.spigot.justlootit.storage.randomaccessfile.old.RAFSettings.LOOKUP_AMOUNT_SIZE;
+import static me.lauriichan.spigot.justlootit.storage.randomaccessfile.old.RAFSettings.LOOKUP_ENTRY_SIZE;
+import static me.lauriichan.spigot.justlootit.storage.randomaccessfile.old.RAFSettings.VALUE_HEADER_ID_SIZE;
+import static me.lauriichan.spigot.justlootit.storage.randomaccessfile.old.RAFSettings.VALUE_HEADER_SIZE;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
@@ -27,33 +28,43 @@ import me.lauriichan.spigot.justlootit.storage.UpdateInfo;
 import me.lauriichan.spigot.justlootit.storage.UpdateInfo.UpdateState;
 import me.lauriichan.spigot.justlootit.storage.identifier.FileIdentifier;
 import me.lauriichan.spigot.justlootit.storage.identifier.IIdentifier;
-import me.lauriichan.spigot.justlootit.storage.util.cache.ThreadSafeSingletonCache;
+import me.lauriichan.spigot.justlootit.storage.util.cache.Int2ObjectMapCache;
+import me.lauriichan.spigot.justlootit.storage.util.cache.ThreadSafeMapCache;
 
-public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
+public class RAFMultiStorage<S extends Storable> extends AbstractStorage<S> {
 
     private final RAFSettings settings;
 
-    private final File file;
-    private final ThreadSafeSingletonCache<RAFAccess<S>> accessCache;
+    private final File directory;
+    private final ThreadSafeMapCache<Integer, RAFAccess<S>> accesses;
 
     private final IIdentifier identifier;
 
-    public RAFSingleStorage(final ISimpleLogger logger, final Class<S> baseType, final File file) {
-        this(logger, baseType, file, RAFSettings.DEFAULT);
+    public RAFMultiStorage(final ISimpleLogger logger, final Class<S> baseType, final File directory) {
+        this(logger, baseType, directory, RAFSettings.DEFAULT);
     }
 
-    public RAFSingleStorage(final ISimpleLogger logger, final Class<S> baseType, final File file, final RAFSettings settings) {
+    public RAFMultiStorage(final ISimpleLogger logger, final Class<S> baseType, final File directory, final RAFSettings settings) {
         super(logger, baseType);
-        this.file = file;
         this.settings = settings;
-        this.accessCache = new ThreadSafeSingletonCache<>(logger);
-        this.identifier = new FileIdentifier(logger, file);
-        identifier.load();
+        this.accesses = new ThreadSafeMapCache<>(new Int2ObjectMapCache<>(logger));
+        this.directory = directory;
+        createDirectory();
+        this.identifier = new FileIdentifier(logger, directory);
+    }
+    
+    private void createDirectory() {
+        if (!directory.exists()) {
+            directory.mkdirs();
+        } else if(directory.isFile()) {
+            directory.delete();
+            directory.mkdirs();
+        }
     }
 
     @Override
     public boolean isSupported(final long id) {
-        return id < settings.valueIdAmount && id >= 0;
+        return Long.compareUnsigned(id >> settings.valueIdBits | 0xFFFFFFFF, 0xFFFFFFFF) <= 0;
     }
 
     @Override
@@ -66,16 +77,58 @@ public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
     }
 
     /*
+     * File cache
+     */
+
+    private void saveAccess(final RAFAccess<S> access) {
+        if (accesses.size() < settings.fileCacheMaxAmount) {
+            accesses.set(access.id(), access);
+            return;
+        }
+        long cacheTime = settings.fileCacheTicks;
+        while (accesses.size() >= settings.fileCacheMaxAmount) {
+            cacheTime -= settings.fileCachePurgeStep;
+            accesses.purge(cacheTime);
+        }
+        accesses.set(access.id(), access);
+    }
+
+    /*
      * Clear data
      */
 
     @Override
     public void clear() {
-        final RAFAccess<S> access = accessCache.remove();
-        if (access == null) {
-            return;
+        final List<Integer> list = accesses.keys();
+        for (final Integer id : list) {
+            final RAFAccess<S> access = accesses.remove(id);
+            if (access == null) {
+                continue;
+            }
+            if (access.isOpen()) {
+                access.lock();
+                try {
+                    access.close();
+                } catch (final Exception e) {
+                    logger.warning("Couldn't close File access to '" + access.hexId() + "'");
+                } finally {
+                    access.unlock();
+                }
+            }
+            access.file().delete();
         }
-        if (access.isOpen()) {
+        identifier.reset();
+        identifier.save();
+    }
+
+    @Override
+    public void close() {
+        final List<Integer> list = accesses.keys();
+        for (final Integer id : list) {
+            final RAFAccess<S> access = accesses.remove(id);
+            if (access == null || !access.isOpen()) {
+                continue;
+            }
             access.lock();
             try {
                 access.close();
@@ -85,26 +138,7 @@ public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
                 access.unlock();
             }
         }
-        access.file().delete();
-        identifier.reset();
         identifier.save();
-    }
-
-    @Override
-    public void close() {
-        final RAFAccess<S> access = accessCache.remove();
-        if (access == null || !access.isOpen()) {
-            return;
-        }
-        identifier.save();
-        access.lock();
-        try {
-            access.close();
-        } catch (final Exception e) {
-            logger.warning("Couldn't close File access to '" + access.hexId() + "'");
-        } finally {
-            access.unlock();
-        }
     }
 
     /*
@@ -113,14 +147,16 @@ public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
 
     @Override
     public boolean has(final long id) throws StorageException {
-        if (id >= settings.valueIdAmount || id < 0) {
+        final long possibleId = id >> settings.valueIdBits;
+        if (Long.compareUnsigned(possibleId | 0xFFFFFFFF, 0xFFFFFFFF) >= 1) {
             return false;
         }
+        final int fileId = (int) (possibleId & 0xFFFFFFFF);
         final short valueId = (short) (id & settings.valueIdMask);
-        if (accessCache.isPresent()) {
-            return has(accessCache.get(), id, valueId);
+        if (accesses.has(fileId)) {
+            return has(accesses.get(fileId), id, valueId);
         }
-        final RAFAccess<S> access = new RAFAccess<>(file);
+        final RAFAccess<S> access = new RAFAccess<>(fileId, directory);
         if (!access.exists()) {
             try {
                 access.close();
@@ -129,7 +165,7 @@ public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
             }
             return false;
         }
-        accessCache.set(access);
+        saveAccess(access);
         return has(access, id, valueId);
     }
 
@@ -139,7 +175,7 @@ public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
             final RandomAccessFile file = access.open();
             final long fileSize = file.length();
             if (fileSize == 0) {
-                accessCache.remove();
+                accesses.remove(access.id());
                 access.close();
                 access.file().delete();
                 return false;
@@ -157,14 +193,16 @@ public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
 
     @Override
     public S read(final long id) throws StorageException {
-        if (id >= settings.valueIdAmount || id < 0) {
-            throw new StorageException("Unsupported value id '" + id + "'!");
+        final long possibleId = id >> settings.valueIdBits;
+        if (Long.compareUnsigned(possibleId | 0xFFFFFFFF, 0xFFFFFFFF) >= 1) {
+            throw new StorageException("Unsupported file id '" + Long.toHexString(possibleId) + "'!");
         }
+        final int fileId = (int) (possibleId & 0xFFFFFFFF);
         final short valueId = (short) (id & settings.valueIdMask);
-        if (accessCache.isPresent()) {
-            return read(accessCache.get(), id, valueId);
+        if (accesses.has(fileId)) {
+            return read(accesses.get(fileId), id, valueId);
         }
-        final RAFAccess<S> access = new RAFAccess<>(file);
+        final RAFAccess<S> access = new RAFAccess<>(fileId, directory);
         if (!access.exists()) {
             try {
                 access.close();
@@ -173,7 +211,7 @@ public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
             }
             return null;
         }
-        accessCache.set(access);
+        saveAccess(access);
         return read(access, id, valueId);
     }
 
@@ -183,7 +221,7 @@ public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
             final RandomAccessFile file = access.open();
             final long fileSize = file.length();
             if (fileSize == 0) {
-                accessCache.remove();
+                accesses.remove(access.id());
                 access.close();
                 access.file().delete();
                 return null;
@@ -201,7 +239,7 @@ public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
             if (adapter == null) {
                 try {
                     if (deleteEntry(file, lookupPosition, dataSize, headerOffset)) {
-                        accessCache.remove();
+                        accesses.remove(access.id());
                         access.close();
                         access.file().delete();
                     }
@@ -229,16 +267,18 @@ public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
     @Override
     public void write(final S storable) throws StorageException {
         final long id = storable.id();
-        if (id >= settings.valueIdAmount || id < 0) {
-            throw new StorageException("Unsupported value id '" + id + "'!");
+        final long possibleId = id >> settings.valueIdBits;
+        if (Long.compareUnsigned(possibleId | 0xFFFFFFFF, 0xFFFFFFFF) >= 1) {
+            throw new StorageException("Unsupported file id '" + Long.toHexString(possibleId) + "'!");
         }
+        final int fileId = (int) (possibleId & 0xFFFFFFFF);
         final short valueId = (short) (id & settings.valueIdMask);
-        if (accessCache.isPresent()) {
-            write(accessCache.get(), valueId, storable);
+        if (accesses.has(fileId)) {
+            write(accesses.get(fileId), valueId, storable);
             return;
         }
-        final RAFAccess<S> access = new RAFAccess<>(file);
-        accessCache.set(access);
+        final RAFAccess<S> access = new RAFAccess<>(fileId, directory);
+        saveAccess(access);
         write(access, valueId, storable);
     }
 
@@ -323,18 +363,20 @@ public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
     @SuppressWarnings("resource")
     @Override
     public boolean delete(final long id) throws StorageException {
-        if (id >= settings.valueIdAmount || id < 0) {
-            throw new StorageException("Unsupported value id '" + id + "'!");
+        final long possibleId = id >> settings.valueIdBits;
+        if (Long.compareUnsigned(possibleId | 0xFFFFFFFF, 0xFFFFFFFF) >= 1) {
+            throw new StorageException("Unsupported file id '" + Long.toHexString(possibleId) + "'!");
         }
+        final int fileId = (int) (possibleId & 0xFFFFFFFF);
         final short valueId = (short) (id & settings.valueIdMask);
-        if (accessCache.isPresent()) {
-            return delete(accessCache.get(), id, valueId);
+        if (accesses.has(fileId)) {
+            return delete(accesses.get(fileId), id, valueId);
         }
-        final RAFAccess<S> access = new RAFAccess<>(file);
+        final RAFAccess<S> access = new RAFAccess<>(fileId, directory);
         if (!access.exists()) {
             return false;
         }
-        accessCache.set(access);
+        saveAccess(access);
         return delete(access, id, valueId);
     }
 
@@ -344,7 +386,7 @@ public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
             final RandomAccessFile file = access.open();
             final long fileSize = file.length();
             if (fileSize == 0) {
-                accessCache.remove();
+                accesses.remove(access.id());
                 access.close();
                 access.file().delete();
                 return false;
@@ -358,7 +400,7 @@ public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
             file.seek(lookupPosition + VALUE_HEADER_ID_SIZE);
             final int dataSize = file.readInt();
             if (deleteEntry(file, lookupPosition, dataSize, headerOffset)) {
-                accessCache.remove();
+                accesses.remove(access.id());
                 access.close();
                 access.file().delete();
             }
@@ -452,27 +494,33 @@ public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
 
     @Override
     public void updateEach(final Function<S, UpdateInfo<S>> updater) {
-        if (!file.exists()) {
+        if (!directory.exists()) {
             return;
         }
-        accessCache.tickPaused(true);
-        try {
-            if (accessCache.isPresent()) {
-                try {
-                    doUpdate(accessCache.peek(), updater);
-                } catch (final IOException e) {
-                    logger.warning("Failed to run update for file '" + file.getName() + "'!", e);
-                }
-                return;
+        accesses.tickPaused(true);
+        final File[] files = directory.listFiles(RAFAccess.FILE_FILTER);
+        for (final File file : files) {
+            int fileId;
+            try {
+                fileId = Integer.parseInt(file.getName().substring(0, file.getName().length() - 4));
+            } catch (final NumberFormatException nfe) {
+                continue;
             }
-            try (RAFAccess<S> access = new RAFAccess<>(file)) {
+            if (accesses.has(fileId)) {
+                try {
+                    doUpdate(accesses.peek(fileId), updater);
+                } catch (final IOException e) {
+                    logger.warning("Failed to run update for file '" + Integer.toHexString(fileId) + "'!", e);
+                }
+                continue;
+            }
+            try (RAFAccess<S> access = new RAFAccess<>(fileId, directory)) {
                 doUpdate(access, updater);
             } catch (final IOException e) {
-                logger.warning("Failed to run update for file '" + file.getName() + "'!", e);
+                logger.warning("Failed to run update for file '" + Integer.toHexString(fileId) + "'!", e);
             }
-        } finally {
-            accessCache.tickPaused(false);
         }
+        accesses.tickPaused(false);
     }
 
     private void doUpdate(final RAFAccess<S> access, final Function<S, UpdateInfo<S>> updater) throws IOException {
@@ -481,7 +529,9 @@ public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
             final RandomAccessFile file = access.open();
             final long fileSize = file.length();
             if (fileSize == 0) {
-                accessCache.remove();
+                if (accesses.has(access.id())) {
+                    accesses.remove(access.id());
+                }
                 access.close();
                 access.file().delete();
                 return;
@@ -506,7 +556,7 @@ public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
                 StorageAdapter<? extends S> adapter = findAdapterFor(typeId);
                 if (adapter == null) {
                     if ((items -= 1) == 0) {
-                        accessCache.remove();
+                        accesses.remove(access.id());
                         access.close();
                         access.file().delete();
                         return; // File is gone
@@ -525,7 +575,7 @@ public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
                 rawBuffer = null; // We no longer need this data, this can be a lot so we remove it from cache
                 if (storable == null) {
                     if ((items -= 1) == 0) {
-                        accessCache.remove();
+                        accesses.remove(access.id());
                         access.close();
                         access.file().delete();
                         return; // File is gone
@@ -546,7 +596,7 @@ public class RAFSingleStorage<S extends Storable> extends AbstractStorage<S> {
                 }
                 if (state == UpdateState.DELETE) {
                     if ((items -= 1) == 0) {
-                        accessCache.remove();
+                        accesses.remove(access.id());
                         access.close();
                         access.file().delete();
                         return; // File is gone

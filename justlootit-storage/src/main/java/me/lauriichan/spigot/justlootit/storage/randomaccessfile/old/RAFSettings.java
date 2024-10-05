@@ -1,4 +1,4 @@
-package me.lauriichan.spigot.justlootit.storage.randomaccessfile;
+package me.lauriichan.spigot.justlootit.storage.randomaccessfile.old;
 
 /**
  * Settings for the {@link RAFMultiStorage}
@@ -104,7 +104,7 @@ public final class RAFSettings {
 
     public static final RAFSettings DEFAULT = new RAFSettings(DEFAULT_VALUES_PER_FILE, DEFAULT_COPY_BUFFER_BYTES, DEFAULT_FILE_CACHE_TICKS,
         DEFAULT_FILE_CACHE_PURGE_STEP, DEFAULT_FILE_CHANNEL_MAX_AMOUNT);
-
+    
     public static final int LOOKUP_AMOUNT_SIZE = Short.BYTES;
     public static final int LOOKUP_ENTRY_SIZE = Long.BYTES;
 

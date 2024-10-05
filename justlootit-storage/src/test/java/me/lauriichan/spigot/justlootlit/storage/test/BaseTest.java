@@ -7,8 +7,8 @@ import java.util.List;
 import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.spigot.justlootit.storage.AbstractStorage;
 import me.lauriichan.spigot.justlootit.storage.Storable;
-import me.lauriichan.spigot.justlootit.storage.randomaccessfile.RAFMultiStorage;
-import me.lauriichan.spigot.justlootit.storage.randomaccessfile.RAFSingleStorage;
+import me.lauriichan.spigot.justlootit.storage.randomaccessfile.old.RAFMultiStorage;
+import me.lauriichan.spigot.justlootit.storage.randomaccessfile.old.RAFSingleStorage;
 import me.lauriichan.spigot.justlootit.storage.util.SystemSimpleLogger;
 
 public abstract class BaseTest<T extends Storable> extends Test<T> {
