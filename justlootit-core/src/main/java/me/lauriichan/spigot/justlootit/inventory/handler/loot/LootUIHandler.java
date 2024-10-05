@@ -42,7 +42,7 @@ public final class LootUIHandler implements IHandler {
         player.removeData(PLAYER_DATA_LOOTING);
         final Location blockLocation = inventory.attrUnset(ATTR_LIDDED_LOCATION, Location.class);
         if (blockLocation != null) {
-            BlockUtil.sendBlockClose(player.asBukkit(), blockLocation);
+            BlockUtil.sendBlockClose(player.getLevel(), player.asBukkit(), blockLocation);
         }
         player.getCapability(StorageCapability.class).ifPresent(capability -> {
             CachedInventory cached = (CachedInventory) capability.storage().read(id);

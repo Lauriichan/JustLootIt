@@ -1,6 +1,7 @@
 package me.lauriichan.spigot.justlootit.util;
 
 import org.bukkit.Bukkit;
+import org.bukkit.GameEvent;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.RegionAccessor;
@@ -18,6 +19,7 @@ import org.bukkit.persistence.PersistentDataContainer;
 
 import me.lauriichan.spigot.justlootit.JustLootItAccess;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
+import me.lauriichan.spigot.justlootit.nms.LevelAdapter;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoChunk;
 import me.lauriichan.spigot.justlootit.nms.util.Vec3i;
 import me.lauriichan.spigot.justlootit.platform.scheduler.Scheduler;
@@ -150,37 +152,45 @@ public final class BlockUtil {
         return null;
     }
 
-    public static void sendBlockOpen(Player player, Location location) {
+    public static void sendBlockOpen(LevelAdapter level, Player player, Location location) {
         BlockState state = player.getWorld().getBlockState(location);
         Material type = state.getType();
         if (type == Material.BARREL) {
+            level.triggerGameEvent(player, GameEvent.CONTAINER_OPEN, location);
             player.playSound(location, Sound.BLOCK_BARREL_OPEN, SoundCategory.BLOCKS, 0.5f, 1f);
             return;
         } else if (type == Material.CHEST) {
+            level.triggerGameEvent(player, GameEvent.CONTAINER_OPEN, location);
             player.playSound(location, Sound.BLOCK_CHEST_OPEN, SoundCategory.BLOCKS, 0.5f, 1f);
             return;
         } else if (type == Material.ENDER_CHEST) {
+            level.triggerGameEvent(player, GameEvent.CONTAINER_OPEN, location);
             player.playSound(location, Sound.BLOCK_ENDER_CHEST_OPEN, SoundCategory.BLOCKS, 0.5f, 1f);
             return;
         } else if (state instanceof ShulkerBox) {
+            level.triggerGameEvent(player, GameEvent.CONTAINER_OPEN, location);
             player.playSound(location, Sound.BLOCK_SHULKER_BOX_OPEN, SoundCategory.BLOCKS, 0.5f, 1f);
             return;
         }
     }
 
-    public static void sendBlockClose(Player player, Location location) {
+    public static void sendBlockClose(LevelAdapter level, Player player, Location location) {
         BlockState state = player.getWorld().getBlockState(location);
         Material type = state.getType();
         if (type == Material.BARREL) {
+            level.triggerGameEvent(player, GameEvent.CONTAINER_CLOSE, location);
             player.playSound(location, Sound.BLOCK_BARREL_CLOSE, SoundCategory.BLOCKS, 0.5f, 1f);
             return;
         } else if (type == Material.CHEST) {
+            level.triggerGameEvent(player, GameEvent.CONTAINER_CLOSE, location);
             player.playSound(location, Sound.BLOCK_CHEST_CLOSE, SoundCategory.BLOCKS, 0.5f, 1f);
             return;
         } else if (type == Material.ENDER_CHEST) {
+            level.triggerGameEvent(player, GameEvent.CONTAINER_CLOSE, location);
             player.playSound(location, Sound.BLOCK_ENDER_CHEST_CLOSE, SoundCategory.BLOCKS, 0.5f, 1f);
             return;
         } else if (state instanceof ShulkerBox) {
+            level.triggerGameEvent(player, GameEvent.CONTAINER_CLOSE, location);
             player.playSound(location, Sound.BLOCK_SHULKER_BOX_CLOSE, SoundCategory.BLOCKS, 0.5f, 1f);
             return;
         }

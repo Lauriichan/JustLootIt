@@ -1,6 +1,7 @@
 package me.lauriichan.spigot.justlootit;
 
 import java.io.File;
+import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -11,8 +12,12 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import me.lauriichan.laylib.command.Actor;
 import me.lauriichan.laylib.command.ArgumentRegistry;
 import me.lauriichan.laylib.command.CommandManager;
+import me.lauriichan.laylib.json.JsonObject;
+import me.lauriichan.laylib.json.io.JsonParser;
+import me.lauriichan.laylib.localization.Key;
 import me.lauriichan.laylib.reflection.AccessFailedException;
 import me.lauriichan.laylib.reflection.ClassUtil;
 import me.lauriichan.laylib.reflection.JavaAccess;
@@ -25,6 +30,9 @@ import me.lauriichan.minecraft.pluginbase.command.processor.IBukkitCommandProces
 import me.lauriichan.minecraft.pluginbase.config.startup.IPropertyIO;
 import me.lauriichan.minecraft.pluginbase.config.startup.Property;
 import me.lauriichan.minecraft.pluginbase.extension.IConditionMap;
+import me.lauriichan.minecraft.pluginbase.resource.source.IDataSource;
+import me.lauriichan.minecraft.pluginbase.util.spigot.SpigotUpdater;
+import me.lauriichan.minecraft.pluginbase.util.spigot.SpigotUpdater.SpigotUpdaterException;
 import me.lauriichan.spigot.justlootit.capability.JustLootItCapabilityProvider;
 import me.lauriichan.spigot.justlootit.command.*;
 import me.lauriichan.spigot.justlootit.command.argument.*;
@@ -40,6 +48,7 @@ import me.lauriichan.spigot.justlootit.data.io.DataIO;
 import me.lauriichan.spigot.justlootit.input.InputProvider;
 import me.lauriichan.spigot.justlootit.input.SimpleChatInputProvider;
 import me.lauriichan.spigot.justlootit.listener.ItemFramePacketListener;
+import me.lauriichan.spigot.justlootit.message.Messages;
 import me.lauriichan.spigot.justlootit.nms.IServiceProvider;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.nms.VersionHelper;
@@ -52,6 +61,7 @@ import me.lauriichan.spigot.justlootit.platform.paper.PaperPlatform;
 import me.lauriichan.spigot.justlootit.platform.spigot.SpigotPlatform;
 import me.lauriichan.spigot.justlootit.storage.util.cache.CacheTickTimer;
 import me.lauriichan.spigot.justlootit.util.JLIInitializationException;
+import me.lauriichan.spigot.justlootit.util.PluginVersion;
 
 public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> implements IServiceProvider {
 
@@ -66,11 +76,13 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     }
 
     private static final String VERSION_PATH = JustLootItPlugin.class.getPackageName() + ".nms.%s.VersionHandler%s";
-    
+
     private final CacheTickTimer levelTickTimer = new CacheTickTimer();
     private final CacheTickTimer playerTickTimer = new CacheTickTimer();
 
     private volatile JustLootItPlatform platform;
+
+    private SpigotUpdater<PluginVersion> updater;
 
     private File mainWorldFolder;
 
@@ -82,8 +94,9 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     private BukkitCommandInjectableBridge<?> commandBridge;
 
     private volatile InputProvider inputProvider = SimpleChatInputProvider.CHAT;
-    
-    private final Property<Boolean> keepConversionFile = new Property<>("debug.conversion", "If set to true, the conversion will never delete its property file.", IPropertyIO.BOOLEAN, false);
+
+    private final Property<Boolean> keepConversionFile = new Property<>("debug.conversion",
+        "If set to true, the conversion will never delete its property file.", IPropertyIO.BOOLEAN, false);
 
     /*
      * PacketContainers
@@ -94,7 +107,7 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     /*
      * Setup
      */
-    
+
     @Override
     protected void onPluginProperties(ObjectArrayList<Property<?>> properties) {
         properties.add(keepConversionFile);
@@ -106,6 +119,7 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         if (!setupVersionHandler()) {
             return;
         }
+        setupUpdater();
         DataIO.setup(versionHandler.io());
         setupCapabilities();
         setupTimers();
@@ -131,11 +145,36 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         }
     }
 
+    private void setupUpdater() {
+        IDataSource source = resource("jar://META-INF/updater.json");
+        if (!source.exists()) {
+            logger().error("Couldn't setup updater, no update information will be available.");
+            return;
+        }
+        JsonObject object;
+        try (InputStream input = source.openReadableStream()) {
+            object = JsonParser.fromStream(input).asJsonObject();
+        } catch (Throwable e) {
+            if (logger().isDebug()) {
+                logger().error("Couldn't setup updater, no update information will be available.", e);
+            } else {
+                logger().error("Couldn't setup updater, no update information will be available.");
+            }
+            return;
+        }
+        if (!object.has("resource_id")) {
+            logger().error("Couldn't setup updater, no update information will be available.");
+            logger().debug("No resource id was available");
+            return;
+        }
+        updater = new SpigotUpdater<>(object.getAsInt("resource_id"), getDescription().getVersion(), PluginVersion::new);
+    }
+
     private void setupCapabilities() {
         final CapabilityManager capabilities = versionHandler.capabilities();
         capabilities.add(JustLootItCapabilityProvider.CAPABILITY_PROVIDER);
     }
-    
+
     private void setupTimers() {
         playerTickTimer.setLength(1, TimeUnit.SECONDS);
         playerTickTimer.setPauseLength(50, TimeUnit.MILLISECONDS);
@@ -148,7 +187,7 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     /*
      * Start
      */
-    
+
     @Override
     protected IBukkitReflection createBukkitReflection() {
         return new JustLootItPlatformReflection(platform);
@@ -230,6 +269,36 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         startTimers();
         // Update compatibilities
         CompatDependency.updateAll(this);
+        // Check for updates
+        runUpdateCheck();
+    }
+
+    private void runUpdateCheck() {
+        if (updater == null) {
+            return;
+        }
+        platform().scheduler().async(() -> {
+            Thread thread = Thread.currentThread();
+            String threadName = thread.getName();
+            thread.setName("Update checker");
+            try {
+                Actor<?> console = actor(Bukkit.getConsoleSender());
+                if (updater.isUp2Date()) {
+                    console.sendTranslatedMessage(Messages.UPDATER_UPDATE_LATEST, Key.of("version.current", updater.getVersion()));
+                } else {
+                    console.sendTranslatedMessage(Messages.UPDATER_UPDATE_LATEST, Key.of("version.current", updater.getVersion()),
+                        Key.of("version.latest", updater.getLatestVersion()));
+                }
+            } catch (SpigotUpdaterException e) {
+                if (logger().isDebug()) {
+                    logger().error("Failed to retrieve update information");
+                } else {
+                    logger().error("Failed to retrieve update information", e);
+                }
+            } finally {
+                thread.setName(threadName);
+            }
+        });
     }
 
     private void registerCommands(final CommandManager manager) {
@@ -240,7 +309,7 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         // Register packet listener
         itemFrameContainer = packetManager.register(new ItemFramePacketListener(versionHandler)).setGlobal(true);
     }
-    
+
     private void startTimers() {
         levelTickTimer.start();
         playerTickTimer.start();
@@ -263,7 +332,7 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         // Ignore any stats here
         configManager().save();
     }
-    
+
     private void stopTimers() {
         levelTickTimer.stop();
         levelTickTimer.clear();
@@ -282,11 +351,11 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     /*
      * Getter
      */
-    
+
     public CacheTickTimer levelTickTimer() {
         return levelTickTimer;
     }
-    
+
     public CacheTickTimer playerTickTimer() {
         return playerTickTimer;
     }
@@ -313,6 +382,10 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
 
     public File mainWorldFolder() {
         return mainWorldFolder;
+    }
+    
+    public SpigotUpdater<PluginVersion> updater() {
+        return updater;
     }
 
     /*

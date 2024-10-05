@@ -55,6 +55,7 @@ import me.lauriichan.spigot.justlootit.data.CacheLookupTable.WorldEntry;
 import me.lauriichan.spigot.justlootit.inventory.handler.loot.LootUIHandler;
 import me.lauriichan.spigot.justlootit.message.Messages;
 import me.lauriichan.spigot.justlootit.message.UIInventoryNames;
+import me.lauriichan.spigot.justlootit.nms.LevelAdapter;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.storage.IStorage;
 import me.lauriichan.spigot.justlootit.storage.Storable;
@@ -307,7 +308,8 @@ public class ContainerListener implements IListenerExtension {
         }
         final WorldEntry entryId = new WorldEntry(location.getWorld(), id);
         final UUID playerId = bukkitPlayer.getUniqueId();
-        actor.versionHandler().getLevel(location.getWorld()).getCapability(StorageCapability.class).ifPresentOrElse(capability -> {
+        final LevelAdapter level = actor.versionHandler().getLevel(location.getWorld());
+        level.getCapability(StorageCapability.class).ifPresentOrElse(capability -> {
             final Container dataContainer = (Container) capability.storage().read(id);
             if (dataContainer == null) {
                 JustLootItAccess.removeIdentity(data);
@@ -342,7 +344,7 @@ public class ContainerListener implements IListenerExtension {
                                     inventory.open(bukkitPlayer);
                                     if (inventoryHolder instanceof DoubleChest || inventoryHolder instanceof Lidded) {
                                         inventory.attrSet(LootUIHandler.ATTR_LIDDED_LOCATION, location);
-                                        BlockUtil.sendBlockOpen(bukkitPlayer, location);
+                                        BlockUtil.sendBlockOpen(level, bukkitPlayer, location);
                                     }
                                 });
                                 return;
@@ -384,7 +386,7 @@ public class ContainerListener implements IListenerExtension {
                     inventory.open(bukkitPlayer);
                     if (inventoryHolder instanceof DoubleChest || inventoryHolder instanceof Lidded) {
                         inventory.attrSet(LootUIHandler.ATTR_LIDDED_LOCATION, location);
-                        BlockUtil.sendBlockOpen(bukkitPlayer, location);
+                        BlockUtil.sendBlockOpen(level, bukkitPlayer, location);
                     }
                 });
             });

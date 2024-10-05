@@ -22,6 +22,15 @@ public final class Messages implements IMessageExtension {
     public static MessageProvider PREFIX;
     
     /*
+     * Updater
+     */
+
+    @Message(id = "updater.update.latest", content = "$#plugin.prefix You are currently running &8<&c$version.current&8> &7which is the latest version of $#plugin.name&7.")
+    public static MessageProvider UPDATER_UPDATE_LATEST;
+    @Message(id = "updater.update.available", content = "$#plugin.prefix You are currently running &8<&c$version.current&8> &7which is an oudated version of $#plugin.name&7, please update to &8<&c$version.latest&8>&7.")
+    public static MessageProvider UPDATER_UPDATE_AVAILABLE;
+    
+    /*
      * Input
      */
     @Message(id = "input.manual.cancel", content = "$#plugin.prefix &7Successfully cancelled input.")
