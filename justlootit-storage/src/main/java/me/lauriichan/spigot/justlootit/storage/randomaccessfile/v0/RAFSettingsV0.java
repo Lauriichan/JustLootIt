@@ -1,9 +1,11 @@
 package me.lauriichan.spigot.justlootit.storage.randomaccessfile.v0;
 
+import me.lauriichan.spigot.justlootit.storage.randomaccessfile.IRAFSettings;
+
 /**
  * Settings for the {@link RAFMultiStorage}
  */
-public final class RAFSettingsV0 {
+public final class RAFSettingsV0 implements IRAFSettings {
 
     public static final class Builder {
 
@@ -102,8 +104,8 @@ public final class RAFSettingsV0 {
 
     public static final int DEFAULT_FILE_CHANNEL_MAX_AMOUNT = 64;
 
-    public static final RAFSettingsV0 DEFAULT = new RAFSettingsV0(DEFAULT_VALUES_PER_FILE, DEFAULT_COPY_BUFFER_BYTES, DEFAULT_FILE_CACHE_TICKS,
-        DEFAULT_FILE_CACHE_PURGE_STEP, DEFAULT_FILE_CHANNEL_MAX_AMOUNT);
+    public static final RAFSettingsV0 DEFAULT = new RAFSettingsV0(DEFAULT_VALUES_PER_FILE, DEFAULT_COPY_BUFFER_BYTES,
+        DEFAULT_FILE_CACHE_TICKS, DEFAULT_FILE_CACHE_PURGE_STEP, DEFAULT_FILE_CHANNEL_MAX_AMOUNT);
 
     public static final int FORMAT_VERSION = Short.BYTES;
 
@@ -144,6 +146,36 @@ public final class RAFSettingsV0 {
         this.fileCacheTicks = Math.max(fileCacheTicks, 30);
         this.fileCachePurgeStep = Math.max(fileCachePurgeStep, 1);
         this.fileCacheMaxAmount = Math.max(fileCacheMaxAmount, 4);
+    }
+
+    @Override
+    public int valueIdBits() {
+        return valueIdBits;
+    }
+
+    @Override
+    public int valueIdMask() {
+        return valueIdMask;
+    }
+
+    @Override
+    public int valueIdAmount() {
+        return valueIdAmount;
+    }
+
+    @Override
+    public long fileCacheTicks() {
+        return fileCacheTicks;
+    }
+
+    @Override
+    public int fileCacheMaxAmount() {
+        return fileCacheMaxAmount;
+    }
+
+    @Override
+    public long fileCachePurgeStep() {
+        return fileCachePurgeStep;
     }
 
 }

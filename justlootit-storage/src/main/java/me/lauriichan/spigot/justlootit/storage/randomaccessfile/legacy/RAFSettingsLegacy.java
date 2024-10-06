@@ -1,9 +1,12 @@
 package me.lauriichan.spigot.justlootit.storage.randomaccessfile.legacy;
 
+import me.lauriichan.spigot.justlootit.storage.randomaccessfile.IRAFSettings;
+import me.lauriichan.spigot.justlootit.storage.randomaccessfile.v0.RAFSettingsV0;
+
 /**
  * Settings for the {@link RAFMultiStorage}
  */
-public final class RAFSettingsLegacy {
+public final class RAFSettingsLegacy implements IRAFSettings {
 
     public static final class Builder {
 
@@ -94,6 +97,11 @@ public final class RAFSettingsLegacy {
         return new Builder();
     }
 
+    public static RAFSettingsLegacy of(RAFSettingsV0 settings) {
+        return new RAFSettingsLegacy(settings.valueIdAmount, settings.copyBufferSize / 1024, settings.fileCacheTicks,
+            settings.fileCachePurgeStep, settings.fileCacheMaxAmount);
+    }
+
     public static final int DEFAULT_VALUES_PER_FILE = 1024;
     public static final int DEFAULT_COPY_BUFFER_BYTES = 64;
 
@@ -102,11 +110,11 @@ public final class RAFSettingsLegacy {
 
     public static final int DEFAULT_FILE_CHANNEL_MAX_AMOUNT = 64;
 
-    public static final RAFSettingsLegacy DEFAULT = new RAFSettingsLegacy(DEFAULT_VALUES_PER_FILE, DEFAULT_COPY_BUFFER_BYTES, DEFAULT_FILE_CACHE_TICKS,
-        DEFAULT_FILE_CACHE_PURGE_STEP, DEFAULT_FILE_CHANNEL_MAX_AMOUNT);
+    public static final RAFSettingsLegacy DEFAULT = new RAFSettingsLegacy(DEFAULT_VALUES_PER_FILE, DEFAULT_COPY_BUFFER_BYTES,
+        DEFAULT_FILE_CACHE_TICKS, DEFAULT_FILE_CACHE_PURGE_STEP, DEFAULT_FILE_CHANNEL_MAX_AMOUNT);
 
     public static final int FORMAT_VERSION = 0;
-    
+
     public static final int LOOKUP_AMOUNT_SIZE = Short.BYTES;
     public static final int LOOKUP_ENTRY_SIZE = Long.BYTES;
 
@@ -114,7 +122,7 @@ public final class RAFSettingsLegacy {
 
     public static final int VALUE_HEADER_ID_SIZE = Short.BYTES;
     public static final int VALUE_HEADER_LENGTH_SIZE = Integer.BYTES;
-    
+
     public static final int VALUE_HEADER_ID_VERSION_SIZE = VALUE_HEADER_ID_SIZE;
     public static final int VALUE_HEADER_SIZE = VALUE_HEADER_ID_SIZE + VALUE_HEADER_LENGTH_SIZE;
 
@@ -143,6 +151,36 @@ public final class RAFSettingsLegacy {
         this.fileCacheTicks = Math.max(fileCacheTicks, 30);
         this.fileCachePurgeStep = Math.max(fileCachePurgeStep, 1);
         this.fileCacheMaxAmount = Math.max(fileCacheMaxAmount, 4);
+    }
+
+    @Override
+    public int valueIdBits() {
+        return valueIdBits;
+    }
+
+    @Override
+    public int valueIdMask() {
+        return valueIdMask;
+    }
+
+    @Override
+    public int valueIdAmount() {
+        return valueIdAmount;
+    }
+
+    @Override
+    public long fileCacheTicks() {
+        return fileCacheTicks;
+    }
+
+    @Override
+    public int fileCacheMaxAmount() {
+        return fileCacheMaxAmount;
+    }
+
+    @Override
+    public long fileCachePurgeStep() {
+        return fileCachePurgeStep;
     }
 
 }

@@ -1,44 +1,32 @@
 package me.lauriichan.spigot.justlootit.storage;
 
-import java.util.Objects;
-
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 
-public abstract class StorageAdapter<T extends Storable> {
+public abstract class StorageAdapter<T> {
+
+    public static final int MAX_TYPE_ID = 65535;
 
     protected final Class<T> type;
-    protected final short typeId;
+    protected final int typeId;
 
     public StorageAdapter(final Class<T> type, final int typeId) {
-        this.type = Objects.requireNonNull(type);
-        this.typeId = (short) (typeId & 0xFF);
+        this.type = type;
+        if (typeId > MAX_TYPE_ID || typeId < 0) {
+            throw new IllegalArgumentException("Invalid type id <" + typeId + ">, type id has to be between 0 and " + MAX_TYPE_ID);
+        }
+        this.typeId = typeId & 0xFFFF;
     }
 
-    public final Class<T> type() {
+    public Class<T> type() {
         return type;
     }
 
-    public final short typeId() {
+    public int typeId() {
         return typeId;
     }
 
-    public final ByteBuf serializeValue(final Storable storable) {
-        return serialize(type.cast(storable));
-    }
+    public abstract void serialize(StorageAdapterRegistry registry, T value, ByteBuf buffer);
 
-    public final void serializeValue(final Storable storable, final ByteBuf buffer) {
-        serialize(type.cast(storable), buffer);
-    }
-
-    public final ByteBuf serialize(final T storable) {
-        final ByteBuf buffer = Unpooled.buffer();
-        serialize(storable, buffer);
-        return buffer;
-    }
-
-    public abstract void serialize(T storable, ByteBuf buffer);
-
-    public abstract T deserialize(long id, ByteBuf buffer);
+    public abstract T deserialize(StorageAdapterRegistry registry, ByteBuf buffer);
 
 }

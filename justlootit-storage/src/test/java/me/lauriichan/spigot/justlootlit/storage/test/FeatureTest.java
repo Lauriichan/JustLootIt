@@ -12,7 +12,6 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 
-import me.lauriichan.spigot.justlootit.storage.Storable;
 import me.lauriichan.spigot.justlootlit.storage.test.Test.StorageProvider;
 import me.lauriichan.spigot.justlootlit.storage.test.simple.ShuffledWriteReadTest;
 import me.lauriichan.spigot.justlootlit.storage.test.simple.WriteOverwriteReadTest;
@@ -28,7 +27,7 @@ public class FeatureTest {
 
     public static final long SEED = 285428738523L;
 
-    public static final Test<?>[] TESTS = new Test[] {
+    public static final Test[] TESTS = new Test[] {
         new WriteReadTest(128),
         new WriteReadDeleteTest(128),
         new WriteUpdateReadTest(128),
@@ -40,24 +39,22 @@ public class FeatureTest {
      * ONLY MODIFY PUBLIC FIELDS
      */
 
-    @Disabled
     @TestFactory
     public Collection<DynamicTest> featureTests() {
         final ArrayList<DynamicTest> tests = new ArrayList<>(TESTS.length);
         if (TESTS.length == 0) {
             return tests;
         }
-        for (final Test<?> test : TESTS) {
+        for (final Test test : TESTS) {
             createTests(tests, test);
         }
         return tests;
     }
 
-    @SuppressWarnings("unchecked")
-    private static <T extends Storable> void createTests(final ArrayList<DynamicTest> collection, final Test<T> test) {
-        final ArrayList<StorageProvider<T>> providerList = new ArrayList<>();
+    private static void createTests(final ArrayList<DynamicTest> collection, final Test test) {
+        final ArrayList<StorageProvider> providerList = new ArrayList<>();
         test.createProviders(providerList);
-        final StorageProvider<T>[] providers = providerList.toArray(StorageProvider[]::new);
+        final StorageProvider[] providers = providerList.toArray(StorageProvider[]::new);
         providerList.clear();
         final File workingDir = new File("tests/features", test.name);
         if (workingDir.exists()) {
@@ -70,7 +67,7 @@ public class FeatureTest {
         workingDir.mkdirs();
         final Profiler profiler = new Profiler(0);
         profiler.lock();
-        for (final StorageProvider<T> provider : providers) {
+        for (final StorageProvider provider : providers) {
             final File storageDir = new File(workingDir, provider.name);
             storageDir.mkdirs();
             collection.add(DynamicTest.dynamicTest(test.name + " [" + provider.name + "]",

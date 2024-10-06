@@ -6,46 +6,49 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Random;
 
-import me.lauriichan.spigot.justlootit.storage.AbstractStorage;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import me.lauriichan.spigot.justlootit.storage.Storage;
+import me.lauriichan.spigot.justlootit.storage.StorageAdapterRegistry;
+import me.lauriichan.spigot.justlootit.storage.Stored;
 import me.lauriichan.spigot.justlootlit.storage.test.BaseTest;
 import me.lauriichan.spigot.justlootlit.storage.test.simple.model.SimpleObject;
 import me.lauriichan.spigot.justlootlit.storage.test.simple.model.SimpleObjectAdapter;
 
-public class ShuffledWriteReadTest extends BaseTest<SimpleObject> {
+public class ShuffledWriteReadTest extends BaseTest {
 
     private final int amount;
 
     public ShuffledWriteReadTest(final int amount) {
-        super("ShuffledWriteRead (" + Math.abs(amount) + "x)", SimpleObject.class);
+        super("ShuffledWriteRead (" + Math.abs(amount) + "x)");
         this.amount = Math.abs(amount);
     }
 
     @Override
-    protected void executeTest(final String storageName, final AbstractStorage<SimpleObject> storage, final Random random) {
+    protected void executeTest(final String storageName, final Storage storage, final Random random) {
         if (amount == 0) {
             return;
         }
-        final ArrayList<SimpleObject> list = new ArrayList<>();
-        final SimpleObject[] objects = new SimpleObject[amount];
+        final ObjectArrayList<SimpleObject> objects = new ObjectArrayList<>(amount);
         for (int id = 0; id < amount; id++) {
-            SimpleObject object = new SimpleObject(id, random.nextInt(Integer.MAX_VALUE));
-            list.add(object);
-            objects[id] = object;
+            objects.add(new SimpleObject(random.nextInt(Integer.MAX_VALUE)));
         }
-        
-        Collections.shuffle(list, random);
-        for(SimpleObject object : list) {
-            storage.write(object);
+
+        final ObjectArrayList<SimpleObject> copy = new ObjectArrayList<>(objects);
+        Collections.shuffle(copy, random);
+        for (SimpleObject object : copy) {
+            Stored<SimpleObject> stored = storage.registry().create(object);
+            stored.id(objects.indexOf(object));
+            storage.write(stored);
         }
 
         for (int id = 0; id < amount; id++) {
-            final SimpleObject loaded = storage.read(id);
-            assertArrayEquals(objects[id].numbers, loaded.numbers, "Invalid entry " + id);
+            final Stored<SimpleObject> loaded = storage.read(id);
+            assertArrayEquals(objects.get(id).numbers, loaded.value().numbers, "Invalid entry " + id);
         }
     }
 
     @Override
-    protected void setup(final AbstractStorage<SimpleObject> storage) {
+    protected void setup(final StorageAdapterRegistry storage) {
         storage.register(SimpleObjectAdapter.INSTANCE);
     }
 

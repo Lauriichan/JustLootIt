@@ -5,22 +5,24 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Random;
 
-import me.lauriichan.spigot.justlootit.storage.AbstractStorage;
+import me.lauriichan.spigot.justlootit.storage.Storage;
+import me.lauriichan.spigot.justlootit.storage.StorageAdapterRegistry;
+import me.lauriichan.spigot.justlootit.storage.Stored;
 import me.lauriichan.spigot.justlootlit.storage.test.BaseTest;
 import me.lauriichan.spigot.justlootlit.storage.test.simple.model.SimpleObject;
 import me.lauriichan.spigot.justlootlit.storage.test.simple.model.SimpleObjectAdapter;
 
-public class WriteReadDeleteTest extends BaseTest<SimpleObject> {
+public class WriteReadDeleteTest extends BaseTest {
 
     private final int amount;
 
     public WriteReadDeleteTest(final int amount) {
-        super("WriteReadDelete (" + Math.abs(amount) + "x)", SimpleObject.class);
+        super("WriteReadDelete (" + Math.abs(amount) + "x)");
         this.amount = Math.abs(amount);
     }
 
     @Override
-    protected void executeTest(final String storageName, final AbstractStorage<SimpleObject> storage, final Random random) {
+    protected void executeTest(final String storageName, final Storage storage, final Random random) {
         if (amount == 0) {
             return;
         }
@@ -28,12 +30,14 @@ public class WriteReadDeleteTest extends BaseTest<SimpleObject> {
         for (int id = 0; id < amount; id++) {
             final SimpleObject object = new SimpleObject(id, random.nextInt(Integer.MAX_VALUE));
             objects[id] = object;
-            storage.write(object);
+            final Stored<SimpleObject> stored = storage.registry().create(object);
+            stored.id(id);
+            storage.write(stored);
         }
 
         for (int id = 0; id < amount; id++) {
-            final SimpleObject loaded = storage.read(id);
-            assertArrayEquals(objects[id].numbers, loaded.numbers, "Invalid entry " + id);
+            final Stored<SimpleObject> loaded = storage.read(id);
+            assertArrayEquals(objects[id].numbers, loaded.value().numbers, "Invalid entry " + id);
             if (id % 2 == 0) {
                 assertTrue(storage.delete(id), "Invalid entry " + id);
             }
@@ -41,8 +45,8 @@ public class WriteReadDeleteTest extends BaseTest<SimpleObject> {
     }
 
     @Override
-    protected void setup(final AbstractStorage<SimpleObject> storage) {
-        storage.register(SimpleObjectAdapter.INSTANCE);
+    protected void setup(final StorageAdapterRegistry registry) {
+        registry.register(SimpleObjectAdapter.INSTANCE);
     }
 
 }
