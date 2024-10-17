@@ -380,12 +380,12 @@ public final class RAFFileV0 implements IRAFFile {
                 return;
             }
             ShortArrayList deleteList = new ShortArrayList();
-            final long idBase = this.id << settings.valueIdBits;
+            final long idBase = this.id == -1 ? 0 : (this.id << settings.valueIdBits);
             fileAccess.seek(FORMAT_VERSION);
             int items = fileAccess.readShort();
             long headerOffset;
             long lookupPosition;
-            for (int valueId = 0; id < settings.valueIdAmount; valueId++) {
+            for (int valueId = 0; valueId < settings.valueIdAmount; valueId++) {
                 headerOffset = LOOKUP_ENTRY_BASE_OFFSET + LOOKUP_ENTRY_SIZE * valueId;
                 fileAccess.seek(headerOffset);
                 lookupPosition = fileAccess.readLong();
@@ -393,8 +393,9 @@ public final class RAFFileV0 implements IRAFFile {
                     continue;
                 }
                 final long id = idBase + valueId;
-                final int typeId = fileAccess.readUnsignedShort();
+                fileAccess.seek(lookupPosition);
                 final int version = fileAccess.readUnsignedShort();
+                final int typeId = fileAccess.readUnsignedShort();
                 final int dataSize = fileAccess.readInt();
                 final byte[] buffer = new byte[dataSize];
                 fileAccess.read(buffer);
@@ -447,6 +448,7 @@ public final class RAFFileV0 implements IRAFFile {
             final LongArrayList headerNewValues = new LongArrayList(items);
             int headerAmount = 0;
             final Short2LongOpenHashMap deleteHeaders = new Short2LongOpenHashMap(amount);
+            final Short2LongOpenHashMap modifiedDeleteHeaders = new Short2LongOpenHashMap(amount);
             for (int valueId = 0; valueId < settings.valueIdAmount; valueId++) {
                 headerOffset = LOOKUP_ENTRY_BASE_OFFSET + LOOKUP_ENTRY_SIZE * valueId;
                 fileAccess.seek(headerOffset);
@@ -456,6 +458,7 @@ public final class RAFFileV0 implements IRAFFile {
                 }
                 if (deleteList.contains((short) valueId)) {
                     deleteHeaders.put((short) valueId, lookupPosition);
+                    modifiedDeleteHeaders.put((short) valueId, lookupPosition);
                     continue;
                 }
                 keysToIndex.put(headerOffset, headerAmount++);
@@ -464,10 +467,12 @@ public final class RAFFileV0 implements IRAFFile {
                 headerNewValues.add(lookupPosition);
             }
             int dataSize;
+            long offsetLookupPosition;
             while (amount != 0) {
                 final short valueIdShort = deleteList.removeShort(0);
                 final int valueId = Short.toUnsignedInt(valueIdShort);
                 amount--;
+                offsetLookupPosition = modifiedDeleteHeaders.remove(valueIdShort);
                 headerOffset = LOOKUP_ENTRY_BASE_OFFSET + LOOKUP_ENTRY_SIZE * valueId;
                 fileAccess.seek(headerOffset);
                 fileAccess.writeLong(INVALID_HEADER_OFFSET);
@@ -477,18 +482,18 @@ public final class RAFFileV0 implements IRAFFile {
                 fileSize -= dataSize;
                 for (int headerIdx = 0; headerIdx < items; headerIdx++) {
                     final long headerValue = headerNewValues.getLong(headerIdx);
-                    if (headerValue < lookupPosition) {
+                    if (headerValue < offsetLookupPosition) {
                         continue;
                     }
                     headerNewValues.set(headerIdx, headerValue - dataSize);
                 }
                 for (int entry = 0; entry < amount; entry++) {
                     final short entryId = deleteList.getShort(entry);
-                    final long headerValue = deleteHeaders.get(entryId);
-                    if (headerValue < lookupPosition) {
+                    final long headerValue = modifiedDeleteHeaders.get(entryId);
+                    if (headerValue < offsetLookupPosition) {
                         continue;
                     }
-                    deleteHeaders.put(entryId, headerValue - dataSize);
+                    modifiedDeleteHeaders.put(entryId, headerValue - dataSize);
                 }
             }
             headerKeys

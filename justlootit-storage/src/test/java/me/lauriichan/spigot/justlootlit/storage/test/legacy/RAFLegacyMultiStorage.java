@@ -1,4 +1,4 @@
-package me.lauriichan.spigot.justlootit.storage.randomaccessfile;
+package me.lauriichan.spigot.justlootlit.storage.test.legacy;
 
 import java.io.File;
 import java.util.function.Function;
@@ -13,24 +13,28 @@ import me.lauriichan.spigot.justlootit.storage.UpdateInfo;
 import me.lauriichan.spigot.justlootit.storage.UpdateInfo.UpdateState;
 import me.lauriichan.spigot.justlootit.storage.identifier.FileIdentifier;
 import me.lauriichan.spigot.justlootit.storage.identifier.IIdentifier;
-import me.lauriichan.spigot.justlootit.storage.randomaccessfile.v0.RAFSettingsV0;
+import me.lauriichan.spigot.justlootit.storage.randomaccessfile.IRAFEntry;
+import me.lauriichan.spigot.justlootit.storage.randomaccessfile.IRAFFile;
+import me.lauriichan.spigot.justlootit.storage.randomaccessfile.RAFFileHelper;
+import me.lauriichan.spigot.justlootit.storage.randomaccessfile.legacy.RAFFileLegacy;
+import me.lauriichan.spigot.justlootit.storage.randomaccessfile.legacy.RAFSettingsLegacy;
 import me.lauriichan.spigot.justlootit.storage.util.cache.Int2ObjectMapCache;
 import me.lauriichan.spigot.justlootit.storage.util.cache.ThreadSafeMapCache;
 
-public final class RAFMultiStorage extends Storage {
+public final class RAFLegacyMultiStorage extends Storage {
 
-    private final RAFSettingsV0 settings;
+    private final RAFSettingsLegacy settings;
 
     private final File directory;
     private final ThreadSafeMapCache<Integer, IRAFFile> files;
 
     private final IIdentifier identifier;
 
-    public RAFMultiStorage(final StorageAdapterRegistry registry, final File directory) {
-        this(registry, directory, RAFSettingsV0.DEFAULT);
+    public RAFLegacyMultiStorage(final StorageAdapterRegistry registry, final File directory) {
+        this(registry, directory, RAFSettingsLegacy.DEFAULT);
     }
 
-    public RAFMultiStorage(final StorageAdapterRegistry registry, final File directory, final RAFSettingsV0 settings) {
+    public RAFLegacyMultiStorage(final StorageAdapterRegistry registry, final File directory, final RAFSettingsLegacy settings) {
         super(registry);
         this.settings = settings;
         this.directory = directory;
@@ -54,6 +58,10 @@ public final class RAFMultiStorage extends Storage {
             id = identifier.nextId();
         }
         return id;
+    }
+    
+    private IRAFFile create(int id) {
+        return new RAFFileLegacy(settings, directory, id);
     }
     
     private void decacheFile(int fileId, IRAFFile file) {
@@ -91,7 +99,7 @@ public final class RAFMultiStorage extends Storage {
         if (files.has(fileId)) {
             return files.get(fileId).has(id);
         }
-        IRAFFile file = RAFFileHelper.create(registry, directory, fileId, settings);
+        IRAFFile file = create(fileId);
         if (!file.isOpen()) {
             if (!file.exists()) {
                 return false;
@@ -112,7 +120,7 @@ public final class RAFMultiStorage extends Storage {
         if (files.has(fileId)) {
             return read(files.get(fileId), id);
         }
-        IRAFFile file = RAFFileHelper.create(registry, directory, fileId, settings);
+        IRAFFile file = create(fileId);
         if (!file.isOpen()) {
             if (!file.exists()) {
                 return null;
@@ -161,7 +169,7 @@ public final class RAFMultiStorage extends Storage {
             write(files.get(fileId), stored);
             return;
         }
-        IRAFFile file = RAFFileHelper.create(registry, directory, fileId, settings);
+        IRAFFile file = create(fileId);
         if (!file.isOpen()) {
             file.open();
         }
@@ -191,7 +199,7 @@ public final class RAFMultiStorage extends Storage {
         if (files.has(fileId)) {
             return delete(files.get(fileId), id);
         }
-        IRAFFile file = RAFFileHelper.create(registry, directory, fileId, settings);
+        IRAFFile file = create(fileId);
         if (!file.isOpen()) {
             if (!file.exists()) {
                 return false;
@@ -239,7 +247,7 @@ public final class RAFMultiStorage extends Storage {
                     }
                     continue;
                 }
-                try (IRAFFile rafFile = RAFFileHelper.create(registry, file, fileId, settings)) {
+                try (IRAFFile rafFile = create(fileId)) {
                     updateEach(rafFile, updater);
                 } catch(StorageException exp) {
                     logger.warning("Failed to run update for file '{0}'!", exp, Integer.toHexString(fileId));

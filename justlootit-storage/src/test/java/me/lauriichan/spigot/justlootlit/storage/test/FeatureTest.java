@@ -13,11 +13,7 @@ import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 
 import me.lauriichan.spigot.justlootlit.storage.test.Test.StorageProvider;
-import me.lauriichan.spigot.justlootlit.storage.test.simple.ShuffledWriteReadTest;
-import me.lauriichan.spigot.justlootlit.storage.test.simple.WriteOverwriteReadTest;
-import me.lauriichan.spigot.justlootlit.storage.test.simple.WriteReadDeleteTest;
-import me.lauriichan.spigot.justlootlit.storage.test.simple.WriteReadTest;
-import me.lauriichan.spigot.justlootlit.storage.test.simple.WriteUpdateReadTest;
+import me.lauriichan.spigot.justlootlit.storage.test.simple.*;
 
 public class FeatureTest {
 
@@ -39,6 +35,7 @@ public class FeatureTest {
      * ONLY MODIFY PUBLIC FIELDS
      */
 
+    @Disabled
     @TestFactory
     public Collection<DynamicTest> featureTests() {
         final ArrayList<DynamicTest> tests = new ArrayList<>(TESTS.length);

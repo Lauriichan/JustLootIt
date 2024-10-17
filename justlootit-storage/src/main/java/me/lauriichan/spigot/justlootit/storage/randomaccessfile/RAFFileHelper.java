@@ -102,6 +102,7 @@ public final class RAFFileHelper {
             if (RAFFileLegacy.create(file, id).exists()) {
                 RAFFileLegacy legacy = new RAFFileLegacy(RAFSettingsLegacy.of(settings), file, id);
                 legacy.open();
+                raf.open();
                 try {
                     legacy.forEach(entry -> {
                         Class<?> type = registry.findAdapter(entry.typeId()).type();
@@ -117,6 +118,7 @@ public final class RAFFileHelper {
                         raf.write(newEntry(entry.id(), entry.typeId(), version, buffer));
                     });
                 } finally {
+                    raf.close();
                     legacy.close();
                 }
                 // This does not execute if an error occurs

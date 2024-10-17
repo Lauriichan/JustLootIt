@@ -3,7 +3,7 @@ package me.lauriichan.spigot.justlootit.storage.randomaccessfile.v0;
 import me.lauriichan.spigot.justlootit.storage.randomaccessfile.IRAFSettings;
 
 /**
- * Settings for the {@link RAFMultiStorage}
+ * Settings for the {@link RAFLegacyMultiStorage}
  */
 public final class RAFSettingsV0 implements IRAFSettings {
 

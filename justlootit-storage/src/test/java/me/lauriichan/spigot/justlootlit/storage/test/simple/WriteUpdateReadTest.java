@@ -1,8 +1,8 @@
 package me.lauriichan.spigot.justlootlit.storage.test.simple;
 
+import static me.lauriichan.spigot.justlootlit.storage.test.junit.AssertArrayNotEquals.*;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static me.lauriichan.spigot.justlootlit.storage.test.junit.AssertArrayNotEquals.*;
 
 import java.util.Random;
 
@@ -30,7 +30,7 @@ public class WriteUpdateReadTest extends BaseTest {
         }
         final SimpleObject[] objects = new SimpleObject[amount];
         for (int id = 0; id < amount; id++) {
-            final SimpleObject object = new SimpleObject(id, random.nextInt(Integer.MAX_VALUE));
+            final SimpleObject object = new SimpleObject(random.nextInt(Integer.MAX_VALUE));
             objects[id] = object;
             storage.write(storage.registry().create(object).id(id));
         }
@@ -54,11 +54,11 @@ public class WriteUpdateReadTest extends BaseTest {
                 assertNull(loaded, "Invalid entry " + id);
                 continue;
             }
-            if (mod == 0) {
-                assertArrayEquals(objects[id].numbers, loaded.value().numbers, "Invalid entry " + id);
+            if (mod == 1) {
+                assertArrayNotEquals(objects[id].numbers, loaded.value().numbers, "Invalid entry " + id);
                 continue;
             }
-            assertArrayNotEquals(objects[id].numbers, loaded.value().numbers, "Invalid entry " + id);
+            assertArrayEquals(objects[id].numbers, loaded.value().numbers, "Invalid entry " + id);
         }
     }
 

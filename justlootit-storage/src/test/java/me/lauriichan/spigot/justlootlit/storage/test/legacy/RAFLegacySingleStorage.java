@@ -1,4 +1,4 @@
-package me.lauriichan.spigot.justlootit.storage.randomaccessfile;
+package me.lauriichan.spigot.justlootlit.storage.test.legacy;
 
 import java.io.File;
 import java.util.function.Function;
@@ -13,16 +13,21 @@ import me.lauriichan.spigot.justlootit.storage.UpdateInfo;
 import me.lauriichan.spigot.justlootit.storage.UpdateInfo.UpdateState;
 import me.lauriichan.spigot.justlootit.storage.identifier.FileIdentifier;
 import me.lauriichan.spigot.justlootit.storage.identifier.IIdentifier;
+import me.lauriichan.spigot.justlootit.storage.randomaccessfile.IRAFEntry;
+import me.lauriichan.spigot.justlootit.storage.randomaccessfile.IRAFFile;
+import me.lauriichan.spigot.justlootit.storage.randomaccessfile.RAFFileHelper;
+import me.lauriichan.spigot.justlootit.storage.randomaccessfile.legacy.RAFFileLegacy;
+import me.lauriichan.spigot.justlootit.storage.randomaccessfile.legacy.RAFSettingsLegacy;
 
-public final class RAFSingleStorage extends Storage {
+public final class RAFLegacySingleStorage extends Storage {
 
     private final IRAFFile file;
 
     private final IIdentifier identifier;
 
-    public RAFSingleStorage(final StorageAdapterRegistry registry, final File file) {
+    public RAFLegacySingleStorage(final StorageAdapterRegistry registry, final File file) {
         super(registry);
-        this.file = RAFFileHelper.create(registry, file);
+        this.file = new RAFFileLegacy(RAFSettingsLegacy.DEFAULT, file);
         this.identifier = new FileIdentifier(logger, file);
     }
 

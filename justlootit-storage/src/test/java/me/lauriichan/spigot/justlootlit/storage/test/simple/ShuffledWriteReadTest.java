@@ -2,7 +2,6 @@ package me.lauriichan.spigot.justlootlit.storage.test.simple;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Random;
 

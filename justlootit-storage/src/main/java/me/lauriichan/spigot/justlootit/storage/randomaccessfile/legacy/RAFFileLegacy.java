@@ -221,7 +221,6 @@ public final class RAFFileLegacy implements IRAFFile {
                 }
                 fileAccess.seek(lookupPosition);
                 fileAccess.writeShort(entry.typeId());
-                fileAccess.writeShort(entry.version());
                 fileAccess.writeInt(bufferSize);
                 entry.buffer().readBytes(fileAccess.getChannel(), fileAccess.getFilePointer(), bufferSize);
                 return;
@@ -368,12 +367,12 @@ public final class RAFFileLegacy implements IRAFFile {
                 return;
             }
             ShortArrayList deleteList = new ShortArrayList();
-            final long idBase = this.id << settings.valueIdBits;
+            final long idBase = this.id == -1 ? 0 : (this.id << settings.valueIdBits);
             fileAccess.seek(FORMAT_VERSION);
             int items = fileAccess.readShort();
             long headerOffset;
             long lookupPosition;
-            for (int valueId = 0; id < settings.valueIdAmount; valueId++) {
+            for (int valueId = 0; valueId < settings.valueIdAmount; valueId++) {
                 headerOffset = LOOKUP_ENTRY_BASE_OFFSET + LOOKUP_ENTRY_SIZE * valueId;
                 fileAccess.seek(headerOffset);
                 lookupPosition = fileAccess.readLong();
@@ -381,9 +380,10 @@ public final class RAFFileLegacy implements IRAFFile {
                     continue;
                 }
                 final long id = idBase + valueId;
+                fileAccess.seek(lookupPosition);
                 final int typeId = fileAccess.readUnsignedShort();
                 final int dataSize = fileAccess.readInt();
-                final byte[] buffer = new byte[fileAccess.readInt()];
+                final byte[] buffer = new byte[dataSize];
                 fileAccess.read(buffer);
                 IRAFEntry entry = new RAFEntry(id, typeId, Unpooled.wrappedBuffer(buffer));
                 IRAFEntry result = func.apply(entry);
@@ -433,6 +433,7 @@ public final class RAFFileLegacy implements IRAFFile {
             final LongArrayList headerNewValues = new LongArrayList(items);
             int headerAmount = 0;
             final Short2LongOpenHashMap deleteHeaders = new Short2LongOpenHashMap(amount);
+            final Short2LongOpenHashMap modifiedDeleteHeaders = new Short2LongOpenHashMap(amount);
             for (int valueId = 0; valueId < settings.valueIdAmount; valueId++) {
                 headerOffset = LOOKUP_ENTRY_BASE_OFFSET + LOOKUP_ENTRY_SIZE * valueId;
                 fileAccess.seek(headerOffset);
@@ -442,6 +443,7 @@ public final class RAFFileLegacy implements IRAFFile {
                 }
                 if (deleteList.contains((short) valueId)) {
                     deleteHeaders.put((short) valueId, lookupPosition);
+                    modifiedDeleteHeaders.put((short) valueId, lookupPosition);
                     continue;
                 }
                 keysToIndex.put(headerOffset, headerAmount++);
@@ -450,10 +452,12 @@ public final class RAFFileLegacy implements IRAFFile {
                 headerNewValues.add(lookupPosition);
             }
             int dataSize;
+            long offsetLookupPosition;
             while (amount != 0) {
                 final short valueIdShort = deleteList.removeShort(0);
                 final int valueId = Short.toUnsignedInt(valueIdShort);
                 amount--;
+                offsetLookupPosition = modifiedDeleteHeaders.remove(valueIdShort);
                 headerOffset = LOOKUP_ENTRY_BASE_OFFSET + LOOKUP_ENTRY_SIZE * valueId;
                 fileAccess.seek(headerOffset);
                 fileAccess.writeLong(INVALID_HEADER_OFFSET);
@@ -463,18 +467,18 @@ public final class RAFFileLegacy implements IRAFFile {
                 fileSize -= dataSize;
                 for (int headerIdx = 0; headerIdx < items; headerIdx++) {
                     final long headerValue = headerNewValues.getLong(headerIdx);
-                    if (headerValue < lookupPosition) {
+                    if (headerValue < offsetLookupPosition) {
                         continue;
                     }
                     headerNewValues.set(headerIdx, headerValue - dataSize);
                 }
                 for (int entry = 0; entry < amount; entry++) {
                     final short entryId = deleteList.getShort(entry);
-                    final long headerValue = deleteHeaders.get(entryId);
-                    if (headerValue < lookupPosition) {
+                    final long headerValue = modifiedDeleteHeaders.get(entryId);
+                    if (headerValue < offsetLookupPosition) {
                         continue;
                     }
-                    deleteHeaders.put(entryId, headerValue - dataSize);
+                    modifiedDeleteHeaders.put(entryId, headerValue - dataSize);
                 }
             }
             headerKeys
@@ -511,7 +515,7 @@ public final class RAFFileLegacy implements IRAFFile {
             }
             fileAccess.setLength(fileSize);
         } catch (final IOException e) {
-            throw new StorageException("Failed to read through all entries from file!", e);
+            throw new StorageException("Failed to modify all entries from file!", e);
         } finally {
             lock.unlock();
         }

@@ -33,8 +33,10 @@ public class PerformanceTest {
 
     public static final Test[] TESTS = new Test[] {
         new WriteReadTest(1024),
+        new WriteUpdateReadTest(1024),
+        new ShuffledWriteReadTest(1024),
         new WriteReadDeleteTest(1024),
-        new WriteUpdateReadTest(1024)
+        new WriteOverwriteReadTest(1024)
     };
 
     /*
@@ -63,12 +65,12 @@ public class PerformanceTest {
         final StorageProvider[] providers = providerList.toArray(StorageProvider[]::new);
         providerList.clear();
         final File workingDir = new File("tests", test.name);
-        if (workingDir.exists()) {
-            FileUtils.forceDelete(workingDir);
-        }
-        workingDir.mkdirs();
         final File warmupDir = new File(workingDir, "warmup");
         for (final StorageProvider provider : providers) {
+            if (workingDir.exists()) {
+                FileUtils.forceDelete(workingDir);
+            }
+            workingDir.mkdirs();
             final Profiler profiler = new Profiler(RUNS_PER_ROUND);
             profiler.lock();
             for (int index = 0; index < WARMUP_RUNS; index++) {
