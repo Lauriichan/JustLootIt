@@ -19,10 +19,10 @@ public class CachedStorage implements IStorage {
     }
 
     private void invalidate(final Long key, final Stored<?> stored) {
-        if (stored == null || !stored.isDirty()) {
+        if (stored != null && !stored.isDirty()) {
             return;
         }
-        if (stored.isEmpty()) {
+        if (stored == null || stored.isEmpty()) {
             stored.unsetDirty();
             try {
                 delegate.delete(key);
@@ -80,6 +80,11 @@ public class CachedStorage implements IStorage {
         stored.setDirty();
         if (stored.needsId()) {
             delegate.write(stored);
+            cache.set(stored.id(), stored);
+            return;
+        }
+        Stored<?> other = cache.peek(stored.id());
+        if (other == null) {
             cache.set(stored.id(), stored);
         }
     }
