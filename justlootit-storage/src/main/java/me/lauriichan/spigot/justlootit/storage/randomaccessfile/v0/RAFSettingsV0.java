@@ -97,7 +97,7 @@ public final class RAFSettingsV0 implements IRAFSettings {
     }
 
     public static final int DEFAULT_VALUES_PER_FILE = 1024;
-    public static final int DEFAULT_COPY_BUFFER_BYTES = 64;
+    public static final int DEFAULT_COPY_BUFFER_BYTES = 2048;
 
     public static final long DEFAULT_FILE_CACHE_TICKS = 180;
     public static final long DEFAULT_FILE_CACHE_PURGE_STEP = 10;
@@ -139,9 +139,9 @@ public final class RAFSettingsV0 implements IRAFSettings {
     private RAFSettingsV0(final int valuesPerFile, final int copyBufferBytes, final long fileCacheTicks, final long fileCachePurgeStep,
         final int fileCacheMaxAmount) {
         this.copyBufferSize = Math.max(copyBufferBytes * 1024, 1024);
-        this.valueIdBits = Math.max(Integer.bitCount(valuesPerFile - 1 & 0xFFFF), 1);
-        this.valueIdMask = 0xFFFF >>> Short.SIZE - valueIdBits;
-        this.valueIdAmount = valueIdMask + 1;
+        this.valueIdAmount = Math.max(Integer.highestOneBit((valuesPerFile - 1) & 0xFFFF), 1) << 1;
+        this.valueIdMask = valueIdAmount - 1;
+        this.valueIdBits = Integer.bitCount(valueIdMask);
         this.lookupHeaderSize = valueIdAmount * LOOKUP_ENTRY_SIZE + LOOKUP_AMOUNT_SIZE + FORMAT_VERSION;
         this.fileCacheTicks = Math.max(fileCacheTicks, 30);
         this.fileCachePurgeStep = Math.max(fileCachePurgeStep, 1);

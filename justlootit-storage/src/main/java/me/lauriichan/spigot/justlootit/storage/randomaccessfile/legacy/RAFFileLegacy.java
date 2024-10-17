@@ -73,6 +73,13 @@ public final class RAFFileLegacy implements IRAFFile {
         this.file = create(file);
         this.settings = settings;
     }
+    
+    private boolean isInvalidId(long id) {
+        if (this.id != -1) {
+            return false;
+        }
+        return id >= settings.valueIdAmount || id < 0;
+    }
 
     @Override
     public int id() {
@@ -113,7 +120,7 @@ public final class RAFFileLegacy implements IRAFFile {
         if (!isOpen()) {
             throw new StorageException("File is not open");
         }
-        if (id >= settings.valueIdAmount || id < 0) {
+        if (isInvalidId(id)) {
             return false;
         }
         final int valueId = (int) (id & settings.valueIdMask);
@@ -142,8 +149,8 @@ public final class RAFFileLegacy implements IRAFFile {
         if (!isOpen()) {
             throw new StorageException("File is not open");
         }
-        if (id >= settings.valueIdAmount || id < 0) {
-            throw new StorageException("Unsupported value id '" + id + "'!");
+        if (isInvalidId(id)) {
+            throw new StorageException("Invalid value id '" + id + "'!");
         }
         final int valueId = (int) (id & settings.valueIdMask);
         lock.lock();
@@ -179,8 +186,8 @@ public final class RAFFileLegacy implements IRAFFile {
         if (!isOpen()) {
             throw new StorageException("File is not open");
         }
-        if (entry.id() >= settings.valueIdAmount || entry.id() < 0) {
-            throw new StorageException("Unsupported value id '" + id + "'!");
+        if (isInvalidId(entry.id())) {
+            throw new StorageException("Invalid value id '" + id + "'!");
         }
         entry.buffer().resetReaderIndex();
         final int bufferSize = entry.buffer().readableBytes();
@@ -252,8 +259,8 @@ public final class RAFFileLegacy implements IRAFFile {
         if (!isOpen()) {
             throw new StorageException("File is not open");
         }
-        if (id >= settings.valueIdAmount || id < 0) {
-            throw new StorageException("Unsupported value id '" + id + "'!");
+        if (isInvalidId(id)) {
+            throw new StorageException("Invalid value id '" + id + "'!");
         }
         final int valueId = (int) (id & settings.valueIdMask);
         lock.lock();

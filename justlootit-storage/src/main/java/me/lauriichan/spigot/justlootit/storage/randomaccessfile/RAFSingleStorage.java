@@ -13,6 +13,7 @@ import me.lauriichan.spigot.justlootit.storage.UpdateInfo;
 import me.lauriichan.spigot.justlootit.storage.UpdateInfo.UpdateState;
 import me.lauriichan.spigot.justlootit.storage.identifier.FileIdentifier;
 import me.lauriichan.spigot.justlootit.storage.identifier.IIdentifier;
+import me.lauriichan.spigot.justlootit.storage.randomaccessfile.v0.RAFSettingsV0;
 
 public final class RAFSingleStorage extends Storage {
 
@@ -21,8 +22,12 @@ public final class RAFSingleStorage extends Storage {
     private final IIdentifier identifier;
 
     public RAFSingleStorage(final StorageAdapterRegistry registry, final File file) {
+        this(registry, file, RAFSettingsV0.DEFAULT);
+    }
+
+    public RAFSingleStorage(final StorageAdapterRegistry registry, final File file, final RAFSettingsV0 settings) {
         super(registry);
-        this.file = RAFFileHelper.create(registry, file);
+        this.file = RAFFileHelper.create(registry, file, settings);
         this.identifier = new FileIdentifier(logger, file);
     }
 

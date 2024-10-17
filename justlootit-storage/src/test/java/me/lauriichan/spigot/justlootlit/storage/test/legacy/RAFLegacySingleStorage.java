@@ -26,8 +26,12 @@ public final class RAFLegacySingleStorage extends Storage {
     private final IIdentifier identifier;
 
     public RAFLegacySingleStorage(final StorageAdapterRegistry registry, final File file) {
+        this(registry, file, RAFSettingsLegacy.DEFAULT);
+    }
+
+    public RAFLegacySingleStorage(final StorageAdapterRegistry registry, final File file, final RAFSettingsLegacy settings) {
         super(registry);
-        this.file = new RAFFileLegacy(RAFSettingsLegacy.DEFAULT, file);
+        this.file = new RAFFileLegacy(settings, file);
         this.identifier = new FileIdentifier(logger, file);
     }
 
