@@ -317,14 +317,14 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
                 if (updater.isUp2Date()) {
                     console.sendTranslatedMessage(Messages.UPDATER_UPDATE_LATEST, Key.of("version.current", updater.getVersion()));
                 } else {
-                    console.sendTranslatedMessage(Messages.UPDATER_UPDATE_LATEST, Key.of("version.current", updater.getVersion()),
+                    console.sendTranslatedMessage(Messages.UPDATER_UPDATE_AVAILABLE, Key.of("version.current", updater.getVersion()),
                         Key.of("version.latest", updater.getLatestVersion()));
                 }
             } catch (SpigotUpdaterException e) {
                 if (logger().isDebug()) {
-                    logger().error("Failed to retrieve update information");
-                } else {
                     logger().error("Failed to retrieve update information", e);
+                } else {
+                    logger().error("Failed to retrieve update information");
                 }
             } finally {
                 thread.setName(threadName);
