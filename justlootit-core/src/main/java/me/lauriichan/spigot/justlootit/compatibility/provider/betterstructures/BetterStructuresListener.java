@@ -33,7 +33,7 @@ import me.lauriichan.spigot.justlootit.data.CompatibilityContainer;
 import me.lauriichan.spigot.justlootit.data.StaticContainer;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.storage.IStorage;
-import me.lauriichan.spigot.justlootit.storage.Storable;
+import me.lauriichan.spigot.justlootit.storage.Stored;
 import me.lauriichan.spigot.justlootit.util.BlockUtil;
 
 public class BetterStructuresListener implements Listener {
@@ -89,10 +89,10 @@ public class BetterStructuresListener implements Listener {
                     return;
                 }
                 event.setCancelled(true);
-                IStorage<Storable> storage = capability.storage();
-                long id = storage.newId();
-                storage.write(new StaticContainer(id, inventory));
-                JustLootItAccess.setIdentity(dataContainer, id);
+                IStorage storage = capability.storage();
+                Stored<?> stored;
+                storage.write(stored = storage.registry().create(new StaticContainer(inventory)));
+                JustLootItAccess.setIdentity(dataContainer, stored.id());
                 container.update();
                 if (otherContainer != null) {
                     otherContainer.update();
@@ -103,10 +103,10 @@ public class BetterStructuresListener implements Listener {
                 return;
             }
             event.setCancelled(true);
-            IStorage<Storable> storage = capability.storage();
-            long id = storage.newId();
-            storage.write(new CompatibilityContainer(id, dataExtension.create(fFileName)));
-            JustLootItAccess.setIdentity(dataContainer, id);
+            IStorage storage = capability.storage();
+            Stored<?> stored;
+            storage.write(stored = storage.registry().create(new CompatibilityContainer(dataExtension.create(fFileName))));
+            JustLootItAccess.setIdentity(dataContainer, stored.id());
             container.update();
             if (otherContainer != null) {
                 otherContainer.update();

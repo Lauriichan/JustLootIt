@@ -14,6 +14,7 @@ import me.lauriichan.spigot.justlootit.data.io.DataIO;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.nms.io.IOHandler;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapter;
+import me.lauriichan.spigot.justlootit.storage.StorageAdapterRegistry;
 import me.lauriichan.spigot.justlootit.util.InventoryUtil;
 
 public final class StaticContainer extends Container implements IInventoryContainer {
@@ -22,14 +23,14 @@ public final class StaticContainer extends Container implements IInventoryContai
         private final IOHandler<ItemStack> itemIO = DataIO.find(ItemStack.class);
 
         @Override
-        protected void serializeSpecial(final StaticContainer storable, final ByteBuf buffer) {
+        protected void serializeSpecial(final StorageAdapterRegistry registry, final StaticContainer storable, final ByteBuf buffer) {
             itemIO.serializeArray(buffer, storable.items);
         }
 
         @Override
-        protected StaticContainer deserializeSpecial(final long id, final ContainerData data, final ByteBuf buffer) {
+        protected StaticContainer deserializeSpecial(final StorageAdapterRegistry registry, final ContainerData data, final ByteBuf buffer) {
             IOHandler.Result<ItemStack[]> items = itemIO.deserializeArray(buffer);
-            StaticContainer container = new StaticContainer(id, data, items.value());
+            StaticContainer container = new StaticContainer(data, items.value());
             if (items.dirty()) {
                 container.setDirty();
             }
@@ -42,18 +43,16 @@ public final class StaticContainer extends Container implements IInventoryContai
     private volatile ItemStack[] editingItems = null;
     private final ObjectArrayList<IGuiInventory> editingInventories = new ObjectArrayList<>();
 
-    public StaticContainer(final long id, final Inventory inventory) {
-        super(id);
+    public StaticContainer(final Inventory inventory) {
         saveFrom(inventory);
     }
 
-    public StaticContainer(final long id, final ItemStack[] contents) {
-        super(id);
+    public StaticContainer(final ItemStack[] contents) {
         saveFrom(contents);
     }
 
-    private StaticContainer(final long id, final ContainerData data, final ItemStack[] items) {
-        super(id, data);
+    private StaticContainer(final ContainerData data, final ItemStack[] items) {
+        super(data);
         this.items = items;
     }
     

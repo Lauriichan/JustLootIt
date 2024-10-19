@@ -8,6 +8,7 @@ import me.lauriichan.minecraft.pluginbase.inventory.item.ItemEditor;
 import me.lauriichan.spigot.justlootit.data.io.DataIO;
 import me.lauriichan.spigot.justlootit.nms.io.IOHandler;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapter;
+import me.lauriichan.spigot.justlootit.storage.StorageAdapterRegistry;
 
 public final class FrameContainer extends Container {
 
@@ -15,14 +16,14 @@ public final class FrameContainer extends Container {
         private final IOHandler<ItemStack> itemIO = DataIO.find(ItemStack.class);
 
         @Override
-        protected void serializeSpecial(final FrameContainer storable, final ByteBuf buffer) {
+        protected void serializeSpecial(final StorageAdapterRegistry registry, final FrameContainer storable, final ByteBuf buffer) {
             itemIO.serialize(buffer, storable.item);
         }
 
         @Override
-        protected FrameContainer deserializeSpecial(final long id, final ContainerData data, final ByteBuf buffer) {
+        protected FrameContainer deserializeSpecial(final StorageAdapterRegistry registry, final ContainerData data, final ByteBuf buffer) {
             IOHandler.Result<ItemStack> item = itemIO.deserialize(buffer); 
-            FrameContainer container = new FrameContainer(id, data, item.value());
+            FrameContainer container = new FrameContainer(data, item.value());
             if (item.dirty()) {
                 container.setDirty();
             }
@@ -32,13 +33,12 @@ public final class FrameContainer extends Container {
 
     private final ItemStack item;
 
-    public FrameContainer(final long id, final ItemStack item) {
-        super(id);
+    public FrameContainer(final ItemStack item) {
         this.item = item == null ? null : item.clone();
     }
 
-    private FrameContainer(final long id, final ContainerData data, final ItemStack item) {
-        super(id, data);
+    private FrameContainer(final ContainerData data, final ItemStack item) {
+        super(data);
         this.item = item;
     }
 

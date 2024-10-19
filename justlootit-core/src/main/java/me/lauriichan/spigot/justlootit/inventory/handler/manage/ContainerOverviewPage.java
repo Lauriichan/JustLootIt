@@ -8,6 +8,7 @@ import me.lauriichan.laylib.command.Actor;
 import me.lauriichan.laylib.localization.Key;
 import me.lauriichan.minecraft.pluginbase.extension.Extension;
 import me.lauriichan.minecraft.pluginbase.inventory.ChestSize;
+import me.lauriichan.minecraft.pluginbase.inventory.ClickType;
 import me.lauriichan.minecraft.pluginbase.inventory.IGuiInventory;
 import me.lauriichan.minecraft.pluginbase.inventory.item.ColoredLoreEditor;
 import me.lauriichan.minecraft.pluginbase.inventory.item.ItemEditor;
@@ -18,6 +19,7 @@ import me.lauriichan.spigot.justlootit.data.*;
 import me.lauriichan.spigot.justlootit.inventory.Textures;
 import me.lauriichan.spigot.justlootit.message.UIInventoryNames;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
+import me.lauriichan.spigot.justlootit.storage.Stored;
 
 @Extension
 public final class ContainerOverviewPage extends ContainerPage {
@@ -25,6 +27,8 @@ public final class ContainerOverviewPage extends ContainerPage {
     // TODO: Make frame item editable
 
     // TODO: Make vanilla lootable changable
+    
+    // TODO: Check for errors of ATTR_CONTAINER
 
     @Override
     public boolean defaultPage() {
@@ -35,12 +39,14 @@ public final class ContainerOverviewPage extends ContainerPage {
     public void onPageUpdate(PageContext<ContainerPage, PlayerAdapter> context, boolean changed) {
         Actor<Player> actor = ActorCapability.actor(context.player());
         IGuiInventory inventory = context.inventory();
-        Container container = inventory.attr(ContainerPageHandler.ATTR_CONTAINER, Container.class);
+        @SuppressWarnings("unchecked")
+        Stored<Container> storedContainer = inventory.attr(ContainerPageHandler.ATTR_CONTAINER, Stored.class).cast();
         if (inventory.updater().chestSize(ChestSize.GRID_4x9)
-            .title(actor.getTranslatedMessageAsString(UIInventoryNames.CONTAINER_MANAGE_PAGE_OVERVIEW_NAME, Key.of("id", container.id())))
+            .title(actor.getTranslatedMessageAsString(UIInventoryNames.CONTAINER_MANAGE_PAGE_OVERVIEW_NAME, Key.of("id", storedContainer.id())))
             .apply()) {
             return;
         }
+        Container container = storedContainer.value();
         inventory.fill(ItemEditor.of(Material.BLACK_STAINED_GLASS_PANE).setName("&r"));
         inventory.set(0, 4, container.createIcon());
         switch (container.type()) {
@@ -113,11 +119,12 @@ public final class ContainerOverviewPage extends ContainerPage {
     }
 
     @Override
-    public boolean onClickPickup(PageContext<ContainerPage, PlayerAdapter> context, ItemStack item, int slot, int amount, boolean cursor) {
-        Container container = context.inventory().attr(ContainerPageHandler.ATTR_CONTAINER, Container.class);
+    public boolean onClickPickup(PageContext<ContainerPage, PlayerAdapter> context, ItemStack item, int slot, int amount, boolean cursor, ClickType type) {
+        @SuppressWarnings("unchecked")
+        Stored<Container> container = context.inventory().attr(ContainerPageHandler.ATTR_CONTAINER, Stored.class);
         if (slot == InventoryMath.toSlot(2, 1, 9)) {
-            ContainerType type = container.type();
-            switch (type) {
+            ContainerType containerType = container.value().type();
+            switch (containerType) {
             case STATIC:
                 context.openPage(ContainerStaticInventoryPage.class);
                 break;

@@ -48,6 +48,8 @@ public final class RAFFileV0 implements IRAFFile {
     }
 
     private final int id;
+    private final long idBase;
+    
     private final String hexId;
 
     private final File file;
@@ -63,6 +65,7 @@ public final class RAFFileV0 implements IRAFFile {
         this.hexId = Integer.toHexString(id);
         this.file = create(directory, id);
         this.settings = settings;
+        this.idBase = id == -1 ? 0 : id << settings.valueIdBits;
     }
 
     public RAFFileV0(final RAFSettingsV0 settings, final File file) {
@@ -70,6 +73,7 @@ public final class RAFFileV0 implements IRAFFile {
         this.hexId = "";
         this.file = create(file);
         this.settings = settings;
+        this.idBase = id == -1 ? 0 : id << settings.valueIdBits;
     }
     
     private boolean isInvalidId(long id) {
@@ -336,16 +340,16 @@ public final class RAFFileV0 implements IRAFFile {
                 internalCloseDelete();
                 return;
             }
-            final long idBase = this.id << settings.valueIdBits;
             long headerOffset;
             long lookupPosition;
-            for (int valueId = 0; id < settings.valueIdAmount; valueId++) {
+            for (int valueId = 0; valueId < settings.valueIdAmount; valueId++) {
                 headerOffset = LOOKUP_ENTRY_BASE_OFFSET + LOOKUP_ENTRY_SIZE * valueId;
                 fileAccess.seek(headerOffset);
                 lookupPosition = fileAccess.readLong();
                 if (lookupPosition == INVALID_HEADER_OFFSET) {
                     continue;
                 }
+                fileAccess.seek(lookupPosition);
                 final long id = idBase + valueId;
                 final int typeId = fileAccess.readUnsignedShort();
                 final int version = fileAccess.readUnsignedShort();
@@ -380,7 +384,6 @@ public final class RAFFileV0 implements IRAFFile {
                 return;
             }
             ShortArrayList deleteList = new ShortArrayList();
-            final long idBase = this.id == -1 ? 0 : (this.id << settings.valueIdBits);
             fileAccess.seek(FORMAT_VERSION);
             int items = fileAccess.readShort();
             long headerOffset;

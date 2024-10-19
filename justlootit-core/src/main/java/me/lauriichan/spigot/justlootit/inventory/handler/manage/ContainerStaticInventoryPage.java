@@ -12,6 +12,7 @@ import me.lauriichan.laylib.command.Actor;
 import me.lauriichan.laylib.localization.Key;
 import me.lauriichan.minecraft.pluginbase.extension.Extension;
 import me.lauriichan.minecraft.pluginbase.inventory.ChestSize;
+import me.lauriichan.minecraft.pluginbase.inventory.ClickType;
 import me.lauriichan.minecraft.pluginbase.inventory.IGuiInventory;
 import me.lauriichan.minecraft.pluginbase.inventory.IGuiInventoryUpdater;
 import me.lauriichan.minecraft.pluginbase.inventory.paged.PageContext;
@@ -22,16 +23,20 @@ import me.lauriichan.spigot.justlootit.data.ContainerType;
 import me.lauriichan.spigot.justlootit.data.StaticContainer;
 import me.lauriichan.spigot.justlootit.message.UIInventoryNames;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
+import me.lauriichan.spigot.justlootit.storage.Stored;
 
 @Extension
 public final class ContainerStaticInventoryPage extends ContainerPage {
 
     private static final ChestSize[] SIZES = ChestSize.values();
 
+    // TODO: Check for errors of ATTR_CONTAINER
+
     @Override
     public void onPageOpen(PageContext<ContainerPage, PlayerAdapter> context) {
-        Container container = context.inventory().attr(ContainerPageHandler.ATTR_CONTAINER, Container.class);
-        if (container == null || container.type() != ContainerType.STATIC) {
+        @SuppressWarnings("unchecked")
+        Stored<Container> container = context.inventory().attr(ContainerPageHandler.ATTR_CONTAINER, Stored.class);
+        if (container == null || container.value().type() != ContainerType.STATIC) {
             context.openPage(ContainerOverviewPage.class);
             return;
         }
@@ -42,11 +47,12 @@ public final class ContainerStaticInventoryPage extends ContainerPage {
     public void onPageUpdate(PageContext<ContainerPage, PlayerAdapter> context, boolean changed) {
         Actor<Player> actor = ActorCapability.actor(context.player());
         IGuiInventory inventory = context.inventory();
-        StaticContainer container = inventory.attr(ContainerPageHandler.ATTR_CONTAINER, StaticContainer.class);
-        if (updateInventory(inventory, actor, container.amount(), container.id())) {
+        @SuppressWarnings("unchecked")
+        Stored<StaticContainer> storedContainer = inventory.attr(ContainerPageHandler.ATTR_CONTAINER, Stored.class).cast();
+        if (updateInventory(inventory, actor, storedContainer.value().amount(), storedContainer.id())) {
             return;
         }
-        container.pushEditor(inventory);
+        storedContainer.value().pushEditor(inventory);
     }
 
     private boolean updateInventory(IGuiInventory inventory, Actor<Player> actor, int size, long id) {
@@ -79,19 +85,19 @@ public final class ContainerStaticInventoryPage extends ContainerPage {
     }
 
     @Override
-    public boolean onClickPickup(PageContext<ContainerPage, PlayerAdapter> context, ItemStack item, int slot, int amount, boolean cursor) {
+    public boolean onClickPickup(PageContext<ContainerPage, PlayerAdapter> context, ItemStack item, int slot, int amount, boolean cursor, ClickType type) {
         pushModified(context);
         return false;
     }
 
     @Override
-    public boolean onClickPlace(PageContext<ContainerPage, PlayerAdapter> context, ItemStack item, int slot, int amount) {
+    public boolean onClickPlace(PageContext<ContainerPage, PlayerAdapter> context, ItemStack item, int slot, int amount, ClickType type) {
         pushModified(context);
         return false;
     }
 
     @Override
-    public boolean onClickSwap(PageContext<ContainerPage, PlayerAdapter> context, ItemStack previous, ItemStack now, int slot) {
+    public boolean onClickSwap(PageContext<ContainerPage, PlayerAdapter> context, ItemStack previous, ItemStack now, int slot, ClickType type) {
         pushModified(context);
         return false;
     }
@@ -103,27 +109,32 @@ public final class ContainerStaticInventoryPage extends ContainerPage {
     }
 
     private void pushModified(PageContext<ContainerPage, PlayerAdapter> context) {
-        context.player().versionHandler().scheduler().syncLater(
-            () -> context.inventory().attr(ContainerPageHandler.ATTR_CONTAINER, StaticContainer.class).pubEdit(context.inventory()), 1);
+        context.player().versionHandler().scheduler().syncLater(() -> {
+            @SuppressWarnings("unchecked")
+            Stored<StaticContainer> stored = context.inventory().attr(ContainerPageHandler.ATTR_CONTAINER, Stored.class);
+            stored.value().pubEdit(context.inventory());
+        }, 1);
     }
 
     @Override
     public boolean onInventoryClose(PageContext<ContainerPage, PlayerAdapter> context) {
-        StaticContainer container = context.inventory().attr(ContainerPageHandler.ATTR_CONTAINER, StaticContainer.class);
+        @SuppressWarnings("unchecked")
+        Stored<StaticContainer> storedContainer = context.inventory().attr(ContainerPageHandler.ATTR_CONTAINER, Stored.class).cast();
+        StaticContainer container = storedContainer.value();
         if (container.popEditor(context.inventory())) {
-        context.player().versionHandler().getLevel(context.inventory().attr(ContainerPageHandler.ATTR_WORLD, World.class))
-            .getCapability(StorageCapability.class).ifPresent(capability -> {
-                if (!container.isSame(context.inventory().getInventory())) {
-                    container.saveFrom(context.inventory().getInventory());
-                    try {
-                        capability.storage().write(container);
-                    } catch (Throwable throwable) {
-                        context.player().versionHandler().logger().error(
-                            "Failed to save modified static container with id {0} edited by player {1} ({2})", throwable, container.id(),
-                            context.player().getName(), context.player().getUniqueId());
+            context.player().versionHandler().getLevel(context.inventory().attr(ContainerPageHandler.ATTR_WORLD, World.class))
+                .getCapability(StorageCapability.class).ifPresent(capability -> {
+                    if (!container.isSame(context.inventory().getInventory())) {
+                        container.saveFrom(context.inventory().getInventory());
+                        try {
+                            capability.storage().write(storedContainer);
+                        } catch (Throwable throwable) {
+                            context.player().versionHandler().logger().error(
+                                "Failed to save modified static container with id {0} edited by player {1} ({2})", throwable,
+                                storedContainer.id(), context.player().getName(), context.player().getUniqueId());
+                        }
                     }
-                }
-            });
+                });
         }
         context.openPage(ContainerOverviewPage.class);
         return true;

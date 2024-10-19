@@ -11,7 +11,7 @@ import me.lauriichan.laylib.logger.util.StringUtil;
 
 public abstract class StorageMigrator {
 
-    private static record Migration(int targetVersion, ObjectList<StorageMigration<?>> migrations) {}
+    public static record Migration(int targetVersion, ObjectList<StorageMigration<?>> migrations) {}
 
     protected final Object2ObjectArrayMap<Class<?>, Migration> migrations = new Object2ObjectArrayMap<>();
     protected final ISimpleLogger logger;
@@ -34,7 +34,7 @@ public abstract class StorageMigrator {
         return migration != null && version < migration.targetVersion();
     }
 
-    public final Map.Entry<Integer, ByteBuf> migrate(Class<?> type, int version, ByteBuf buffer) {
+    public final Map.Entry<Integer, ByteBuf> migrate(long id, Class<?> type, int version, ByteBuf buffer) {
         Migration migration = migrations.get(type);
         if (migration == null || version >= migration.targetVersion()) {
             return Map.entry(version, buffer);
@@ -44,8 +44,8 @@ public abstract class StorageMigrator {
             if (migrationExt.targetVersion() <= version) {
                 continue;
             }
-            logger.debug("Applying migration '{3}' (version {1} to {2}) for type '{0}'", type.getName(), version,
-                migrationExt.targetVersion(), migrationExt.description());
+            logger.info("Applying migration '{3}' (version {1} to {2}) for entry ({4}) of type '{0}'", StringUtil.shortClassName(type), version,
+                migrationExt.targetVersion(), migrationExt.description(), id);
             nextBuffer.resetReaderIndex();
             ByteBuf out = Unpooled.buffer(nextBuffer.readableBytes());
             try {
@@ -54,11 +54,12 @@ public abstract class StorageMigrator {
                 nextBuffer = out;
             } catch (Throwable throwable) {
                 throw new StorageMigrationFailedException(
-                    StringUtil.format("Failed to apply migration '{3}' (version {1} to {2}) for type '{0}'", new Object[] {
+                    StringUtil.format("Applying migration '{3}' (version {1} to {2}) for entry ({4}) of type '{0}'", new Object[] {
                         type.getName(),
                         version,
                         migrationExt.targetVersion(),
-                        migrationExt.description()
+                        migrationExt.description(),
+                        id
                     }), throwable);
             }
         }

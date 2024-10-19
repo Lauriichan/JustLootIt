@@ -8,6 +8,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.inventory.Inventory;
 
 import me.lauriichan.laylib.localization.Key;
+import me.lauriichan.spigot.justlootit.data.CompatibilityContainer;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 
 public interface ICompatibilityData {
@@ -24,11 +25,11 @@ public interface ICompatibilityData {
         return false;
     }
 
-    default boolean fill(PlayerAdapter player, BlockState state, Location location, Inventory inventory) {
+    default boolean fill(CompatibilityContainer container, PlayerAdapter player, BlockState state, Location location, Inventory inventory) {
         return false;
     }
 
-    default boolean fill(PlayerAdapter player, Entity entity, Location location, Inventory inventory) {
+    default boolean fill(CompatibilityContainer container, PlayerAdapter player, Entity entity, Location location, Inventory inventory) {
         return false;
     }
     

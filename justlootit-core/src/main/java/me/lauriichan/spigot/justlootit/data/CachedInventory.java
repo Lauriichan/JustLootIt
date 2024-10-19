@@ -9,25 +9,25 @@ import me.lauriichan.spigot.justlootit.data.io.BufIO;
 import me.lauriichan.spigot.justlootit.data.io.DataIO;
 import me.lauriichan.spigot.justlootit.nms.io.IOHandler;
 import me.lauriichan.spigot.justlootit.storage.IModifiable;
-import me.lauriichan.spigot.justlootit.storage.Storable;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapter;
+import me.lauriichan.spigot.justlootit.storage.StorageAdapterRegistry;
 
-public final class CachedInventory extends Storable implements IModifiable {
+public final class CachedInventory implements IModifiable {
 
     public static final StorageAdapter<CachedInventory> ADAPTER = new StorageAdapter<>(CachedInventory.class, 0) {
         private final IOHandler<ItemStack> itemIO = DataIO.find(ItemStack.class);
 
         @Override
-        public void serialize(final CachedInventory storable, final ByteBuf buffer) {
+        public void serialize(final StorageAdapterRegistry registry, final CachedInventory storable, final ByteBuf buffer) {
             BufIO.writeString(buffer, storable.type.name());
             itemIO.serializeArray(buffer, storable.items);
         }
 
         @Override
-        public CachedInventory deserialize(final long id, final ByteBuf buffer) {
+        public CachedInventory deserialize(final StorageAdapterRegistry registry, final ByteBuf buffer) {
             final InventoryType type = fromString(BufIO.readString(buffer));
             final IOHandler.Result<ItemStack[]> items = itemIO.deserializeArray(buffer);
-            return new CachedInventory(id, type, items.value(), items.dirty());
+            return new CachedInventory(type, items.value(), items.dirty());
         }
 
         private InventoryType fromString(final String string) {
@@ -45,8 +45,7 @@ public final class CachedInventory extends Storable implements IModifiable {
     
     private final boolean dirty;
 
-    public CachedInventory(final long id, final Inventory inventory) {
-        super(id);
+    public CachedInventory(final Inventory inventory) {
         final ItemStack[] contents = inventory.getContents();
         final ItemStack[] items = new ItemStack[contents.length];
         for (int index = 0; index < contents.length; index++) {
@@ -62,8 +61,7 @@ public final class CachedInventory extends Storable implements IModifiable {
         this.dirty = true;
     }
 
-    private CachedInventory(final long id, final InventoryType type, final ItemStack[] items, final boolean dirty) {
-        super(id);
+    private CachedInventory(final InventoryType type, final ItemStack[] items, final boolean dirty) {
         this.type = type;
         this.items = items;
         this.dirty = dirty;

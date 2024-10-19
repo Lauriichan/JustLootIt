@@ -82,7 +82,7 @@ public final class Stored<T> {
     
     public void read(ISimpleLogger logger, ByteBuf buffer) {
         if (registry.migrator().needsMigration(adapter.type(), version)) {
-            Map.Entry<Integer, ByteBuf> entry = registry.migrator().migrate(adapter.type(), version, buffer);
+            Map.Entry<Integer, ByteBuf> entry = registry.migrator().migrate(id, adapter.type(), version, buffer);
             version = entry.getKey().intValue();
             buffer = entry.getValue();
         }

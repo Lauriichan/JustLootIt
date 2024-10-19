@@ -19,6 +19,7 @@ import me.lauriichan.spigot.justlootit.api.event.player.AsyncJLIPlayerVanillaLoo
 import me.lauriichan.spigot.justlootit.data.io.DataIO;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapter;
+import me.lauriichan.spigot.justlootit.storage.StorageAdapterRegistry;
 
 public final class VanillaContainer extends Container implements IInventoryContainer {
     
@@ -26,34 +27,33 @@ public final class VanillaContainer extends Container implements IInventoryConta
 
     public static final StorageAdapter<VanillaContainer> ADAPTER = new BaseAdapter<>(VanillaContainer.class, 16) {
         @Override
-        protected void serializeSpecial(final VanillaContainer storable, final ByteBuf buffer) {
+        protected void serializeSpecial(final StorageAdapterRegistry registry, final VanillaContainer storable, final ByteBuf buffer) {
             DataIO.NAMESPACED_KEY.serialize(buffer, storable.lootTableKey);
             buffer.writeLong(storable.seed);
         }
 
         @Override
-        protected VanillaContainer deserializeSpecial(final long id, final ContainerData data, final ByteBuf buffer) {
+        protected VanillaContainer deserializeSpecial(final StorageAdapterRegistry registry, final ContainerData data, final ByteBuf buffer) {
             final NamespacedKey key = DataIO.NAMESPACED_KEY.deserialize(buffer).value();
             final long seed = buffer.readLong();
-            return new VanillaContainer(id, data, key, seed);
+            return new VanillaContainer(data, key, seed);
         }
     };
 
     private NamespacedKey lootTableKey;
     private long seed;
 
-    public VanillaContainer(final long id, final LootTable lootTable, final long seed) {
-        this(id, lootTable.getKey(), seed);
+    public VanillaContainer(final LootTable lootTable, final long seed) {
+        this(lootTable.getKey(), seed);
     }
 
-    public VanillaContainer(final long id, final NamespacedKey lootTableKey, final long seed) {
-        super(id);
+    public VanillaContainer(final NamespacedKey lootTableKey, final long seed) {
         this.lootTableKey = lootTableKey;
         this.seed = seed;
     }
 
-    private VanillaContainer(final long id, final ContainerData data, final NamespacedKey lootTableKey, final long seed) {
-        super(id, data);
+    private VanillaContainer(final ContainerData data, final NamespacedKey lootTableKey, final long seed) {
+        super(data);
         this.lootTableKey = lootTableKey;
         this.seed = seed;
     }
@@ -87,7 +87,7 @@ public final class VanillaContainer extends Container implements IInventoryConta
 
     @Override
     public VanillaResult fill(final PlayerAdapter player, final InventoryHolder holder, final Location location, final Inventory inventory) {
-        AsyncJLIPlayerVanillaLootGenerateEvent event = new AsyncJLIPlayerVanillaLootGenerateEvent((JustLootItPlugin) player.versionHandler().plugin(), player, getLootTable(), seed);
+        AsyncJLIPlayerVanillaLootGenerateEvent event = new AsyncJLIPlayerVanillaLootGenerateEvent((JustLootItPlugin) player.versionHandler().plugin(), player, getLootTable(), generateSeed(player, seed));
         event.call().join();
         player.versionHandler().versionHelper().fill(inventory, player.asBukkit(), location, event.lootTable(), event.seed());
         return new VanillaResult(event.lootTable(), event.seed());

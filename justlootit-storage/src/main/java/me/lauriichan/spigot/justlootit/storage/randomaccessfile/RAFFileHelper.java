@@ -21,7 +21,7 @@ public final class RAFFileHelper {
     public static final FilenameFilter FILE_FILTER = (dir, name) -> {
         if (name.endsWith(RAFFileLegacy.FILE_EXTENSION)) {
             return IS_HEX.test(name.substring(0, name.length() - 4));
-        } else if(name.endsWith(RAFFileV0.FILE_EXTENSION)) {
+        } else if (name.endsWith(RAFFileV0.FILE_EXTENSION)) {
             return IS_HEX.test(name.substring(0, name.length() - 5));
         }
         return false;
@@ -30,7 +30,7 @@ public final class RAFFileHelper {
     private RAFFileHelper() {
         throw new UnsupportedOperationException();
     }
-    
+
     public static String getRAFFileName(File file) {
         String name = file.getName();
         if (name.endsWith(RAFFileLegacy.FILE_EXTENSION)) {
@@ -65,13 +65,15 @@ public final class RAFFileHelper {
             if (RAFFileLegacy.create(file).exists()) {
                 RAFFileLegacy legacy = new RAFFileLegacy(RAFSettingsLegacy.of(settings), file);
                 legacy.open();
+                raf.open();
                 try {
+                    registry.migrator().logger().info("Upgrading file '{0}'...", legacy.file().getPath());
                     legacy.forEach(entry -> {
                         Class<?> type = registry.findAdapter(entry.typeId()).type();
                         int version = entry.version() == -1 ? 0 : entry.version();
                         ByteBuf buffer = entry.buffer();
-                        if (!registry.migrator().needsMigration(type, entry.version())) {
-                            Map.Entry<Integer, ByteBuf> newEntry = registry.migrator().migrate(type, entry.version(), entry.buffer());
+                        if (registry.migrator().needsMigration(type, entry.version())) {
+                            Map.Entry<Integer, ByteBuf> newEntry = registry.migrator().migrate(entry.id(), type, entry.version(), entry.buffer());
                             if (newEntry.getValue() != entry.buffer()) {
                                 version = newEntry.getKey().intValue();
                                 buffer = newEntry.getValue();
@@ -79,7 +81,10 @@ public final class RAFFileHelper {
                         }
                         raf.write(newEntry(entry.id(), entry.typeId(), version, buffer));
                     });
+                    registry.migrator().logger().info("File '{0}' successfully upgraded to '{1}'.", legacy.file().getPath(),
+                        raf.file().getPath());
                 } finally {
+                    raf.close();
                     legacy.close();
                 }
                 // This does not execute if an error occurs
@@ -104,12 +109,13 @@ public final class RAFFileHelper {
                 legacy.open();
                 raf.open();
                 try {
+                    registry.migrator().logger().info("Upgrading file '{0}'...", legacy.file().getPath());
                     legacy.forEach(entry -> {
                         Class<?> type = registry.findAdapter(entry.typeId()).type();
                         int version = entry.version() == -1 ? 0 : entry.version();
                         ByteBuf buffer = entry.buffer();
-                        if (!registry.migrator().needsMigration(type, entry.version())) {
-                            Map.Entry<Integer, ByteBuf> newEntry = registry.migrator().migrate(type, entry.version(), entry.buffer());
+                        if (registry.migrator().needsMigration(type, entry.version())) {
+                            Map.Entry<Integer, ByteBuf> newEntry = registry.migrator().migrate(entry.id(), type, entry.version(), entry.buffer());
                             if (newEntry.getValue() != entry.buffer()) {
                                 version = newEntry.getKey().intValue();
                                 buffer = newEntry.getValue();
@@ -117,6 +123,8 @@ public final class RAFFileHelper {
                         }
                         raf.write(newEntry(entry.id(), entry.typeId(), version, buffer));
                     });
+                    registry.migrator().logger().info("File '{0}' successfully upgraded to '{1}'.", legacy.file().getPath(),
+                        raf.file().getPath());
                 } finally {
                     raf.close();
                     legacy.close();

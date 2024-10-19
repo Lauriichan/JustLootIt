@@ -12,6 +12,7 @@ import me.lauriichan.minecraft.pluginbase.config.ISingleConfigExtension;
 import me.lauriichan.minecraft.pluginbase.config.handler.JsonConfigHandler;
 import me.lauriichan.minecraft.pluginbase.extension.Extension;
 import me.lauriichan.spigot.justlootit.config.data.RefreshGroup;
+import me.lauriichan.spigot.justlootit.config.data.RefreshGroup.UniqueType;
 import me.lauriichan.spigot.justlootit.util.DataHelper;
 import me.lauriichan.spigot.justlootit.util.TypeName;
 
@@ -20,7 +21,7 @@ public class RefreshConfig implements ISingleConfigExtension {
 
     private final Object2ObjectOpenHashMap<String, RefreshGroup> groups = new Object2ObjectOpenHashMap<>();
     private volatile boolean modified = false;
-    
+
     @Override
     public String name() {
         return TypeName.ofConfig(this);
@@ -35,22 +36,24 @@ public class RefreshConfig implements ISingleConfigExtension {
     public String path() {
         return "data://refresh_groups.json";
     }
-    
+
     @Override
     public boolean isModified() {
         return modified;
     }
-    
+
     public void setDirty() {
         modified = true;
     }
-    
+
     @Override
     public void onPropergate(Configuration configuration) throws Exception {
         Configuration section = configuration.getConfiguration("example", true);
         section.set("__comment", "This an example group (which can also be used ingame), it defines a refresh interval of 3 hours.");
         section.set("unit", TimeUnit.HOURS.name());
         section.set("time", 3);
+        section.set("unique", "global");
+        section.set("incremental", true);
     }
 
     @Override
@@ -75,6 +78,8 @@ public class RefreshConfig implements ISingleConfigExtension {
                 unit = TimeUnit.MILLISECONDS;
             }
             group.set(time, unit);
+            group.incremental(groupConfig.getBoolean("incremental", true));
+            group.unique(groupConfig.getEnum("unique", UniqueType.class, UniqueType.GLOBAL));
         }
         for (String entry : list) {
             groups.remove(entry);
@@ -86,11 +91,13 @@ public class RefreshConfig implements ISingleConfigExtension {
         this.modified = false;
         for (RefreshGroup group : groups.values()) {
             Configuration groupConfig = configuration.getConfiguration(group.id(), true);
-            groupConfig.set("unit", group.unit().name());
+            groupConfig.set("unit", group.unit().name().toLowerCase());
             groupConfig.set("time", group.timeoutTime());
+            groupConfig.set("incremental", group.incremental());
+            groupConfig.set("unique", group.unique().name().toLowerCase());
         }
     }
-    
+
     public boolean deleteGroup(String id) {
         if (groups.remove(id) != null) {
             setDirty();
