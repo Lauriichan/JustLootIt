@@ -14,9 +14,12 @@ public abstract class PlayerAdapter extends Capable<PlayerAdapter> {
 
     protected final ConcurrentHashMap<String, Object> data = new ConcurrentHashMap<>();
     protected final UUID uniqueId;
+    
+    protected final long uniqueSeed;
 
     public PlayerAdapter(final UUID uniqueId) {
         this.uniqueId = uniqueId;
+        this.uniqueSeed = uniqueId.getLeastSignificantBits() * uniqueId.getMostSignificantBits();
     }
 
     public abstract VersionHandler versionHandler();
@@ -29,6 +32,10 @@ public abstract class PlayerAdapter extends Capable<PlayerAdapter> {
 
     public final UUID getUniqueId() {
         return uniqueId;
+    }
+    
+    public final long getUniqueSeed() {
+        return uniqueSeed;
     }
 
     public final void removeData(final String key) {

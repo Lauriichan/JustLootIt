@@ -17,7 +17,7 @@ import me.lauriichan.spigot.justlootit.nms.packet.PacketOutSetEntityData.IEntity
 import me.lauriichan.spigot.justlootit.nms.packet.listener.IPacketListener;
 import me.lauriichan.spigot.justlootit.nms.packet.listener.PacketHandler;
 import me.lauriichan.spigot.justlootit.nms.util.argument.ArgumentMap;
-import me.lauriichan.spigot.justlootit.storage.Storable;
+import me.lauriichan.spigot.justlootit.storage.Stored;
 
 public class ItemFramePacketListener implements IPacketListener {
 
@@ -26,7 +26,7 @@ public class ItemFramePacketListener implements IPacketListener {
     public ItemFramePacketListener(final VersionHandler versionHandler) {
         this.versionHandler = versionHandler;
     }
-    
+
     @PacketHandler
     public void onEntityCreate(final PlayerAdapter player, final PacketOutAddEntity packet) {
         EntityType type = packet.getEntityType();
@@ -43,20 +43,19 @@ public class ItemFramePacketListener implements IPacketListener {
         }
         final long id = JustLootItAccess.getIdentity(container);
         player.getLevel().getCapability(StorageCapability.class).ifPresent(capability -> {
-            final Storable storable = capability.storage().read(id);
-            if (storable instanceof final FrameContainer frame) {
-                if (!frame.canAccess(player.getUniqueId())) {
-                    return;
-                }
-                final PacketOutSetEntityData dataPacket = versionHandler.packetManager().createPacket(new ArgumentMap().set("entity", entity), PacketOutSetEntityData.class);
-                final IEntityDataPack pack = dataPacket.getData();
-                final IEntityData data = pack.getById(8);
-                if (!(data instanceof IItemEntityData)) {
-                    return;
-                }
-                ((IItemEntityData) data).setItem(frame.getItem());
-                versionHandler.platform().scheduler().sync(() -> player.send(dataPacket));
+            final Stored<FrameContainer> stored = capability.storage().read(id);
+            if (!stored.value().canAccess(player.getUniqueId())) {
+                return;
             }
+            final PacketOutSetEntityData dataPacket = versionHandler.packetManager().createPacket(new ArgumentMap().set("entity", entity),
+                PacketOutSetEntityData.class);
+            final IEntityDataPack pack = dataPacket.getData();
+            final IEntityData data = pack.getById(8);
+            if (!(data instanceof IItemEntityData)) {
+                return;
+            }
+            ((IItemEntityData) data).setItem(stored.value().getItem());
+            versionHandler.platform().scheduler().sync(() -> player.send(dataPacket));
         });
     }
 

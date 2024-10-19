@@ -1,18 +1,18 @@
 package me.lauriichan.spigot.justlootit.command.helper;
 
-import java.util.function.Consumer;
-import java.util.function.Function;
+import java.util.function.BiConsumer;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.ItemFrame;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.loot.LootTable;
 import org.bukkit.persistence.PersistentDataContainer;
 
+import it.unimi.dsi.fastutil.longs.LongConsumer;
 import me.lauriichan.laylib.command.Actor;
 import me.lauriichan.laylib.localization.Key;
 import me.lauriichan.spigot.justlootit.JustLootItAccess;
@@ -42,7 +42,7 @@ public final class ContainerCreationHelper {
         @FunctionalInterface
         public static interface CreatorFunction {
             void create(final JustLootItPlugin plugin, final Actor<?> actor, final Location location,
-                final org.bukkit.block.Container block, final Consumer<Function<Long, Container>> creator);
+                final org.bukkit.block.Container block, final BiConsumer<Supplier<Container>, LongConsumer> creator);
         }
 
         private final Class<? extends Container> containerType;
@@ -79,7 +79,7 @@ public final class ContainerCreationHelper {
         @FunctionalInterface
         public static interface CreatorFunction {
             void create(final JustLootItPlugin plugin, final Actor<?> actor, final Location location, final Entity entity,
-                final Consumer<Function<Long, Container>> creator);
+                final BiConsumer<Supplier<Container>, LongConsumer> creator);
         }
 
         private final Class<? extends Container> containerType;
@@ -134,10 +134,9 @@ public final class ContainerCreationHelper {
                     Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()));
                 return;
             }
-            creator.accept((id) -> {
+            creator.accept(() -> new FrameContainer(itemStack.clone()), id -> {
                 JustLootItAccess.setIdentity(itemFrame.getPersistentDataContainer(), id);
                 itemFrame.setItem(null);
-                return new FrameContainer(id, itemStack.clone());
             });
         }, EntityUtil::isItemFrame);
 
@@ -174,10 +173,9 @@ public final class ContainerCreationHelper {
                                         Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()));
                                     return;
                                 }
-                                creator.accept((id) -> {
+                                creator.accept(() -> new VanillaContainer(lootTable, seed), id -> {
                                     JustLootItAccess.setIdentity(dataContainer, id);
                                     ((InventoryHolder) entity).getInventory().clear();
-                                    return new VanillaContainer(id, lootTable, seed);
                                 });
                             });
                         });
@@ -217,12 +215,11 @@ public final class ContainerCreationHelper {
                                         Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()));
                                     return;
                                 }
-                                creator.accept((id) -> {
+                                creator.accept(() -> new VanillaContainer(lootTable, seed), id -> {
                                     BlockUtil.setContainerOffsetToNearbyChest(blockContainer);
                                     JustLootItAccess.setIdentity(dataContainer, id);
                                     blockContainer.update(false, false);
                                     blockContainer.getInventory().clear();
-                                    return new VanillaContainer(id, lootTable, seed);
                                 });
                             });
                         });
@@ -237,14 +234,10 @@ public final class ContainerCreationHelper {
                     Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()));
                 return;
             }
-            creator.accept((id) -> {
-                Inventory inventory = ((InventoryHolder) entity).getInventory();
-                try {
-                    JustLootItAccess.setIdentity(dataContainer, id);
-                    return new StaticContainer(id, inventory);
-                } finally {
-                    inventory.clear();
-                }
+            InventoryHolder holder = (InventoryHolder) entity;
+            creator.accept(() -> new StaticContainer(holder.getInventory()), id -> {
+                JustLootItAccess.setIdentity(dataContainer, id);
+                holder.getInventory().clear();
             });
         }, EntityUtil::isSupportedEntity);
     public static final BlockContainerCreator BLOCK_STATIC = new BlockContainerCreator(StaticContainer.class,
@@ -255,16 +248,11 @@ public final class ContainerCreationHelper {
                     Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()));
                 return;
             }
-            creator.accept((id) -> {
+            creator.accept(() -> new StaticContainer(block.getInventory()), id -> {
                 BlockUtil.setContainerOffsetToNearbyChest(block);
                 JustLootItAccess.setIdentity(dataContainer, id);
-                Inventory inventory = block.getInventory();
-                try {
-                    return new StaticContainer(id, inventory);
-                } finally {
-                    block.update(false, false);
-                    block.getInventory().clear();
-                }
+                block.update(false, false);
+                block.getInventory().clear();
             });
         });
 }

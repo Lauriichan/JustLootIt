@@ -32,7 +32,7 @@ import me.lauriichan.spigot.justlootit.nms.model.IItemEntityData;
 import me.lauriichan.spigot.justlootit.nms.packet.PacketOutSetEntityData;
 import me.lauriichan.spigot.justlootit.nms.packet.PacketOutSetEntityData.IEntityDataPack;
 import me.lauriichan.spigot.justlootit.nms.util.argument.ArgumentMap;
-import me.lauriichan.spigot.justlootit.storage.Storable;
+import me.lauriichan.spigot.justlootit.storage.Stored;
 import me.lauriichan.spigot.justlootit.util.DataHelper;
 
 @Extension
@@ -98,7 +98,7 @@ public class ItemFrameEventListener implements IListenerExtension {
         }
         breakFrame(entity, actor, container);
     }
-    
+
     private void breakFrame(Entity entity, LootItActor<Player> actor, PersistentDataContainer container) {
         if (!DataHelper.canBreakContainer(container, actor.getId())) {
             actor.sendTranslatedMessage(Messages.CONTAINER_BREAK_CONFIRMATION_ENTITY);
@@ -118,38 +118,38 @@ public class ItemFrameEventListener implements IListenerExtension {
             }
         });
     }
-    
+
     private void accessFrame(Entity entity, EntityType type, Player player, PersistentDataContainer container) {
         final LootItActor<?> actor = ActorCapability.actor(plugin, player);
         final long id = JustLootItAccess.getIdentity(container);
         actor.versionHandler().getLevel(entity.getWorld()).getCapability(StorageCapability.class).ifPresent(capability -> {
-            final Storable storable = capability.storage().read(id);
-            if (storable instanceof final FrameContainer frame) {
-                if (!frame.access(player.getUniqueId())) {
-                    final Duration duration = frame.durationUntilNextAccess(player.getUniqueId());
-                    if (duration.isNegative()) {
-                        actor.sendTranslatedBarMessage(Messages.CONTAINER_ACCESS_NOT_REPEATABLE);
-                        return;
-                    }
-                    actor.sendTranslatedBarMessage(Messages.CONTAINER_ACCESS_NOT_ACCESSIBLE, Key.of("time", DataHelper.formTimeString(actor, duration)));
+            final Stored<FrameContainer> stored = capability.storage().read(id);
+            final FrameContainer frame = stored.value();
+            if (!frame.access(player.getUniqueId())) {
+                final Duration duration = frame.durationUntilNextAccess(player.getUniqueId());
+                if (duration.isNegative()) {
+                    actor.sendTranslatedBarMessage(Messages.CONTAINER_ACCESS_NOT_REPEATABLE);
                     return;
                 }
-                final ItemStack itemStack = frame.getItem().clone();
-                if (!player.getInventory().addItem(itemStack).isEmpty()) {
-                    player.getWorld().dropItemNaturally(entity.getLocation(), itemStack);
-                }
-                player.playSound(entity.getLocation(),
-                    type == EntityType.GLOW_ITEM_FRAME ? Sound.ENTITY_GLOW_ITEM_FRAME_REMOVE_ITEM : Sound.ENTITY_ITEM_FRAME_REMOVE_ITEM,
-                    SoundCategory.NEUTRAL, 1f, 1f);
-                final PacketOutSetEntityData packet = actor.versionHandler().packetManager().createPacket(new ArgumentMap().set("entity", entity),
-                    PacketOutSetEntityData.class);
-                if (packet != null) {
-                    final IEntityDataPack pack = packet.getData();
-                    final IEntityData data = pack.getById(8);
-                    if (data instanceof final IItemEntityData itemData) {
-                        itemData.setItem(null);
-                        actor.versionHandler().getPlayer(player).send(packet);
-                    }
+                actor.sendTranslatedBarMessage(Messages.CONTAINER_ACCESS_NOT_ACCESSIBLE,
+                    Key.of("time", DataHelper.formTimeString(actor, duration)));
+                return;
+            }
+            final ItemStack itemStack = frame.getItem().clone();
+            if (!player.getInventory().addItem(itemStack).isEmpty()) {
+                player.getWorld().dropItemNaturally(entity.getLocation(), itemStack);
+            }
+            player.playSound(entity.getLocation(),
+                type == EntityType.GLOW_ITEM_FRAME ? Sound.ENTITY_GLOW_ITEM_FRAME_REMOVE_ITEM : Sound.ENTITY_ITEM_FRAME_REMOVE_ITEM,
+                SoundCategory.NEUTRAL, 1f, 1f);
+            final PacketOutSetEntityData packet = actor.versionHandler().packetManager()
+                .createPacket(new ArgumentMap().set("entity", entity), PacketOutSetEntityData.class);
+            if (packet != null) {
+                final IEntityDataPack pack = packet.getData();
+                final IEntityData data = pack.getById(8);
+                if (data instanceof final IItemEntityData itemData) {
+                    itemData.setItem(null);
+                    actor.versionHandler().getPlayer(player).send(packet);
                 }
             }
         });

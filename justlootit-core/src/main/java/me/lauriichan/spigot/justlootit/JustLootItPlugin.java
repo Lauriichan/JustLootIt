@@ -44,7 +44,14 @@ import me.lauriichan.spigot.justlootit.compatibility.provider.Compatibility;
 import me.lauriichan.spigot.justlootit.compatibility.provider.ICompatProvider;
 import me.lauriichan.spigot.justlootit.convert.ConversionProperties;
 import me.lauriichan.spigot.justlootit.convert.JustLootItConverter;
+import me.lauriichan.spigot.justlootit.data.CacheLookupTable;
+import me.lauriichan.spigot.justlootit.data.CachedInventory;
+import me.lauriichan.spigot.justlootit.data.CompatibilityContainer;
+import me.lauriichan.spigot.justlootit.data.FrameContainer;
+import me.lauriichan.spigot.justlootit.data.StaticContainer;
+import me.lauriichan.spigot.justlootit.data.VanillaContainer;
 import me.lauriichan.spigot.justlootit.data.io.DataIO;
+import me.lauriichan.spigot.justlootit.data.migration.provider.ExtensionStorageMigrator;
 import me.lauriichan.spigot.justlootit.input.InputProvider;
 import me.lauriichan.spigot.justlootit.input.SimpleChatInputProvider;
 import me.lauriichan.spigot.justlootit.listener.ItemFramePacketListener;
@@ -59,6 +66,8 @@ import me.lauriichan.spigot.justlootit.platform.JustLootItPlatform;
 import me.lauriichan.spigot.justlootit.platform.folia.FoliaPlatform;
 import me.lauriichan.spigot.justlootit.platform.paper.PaperPlatform;
 import me.lauriichan.spigot.justlootit.platform.spigot.SpigotPlatform;
+import me.lauriichan.spigot.justlootit.storage.StorageAdapterRegistry;
+import me.lauriichan.spigot.justlootit.storage.StorageMigrator;
 import me.lauriichan.spigot.justlootit.storage.util.cache.CacheTickTimer;
 import me.lauriichan.spigot.justlootit.util.JLIInitializationException;
 import me.lauriichan.spigot.justlootit.util.PluginVersion;
@@ -79,6 +88,10 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
 
     private final CacheTickTimer levelTickTimer = new CacheTickTimer();
     private final CacheTickTimer playerTickTimer = new CacheTickTimer();
+    
+    private StorageMigrator storageMigrator;
+    private StorageAdapterRegistry levelStorageRegistry;
+    private StorageAdapterRegistry playerStorageRegistry;
 
     private volatile JustLootItPlatform platform;
 
@@ -218,6 +231,8 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         if (versionHandler != null) {
             versionHandler.enable();
         }
+        // Setup storage before conversion
+        setupStorage();
         if (doWorldConversion()) {
             // Restart server afterwards, just to be safe
             getServer().spigot().restart();
@@ -257,6 +272,22 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
                 compatibility.maxMinor(), provider);
         });
         extension(CompatibilityDataExtension.class, true);
+    }
+    
+    private void setupStorage() {
+        this.storageMigrator = new ExtensionStorageMigrator(this);
+        this.levelStorageRegistry = new StorageAdapterRegistry(storageMigrator);
+        this.playerStorageRegistry = new StorageAdapterRegistry(storageMigrator);
+        
+        // Register level storage adapters
+        levelStorageRegistry.register(CompatibilityContainer.ADAPTER);
+        levelStorageRegistry.register(VanillaContainer.ADAPTER);
+        levelStorageRegistry.register(StaticContainer.ADAPTER);
+        levelStorageRegistry.register(FrameContainer.ADAPTER);
+        
+        // Register player storage adapters
+        playerStorageRegistry.register(CachedInventory.ADAPTER);
+        playerStorageRegistry.register(CacheLookupTable.ADAPTER);
     }
 
     @Override
@@ -358,6 +389,18 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
 
     public CacheTickTimer playerTickTimer() {
         return playerTickTimer;
+    }
+    
+    public StorageMigrator storageMigrator() {
+        return storageMigrator;
+    }
+
+    public StorageAdapterRegistry levelStorageRegistry() {
+        return levelStorageRegistry;
+    }
+
+    public StorageAdapterRegistry playerStorageRegistry() {
+        return playerStorageRegistry;
     }
 
     public JustLootItPlatform platform() {

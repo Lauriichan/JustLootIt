@@ -109,6 +109,7 @@ public final class UIInventoryNames implements IMessageExtension {
     @Message(id = "inventory.container-manage.page.accesses.item.player.lore", content = {
         "&r",
         "&8Id: &7$id",
+        "&8Access Count: &7$access.count",
         "&r",
         "&8Last access:",
         "&8= &7$date",
@@ -116,7 +117,8 @@ public final class UIInventoryNames implements IMessageExtension {
         "&8Next possible access:",
         "&8= &7$time",
         "&r",
-        "&7Click to reset access"
+        "&7Click to decrease access count",
+        "&7Shift click to reset access"
     })
     public static MessageProvider CONTAINER_MANAGE_PAGE_ACCESSES_ITEM_PLAYER_LORE;
 

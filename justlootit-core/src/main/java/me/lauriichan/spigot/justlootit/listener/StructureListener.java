@@ -40,6 +40,7 @@ import me.lauriichan.spigot.justlootit.data.VanillaContainer;
 import me.lauriichan.spigot.justlootit.nms.LevelAdapter;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.storage.IStorage;
+import me.lauriichan.spigot.justlootit.storage.Stored;
 import me.lauriichan.spigot.justlootit.util.BlockUtil;
 
 @Extension
@@ -127,7 +128,10 @@ public class StructureListener implements IListenerExtension {
                             return;
                         }
                         long id = getIdOfBlockState(region, x, y, z, capability.storage(), container);
-                        capability.storage().write(new VanillaContainer(id, lootable.getLootTable(), lootable.getSeed()));
+                        Stored<?> stored = capability.storage().registry().create(new VanillaContainer(lootable.getLootTable(), lootable.getSeed())).id(id);
+                        capability.storage().write(stored);
+                        id = stored.id();
+                        JustLootItAccess.setIdentity(dataContainer, id);
                         lootable.setSeed(0L);
                         lootable.setLootTable(null);
                         container.update();
@@ -144,8 +148,11 @@ public class StructureListener implements IListenerExtension {
                         return;
                     }
                     long id = getIdOfBlockState(region, x, y, z, capability.storage(), container);
+                    Stored<?> stored = capability.storage().registry().create(new StaticContainer(inventory)).id(id);
+                    capability.storage().write(stored);
+                    id = stored.id();
                     JustLootItAccess.setIdentity(container.getPersistentDataContainer(), id);
-                    capability.storage().write(new StaticContainer(id, inventory));
+                    JustLootItAccess.setIdentity(dataContainer, id);
                     inventory.clear();
                     container.update();
                 });
@@ -153,18 +160,13 @@ public class StructureListener implements IListenerExtension {
             return current;
         }
 
-        private long getIdOfBlockState(LimitedRegion region, int x, int y, int z, IStorage<?> storage, Container container) {
+        private long getIdOfBlockState(LimitedRegion region, int x, int y, int z, IStorage storage, Container container) {
             BlockUtil.setContainerOffsetToNearbyChest(region, container);
-            return idFromData(storage, container.getPersistentDataContainer());
-        }
-
-        private long idFromData(IStorage<?> storage, PersistentDataContainer dataContainer) {
+            PersistentDataContainer dataContainer = container.getPersistentDataContainer();
             if (JustLootItAccess.hasIdentity(dataContainer)) {
                 return JustLootItAccess.getIdentity(dataContainer);
             }
-            long id = storage.newId();
-            JustLootItAccess.setIdentity(dataContainer, id);
-            return id;
+            return -1;
         }
 
         @Override
@@ -179,9 +181,9 @@ public class StructureListener implements IListenerExtension {
                         if (config.areFrameContainersBlacklisted()) {
                             return;
                         }
-                        long id = capability.storage().newId();
-                        JustLootItAccess.setIdentity(itemFrame.getPersistentDataContainer(), id);
-                        capability.storage().write(new FrameContainer(id, itemStack.clone()));
+                        Stored<?> stored;
+                        capability.storage().write(stored = capability.storage().registry().create(new FrameContainer(itemStack.clone())));
+                        JustLootItAccess.setIdentity(itemFrame.getPersistentDataContainer(), stored.id());
                         itemFrame.setItem(null);
                     });
                 }
@@ -194,9 +196,9 @@ public class StructureListener implements IListenerExtension {
                         if (config.areVanillaContainersBlacklisted() || config.isLootTableBlacklisted(lootable.getLootTable().getKey())) {
                             return;
                         }
-                        long id = capability.storage().newId();
-                        JustLootItAccess.setIdentity(entity.getPersistentDataContainer(), id);
-                        capability.storage().write(new VanillaContainer(id, lootable.getLootTable(), lootable.getSeed()));
+                        Stored<?> stored;
+                        capability.storage().write(stored = capability.storage().registry().create(new VanillaContainer(lootable.getLootTable(), lootable.getSeed())));
+                        JustLootItAccess.setIdentity(entity.getPersistentDataContainer(), stored.id());
                         lootable.setSeed(0L);
                         lootable.setLootTable(null);
                     });
@@ -207,9 +209,9 @@ public class StructureListener implements IListenerExtension {
                             if (config.areStaticContainersBlacklisted()) {
                                 return;
                             }
-                            long id = capability.storage().newId();
-                            JustLootItAccess.setIdentity(entity.getPersistentDataContainer(), id);
-                            capability.storage().write(new StaticContainer(id, inventory));
+                            Stored<?> stored;
+                            capability.storage().write(stored = capability.storage().registry().create(new StaticContainer(inventory)));
+                            JustLootItAccess.setIdentity(entity.getPersistentDataContainer(), stored.id());
                             inventory.clear();
                         });
                     }

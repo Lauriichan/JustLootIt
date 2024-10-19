@@ -20,14 +20,14 @@ import me.lauriichan.spigot.justlootit.config.world.WorldMultiConfig;
 import me.lauriichan.spigot.justlootit.data.CompatibilityContainer;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.storage.IStorage;
-import me.lauriichan.spigot.justlootit.storage.Storable;
+import me.lauriichan.spigot.justlootit.storage.Stored;
 import me.lauriichan.spigot.justlootit.util.BlockUtil;
 
 public class CustomStructuresListener implements Listener {
-    
+
     private final CustomStructuresDataExtension dataExtension = CompatibilityDataExtension.get("CustomStructures",
         CustomStructuresDataExtension.class);
-    
+
     private final String pluginId;
 
     private final VersionHandler versionHandler;
@@ -42,7 +42,8 @@ public class CustomStructuresListener implements Listener {
     @EventHandler
     public void onLootPopulate(LootPopulateEvent event) {
         BlockState state = event.getLocation().getBlock().getState();
-        if (!(state instanceof Container container) || JustLootItAccess.hasIdentity(container.getPersistentDataContainer()) || JustLootItAccess.hasAnyOffset(container.getPersistentDataContainer())) {
+        if (!(state instanceof Container container) || JustLootItAccess.hasIdentity(container.getPersistentDataContainer())
+            || JustLootItAccess.hasAnyOffset(container.getPersistentDataContainer())) {
             return;
         }
         Inventory inventory = container.getInventory();
@@ -58,11 +59,11 @@ public class CustomStructuresListener implements Listener {
         event.setCanceled(true);
         BlockUtil.setContainerOffsetToNearbyChest(container);
         versionHandler.getLevel(state.getWorld()).getCapability(StorageCapability.class).ifPresent(capability -> {
-            IStorage<Storable> storage = capability.storage();
-            long id = storage.newId();
-            storage.write(new CompatibilityContainer(id,
-                dataExtension.create(event.getStructure().getName(), BlockUtil.getSeed(event.getLocation()))));
-            JustLootItAccess.setIdentity(container.getPersistentDataContainer(), id);
+            IStorage storage = capability.storage();
+            Stored<?> stored;
+            storage.write(stored = storage.registry().create(
+                new CompatibilityContainer(dataExtension.create(event.getStructure().getName(), BlockUtil.getSeed(event.getLocation())))));
+            JustLootItAccess.setIdentity(container.getPersistentDataContainer(), stored.id());
             container.update();
         });
     }

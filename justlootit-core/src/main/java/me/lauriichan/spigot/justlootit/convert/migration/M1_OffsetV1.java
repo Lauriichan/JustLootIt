@@ -16,7 +16,6 @@ import me.lauriichan.spigot.justlootit.nms.convert.ProtoBlockEntity;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoChunk;
 import me.lauriichan.spigot.justlootit.nms.util.Vec3i;
 import me.lauriichan.spigot.justlootit.storage.IStorage;
-import me.lauriichan.spigot.justlootit.storage.Storable;
 import me.lauriichan.spigot.justlootit.util.BlockUtil;
 import me.lauriichan.spigot.justlootit.util.ConverterDataHelper;
 
@@ -65,7 +64,7 @@ public final class M1_OffsetV1 implements IBlockEntityMigration {
         ConverterDataHelper.setOffset(dataContainer, otherDataContainer, location, otherLocation);
         
         if (JustLootItAccess.hasIdentity(dataContainer) && JustLootItAccess.hasIdentity(otherDataContainer)) {
-            IStorage<Storable> storage = chunk.getWorld().getCapability(StorageCapability.class).map(StorageCapability::storage).get();
+            IStorage storage = chunk.getWorld().getCapability(StorageCapability.class).map(StorageCapability::storage).get();
             long id = JustLootItAccess.getIdentity(dataContainer);
             long otherId = JustLootItAccess.getIdentity(otherDataContainer);
             if (id > otherId) {

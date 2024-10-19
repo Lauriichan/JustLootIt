@@ -11,7 +11,7 @@ public class ThreadSafeMapCache<K, V> extends MapCache<K, V> {
     private final Lock writeLock = lock.writeLock();
 
     public ThreadSafeMapCache(final MapCache<K, V> delegate) {
-        super(delegate.logger);
+        super(delegate.logger, delegate.callback);
         this.delegate = delegate;
     }
 

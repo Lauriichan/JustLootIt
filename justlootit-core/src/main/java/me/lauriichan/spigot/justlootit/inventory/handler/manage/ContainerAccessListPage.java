@@ -17,6 +17,7 @@ import me.lauriichan.laylib.command.Actor;
 import me.lauriichan.laylib.localization.Key;
 import me.lauriichan.minecraft.pluginbase.extension.Extension;
 import me.lauriichan.minecraft.pluginbase.inventory.ChestSize;
+import me.lauriichan.minecraft.pluginbase.inventory.ClickType;
 import me.lauriichan.minecraft.pluginbase.inventory.IGuiInventory;
 import me.lauriichan.minecraft.pluginbase.inventory.item.ItemEditor;
 import me.lauriichan.minecraft.pluginbase.inventory.paged.PageContext;
@@ -25,10 +26,12 @@ import me.lauriichan.spigot.justlootit.JustLootItKey;
 import me.lauriichan.spigot.justlootit.capability.ActorCapability;
 import me.lauriichan.spigot.justlootit.config.data.RefreshGroup;
 import me.lauriichan.spigot.justlootit.data.Container;
+import me.lauriichan.spigot.justlootit.data.Container.Access;
 import me.lauriichan.spigot.justlootit.inventory.ItemHelper;
 import me.lauriichan.spigot.justlootit.inventory.ItemHelper.PageType;
 import me.lauriichan.spigot.justlootit.message.UIInventoryNames;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
+import me.lauriichan.spigot.justlootit.storage.Stored;
 import me.lauriichan.spigot.justlootit.util.DataHelper;
 import me.lauriichan.spigot.justlootit.util.SimpleDataType;
 
@@ -42,12 +45,15 @@ public final class ContainerAccessListPage extends ContainerPage {
     public void onPageUpdate(PageContext<ContainerPage, PlayerAdapter> context, boolean changed) {
         Actor<Player> actor = ActorCapability.actor(context.player());
         IGuiInventory inventory = context.inventory();
-        Container container = inventory.attr(ContainerPageHandler.ATTR_CONTAINER, Container.class);
-        if (inventory.updater().chestSize(ChestSize.GRID_5x9)
-            .title(actor.getTranslatedMessageAsString(UIInventoryNames.CONTAINER_MANAGE_PAGE_ACCESSES_NAME, Key.of("id", container.id())))
+        @SuppressWarnings("unchecked")
+        Stored<Container> storedContainer = inventory.attr(ContainerPageHandler.ATTR_CONTAINER, Stored.class).cast();
+        if (inventory
+            .updater().chestSize(ChestSize.GRID_5x9).title(actor
+                .getTranslatedMessageAsString(UIInventoryNames.CONTAINER_MANAGE_PAGE_ACCESSES_NAME, Key.of("id", storedContainer.id())))
             .apply()) {
             return;
         }
+        Container container = storedContainer.value();
         inventory.fill(ItemEditor.of(Material.BLACK_STAINED_GLASS_PANE).setName("&r"));
         inventory.clearSection(1, 1, 1, 7);
         inventory.clearSection(2, 1, 2, 7);
@@ -77,7 +83,7 @@ public final class ContainerAccessListPage extends ContainerPage {
         int endIdx = page * 14;
         int startIdx = (page - 1) * 14;
         int tmpIdx = 0;
-        ObjectIterator<Entry<UUID, OffsetDateTime>> iterator = container.accesses().iterator();
+        ObjectIterator<Entry<UUID, Access>> iterator = container.accesses().iterator();
         Server server = Bukkit.getServer();
         while (tmpIdx++ != startIdx) {
             if (!iterator.hasNext()) {
@@ -95,27 +101,28 @@ public final class ContainerAccessListPage extends ContainerPage {
             if (!iterator.hasNext()) {
                 break;
             }
-            Entry<UUID, OffsetDateTime> entry = iterator.next();
+            Entry<UUID, Access> entry = iterator.next();
             player = server.getOfflinePlayer(entry.getKey());
             time = Key.of("time", group == null ? actor.getTranslatedMessageAsString(UIInventoryNames.GENERAL_TIME_NEVER)
-                : DataHelper.formTimeString(actor, group.duration(entry.getValue(), now)));
+                : DataHelper.formTimeString(actor, group.duration(entry.getValue().time(), now)));
             inventory
-                .set(1 + Math.floorDiv(slotIndex, 7), 1 + slotIndex % 7,
+                .set(
+                    1 + Math.floorDiv(slotIndex, 7), 1 + slotIndex
+                        % 7,
                     ItemEditor.ofHead(player)
                         .setName(actor.getTranslatedMessageAsString(UIInventoryNames.CONTAINER_MANAGE_PAGE_ACCESSES_ITEM_PLAYER_NAME,
                             Key.of("player", player.getName())))
                         .lore()
-                        .set(actor
-                            .getTranslatedMessageAsString(UIInventoryNames.CONTAINER_MANAGE_PAGE_ACCESSES_ITEM_PLAYER_LORE,
-                                Key.of("id", entry.getKey().toString()), Key.of("date", formatter.format(entry.getValue())), time)
-                            .split("\n"))
+                        .set(actor.getTranslatedMessageAsString(UIInventoryNames.CONTAINER_MANAGE_PAGE_ACCESSES_ITEM_PLAYER_LORE,
+                            Key.of("id", entry.getKey().toString()), Key.of("date", formatter.format(entry.getValue().time())),
+                            Key.of("access.count", entry.getValue().accessCount()), time).split("\n"))
                         .apply().applyItemMeta(
                             meta -> meta.getPersistentDataContainer().set(JustLootItKey.identity(), SimpleDataType.UUID, entry.getKey())));
         }
     }
 
     @Override
-    public boolean onClickPickup(PageContext<ContainerPage, PlayerAdapter> context, ItemStack item, int slot, int amount, boolean cursor) {
+    public boolean onClickPickup(PageContext<ContainerPage, PlayerAdapter> context, ItemStack item, int slot, int amount, boolean cursor, ClickType type) {
         if (item.getType() != Material.PLAYER_HEAD) {
             return true;
         }
@@ -144,7 +151,13 @@ public final class ContainerAccessListPage extends ContainerPage {
         if (id == null) {
             return true;
         }
-        inventory.attr(ContainerPageHandler.ATTR_CONTAINER, Container.class).resetAccess(id);
+        @SuppressWarnings("unchecked")
+        Stored<Container> stored = inventory.attr(ContainerPageHandler.ATTR_CONTAINER, Stored.class);
+        if (type == ClickType.SHIFT_LEFT) {
+            stored.value().resetAccess(id);
+        } else if (type == ClickType.LEFT || type == ClickType.RIGHT) {
+            stored.value().decreaseAccessCount(id);
+        }
         inventory.update();
         return true;
     }

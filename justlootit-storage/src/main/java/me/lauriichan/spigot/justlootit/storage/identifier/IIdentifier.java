@@ -6,7 +6,7 @@ public interface IIdentifier {
     
     void reset();
     
-    void set(long id);
+    void delete(long id);
     
     default long lastSaved() {
         return 0L;

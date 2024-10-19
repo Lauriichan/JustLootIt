@@ -1,9 +1,12 @@
-package me.lauriichan.spigot.justlootit.storage.randomaccessfile;
+package me.lauriichan.spigot.justlootit.storage.randomaccessfile.legacy;
+
+import me.lauriichan.spigot.justlootit.storage.randomaccessfile.IRAFSettings;
+import me.lauriichan.spigot.justlootit.storage.randomaccessfile.v0.RAFSettingsV0;
 
 /**
- * Settings for the {@link RAFMultiStorage}
+ * Settings for the {@link RAFLegacyMultiStorage}
  */
-public final class RAFSettings {
+public final class RAFSettingsLegacy implements IRAFSettings {
 
     public static final class Builder {
 
@@ -84,8 +87,8 @@ public final class RAFSettings {
             return this;
         }
 
-        public RAFSettings build() {
-            return new RAFSettings(valuesPerFile, copyBufferBytes, fileCacheTicks, fileCachePurgeStep, fileCacheMaxAmount);
+        public RAFSettingsLegacy build() {
+            return new RAFSettingsLegacy(valuesPerFile, copyBufferBytes, fileCacheTicks, fileCachePurgeStep, fileCacheMaxAmount);
         }
 
     }
@@ -94,22 +97,33 @@ public final class RAFSettings {
         return new Builder();
     }
 
+    public static RAFSettingsLegacy of(RAFSettingsV0 settings) {
+        return new RAFSettingsLegacy(settings.valueIdAmount, settings.copyBufferSize / 1024, settings.fileCacheTicks,
+            settings.fileCachePurgeStep, settings.fileCacheMaxAmount);
+    }
+
     public static final int DEFAULT_VALUES_PER_FILE = 1024;
-    public static final int DEFAULT_COPY_BUFFER_BYTES = 64;
+    public static final int DEFAULT_COPY_BUFFER_BYTES = 2048;
 
     public static final long DEFAULT_FILE_CACHE_TICKS = 180;
     public static final long DEFAULT_FILE_CACHE_PURGE_STEP = 10;
 
     public static final int DEFAULT_FILE_CHANNEL_MAX_AMOUNT = 64;
 
-    public static final RAFSettings DEFAULT = new RAFSettings(DEFAULT_VALUES_PER_FILE, DEFAULT_COPY_BUFFER_BYTES, DEFAULT_FILE_CACHE_TICKS,
-        DEFAULT_FILE_CACHE_PURGE_STEP, DEFAULT_FILE_CHANNEL_MAX_AMOUNT);
+    public static final RAFSettingsLegacy DEFAULT = new RAFSettingsLegacy(DEFAULT_VALUES_PER_FILE, DEFAULT_COPY_BUFFER_BYTES,
+        DEFAULT_FILE_CACHE_TICKS, DEFAULT_FILE_CACHE_PURGE_STEP, DEFAULT_FILE_CHANNEL_MAX_AMOUNT);
+
+    public static final int FORMAT_VERSION = 0;
 
     public static final int LOOKUP_AMOUNT_SIZE = Short.BYTES;
     public static final int LOOKUP_ENTRY_SIZE = Long.BYTES;
 
+    public static final int LOOKUP_ENTRY_BASE_OFFSET = LOOKUP_AMOUNT_SIZE;
+
     public static final int VALUE_HEADER_ID_SIZE = Short.BYTES;
     public static final int VALUE_HEADER_LENGTH_SIZE = Integer.BYTES;
+
+    public static final int VALUE_HEADER_ID_VERSION_SIZE = VALUE_HEADER_ID_SIZE;
     public static final int VALUE_HEADER_SIZE = VALUE_HEADER_ID_SIZE + VALUE_HEADER_LENGTH_SIZE;
 
     public static final long INVALID_HEADER_OFFSET = 0L;
@@ -127,16 +141,46 @@ public final class RAFSettings {
 
     public final int fileCacheMaxAmount;
 
-    private RAFSettings(final int valuesPerFile, final int copyBufferBytes, final long fileCacheTicks, final long fileCachePurgeStep,
+    private RAFSettingsLegacy(final int valuesPerFile, final int copyBufferBytes, final long fileCacheTicks, final long fileCachePurgeStep,
         final int fileCacheMaxAmount) {
         this.copyBufferSize = Math.max(copyBufferBytes * 1024, 1024);
-        this.valueIdBits = Math.max(Integer.bitCount(valuesPerFile - 1 & 0xFFFF), 1);
-        this.valueIdMask = 0xFFFF >>> Short.SIZE - valueIdBits;
-        this.valueIdAmount = valueIdMask + 1;
+        this.valueIdAmount = Math.max(Integer.highestOneBit((valuesPerFile - 1) & 0xFFFF), 1) << 1;
+        this.valueIdMask = valueIdAmount - 1;
+        this.valueIdBits = Integer.bitCount(valueIdMask);
         this.lookupHeaderSize = valueIdAmount * LOOKUP_ENTRY_SIZE + LOOKUP_AMOUNT_SIZE;
         this.fileCacheTicks = Math.max(fileCacheTicks, 30);
         this.fileCachePurgeStep = Math.max(fileCachePurgeStep, 1);
         this.fileCacheMaxAmount = Math.max(fileCacheMaxAmount, 4);
+    }
+
+    @Override
+    public int valueIdBits() {
+        return valueIdBits;
+    }
+
+    @Override
+    public int valueIdMask() {
+        return valueIdMask;
+    }
+
+    @Override
+    public int valueIdAmount() {
+        return valueIdAmount;
+    }
+
+    @Override
+    public long fileCacheTicks() {
+        return fileCacheTicks;
+    }
+
+    @Override
+    public int fileCacheMaxAmount() {
+        return fileCacheMaxAmount;
+    }
+
+    @Override
+    public long fileCachePurgeStep() {
+        return fileCachePurgeStep;
     }
 
 }

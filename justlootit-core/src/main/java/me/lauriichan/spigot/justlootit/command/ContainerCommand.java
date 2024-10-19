@@ -42,7 +42,7 @@ import me.lauriichan.spigot.justlootit.data.VanillaContainer;
 import me.lauriichan.spigot.justlootit.inventory.handler.manage.ContainerPageHandler;
 import me.lauriichan.spigot.justlootit.message.Messages;
 import me.lauriichan.spigot.justlootit.storage.IStorage;
-import me.lauriichan.spigot.justlootit.storage.Storable;
+import me.lauriichan.spigot.justlootit.storage.Stored;
 import me.lauriichan.spigot.justlootit.util.BlockUtil;
 import me.lauriichan.spigot.justlootit.util.CommandUtil;
 import me.lauriichan.spigot.justlootit.util.EntityUtil;
@@ -65,7 +65,7 @@ public class ContainerCommand implements ICommandExtension {
             return;
         }
         plugin.scheduler().async(() -> {
-            Container container = accessContainer(plugin, actor, id, null, null, null, world);
+            Stored<Container> container = accessContainer(plugin, actor, id, null, null, null, world);
             if (container == null) {
                 return;
             }
@@ -87,7 +87,7 @@ public class ContainerCommand implements ICommandExtension {
             return;
         }
         plugin.scheduler().async(() -> {
-            Container container = accessContainer(plugin, actor, null, x, y, z, world);
+            Stored<Container> container = accessContainer(plugin, actor, null, x, y, z, world);
             if (container == null) {
                 return;
             }
@@ -95,7 +95,7 @@ public class ContainerCommand implements ICommandExtension {
         });
     }
 
-    private void openManageInventory(final JustLootItPlugin plugin, final Actor<Player> actor, final Container container,
+    private void openManageInventory(final JustLootItPlugin plugin, final Actor<Player> actor, final Stored<Container> container,
         final World world) {
         plugin.scheduler().sync(() -> {
             plugin.versionHandler().getPlayer(actor.getHandle()).getCapability(PlayerGUICapability.class).ifPresent(guiCapability -> {
@@ -108,7 +108,7 @@ public class ContainerCommand implements ICommandExtension {
         });
     }
 
-    private Container accessContainer(final JustLootItPlugin plugin, final Actor<Player> actor, Long id, Coord x, Coord y, Coord z,
+    private Stored<Container> accessContainer(final JustLootItPlugin plugin, final Actor<Player> actor, Long id, Coord x, Coord y, Coord z,
         World world) {
         if (id == null) {
             Location location = CommandUtil.getLocation(actor, x, y, z, world);
@@ -139,7 +139,7 @@ public class ContainerCommand implements ICommandExtension {
             actor.sendTranslatedMessage(Messages.COMMAND_SYSTEM_ERROR_STORAGE_ACCESS_LEVEL, Key.of("level", world.getName()));
             return null;
         }
-        Container container = (Container) capability.storage().read(id.longValue());
+        Stored<Container> container = capability.storage().read(id.longValue());
         if (container == null) {
             actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_ID, Key.of("id", id));
             return null;
@@ -240,12 +240,12 @@ public class ContainerCommand implements ICommandExtension {
             actor.sendTranslatedMessage(Messages.COMMAND_SYSTEM_ERROR_STORAGE_ACCESS_LEVEL, Key.of("level", loc.getWorld().getName()));
             return;
         }
-        Container container = (Container) capability.storage().read(id.longValue());
+        Stored<Container> container = capability.storage().read(id.longValue());
         if (container == null) {
             actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_ID, Key.of("id", id));
             return;
         }
-        ContainerType type = container.type();
+        ContainerType type = container.value().type();
         if (type.blockCreator() == null && type.entityCreator() == null) {
             actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_LINK_NOT_LINKABLE, Key.of("type", type));
             return;
@@ -404,14 +404,15 @@ public class ContainerCommand implements ICommandExtension {
                 distance = dist;
             }
         }
-        type.entityCreator().function().create(plugin, actor, closest.getLocation(), closest, (creator) -> {
+        type.entityCreator().function().create(plugin, actor, closest.getLocation(), closest, (creator, applier) -> {
             plugin.versionHandler().getLevel(location.getWorld()).getCapability(StorageCapability.class).ifPresentOrElse(capability -> {
-                IStorage<Storable> storage = capability.storage();
-                long id = storage.newId();
-                storage.write(creator.apply(id));
+                IStorage storage = capability.storage();
+                Stored<?> stored;
+                storage.write(stored = storage.registry().create(creator.get()));
+                applier.accept(stored.id());
                 actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_SUCCESS_ENTITY, Key.of("x", location.getBlockX()),
                     Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld().getName()),
-                    Key.of("type", type), Key.of("id", id));
+                    Key.of("type", type), Key.of("id", stored.id()));
             }, () -> actor.sendTranslatedMessage(Messages.COMMAND_SYSTEM_ERROR_STORAGE_ACCESS_LEVEL,
                 Key.of("level", location.getWorld().getName())));
         });
@@ -433,14 +434,15 @@ public class ContainerCommand implements ICommandExtension {
                 Key.of("type", type));
             return;
         }
-        type.blockCreator().function().create(plugin, actor, location, stateContainer, (creator) -> {
+        type.blockCreator().function().create(plugin, actor, location, stateContainer, (creator, applier) -> {
             plugin.versionHandler().getLevel(location.getWorld()).getCapability(StorageCapability.class).ifPresentOrElse(capability -> {
-                IStorage<Storable> storage = capability.storage();
-                long id = storage.newId();
-                storage.write(creator.apply(id));
+                IStorage storage = capability.storage();
+                Stored<?> stored;
+                storage.write(stored = storage.registry().create(creator.get()));
+                applier.accept(stored.id());
                 actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_SUCCESS_BLOCK, Key.of("x", location.getBlockX()),
                     Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld().getName()),
-                    Key.of("type", type), Key.of("id", id));
+                    Key.of("type", type), Key.of("id", stored.id()));
             }, () -> actor.sendTranslatedMessage(Messages.COMMAND_SYSTEM_ERROR_STORAGE_ACCESS_LEVEL,
                 Key.of("level", location.getWorld().getName())));
         });
@@ -518,19 +520,19 @@ public class ContainerCommand implements ICommandExtension {
         }
         long id = getIdentity(dataContainer);
         plugin.versionHandler().getLevel(world).getCapability(StorageCapability.class).ifPresentOrElse(capability -> {
-            Container container = (Container) capability.storage().read(id);
-            if (container == null) {
+            Stored<Container> storedContainer = capability.storage().read(id);
+            if (storedContainer == null) {
                 removeIdentity(dataContainer);
                 actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_ENTITY, Key.of("x", loc.getX()),
                     Key.of("y", loc.getY()), Key.of("z", loc.getZ()), Key.of("world", world.getName()));
                 return;
             }
             if (group == null) {
-                container.setGroupId(null);
+                storedContainer.value().setGroupId(null);
                 actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_GROUP_REMOVED_ENTITY, Key.of("x", loc.getX()),
                     Key.of("y", loc.getY()), Key.of("z", loc.getZ()), Key.of("world", world.getName()));
             } else {
-                container.setGroupId(group.id());
+                storedContainer.value().setGroupId(group.id());
                 actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_GROUP_SET_ENTITY, Key.of("x", loc.getX()), Key.of("y", loc.getY()),
                     Key.of("z", loc.getZ()), Key.of("world", world.getName()), Key.of("group", group.id()));
             }
@@ -568,8 +570,8 @@ public class ContainerCommand implements ICommandExtension {
             id = getIdentity(dataContainer);
         }
         plugin.versionHandler().getLevel(world).getCapability(StorageCapability.class).ifPresentOrElse(capability -> {
-            Container container = (Container) capability.storage().read(id);
-            if (container == null) {
+            Stored<Container> storedContainer = capability.storage().read(id);
+            if (storedContainer == null) {
                 if (otherContainer != null) {
                     PersistentDataContainer otherDataContainer = otherContainer.getPersistentDataContainer();
                     removeIdentity(otherDataContainer);
@@ -584,11 +586,11 @@ public class ContainerCommand implements ICommandExtension {
                 return;
             }
             if (group == null) {
-                container.setGroupId(null);
+                storedContainer.value().setGroupId(null);
                 actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_GROUP_REMOVED_BLOCK, Key.of("x", location.getX()),
                     Key.of("y", location.getY()), Key.of("z", location.getZ()), Key.of("world", world.getName()));
             } else {
-                container.setGroupId(group.id());
+                storedContainer.value().setGroupId(group.id());
                 actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_GROUP_SET_BLOCK, Key.of("x", location.getX()),
                     Key.of("y", location.getY()), Key.of("z", location.getZ()), Key.of("world", world.getName()),
                     Key.of("group", group.id()));
@@ -653,15 +655,16 @@ public class ContainerCommand implements ICommandExtension {
         }
         long id = getIdentity(dataContainer);
         plugin.versionHandler().getLevel(world).getCapability(StorageCapability.class).ifPresentOrElse(capability -> {
-            Container container = (Container) capability.storage().read(id);
-            if (container == null) {
+            Stored<Container> storedContainer = capability.storage().read(id);
+            if (storedContainer == null) {
                 removeIdentity(dataContainer);
                 actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_ALL_NO_CONTAINER_ENTITY, Key.of("x", loc.getX()),
                     Key.of("y", loc.getY()), Key.of("z", loc.getZ()), Key.of("world", world.getName()));
                 return;
             }
+            Container container = storedContainer.value();
             String refreshGroup = container.getGroupId();
-            actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_INFO_CONTAINER_ANY_ENTITY, Key.of("id", container.id()),
+            actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_INFO_CONTAINER_ANY_ENTITY, Key.of("id", storedContainer.id()),
                 Key.of("refreshGroup", refreshGroup == null || refreshGroup.isEmpty() ? "None" : refreshGroup),
                 Key.of("type", TypeName.ofContainer(container)), Key.of("x", loc.getX()), Key.of("y", loc.getY()), Key.of("z", loc.getZ()),
                 Key.of("world", world.getName()));
@@ -700,8 +703,8 @@ public class ContainerCommand implements ICommandExtension {
             id = getIdentity(dataContainer);
         }
         plugin.versionHandler().getLevel(world).getCapability(StorageCapability.class).ifPresentOrElse(capability -> {
-            Container container = (Container) capability.storage().read(id);
-            if (container == null) {
+            Stored<Container> storedContainer = capability.storage().read(id);
+            if (storedContainer == null) {
                 if (otherContainer != null) {
                     PersistentDataContainer otherDataContainer = otherContainer.getPersistentDataContainer();
                     removeIdentity(otherDataContainer);
@@ -715,8 +718,9 @@ public class ContainerCommand implements ICommandExtension {
                     Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", world.getName()));
                 return;
             }
+            Container container = storedContainer.value();
             String refreshGroup = container.getGroupId();
-            actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_INFO_CONTAINER_ANY_BLOCK, Key.of("id", container.id()),
+            actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_INFO_CONTAINER_ANY_BLOCK, Key.of("id", storedContainer.id()),
                 Key.of("refreshGroup", refreshGroup == null ? "None" : refreshGroup), Key.of("type", TypeName.ofContainer(container)),
                 Key.of("x", location.getBlockX()), Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()),
                 Key.of("world", world.getName()));

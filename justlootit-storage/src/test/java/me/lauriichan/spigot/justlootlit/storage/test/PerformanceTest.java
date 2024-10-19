@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 
-import me.lauriichan.spigot.justlootit.storage.Storable;
 import me.lauriichan.spigot.justlootlit.storage.test.Test.StorageProvider;
 import me.lauriichan.spigot.justlootlit.storage.test.simple.*;
 
@@ -32,10 +31,12 @@ public class PerformanceTest {
 
     public static final boolean PRINT_EACH_ROUND = false;
 
-    public static final Test<?>[] TESTS = new Test[] {
+    public static final Test[] TESTS = new Test[] {
         new WriteReadTest(1024),
+        new WriteUpdateReadTest(1024),
+        new ShuffledWriteReadTest(1024),
         new WriteReadDeleteTest(1024),
-        new WriteUpdateReadTest(1024)
+        new WriteOverwriteReadTest(1024)
     };
 
     /*
@@ -52,25 +53,24 @@ public class PerformanceTest {
         if (TESTS.length == 0) {
             return tests;
         }
-        for (final Test<?> test : TESTS) {
+        for (final Test test : TESTS) {
             tests.add(DynamicTest.dynamicTest(test.name, () -> runTest(test)));
         }
         return tests;
     }
 
-    @SuppressWarnings("unchecked")
-    private static <T extends Storable> void runTest(final Test<T> test) throws Throwable {
-        final ArrayList<StorageProvider<T>> providerList = new ArrayList<>();
+    private static void runTest(final Test test) throws Throwable {
+        final ArrayList<StorageProvider> providerList = new ArrayList<>();
         test.createProviders(providerList);
-        final StorageProvider<T>[] providers = providerList.toArray(StorageProvider[]::new);
+        final StorageProvider[] providers = providerList.toArray(StorageProvider[]::new);
         providerList.clear();
         final File workingDir = new File("tests", test.name);
-        if (workingDir.exists()) {
-            FileUtils.forceDelete(workingDir);
-        }
-        workingDir.mkdirs();
         final File warmupDir = new File(workingDir, "warmup");
-        for (final StorageProvider<T> provider : providers) {
+        for (final StorageProvider provider : providers) {
+            if (workingDir.exists()) {
+                FileUtils.forceDelete(workingDir);
+            }
+            workingDir.mkdirs();
             final Profiler profiler = new Profiler(RUNS_PER_ROUND);
             profiler.lock();
             for (int index = 0; index < WARMUP_RUNS; index++) {

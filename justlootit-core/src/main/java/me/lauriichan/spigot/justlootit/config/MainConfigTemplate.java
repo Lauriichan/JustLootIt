@@ -32,6 +32,9 @@ public class MainConfigTemplate implements ISingleConfigExtension {
     @ConfigValue("container.delete-on-break")
     public boolean deleteOnBreak = true;
     
+    @ConfigValue("loot.unique")
+    public boolean uniqueLootPerPlayer = false;
+    
     private final VersionHandler versionHandler;
     
     public MainConfigTemplate(JustLootItPlugin plugin) {

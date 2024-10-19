@@ -18,13 +18,14 @@ import me.lauriichan.spigot.justlootit.data.io.BufIO;
 import me.lauriichan.spigot.justlootit.message.Messages;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapter;
+import me.lauriichan.spigot.justlootit.storage.StorageAdapterRegistry;
 
 public class CompatibilityContainer extends Container implements IInventoryContainer {
 
     public static final StorageAdapter<CompatibilityContainer> ADAPTER = new BaseAdapter<>(CompatibilityContainer.class, 17) {
 
         @Override
-        protected void serializeSpecial(CompatibilityContainer storable, ByteBuf buffer) {
+        protected void serializeSpecial(final StorageAdapterRegistry registry, CompatibilityContainer storable, ByteBuf buffer) {
             ICompatibilityData data = storable.getCompatibilityData();
             CompatibilityDataExtension<?> extension = data.extension();
             BufIO.writeString(buffer, extension.id());
@@ -33,7 +34,7 @@ public class CompatibilityContainer extends Container implements IInventoryConta
         }
 
         @Override
-        protected CompatibilityContainer deserializeSpecial(long id, ContainerData data, ByteBuf buffer) {
+        protected CompatibilityContainer deserializeSpecial(final StorageAdapterRegistry registry, ContainerData data, ByteBuf buffer) {
             String compatId = BufIO.readString(buffer);
             int version = buffer.readInt();
             CompatibilityDataExtension<?> extension = CompatibilityDataExtension.get(compatId);
@@ -41,20 +42,19 @@ public class CompatibilityContainer extends Container implements IInventoryConta
             while (extension.hasUpgrade(compatData)) {
                 compatData = extension.upgrade(compatData);
             }
-            return new CompatibilityContainer(id, compatData);
+            return new CompatibilityContainer(compatData);
         }
 
     };
 
     private ICompatibilityData compatibilityData;
 
-    public CompatibilityContainer(final long id, final ICompatibilityData compatibilityData) {
-        super(id);
+    public CompatibilityContainer(final ICompatibilityData compatibilityData) {
         setCompatibilityData(compatibilityData);
     }
 
-    public CompatibilityContainer(final long id, ContainerData data, final ICompatibilityData compatibilityData) {
-        super(id, data);
+    public CompatibilityContainer(ContainerData data, final ICompatibilityData compatibilityData) {
+        super(data);
         setCompatibilityData(compatibilityData);
     }
 
@@ -88,7 +88,7 @@ public class CompatibilityContainer extends Container implements IInventoryConta
                         Key.of("plugin", compatibilityData.extension().id()));
                     return;
                 }
-                if (!compatibilityData.fill(player, entity, location, inventory)) {
+                if (!compatibilityData.fill(this, player, entity, location, inventory)) {
                     ActorCapability.actor(player).sendTranslatedMessage(Messages.CONTAINER_COMPATIBILITY_FILL_FAILED,
                         Key.of("plugin", compatibilityData.extension().id()));
                     return;
@@ -100,7 +100,7 @@ public class CompatibilityContainer extends Container implements IInventoryConta
                         Key.of("plugin", compatibilityData.extension().id()));
                     return;
                 }
-                if (!compatibilityData.fill(player, state, location, inventory)) {
+                if (!compatibilityData.fill(this, player, state, location, inventory)) {
                     ActorCapability.actor(player).sendTranslatedMessage(Messages.CONTAINER_COMPATIBILITY_FILL_FAILED,
                         Key.of("plugin", compatibilityData.extension().id()));
                     return;

@@ -10,6 +10,7 @@ import me.lauriichan.laylib.localization.Key;
 import me.lauriichan.spigot.justlootit.compatibility.data.ICompatibilityData;
 import me.lauriichan.spigot.justlootit.compatibility.provider.CompatDependency;
 import me.lauriichan.spigot.justlootit.compatibility.provider.customstructures.ICustomStructuresProvider;
+import me.lauriichan.spigot.justlootit.data.CompatibilityContainer;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 
 public interface ICustomStructuresData extends ICompatibilityData {
@@ -24,12 +25,12 @@ public interface ICustomStructuresData extends ICompatibilityData {
     }
     
     @Override
-    default boolean fill(PlayerAdapter player, BlockState state, Location location, Inventory inventory) {
+    default boolean fill(CompatibilityContainer container, PlayerAdapter player, BlockState state, Location location, Inventory inventory) {
         ICustomStructuresProvider provider = CompatDependency.getActiveProvider(extension().id(), ICustomStructuresProvider.class);
         if (provider == null) {
             return false;
         }
-        return provider.access().fillWithLootTable(inventory, state.getType(), location, structureName(), seed());
+        return provider.access().fillWithLootTable(inventory, state.getType(), location, structureName(), container.generateSeed(player, seed()));
     }
     
     @Override

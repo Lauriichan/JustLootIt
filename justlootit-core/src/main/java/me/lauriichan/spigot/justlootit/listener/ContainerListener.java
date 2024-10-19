@@ -58,7 +58,7 @@ import me.lauriichan.spigot.justlootit.message.UIInventoryNames;
 import me.lauriichan.spigot.justlootit.nms.LevelAdapter;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.storage.IStorage;
-import me.lauriichan.spigot.justlootit.storage.Storable;
+import me.lauriichan.spigot.justlootit.storage.Stored;
 import me.lauriichan.spigot.justlootit.util.BlockUtil;
 import me.lauriichan.spigot.justlootit.util.DataHelper;
 import me.lauriichan.spigot.justlootit.util.EntityUtil;
@@ -310,19 +310,19 @@ public class ContainerListener implements IListenerExtension {
         final UUID playerId = bukkitPlayer.getUniqueId();
         final LevelAdapter level = actor.versionHandler().getLevel(location.getWorld());
         level.getCapability(StorageCapability.class).ifPresentOrElse(capability -> {
-            final Container dataContainer = (Container) capability.storage().read(id);
+            final Stored<Container> dataContainer = capability.storage().read(id);
             if (dataContainer == null) {
                 JustLootItAccess.removeIdentity(data);
                 return;
             }
             event.setCancelled(true);
             player.getCapability(StorageCapability.class).ifPresent(playerCapability -> {
-                final IStorage<Storable> playerStorage = playerCapability.storage();
-                final CacheLookupTable lookupTable = CacheLookupTable.retrieve(playerStorage);
-                if (!dataContainer.access(playerId)) {
+                final IStorage playerStorage = playerCapability.storage();
+                final CacheLookupTable lookupTable = CacheLookupTable.retrieve(actor.plugin(), playerStorage);
+                if (!dataContainer.value().access(playerId)) {
                     if (lookupTable.access(entryId)) {
-                        final CachedInventory cachedInventory = (CachedInventory) playerStorage
-                            .read(lookupTable.getEntryIdByMapped(entryId));
+                        final Stored<CachedInventory> storedCachedInventory = playerStorage.read(lookupTable.getEntryIdByMapped(entryId));
+                        final CachedInventory cachedInventory = storedCachedInventory.value();
                         final int columnAmount = IGuiInventory.getColumnAmount(cachedInventory.getType());
                         if (cachedInventory.size() % columnAmount == 0) {
                             final int rowAmount = cachedInventory.size() / columnAmount;
@@ -338,7 +338,7 @@ public class ContainerListener implements IListenerExtension {
                                     }
                                     updater.apply();
                                     player.setData(LootUIHandler.PLAYER_DATA_LOOTING, LootUIHandler.PLAYER_DATA_LOOTING_VALUE);
-                                    inventory.attrSet(LootUIHandler.ATTR_ID, cachedInventory.id());
+                                    inventory.attrSet(LootUIHandler.ATTR_ID, storedCachedInventory.id());
                                     inventory.setHandler(LootUIHandler.LOOT_HANDLER);
                                     inventory.getInventory().setContents(cachedInventory.getItems());
                                     inventory.open(bukkitPlayer);
@@ -350,9 +350,9 @@ public class ContainerListener implements IListenerExtension {
                                 return;
                             }
                         }
-                        playerStorage.delete(cachedInventory.id());
+                        playerStorage.delete(storedCachedInventory.id());
                     }
-                    final Duration duration = dataContainer.durationUntilNextAccess(playerId);
+                    final Duration duration = dataContainer.value().durationUntilNextAccess(playerId);
                     if (duration.isNegative()) {
                         actor.sendTranslatedBarMessage(Messages.CONTAINER_ACCESS_NOT_REPEATABLE);
                         return;
@@ -363,7 +363,7 @@ public class ContainerListener implements IListenerExtension {
                 }
                 player.getCapability(PlayerGUICapability.class).ifPresent(guiCapability -> {
                     final IGuiInventory inventory = guiCapability.gui();
-                    if (!(dataContainer instanceof final IInventoryContainer container)) {
+                    if (!(dataContainer.value() instanceof final IInventoryContainer container)) {
                         // Do nothing, no need to allocate anything if we have no inventory
                         return;
                     }

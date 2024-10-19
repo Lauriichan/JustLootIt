@@ -14,10 +14,11 @@ import me.lauriichan.spigot.justlootit.config.MainConfig;
 import me.lauriichan.spigot.justlootit.data.io.DataIO;
 import me.lauriichan.spigot.justlootit.storage.IModifiable;
 import me.lauriichan.spigot.justlootit.storage.IStorage;
-import me.lauriichan.spigot.justlootit.storage.Storable;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapter;
+import me.lauriichan.spigot.justlootit.storage.StorageAdapterRegistry;
+import me.lauriichan.spigot.justlootit.storage.Stored;
 
-public class CacheLookupTable extends Storable implements IModifiable {
+public class CacheLookupTable implements IModifiable {
 
     public static final long ID = 15;
     public static final long MIN_ENTRY_ID = ID + 1;
@@ -26,7 +27,7 @@ public class CacheLookupTable extends Storable implements IModifiable {
 
     public static final StorageAdapter<CacheLookupTable> ADAPTER = new StorageAdapter<>(CacheLookupTable.class, 1) {
         @Override
-        public void serialize(final CacheLookupTable storable, final ByteBuf buffer) {
+        public void serialize(final StorageAdapterRegistry registry, final CacheLookupTable storable, final ByteBuf buffer) {
             final int size = storable.tableToMapped.size();
             buffer.writeByte(size);
             for (int index = 0; index < size; index++) {
@@ -39,7 +40,7 @@ public class CacheLookupTable extends Storable implements IModifiable {
         }
 
         @Override
-        public CacheLookupTable deserialize(final long id, final ByteBuf buffer) {
+        public CacheLookupTable deserialize(final StorageAdapterRegistry registry, final ByteBuf buffer) {
             final int size = buffer.readByte();
             final CacheLookupTable table = new CacheLookupTable(size);
             for (int index = 0; index < size; index++) {
@@ -97,7 +98,6 @@ public class CacheLookupTable extends Storable implements IModifiable {
     private long maxEntryId;
 
     public CacheLookupTable(int size) {
-        super(ID);
         this.maxSize = Math.max(size, config.playerInventoryCacheSize());
         this.maxEntryId = MIN_ENTRY_ID + maxSize;
         this.tableToMapped = new Int2ObjectArrayMap<>(maxSize);
@@ -256,16 +256,13 @@ public class CacheLookupTable extends Storable implements IModifiable {
         return maxEntryId;
     }
 
-    public static CacheLookupTable retrieve(final IStorage<Storable> storage) {
-        final Storable entry = storage.read(ID);
+    public static CacheLookupTable retrieve(final JustLootItPlugin plugin, final IStorage storage) {
+        final Stored<CacheLookupTable> entry = storage.read(ID);
         if (entry != null) {
-            if (entry instanceof final CacheLookupTable table) {
-                return table;
-            }
-            throw new IllegalStateException("Storage has unknown object at id " + ID);
+            return entry.value();
         }
         final CacheLookupTable table = new CacheLookupTable(0);
-        storage.write(table);
+        storage.write(storage.registry().create(table).id(ID));
         return table;
     }
 

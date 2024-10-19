@@ -2,6 +2,7 @@ package me.lauriichan.spigot.justlootlit.storage.test.simple.model;
 
 import io.netty.buffer.ByteBuf;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapter;
+import me.lauriichan.spigot.justlootit.storage.StorageAdapterRegistry;
 
 public class SimpleObjectAdapter extends StorageAdapter<SimpleObject> {
 
@@ -12,20 +13,20 @@ public class SimpleObjectAdapter extends StorageAdapter<SimpleObject> {
     }
 
     @Override
-    public void serialize(final SimpleObject storable, final ByteBuf buffer) {
-        buffer.writeInt(storable.numbers.length);
-        for(int index = 0; index < storable.numbers.length; index++) {
-            buffer.writeInt(storable.numbers[index]);
+    public void serialize(StorageAdapterRegistry registry, SimpleObject value, ByteBuf buffer) {
+        buffer.writeInt(value.numbers.length);
+        for (int index = 0; index < value.numbers.length; index++) {
+            buffer.writeInt(value.numbers[index]);
         }
     }
 
     @Override
-    public SimpleObject deserialize(final long id, final ByteBuf buffer) {
+    public SimpleObject deserialize(StorageAdapterRegistry registry, ByteBuf buffer) {
         int[] numbers = new int[buffer.readInt()];
-        for(int index = 0; index < numbers.length; index++) {
+        for (int index = 0; index < numbers.length; index++) {
             numbers[index] = buffer.readInt();
         }
-        return new SimpleObject(id, numbers);
+        return new SimpleObject(numbers);
     }
 
 }

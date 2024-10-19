@@ -11,6 +11,7 @@ import me.lauriichan.spigot.justlootit.capability.StorageCapability;
 import me.lauriichan.spigot.justlootit.data.CachedInventory;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
+import me.lauriichan.spigot.justlootit.storage.Stored;
 import me.lauriichan.spigot.justlootit.util.BlockUtil;
 
 public final class LootUIHandler implements IHandler {
@@ -45,12 +46,18 @@ public final class LootUIHandler implements IHandler {
             BlockUtil.sendBlockClose(player.getLevel(), player.asBukkit(), blockLocation);
         }
         player.getCapability(StorageCapability.class).ifPresent(capability -> {
-            CachedInventory cached = (CachedInventory) capability.storage().read(id);
-            if (cached != null && cached.equals(inventory.getInventory())) {
+            Stored<CachedInventory> cached = capability.storage().read(id);
+            if (cached != null && cached.value().equals(inventory.getInventory())) {
                 return;
             }
+            CachedInventory cachedInventory = new CachedInventory(inventory.getInventory());
+            if (cached == null) {
+                cached = capability.storage().registry().create(cachedInventory).id(id.longValue());
+            } else {
+                cached.value(cachedInventory);
+            }
             try {
-                capability.storage().write(new CachedInventory(id, inventory.getInventory()));
+                capability.storage().write(cached);
             } catch (Throwable throwable) {
                 plugin.logger().error("Failed to save cached inventory with id {0} for player {1} ({2})", throwable, id, entity.getName(),
                     entity.getUniqueId());
