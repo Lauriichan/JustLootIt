@@ -102,7 +102,7 @@ public final class CachedInventory implements IModifiable {
                     }
                     continue;
                 }
-                if (is1.getAmount() != is2.getAmount() && is1.isSimilar(is2)) {
+                if (is1.getAmount() != is2.getAmount() || !is1.isSimilar(is2)) {
                     return false;
                 }
             }
@@ -125,7 +125,7 @@ public final class CachedInventory implements IModifiable {
                     }
                     continue;
                 }
-                if (is1.getAmount() != is2.getAmount() && !is1.isSimilar(is2)) {
+                if (is1.getAmount() != is2.getAmount() || !is1.isSimilar(is2)) {
                     return false;
                 }
             }

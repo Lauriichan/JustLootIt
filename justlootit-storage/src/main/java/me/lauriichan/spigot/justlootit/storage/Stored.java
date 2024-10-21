@@ -47,11 +47,7 @@ public final class Stored<T> {
     }
 
     public Stored<T> value(Object rawValue) {
-        T value = (T) rawValue;
-        if (Objects.equals(this.value, value)) {
-            return this;
-        }
-        this.value = value;
+        this.value = (T) rawValue;
         return this;
     }
     
