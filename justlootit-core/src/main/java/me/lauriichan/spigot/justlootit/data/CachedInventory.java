@@ -96,8 +96,11 @@ public final class CachedInventory implements IModifiable {
             for (int i = 0; i < items.length; i++) {
                 is1 = items[i];
                 is2 = other.items[i];
-                if ((is1 == null || is2 == null) && is1 != is2) {
-                    return false;
+                if (is1 == null || is2 == null) {
+                    if (is1 != is2) {
+                        return false;
+                    }
+                    continue;
                 }
                 if (is1.getAmount() != is2.getAmount() && is1.isSimilar(is2)) {
                     return false;
@@ -117,10 +120,10 @@ public final class CachedInventory implements IModifiable {
                     is2 = null;
                 }
                 if (is1 == null || is2 == null) {
-                    if (is1 == is2) {
-                        continue;
+                    if (is1 != is2) {
+                        return false;
                     }
-                    return false;
+                    continue;
                 }
                 if (is1.getAmount() != is2.getAmount() && !is1.isSimilar(is2)) {
                     return false;
