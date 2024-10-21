@@ -22,8 +22,10 @@ public class CachedStorage implements IStorage {
         if (stored != null && !stored.isDirty()) {
             return;
         }
-        if (stored == null || stored.isEmpty()) {
+        if (stored != null) {
             stored.unsetDirty();
+        }
+        if (stored == null || stored.isEmpty()) {
             try {
                 delegate.delete(key);
             } catch (final StorageException exp) {
