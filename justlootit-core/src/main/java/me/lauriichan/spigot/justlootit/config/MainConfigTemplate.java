@@ -26,6 +26,8 @@ public class MainConfigTemplate implements ISingleConfigExtension {
     @ConfigValue("cache.player.keep-in-memory")
     public long playerCacheKeepInMemory = 120L;
 
+    @ConfigValue("cache.level.keep-file-open")
+    public long levelCacheKeepFileOpen = 9000L;
     @ConfigValue("cache.level.keep-in-memory")
     public long levelCacheKeepInMemory = 600L;
 

@@ -2,10 +2,14 @@ package me.lauriichan.spigot.justlootit.storage.randomaccessfile;
 
 import java.io.Closeable;
 import java.io.File;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 import me.lauriichan.spigot.justlootit.storage.StorageException;
+import me.lauriichan.spigot.justlootit.storage.util.counter.Counter;
 
 public interface IRAFFile extends Closeable {
     
@@ -33,9 +37,9 @@ public interface IRAFFile extends Closeable {
     
     boolean delete(long id) throws StorageException;
     
-    void forEach(Consumer<IRAFEntry> consumer) throws StorageException;
+    Map.Entry<Counter, CompletableFuture<Void>> forEach(Consumer<IRAFEntry> consumer, Executor executor) throws StorageException;
     
-    void modifyEach(Function<IRAFEntry, IRAFEntry> func) throws StorageException;
+    Map.Entry<Counter, CompletableFuture<Void>> modifyEach(Function<IRAFEntry, IRAFEntry> func, Executor executor) throws StorageException;
     
     void open() throws StorageException;
     

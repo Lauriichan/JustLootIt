@@ -1,8 +1,11 @@
 package me.lauriichan.spigot.justlootit.storage;
 
+import java.util.concurrent.Executor;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import me.lauriichan.laylib.logger.ISimpleLogger;
+import me.lauriichan.spigot.justlootit.storage.util.counter.CounterProgress;
 
 public interface IStorage {
     
@@ -20,7 +23,9 @@ public interface IStorage {
     
     boolean delete(long id) throws StorageException;
     
-    void updateEach(Function<Stored<?>, UpdateInfo<?>> updater);
+    CounterProgress forEach(Consumer<Stored<?>> reader, Executor executor);
+    
+    CounterProgress updateEach(Function<Stored<?>, UpdateInfo<?>> updater, Executor executor);
     
     void clear() throws StorageException;
     

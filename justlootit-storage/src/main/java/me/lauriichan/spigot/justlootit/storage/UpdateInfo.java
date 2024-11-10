@@ -30,24 +30,24 @@ public final class UpdateInfo<T> {
         return MODIFY;
     }
 
-    public static <T> UpdateInfo<T> modify(final Stored<T> stored) {
-        return new UpdateInfo<>(UpdateState.MODIFY, stored);
+    public static <T> UpdateInfo<T> modify(T value) {
+        return new UpdateInfo(UpdateState.MODIFY, value);
     }
 
     private final UpdateState state;
-    private final Stored<T> stored;
+    private final T value;
 
-    private UpdateInfo(final UpdateState state, final Stored<T> stored) {
+    private UpdateInfo(final UpdateState state, final T value) {
         this.state = state;
-        this.stored = stored;
+        this.value = value;
     }
 
     public UpdateState state() {
         return state;
     }
-
-    public Stored<T> stored() {
-        return stored;
+    
+    public T value() {
+        return value;
     }
 
 }

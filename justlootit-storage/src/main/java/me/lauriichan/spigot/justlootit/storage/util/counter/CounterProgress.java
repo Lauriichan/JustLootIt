@@ -1,18 +1,17 @@
-package me.lauriichan.spigot.justlootit.nms.convert;
+package me.lauriichan.spigot.justlootit.storage.util.counter;
 
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import me.lauriichan.spigot.justlootit.nms.util.counter.Counter;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
-public final class ConversionProgress {
+public final class CounterProgress {
 
     private final Counter counter;
-    private final List<CompletableFuture<Void>> futures;
+    private final ObjectList<CompletableFuture<Void>> futures;
     
     private volatile int index = 0;
 
-    public ConversionProgress(final Counter counter, final List<CompletableFuture<Void>> futures) {
+    public CounterProgress(final Counter counter, final ObjectList<CompletableFuture<Void>> futures) {
         this.counter = counter;
         this.futures = futures;
     }
@@ -41,7 +40,7 @@ public final class ConversionProgress {
         return true;
     }
     
-    public boolean hasRegions() {
+    public boolean hasFutures() {
         return !futures.isEmpty();
     }
     

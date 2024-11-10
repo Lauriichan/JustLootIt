@@ -1,7 +1,6 @@
 package me.lauriichan.spigot.justlootit.storage;
 
 import java.util.Map;
-import java.util.Objects;
 
 import io.netty.buffer.ByteBuf;
 import me.lauriichan.laylib.logger.ISimpleLogger;

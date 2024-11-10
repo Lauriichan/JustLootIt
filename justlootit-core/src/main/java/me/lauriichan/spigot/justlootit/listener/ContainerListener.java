@@ -382,6 +382,11 @@ public class ContainerListener implements IListenerExtension {
                     inventory.setHandler(LootUIHandler.LOOT_HANDLER);
                     updater.apply();
                     IResult result = container.fill(player, inventoryHolder, location, inventory.getInventory());
+                    if (result.isFailed()) {
+                        // Reset access, we failed to fill
+                        dataContainer.value().decreaseAccessCount(player.getUniqueId());
+                        return;
+                    }
                     container.awaitProvidedEvent(player, inventory, inventoryHolder, location, result);
                     inventory.open(bukkitPlayer);
                     if (inventoryHolder instanceof DoubleChest || inventoryHolder instanceof Lidded) {

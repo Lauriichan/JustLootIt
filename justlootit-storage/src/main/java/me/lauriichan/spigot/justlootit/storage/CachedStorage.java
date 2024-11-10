@@ -1,9 +1,12 @@
 package me.lauriichan.spigot.justlootit.storage;
 
+import java.util.concurrent.Executor;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.spigot.justlootit.storage.util.cache.Long2ObjectMapCache;
+import me.lauriichan.spigot.justlootit.storage.util.counter.CounterProgress;
 
 public class CachedStorage implements IStorage {
 
@@ -101,9 +104,15 @@ public class CachedStorage implements IStorage {
     }
 
     @Override
-    public void updateEach(Function<Stored<?>, UpdateInfo<?>> updater) {
+    public CounterProgress forEach(Consumer<Stored<?>> reader, Executor executor) {
         cache.clear();
-        delegate.updateEach(updater);
+        return delegate.forEach(reader, executor);
+    }
+
+    @Override
+    public CounterProgress updateEach(Function<Stored<?>, UpdateInfo<?>> updater, Executor executor) {
+        cache.clear();
+        return delegate.updateEach(updater, executor);
     }
 
     @Override

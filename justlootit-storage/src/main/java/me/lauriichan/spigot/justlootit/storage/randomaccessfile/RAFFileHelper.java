@@ -80,7 +80,7 @@ public final class RAFFileHelper {
                             }
                         }
                         raf.write(newEntry(entry.id(), entry.typeId(), version, buffer));
-                    });
+                    }, Runnable::run);
                     registry.migrator().logger().info("File '{0}' successfully upgraded to '{1}'.", legacy.file().getPath(),
                         raf.file().getPath());
                 } finally {
@@ -122,7 +122,7 @@ public final class RAFFileHelper {
                             }
                         }
                         raf.write(newEntry(entry.id(), entry.typeId(), version, buffer));
-                    });
+                    }, Runnable::run);
                     registry.migrator().logger().info("File '{0}' successfully upgraded to '{1}'.", legacy.file().getPath(),
                         raf.file().getPath());
                 } finally {

@@ -5,6 +5,7 @@ import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 
 import me.lauriichan.spigot.justlootit.nms.capability.Capable;
+import me.lauriichan.spigot.justlootit.storage.util.counter.CounterProgress;
 
 public abstract class ProtoWorld extends Capable<ProtoWorld> implements AutoCloseable {
     
@@ -20,7 +21,7 @@ public abstract class ProtoWorld extends Capable<ProtoWorld> implements AutoClos
     
     public abstract File getWorldFolder();
     
-    public abstract ConversionProgress streamChunks(Consumer<ProtoChunk> consumer);
+    public abstract CounterProgress streamChunks(Consumer<ProtoChunk> consumer);
     
     @Override
     public void close() {

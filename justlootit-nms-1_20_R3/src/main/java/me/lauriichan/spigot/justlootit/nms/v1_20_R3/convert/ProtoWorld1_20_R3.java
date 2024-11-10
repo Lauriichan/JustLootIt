@@ -18,14 +18,14 @@ import com.mojang.datafixers.util.Pair;
 import it.unimi.dsi.fastutil.objects.Object2IntArrayMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.lauriichan.laylib.logger.ISimpleLogger;
-import me.lauriichan.spigot.justlootit.nms.convert.ConversionProgress;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoBlockEntity;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoChunk;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoThread;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoWorld;
-import me.lauriichan.spigot.justlootit.nms.util.counter.CompositeCounter;
-import me.lauriichan.spigot.justlootit.nms.util.counter.Counter;
-import me.lauriichan.spigot.justlootit.nms.util.counter.SimpleCounter;
+import me.lauriichan.spigot.justlootit.storage.util.counter.CompositeCounter;
+import me.lauriichan.spigot.justlootit.storage.util.counter.Counter;
+import me.lauriichan.spigot.justlootit.storage.util.counter.CounterProgress;
+import me.lauriichan.spigot.justlootit.storage.util.counter.SimpleCounter;
 import me.lauriichan.spigot.justlootit.nms.v1_20_R3.util.NmsHelper1_20_R3;
 import me.lauriichan.spigot.justlootit.nms.v1_20_R3.util.PlatformHelper1_20_R3;
 import net.minecraft.world.level.storage.LevelStorageSource.LevelStorageAccess;
@@ -153,7 +153,7 @@ public class ProtoWorld1_20_R3 extends ProtoWorld implements LevelHeightAccessor
     }
 
     @Override
-    public ConversionProgress streamChunks(Consumer<ProtoChunk> consumer) {
+    public CounterProgress streamChunks(Consumer<ProtoChunk> consumer) {
         CompositeCounter compositeCounter = new CompositeCounter();
         // This should most likely block until we are done however this is also the one informing about the progress
         ObjectArrayList<CompletableFuture<Void>> futures = new ObjectArrayList<>();
@@ -170,7 +170,7 @@ public class ProtoWorld1_20_R3 extends ProtoWorld implements LevelHeightAccessor
         } catch (IOException e) {
             logger.error("Failed to convert level '{0}'!", e, worldData.getLevelName());
         }
-        return new ConversionProgress(compositeCounter, futures);
+        return new CounterProgress(compositeCounter, futures);
     }
 
     private void streamRegion(Path path, Counter counter, Consumer<ProtoChunk> consumer) {

@@ -45,7 +45,7 @@ public class WriteUpdateReadTest extends BaseTest {
                 return UpdateInfo.modify(stored);
             }
             return UpdateInfo.delete();
-        });
+        }, Runnable::run);
 
         for (int id = 0; id < amount; id++) {
             final Stored<SimpleObject> loaded = storage.read(id);

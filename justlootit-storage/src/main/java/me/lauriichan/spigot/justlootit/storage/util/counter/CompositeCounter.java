@@ -1,4 +1,4 @@
-package me.lauriichan.spigot.justlootit.nms.util.counter;
+package me.lauriichan.spigot.justlootit.storage.util.counter;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 

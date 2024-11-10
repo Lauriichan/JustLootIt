@@ -1,0 +1,66 @@
+package me.lauriichan.spigot.justlootit.data.alternation;
+
+import java.util.Objects;
+
+import me.lauriichan.laylib.logger.ISimpleLogger;
+import me.lauriichan.spigot.justlootit.storage.IStorage;
+import me.lauriichan.spigot.justlootit.storage.Stored;
+import me.lauriichan.spigot.justlootit.storage.UpdateInfo;
+import me.lauriichan.spigot.justlootit.storage.UpdateInfo.UpdateState;
+
+public abstract class AlternationAction<T> {
+
+    private final Class<T> type;
+
+    protected AlternationAction(Class<T> type) {
+        this.type = type;
+    }
+
+    private boolean isApplicableEntry(UpdateState state, Stored<?> stored, boolean possiblyModified) {
+        if (!type.isAssignableFrom(stored.adapter().type())) {
+            return false;
+        }
+        return isApplicable(state, stored, possiblyModified);
+    }
+
+    protected boolean isApplicable(UpdateState state, Stored<?> stored, boolean possiblyModified) {
+        return state != UpdateState.DELETE;
+    }
+
+    private UpdateState tryUpdateEntry(ISimpleLogger logger, Stored<?> stored, boolean possiblyModified) {
+        return updateEntry(logger, stored, stored.valueAs(type), possiblyModified);
+    }
+
+    protected abstract UpdateState updateEntry(ISimpleLogger logger, Stored<?> stored, T value, boolean possiblyModified);
+
+    public static void apply(IStorage storage, AlternationAction<?>... actions) {
+        storage.updateEach(stored -> {
+            UpdateState state = UpdateState.NONE;
+            boolean possiblyModified = false;
+            UpdateState tmp;
+            for (AlternationAction<?> action : actions) {
+                if (!action.isApplicableEntry(state, stored, possiblyModified)) {
+                    continue;
+                }
+                tmp = Objects.requireNonNull(action.tryUpdateEntry(storage.logger(), stored, possiblyModified),
+                    "Update state has to be valid for action '" + action.getClass().getSimpleName() + "'");
+                if (state != UpdateState.NONE && tmp == UpdateState.NONE) {
+                    possiblyModified = true;
+                }
+                state = tmp;
+            }
+            switch (state) {
+            case DELETE:
+                return UpdateInfo.delete();
+            case MODIFY:
+                return UpdateInfo.modify();
+            case NONE:
+            default:
+                // We set 'default' to NONE as null is not an option here
+                return UpdateInfo.none();
+            }
+        // TODO: Use actual executor here
+        }, Runnable::run);
+    }
+
+}

@@ -1,4 +1,4 @@
-package me.lauriichan.spigot.justlootit.nms.util.counter;
+package me.lauriichan.spigot.justlootit.storage.util.counter;
 
 public class SimpleCounter extends Counter {
 

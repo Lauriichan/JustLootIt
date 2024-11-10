@@ -1,10 +1,15 @@
 package me.lauriichan.spigot.justlootlit.storage.test.legacy;
 
 import java.io.File;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 import me.lauriichan.spigot.justlootit.storage.Storage;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapterRegistry;
 import me.lauriichan.spigot.justlootit.storage.StorageException;
@@ -18,6 +23,9 @@ import me.lauriichan.spigot.justlootit.storage.randomaccessfile.IRAFFile;
 import me.lauriichan.spigot.justlootit.storage.randomaccessfile.RAFFileHelper;
 import me.lauriichan.spigot.justlootit.storage.randomaccessfile.legacy.RAFFileLegacy;
 import me.lauriichan.spigot.justlootit.storage.randomaccessfile.legacy.RAFSettingsLegacy;
+import me.lauriichan.spigot.justlootit.storage.util.counter.Counter;
+import me.lauriichan.spigot.justlootit.storage.util.counter.CounterProgress;
+import me.lauriichan.spigot.justlootit.storage.util.counter.SimpleCounter;
 
 public final class RAFLegacySingleStorage extends Storage {
 
@@ -106,16 +114,42 @@ public final class RAFLegacySingleStorage extends Storage {
         }
         return file.delete(id);
     }
-
+    
     @Override
-    public void updateEach(Function<Stored<?>, UpdateInfo<?>> updater) {
+    public CounterProgress forEach(Consumer<Stored<?>> reader, Executor executor) {
         if (!file.isOpen()) {
             if (!file.exists()) {
-                return;
+                return new CounterProgress(new SimpleCounter(0), ObjectLists.emptyList());
             }
             file.open();
         }
-        file.modifyEach(entry -> {
+        Map.Entry<Counter, CompletableFuture<Void>> fileFuture = file.forEach(entry -> {
+            try {
+                Stored<?> stored;
+                try {
+                    stored = registry.create(entry.typeId());
+                    stored.id(entry.id());
+                    stored.read(logger, entry.buffer());
+                } catch (IllegalArgumentException iae) {
+                    return;
+                }
+                reader.accept(stored);
+            } catch (RuntimeException exp) {
+                logger.warning("Failed to read entry '{0}'", exp, entry.id());
+            }
+        }, executor);
+        return new CounterProgress(fileFuture.getKey(), ObjectLists.singleton(fileFuture.getValue()));
+    }
+
+    @Override
+    public CounterProgress updateEach(Function<Stored<?>, UpdateInfo<?>> updater, Executor executor) {
+        if (!file.isOpen()) {
+            if (!file.exists()) {
+                return new CounterProgress(new SimpleCounter(0), ObjectLists.emptyList());
+            }
+            file.open();
+        }
+        Map.Entry<Counter, CompletableFuture<Void>> fileFuture = file.modifyEach(entry -> {
             try {
                 Stored<?> stored;
                 try {
@@ -133,13 +167,21 @@ public final class RAFLegacySingleStorage extends Storage {
                     return null;
                 }
                 ByteBuf buffer = Unpooled.buffer();
+                if (info.value() != null && info.value() != stored) {
+                    if (info.value() instanceof Stored<?> other) {
+                        stored = other;
+                    } else {
+                        stored.value(info.value());
+                    }
+                }
                 stored.write(logger, buffer);
                 return RAFFileHelper.newEntry(entry.id(), stored.adapter().typeId(), stored.version(), buffer);
             } catch (RuntimeException exp) {
                 logger.warning("Failed to modify entry '{0}'", exp, entry.id());
                 return entry;
             }
-        });
+        }, executor);
+        return new CounterProgress(fileFuture.getKey(), ObjectLists.singleton(fileFuture.getValue()));
     }
 
     @Override

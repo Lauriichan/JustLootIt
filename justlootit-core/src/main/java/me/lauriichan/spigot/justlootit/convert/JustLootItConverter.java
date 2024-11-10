@@ -17,10 +17,10 @@ import me.lauriichan.laylib.reflection.StackTracker;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.nms.convert.ConversionAdapter;
-import me.lauriichan.spigot.justlootit.nms.convert.ConversionProgress;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoChunk;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoThread;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoWorld;
+import me.lauriichan.spigot.justlootit.storage.util.counter.CounterProgress;
 
 public final class JustLootItConverter {
 
@@ -83,8 +83,8 @@ public final class JustLootItConverter {
                     };
                     somethingWasConverted = true;
                     logger.info("Starting conversion of level '{0}'...", world.getName());
-                    ConversionProgress progress = world.streamChunks(chunkConsumer);
-                    if (!progress.hasRegions()) {
+                    CounterProgress progress = world.streamChunks(chunkConsumer);
+                    if (!progress.hasFutures()) {
                         logger.info("Skipping level '{0}', couldn't find any regions.", world.getName());
                         continue;
                     }
@@ -119,7 +119,7 @@ public final class JustLootItConverter {
         }
     }
 
-    private static void printThreads(ISimpleLogger logger, String level, ConversionProgress progress, ObjectList<ProtoThread> threads) {
+    private static void printThreads(ISimpleLogger logger, String level, CounterProgress progress, ObjectList<ProtoThread> threads) {
         logger.info("═════════════════════════════════════════════════════");
         logger.info(" ");
         logger.info("  ┌──► Conversion ({0})", level);

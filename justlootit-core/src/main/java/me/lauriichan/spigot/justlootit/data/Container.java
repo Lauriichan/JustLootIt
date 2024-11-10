@@ -201,6 +201,7 @@ public abstract class Container implements IModifiable {
         if (access == null) {
             return;
         }
+        access.time = OffsetDateTime.MIN;
         if ((access.accessCount -= 1) <= 0) {
             data.playerAccess.remove(id);
         }

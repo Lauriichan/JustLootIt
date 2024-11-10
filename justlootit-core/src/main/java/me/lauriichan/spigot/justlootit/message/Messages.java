@@ -123,6 +123,9 @@ public final class Messages implements IMessageExtension {
     @Message(id = "container.compatibility.fill-failed", content = "$#plugin.prefix This loot container can not be accessed because the compatibility for plugin '&c$plugin&7' failed to fill it.")
     public static MessageProvider CONTAINER_COMPATIBILITY_FILL_FAILED;
     
+    @Message(id = "container.vanilla.loottable-not-available", content = "$#plugin.prefix This loot container can not be accessed because the loot table '&c$lootTable&7' is not available to fill it.")
+    public static MessageProvider CONTAINER_VANILLA_LOOTTABLE_NOT_AVAILABLE;
+    
     @Message(id = "container.access.not-repeatable", content = "&7Can &cnever &7be accessed again.")
     public static MessageProvider CONTAINER_ACCESS_NOT_REPEATABLE;
     @Message(id = "container.access.not-accessible", content = "&7Not accessible for $time&7.")

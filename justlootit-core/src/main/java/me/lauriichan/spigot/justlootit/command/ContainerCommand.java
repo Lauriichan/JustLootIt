@@ -211,6 +211,11 @@ public class ContainerCommand implements ICommandExtension {
         }
         return getIdentity(otherContainer.getPersistentDataContainer());
     }
+    
+//    @Action("alter")
+//    public void alter(final JustLootItPlugin plugin, final Actor<?> actor, @Argument(name = "alternation action", index = 0) final AlterAction action) {
+//        
+//    }
 
     @Action("link entity")
     public void linkEntity(final JustLootItPlugin plugin, final Actor<?> actor,
