@@ -42,6 +42,7 @@ public abstract class ConversionAdapter implements AutoCloseable {
         if (executor != null) {
             executor.setInactive();
             executor.await();
+            executor = null;
         }
     }
 
