@@ -1,14 +1,16 @@
 package me.lauriichan.spigot.justlootit.nms.convert;
 
-public final class ProtoThread extends Thread {
+import me.lauriichan.spigot.justlootit.storage.util.executor.ProtoExecutor;
 
-    private final ProtoExecutor executor;
+public final class ConvThread extends Thread {
+
+    private final ProtoExecutor<ConvThread> executor;
 
     private volatile String region;
     private volatile int cx, cz;
     private volatile String task;
     
-    public ProtoThread(int id, ProtoExecutor executor) {
+    public ConvThread(int id, ProtoExecutor<ConvThread> executor) {
         setName("JLI-ConversionWorker-" + id);
         setDaemon(true);
         this.executor = executor;

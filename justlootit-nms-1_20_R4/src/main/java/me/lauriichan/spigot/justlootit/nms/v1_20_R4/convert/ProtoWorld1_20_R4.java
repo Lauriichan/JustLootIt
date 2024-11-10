@@ -18,9 +18,9 @@ import com.mojang.datafixers.util.Pair;
 import it.unimi.dsi.fastutil.objects.Object2IntArrayMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.lauriichan.laylib.logger.ISimpleLogger;
+import me.lauriichan.spigot.justlootit.nms.convert.ConvThread;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoBlockEntity;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoChunk;
-import me.lauriichan.spigot.justlootit.nms.convert.ProtoThread;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoWorld;
 import me.lauriichan.spigot.justlootit.storage.util.counter.CompositeCounter;
 import me.lauriichan.spigot.justlootit.storage.util.counter.Counter;
@@ -181,7 +181,7 @@ public class ProtoWorld1_20_R4 extends ProtoWorld implements LevelHeightAccessor
     }
 
     private void streamRegion(Path path, Counter counter, Consumer<ProtoChunk> consumer) {
-        ProtoThread thread = (ProtoThread) Thread.currentThread();
+        ConvThread thread = (ConvThread) Thread.currentThread();
         int minSection = getMinSection();
         int maxSection = getMaxSection();
         int sectionCount = getSectionsCount();

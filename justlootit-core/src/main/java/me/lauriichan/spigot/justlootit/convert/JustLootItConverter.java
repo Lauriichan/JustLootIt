@@ -16,9 +16,9 @@ import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.laylib.reflection.StackTracker;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
+import me.lauriichan.spigot.justlootit.nms.convert.ConvThread;
 import me.lauriichan.spigot.justlootit.nms.convert.ConversionAdapter;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoChunk;
-import me.lauriichan.spigot.justlootit.nms.convert.ProtoThread;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoWorld;
 import me.lauriichan.spigot.justlootit.storage.util.counter.CounterProgress;
 
@@ -119,7 +119,7 @@ public final class JustLootItConverter {
         }
     }
 
-    private static void printThreads(ISimpleLogger logger, String level, CounterProgress progress, ObjectList<ProtoThread> threads) {
+    private static void printThreads(ISimpleLogger logger, String level, CounterProgress progress, ObjectList<ConvThread> threads) {
         logger.info("═════════════════════════════════════════════════════");
         logger.info(" ");
         logger.info("  ┌──► Conversion ({0})", level);
@@ -141,7 +141,7 @@ public final class JustLootItConverter {
         logger.info(" ");
         logger.info(" ");
         logger.info(" ");
-        for (ProtoThread thread : threads) {
+        for (ConvThread thread : threads) {
             logger.info("  ┌──► {0}", thread.getName());
             logger.info("  │");
             if (thread.region() == null) {
