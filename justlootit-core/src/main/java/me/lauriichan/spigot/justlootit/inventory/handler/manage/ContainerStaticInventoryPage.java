@@ -30,8 +30,6 @@ public final class ContainerStaticInventoryPage extends ContainerPage {
 
     private static final ChestSize[] SIZES = ChestSize.values();
 
-    // TODO: Check for errors of ATTR_CONTAINER
-
     @Override
     public void onPageOpen(PageContext<ContainerPage, PlayerAdapter> context) {
         @SuppressWarnings("unchecked")

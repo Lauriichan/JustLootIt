@@ -138,7 +138,13 @@
             <artifactId>justlootit-nms-1_20_R4</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
-        <!-- 1.21 -->
+        <!-- 1.21 / 1.21.1 / 1.21.2 -->
+        <dependency>
+            <groupId>${project.parent.groupId}</groupId>
+            <artifactId>justlootit-nms-1_21_R1</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <!-- 1.21.3 -->
         <dependency>
             <groupId>${project.parent.groupId}</groupId>
             <artifactId>justlootit-nms-1_21_R1</artifactId>

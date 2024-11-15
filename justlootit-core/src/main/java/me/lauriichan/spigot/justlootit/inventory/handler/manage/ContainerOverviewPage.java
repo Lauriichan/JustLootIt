@@ -27,8 +27,6 @@ public final class ContainerOverviewPage extends ContainerPage {
     // TODO: Make frame item editable
 
     // TODO: Make vanilla lootable changable
-    
-    // TODO: Check for errors of ATTR_CONTAINER
 
     @Override
     public boolean defaultPage() {

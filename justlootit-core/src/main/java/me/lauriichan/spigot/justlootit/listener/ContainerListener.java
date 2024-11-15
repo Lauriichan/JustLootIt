@@ -1,6 +1,7 @@
 package me.lauriichan.spigot.justlootit.listener;
 
 import java.time.Duration;
+import java.util.Iterator;
 import java.util.UUID;
 
 import org.bukkit.Location;
@@ -20,6 +21,8 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.EntityChangeBlockEvent;
+import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -174,6 +177,30 @@ public class ContainerListener implements IListenerExtension {
                 actor.sendTranslatedMessage(Messages.CONTAINER_BREAK_NO_CONTAINER, Key.of("id", id));
             }
         });
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
+    public void onEntityChange(final EntityChangeBlockEvent event) {
+        if (!(event.getBlock().getState() instanceof org.bukkit.block.Container container)) {
+            return;
+        }
+        PersistentDataContainer dataContainer = container.getPersistentDataContainer();
+        event.setCancelled(JustLootItAccess.hasIdentity(dataContainer) || JustLootItAccess.hasAnyOffset(dataContainer));
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
+    public void onEntityExplode(final EntityExplodeEvent event) {
+        Iterator<Block> iterator = event.blockList().iterator();
+        while(iterator.hasNext()) {
+            Block block = iterator.next();
+            if (!(block.getState() instanceof org.bukkit.block.Container container)) {
+                return;
+            }
+            PersistentDataContainer dataContainer = container.getPersistentDataContainer();
+            if (JustLootItAccess.hasIdentity(dataContainer) || JustLootItAccess.hasAnyOffset(dataContainer)) {
+                iterator.remove();
+            }
+        }
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
