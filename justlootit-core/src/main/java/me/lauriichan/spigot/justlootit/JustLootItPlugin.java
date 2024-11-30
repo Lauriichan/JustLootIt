@@ -69,6 +69,7 @@ import me.lauriichan.spigot.justlootit.platform.spigot.SpigotPlatform;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapterRegistry;
 import me.lauriichan.spigot.justlootit.storage.StorageMigrator;
 import me.lauriichan.spigot.justlootit.storage.util.cache.CacheTickTimer;
+import me.lauriichan.spigot.justlootit.storage.util.executor.ProtoExecutor;
 import me.lauriichan.spigot.justlootit.util.JLIInitializationException;
 import me.lauriichan.spigot.justlootit.util.PluginVersion;
 
@@ -220,6 +221,7 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         registry.registerArgumentType(CoordinateArgument.class);
         registry.registerArgumentType(RefreshGroupArgument.class);
         registry.registerArgumentType(OfflinePlayerArgument.class);
+        registry.registerArgumentType(NamespacedKeyArgument.class);
 
         // Register providers
         registry.setProvider(new PluginProvider(this));
@@ -495,6 +497,10 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         } catch (AccessFailedException exception) {
             throw new JLIInitializationException("Failed to initialize VersionHandler!", exception.getCause());
         }
+    }
+
+    public ProtoExecutor<?> executor() {
+        return null;
     }
 
 }

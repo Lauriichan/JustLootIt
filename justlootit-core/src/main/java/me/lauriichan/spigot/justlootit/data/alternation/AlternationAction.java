@@ -7,6 +7,8 @@ import me.lauriichan.spigot.justlootit.storage.IStorage;
 import me.lauriichan.spigot.justlootit.storage.Stored;
 import me.lauriichan.spigot.justlootit.storage.UpdateInfo;
 import me.lauriichan.spigot.justlootit.storage.UpdateInfo.UpdateState;
+import me.lauriichan.spigot.justlootit.storage.util.counter.CounterProgress;
+import me.lauriichan.spigot.justlootit.storage.util.executor.ProtoExecutor;
 
 public abstract class AlternationAction<T> {
 
@@ -33,8 +35,8 @@ public abstract class AlternationAction<T> {
 
     protected abstract UpdateState updateEntry(ISimpleLogger logger, Stored<?> stored, T value, boolean possiblyModified);
 
-    public static void apply(IStorage storage, AlternationAction<?>... actions) {
-        storage.updateEach(stored -> {
+    public static CounterProgress apply(ProtoExecutor<?> executor, IStorage storage, AlternationAction<?>... actions) {
+        return storage.updateEach(stored -> {
             UpdateState state = UpdateState.NONE;
             boolean possiblyModified = false;
             UpdateState tmp;
@@ -59,8 +61,7 @@ public abstract class AlternationAction<T> {
                 // We set 'default' to NONE as null is not an option here
                 return UpdateInfo.none();
             }
-        // TODO: Use actual executor here
-        }, Runnable::run);
+        }, executor);
     }
 
 }

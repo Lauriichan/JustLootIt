@@ -6,12 +6,14 @@ import java.util.Collection;
 import java.util.List;
 
 import org.bukkit.Location;
+import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.data.type.Chest;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.loot.LootTable;
 import org.bukkit.persistence.PersistentDataContainer;
 
 import me.lauriichan.laylib.command.Actor;
@@ -39,6 +41,8 @@ import me.lauriichan.spigot.justlootit.data.Container;
 import me.lauriichan.spigot.justlootit.data.ContainerType;
 import me.lauriichan.spigot.justlootit.data.FrameContainer;
 import me.lauriichan.spigot.justlootit.data.VanillaContainer;
+import me.lauriichan.spigot.justlootit.data.alternation.AlternationAction;
+import me.lauriichan.spigot.justlootit.data.alternation.container.vanilla.UpdateLootTableAction;
 import me.lauriichan.spigot.justlootit.inventory.handler.manage.ContainerPageHandler;
 import me.lauriichan.spigot.justlootit.message.Messages;
 import me.lauriichan.spigot.justlootit.storage.IStorage;
@@ -53,6 +57,17 @@ import net.md_5.bungee.api.chat.HoverEvent;
 @Command(name = "container")
 @Permission(JustLootItPermission.COMMAND_CONTAINER)
 public class ContainerCommand implements ICommandExtension {
+
+// TODO: Implement this
+//    @Action("alter loottable")
+    @Description("$#command.description.justlootit.container.alter.loottable")
+    public void alter(final JustLootItPlugin plugin, final Actor<?> actor, @Argument(name = "world", index = 1) final World world,
+        @Argument(name = "loottable to replace", index = 2) final NamespacedKey find,
+        @Argument(name = "loottable to set", index = 3) final LootTable replace) {
+        plugin.versionHandler().getLevel(world).getCapability(StorageCapability.class).ifPresent(capability -> {
+            AlternationAction.apply(plugin.executor(), capability.storage(), new UpdateLootTableAction(find, replace));
+        });
+    }
 
     @Action("manage")
     @Description("$#command.description.justlootit.container.manage.id")
@@ -211,11 +226,11 @@ public class ContainerCommand implements ICommandExtension {
         }
         return getIdentity(otherContainer.getPersistentDataContainer());
     }
-    
-//    @Action("alter")
-//    public void alter(final JustLootItPlugin plugin, final Actor<?> actor, @Argument(name = "alternation action", index = 0) final AlterAction action) {
-//        
-//    }
+
+    //    @Action("alter")
+    //    public void alter(final JustLootItPlugin plugin, final Actor<?> actor, @Argument(name = "alternation action", index = 0) final AlterAction action) {
+    //        
+    //    }
 
     @Action("link entity")
     public void linkEntity(final JustLootItPlugin plugin, final Actor<?> actor,

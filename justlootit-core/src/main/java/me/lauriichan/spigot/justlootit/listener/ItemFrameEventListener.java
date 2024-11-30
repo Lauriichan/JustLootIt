@@ -2,8 +2,11 @@ package me.lauriichan.spigot.justlootit.listener;
 
 import java.time.Duration;
 
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.SoundCategory;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -11,6 +14,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.hanging.HangingBreakByEntityEvent;
 import org.bukkit.event.hanging.HangingBreakEvent;
+import org.bukkit.event.hanging.HangingBreakEvent.RemoveCause;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataContainer;
@@ -40,6 +44,8 @@ import me.lauriichan.spigot.justlootit.util.DataHelper;
 public class ItemFrameEventListener implements IListenerExtension {
     
     public static final String PLAYER_DATA_FRAME_LOOTING = "PlayerIsLootingFrame";
+    
+    private static final BlockData AIR_DATA = Bukkit.createBlockData(Material.AIR);
 
     private final JustLootItPlugin plugin;
     private final MainConfig config;
@@ -71,6 +77,9 @@ public class ItemFrameEventListener implements IListenerExtension {
             return;
         }
         event.setCancelled(JustLootItAccess.hasIdentity(entity.getPersistentDataContainer()));
+        if (event.getCause() == RemoveCause.OBSTRUCTION) {
+            entity.getWorld().setBlockData(event.getEntity().getLocation(), AIR_DATA);
+        }
     }
 
     @EventHandler(ignoreCancelled = true)

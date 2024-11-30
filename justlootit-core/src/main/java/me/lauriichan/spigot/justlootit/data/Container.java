@@ -189,6 +189,10 @@ public abstract class Container implements IModifiable {
     public ObjectSet<Entry<UUID, Access>> accesses() {
         return data.playerAccess.entrySet();
     }
+    
+    public void resetAllAccesses() {
+        data.playerAccess.clear();
+    }
 
     public void resetAccess(final UUID id) {
         if (data.playerAccess.remove(id) != null) {

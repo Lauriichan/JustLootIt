@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.UUID;
 
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.DoubleChest;
@@ -20,6 +21,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockExplodeEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
@@ -27,10 +29,11 @@ import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.vehicle.VehicleDamageEvent;
+import org.bukkit.event.world.StructureGrowEvent;
+import org.bukkit.inventory.EntityEquipment;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.persistence.PersistentDataContainer;
 
 import me.lauriichan.laylib.localization.Key;
@@ -191,10 +194,40 @@ public class ContainerListener implements IListenerExtension {
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
     public void onEntityExplode(final EntityExplodeEvent event) {
         Iterator<Block> iterator = event.blockList().iterator();
-        while(iterator.hasNext()) {
+        while (iterator.hasNext()) {
             Block block = iterator.next();
             if (!(block.getState() instanceof org.bukkit.block.Container container)) {
-                return;
+                continue;
+            }
+            PersistentDataContainer dataContainer = container.getPersistentDataContainer();
+            if (JustLootItAccess.hasIdentity(dataContainer) || JustLootItAccess.hasAnyOffset(dataContainer)) {
+                iterator.remove();
+            }
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
+    public void onBlockExplode(BlockExplodeEvent event) {
+        Iterator<Block> iterator = event.blockList().iterator();
+        while (iterator.hasNext()) {
+            Block block = iterator.next();
+            if (!(block.getState() instanceof org.bukkit.block.Container container)) {
+                continue;
+            }
+            PersistentDataContainer dataContainer = container.getPersistentDataContainer();
+            if (JustLootItAccess.hasIdentity(dataContainer) || JustLootItAccess.hasAnyOffset(dataContainer)) {
+                iterator.remove();
+            }
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
+    public void onStructureGrowEvent(final StructureGrowEvent event) {
+        Iterator<BlockState> iterator = event.getBlocks().iterator();
+        World world = event.getWorld();
+        while (iterator.hasNext()) {
+            if (!(world.getBlockState(iterator.next().getLocation()) instanceof org.bukkit.block.Container container)) {
+                continue;
             }
             PersistentDataContainer dataContainer = container.getPersistentDataContainer();
             if (JustLootItAccess.hasIdentity(dataContainer) || JustLootItAccess.hasAnyOffset(dataContainer)) {
@@ -252,9 +285,8 @@ public class ContainerListener implements IListenerExtension {
         }
         final Player player = event.getPlayer();
         if (player.isSneaking()) {
-            final PlayerInventory inventory = player.getInventory();
-            final ItemStack first = inventory.getItemInMainHand(), second = inventory.getItemInOffHand();
-            if (first.getType().isBlock() && !first.getType().isAir() || second.getType().isBlock() && !second.getType().isAir()) {
+            final EntityEquipment equipment = player.getEquipment();
+            if (!equipment.getItem(EquipmentSlot.HAND).getType().isAir() || !equipment.getItem(EquipmentSlot.OFF_HAND).getType().isAir()) {
                 return;
             }
         }
