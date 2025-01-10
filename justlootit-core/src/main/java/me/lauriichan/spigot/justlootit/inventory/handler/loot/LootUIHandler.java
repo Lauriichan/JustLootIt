@@ -19,7 +19,7 @@ public final class LootUIHandler implements IHandler {
     public static final LootUIHandler LOOT_HANDLER = new LootUIHandler();
     public static final String ATTR_ID = "PlayerStorageId";
     public static final String ATTR_LIDDED_LOCATION = "LiddedBlockLocation";
-    
+
     public static final String PLAYER_DATA_LOOTING = "PlayerIsLooting";
     public static final int PLAYER_DATA_LOOTING_VALUE = 2;
 
@@ -43,7 +43,8 @@ public final class LootUIHandler implements IHandler {
         player.removeData(PLAYER_DATA_LOOTING);
         final Location blockLocation = inventory.attrUnset(ATTR_LIDDED_LOCATION, Location.class);
         if (blockLocation != null) {
-            BlockUtil.sendBlockClose(player.getLevel(), player.asBukkit(), blockLocation);
+            player.versionHandler().platform().scheduler().regional(blockLocation,
+                () -> BlockUtil.sendBlockClose(player.getLevel(), player.asBukkit(), blockLocation));
         }
         player.getCapability(StorageCapability.class).ifPresent(capability -> {
             Stored<CachedInventory> cached = capability.storage().read(id);
