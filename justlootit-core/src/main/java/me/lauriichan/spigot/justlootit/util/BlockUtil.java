@@ -43,6 +43,15 @@ public final class BlockUtil {
         return location;
     }
     
+    public static Container getNearbyChest(RegionAccessor region, Container container) {
+        BlockData data = container.getBlockData();
+        if (!(data instanceof Chest chest) || chest.getType() == Type.SINGLE) {
+            return null;
+        }
+        return BlockUtil.findChestAround(region, container.getX(), container.getY(), container.getZ(),
+            chest.getType(), chest.getFacing());
+    }
+    
     public static Container getNearbyChest(Container container) {
         BlockData data = container.getBlockData();
         if (!(data instanceof Chest chest) || chest.getType() == Type.SINGLE) {

@@ -138,7 +138,7 @@ public class StructureListener implements IListenerExtension {
                         return;
                     }
                     if (inventory.isEmpty()) {
-                        Container otherContainer = BlockUtil.getNearbyChest(container);
+                        Container otherContainer = BlockUtil.getNearbyChest(region, container);
                         if (otherContainer != null && JustLootItAccess.hasIdentity(otherContainer.getPersistentDataContainer())) {
                             BlockUtil.setContainerOffset(container, otherContainer, true);
                         }
