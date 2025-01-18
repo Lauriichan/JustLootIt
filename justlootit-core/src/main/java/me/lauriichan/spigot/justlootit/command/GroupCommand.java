@@ -122,7 +122,7 @@ public final class GroupCommand implements ICommandExtension {
             ComponentBuilder.create()
                 .appendContent(actor.getTranslatedMessageAsString(Messages.COMMAND_GROUP_LIST_FORMAT_ENTRY_TEXT, Key.of("group", group.id()),
                     getTimePlaceholder(actor, group.timeoutTime(), group.unit())))
-                .hoverText(Messages.COMMAND_GROUP_LIST_FORMAT_ENTRY_HOVER, actor.getLanguage())
+                .hoverText(Messages.COMMAND_GROUP_LIST_FORMAT_ENTRY_HOVER, actor)
                 .clickSuggest("{0} set {1}", commandManager.getPrefix() + "group", group.id()).finish().send(actor);
         }
         actor.sendMessage(""); // Add one space
@@ -131,7 +131,7 @@ public final class GroupCommand implements ICommandExtension {
             if (page != 1) {
                 component.appendContent(Messages.COMMAND_SYSTEM_ARROW_LEFT, actor.getLanguage())
                     .clickRun("{0} list {1}", commandManager.getPrefix() + "group", page - 1)
-                    .hoverText(Messages.COMMAND_SYSTEM_PAGE_PREVIOUS, actor.getLanguage()).finish();
+                    .hoverText(Messages.COMMAND_SYSTEM_PAGE_PREVIOUS, actor).finish();
             }
             if (page != maxPage) {
                 if (page != 1) {
@@ -139,7 +139,7 @@ public final class GroupCommand implements ICommandExtension {
                 }
                 component.appendContent(Messages.COMMAND_SYSTEM_ARROW_RIGHT, actor.getLanguage())
                     .clickRun("{0} list {1}", commandManager.getPrefix() + "group", page + 1)
-                    .hoverText(Messages.COMMAND_SYSTEM_PAGE_NEXT, actor.getLanguage()).finish();
+                    .hoverText(Messages.COMMAND_SYSTEM_PAGE_NEXT, actor).finish();
             }
             if (!component.isEmpty()) {
                 component.send(actor);

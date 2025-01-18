@@ -14,6 +14,7 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import it.unimi.dsi.fastutil.objects.ObjectSets;
+import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.minecraft.pluginbase.config.Configuration;
 import me.lauriichan.minecraft.pluginbase.config.IConfigExtension;
 import me.lauriichan.minecraft.pluginbase.config.IConfigHandler;
@@ -53,7 +54,7 @@ public class WorldConfig implements IConfigExtension {
     }
     
     @Override
-    public void onPropergate(Configuration configuration) throws Exception {
+    public void onPropergate(ISimpleLogger logger, Configuration configuration) throws Exception {
         propergate(configuration, "blacklist.structures", "example_structure_id", "another_example_structure_id");
         propergate(configuration, "blacklist.loottables", "example/loottable_id/with/category", "loottables/have/categories/example_loottable_name");
         configuration.set("blacklist.containers.vanilla", blacklistVanillaContainers);
@@ -63,7 +64,7 @@ public class WorldConfig implements IConfigExtension {
     }
     
     @Override
-    public void onLoad(Configuration configuration) throws Exception {
+    public void onLoad(ISimpleLogger logger, Configuration configuration) throws Exception {
         this.modified = false;
         load(configuration, "blacklist.structures", blacklistedStructures);
         load(configuration, "blacklist.loottables", blacklistedLootTables);
@@ -76,7 +77,7 @@ public class WorldConfig implements IConfigExtension {
     }
     
     @Override
-    public void onSave(Configuration configuration) throws Exception {
+    public void onSave(ISimpleLogger logger, Configuration configuration) throws Exception {
         this.modified = false;
         save(configuration, "blacklist.structures", blacklistedStructures);
         save(configuration, "blacklist.loottables", blacklistedLootTables);

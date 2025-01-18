@@ -201,6 +201,11 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     /*
      * Start
      */
+    
+    @Override
+    public void runTask(Runnable runnable) {
+        scheduler().sync(runnable);
+    }
 
     @Override
     protected IBukkitReflection createBukkitReflection() {

@@ -129,7 +129,9 @@ public abstract class Task<E> {
         if (isCompleted()) {
             return;
         }
-        stages.enqueue(stage);
+        synchronized(stages) {
+            stages.enqueue(stage);
+        }
         stage.start(this);
     }
 
@@ -150,12 +152,9 @@ public abstract class Task<E> {
 
     protected final void runStages(E value) {
         synchronized (stages) {
-            if (stages.isEmpty()) {
-                return;
-            }
             while (!stages.isEmpty()) {
                 try {
-                    stages.dequeue().done(value);
+                    stages.dequeue().done(this, value);
                 } catch (RuntimeException ignore) {
                     logger.error("Failed to run task completion stage", ignore);
                 }

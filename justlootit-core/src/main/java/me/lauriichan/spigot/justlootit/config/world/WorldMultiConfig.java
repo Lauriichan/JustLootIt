@@ -25,4 +25,9 @@ public final class WorldMultiConfig implements IMultiConfigExtension<UUID, World
         return "data://worlds/%s/settings.json".formatted(element.getName());
     }
 
+    @Override
+    public Class<WorldConfig> type() {
+        return WorldConfig.class;
+    }
+
 }

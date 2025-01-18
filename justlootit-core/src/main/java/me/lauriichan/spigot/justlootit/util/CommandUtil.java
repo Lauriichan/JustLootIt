@@ -52,4 +52,15 @@ public final class CommandUtil {
         return new Location(world, x.value(), y.value(), z.value());
     }
     
+    public static World getWorld(Actor<?> actor, World world) {
+        if (world == null) {
+            if (!(actor.getHandle() instanceof Entity entity)) {
+                actor.sendTranslatedMessage(Messages.COMMAND_SYSTEM_ACTOR_WORLD_REQUIRED);
+                return null;
+            }
+            return entity.getWorld();
+        }
+        return world;
+    }
+    
 }

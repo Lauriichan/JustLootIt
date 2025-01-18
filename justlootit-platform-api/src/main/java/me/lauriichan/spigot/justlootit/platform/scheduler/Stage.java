@@ -1,35 +1,48 @@
 package me.lauriichan.spigot.justlootit.platform.scheduler;
 
+import java.lang.invoke.VarHandle;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Consumer;
 import java.util.function.Function;
+
+import me.lauriichan.laylib.reflection.JavaLookup;
 
 abstract class Stage<E> {
 
     void start(Task<E> task) {}
 
-    abstract void done(E value);
+    abstract void done(Task<E> task, E value);
 
     public static class JoinStage<E> extends Stage<E> {
-
-        private volatile Thread thread;
-
-        public JoinStage() {
-            this.thread = Thread.currentThread();
+        
+        private static final VarHandle THREAD_HANDLE;
+        
+        static {
+            VarHandle threadHandle = null;
+            try {
+                threadHandle = JavaLookup.PLATFORM.lookup().findVarHandle(JoinStage.class, "thread", Thread.class);
+            } catch (NoSuchFieldException | IllegalAccessException e) {
+                // We don't really care, we know we have access, and we know the field exists.
+            }
+            THREAD_HANDLE = threadHandle;
         }
+        
+        private volatile Thread thread = Thread.currentThread();
 
         @Override
-        public void done(E value) {
-            if (this.thread == null) {
-                return;
+        public void done(Task<E> task, E value) {
+            Thread thr = (Thread) THREAD_HANDLE.getAndSet(this, null);
+            if (thr != null) {
+                LockSupport.unpark(thr);
             }
-            LockSupport.unpark(thread);
-            this.thread = null;
         }
 
         @Override
         public void start(Task<E> task) {
-            LockSupport.park();
+            Thread thr = (Thread) THREAD_HANDLE.get(this);
+            if (thr != null) {
+                LockSupport.park(thr);
+            }
         }
 
     }
@@ -45,7 +58,7 @@ abstract class Stage<E> {
         }
 
         @Override
-        public void done(E value) {
+        public void done(Task<E> task, E value) {
             if (this.mapper == null || this.targetTask == null) {
                 return;
             }
@@ -66,7 +79,7 @@ abstract class Stage<E> {
         }
 
         @Override
-        public void done(E value) {
+        public void done(Task<E> task, E value) {
             if (this.consumer == null) {
                 return;
             }
@@ -85,7 +98,7 @@ abstract class Stage<E> {
         }
 
         @Override
-        public void done(E value) {
+        public void done(Task<E> task, E value) {
             if (this.runnable == null) {
                 return;
             }

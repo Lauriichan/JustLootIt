@@ -97,7 +97,7 @@ public final class VanillaContainer extends Container implements IInventoryConta
             return IResult.empty();
         }
         AsyncJLIPlayerVanillaLootGenerateEvent event = new AsyncJLIPlayerVanillaLootGenerateEvent((JustLootItPlugin) player.versionHandler().plugin(), player, getLootTable(), generateSeed(player, seed));
-        event.call().join();
+        event.call().join(); // <-------
         player.versionHandler().versionHelper().fill(inventory, player.asBukkit(), location, event.lootTable(), event.seed());
         return new VanillaResult(event.lootTable(), event.seed());
     }

@@ -418,11 +418,13 @@ public final class Messages implements IMessageExtension {
     public static MessageProvider COMMAND_CONTAINER_GROUP_REMOVED_BLOCK;
     @Message(id = "command.container.group.removed.entity", content = "$#plugin.prefix Successfully removed the refresh group from the container linked to the entity at &c$x $y $z &7in &c$world&7.")
     public static MessageProvider COMMAND_CONTAINER_GROUP_REMOVED_ENTITY;
-    
+
     // Config
 
-    @Message(id = "command.config.save.single", content = "$#plugin.prefix Saving config '&c$config&7'...")
-    public static MessageProvider COMMAND_CONFIG_SAVE_SINGLE;
+    @Message(id = "command.config.save.chosen.start", content = "$#plugin.prefix Saving configs of type '&c$config&7'...")
+    public static MessageProvider COMMAND_CONFIG_SAVE_CHOSEN_START;
+    @Message(id = "command.config.save.chosen.end", content = "$#plugin.prefix Tried to save &c$total &7configs of type &7'&c$config&7': &c$success &7successful, &c$skipped &7skipped, &c$failed &7failed.")
+    public static MessageProvider COMMAND_CONFIG_SAVE_CHOSEN_END;
     @Message(id = "command.config.save.all.start", content = "$#plugin.prefix Saving configs...")
     public static MessageProvider COMMAND_CONFIG_SAVE_ALL_START;
     @Message(id = "command.config.save.all.end", content = "$#plugin.prefix Tried to save &c$total &7configs: &c$success &7successful, &c$skipped &7skipped, &c$failed &7failed.")
@@ -434,8 +436,10 @@ public final class Messages implements IMessageExtension {
     @Message(id = "command.config.save.result.failed", content = "$#plugin.prefix Failed to save config '&c$config&7', check the Server console for more info!")
     public static MessageProvider COMMAND_CONFIG_SAVE_RESULT_FAILED;
 
-    @Message(id = "command.config.reload.single", content = "$#plugin.prefix Reloading config '&c$config&7'...")
-    public static MessageProvider COMMAND_CONFIG_RELOAD_SINGLE;
+    @Message(id = "command.config.reload.chosen.start", content = "$#plugin.prefix Reloading configs of type '&c$config&7'...")
+    public static MessageProvider COMMAND_CONFIG_RELOAD_CHOSEN_START;
+    @Message(id = "command.config.reload.chosen.end", content = "$#plugin.prefix Tried to reload &c$total &7configs of type &7'&c$config&7': &c$success &7successful, &c$skipped &7skipped, &c$failed &7failed.")
+    public static MessageProvider COMMAND_CONFIG_RELOAD_CHOSEN_END;
     @Message(id = "command.config.reload.all.start", content = "$#plugin.prefix Reloadings configs...")
     public static MessageProvider COMMAND_CONFIG_RELOAD_ALL_START;
     @Message(id = "command.config.reload.all.end", content = "$#plugin.prefix Tried to reload &c$total &7configs: &c$success &7successful, &c$skipped &7skipped, &c$failed &7failed.")

@@ -198,7 +198,7 @@ public class HelpCommand implements ICommandExtension {
             if (page != 1) {
                 component.appendContent(Messages.COMMAND_SYSTEM_ARROW_LEFT, actor.getLanguage())
                     .clickRun(arrowCommandFormat, commandManager.getPrefix() + "help", helpText, page - 1)
-                    .hoverText(Messages.COMMAND_SYSTEM_PAGE_PREVIOUS, actor.getLanguage()).finish();
+                    .hoverText(Messages.COMMAND_SYSTEM_PAGE_PREVIOUS, actor).finish();
             }
             if (page != maxPage) {
                 if (page != 1) {
@@ -206,7 +206,7 @@ public class HelpCommand implements ICommandExtension {
                 }
                 component.appendContent(Messages.COMMAND_SYSTEM_ARROW_RIGHT, actor.getLanguage())
                     .clickRun(arrowCommandFormat, commandManager.getPrefix() + "help", helpText, page + 1)
-                    .hoverText(Messages.COMMAND_SYSTEM_PAGE_NEXT, actor.getLanguage()).finish();
+                    .hoverText(Messages.COMMAND_SYSTEM_PAGE_NEXT, actor).finish();
             }
             if (!component.isEmpty()) {
                 component.send(actor);

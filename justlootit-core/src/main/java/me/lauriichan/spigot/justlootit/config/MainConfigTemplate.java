@@ -1,5 +1,6 @@
 package me.lauriichan.spigot.justlootit.config;
 
+import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.minecraft.pluginbase.config.Config;
 import me.lauriichan.minecraft.pluginbase.config.ConfigValue;
 import me.lauriichan.minecraft.pluginbase.config.ConfigValueValidator;
@@ -67,7 +68,7 @@ public class MainConfigTemplate implements ISingleConfigExtension {
      */
     
     @Override
-    public void onLoad(Configuration configuration) throws Exception {
+    public void onLoad(ISimpleLogger logger, Configuration configuration) throws Exception {
         updateStorages();
     }
     

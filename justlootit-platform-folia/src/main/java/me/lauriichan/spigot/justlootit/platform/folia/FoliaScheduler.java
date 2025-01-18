@@ -251,10 +251,13 @@ public final class FoliaScheduler extends Scheduler {
      */
 
     private final Consumer<ScheduledTask> wrap(FoliaTask<Void> task, Runnable runnable) {
+        if (runnable == null) {
+            throw new IllegalArgumentException("WHY IS THIS NULL");
+        }
         return (t) -> {
             try {
                 runnable.run();
-            } catch (RuntimeException re) {
+            } catch (Throwable re) {
                 task.logger().error("Failed to complete scheduled task", re);
             }
             task.complete(null);
@@ -262,10 +265,13 @@ public final class FoliaScheduler extends Scheduler {
     }
 
     private final <E> Consumer<ScheduledTask> wrap(FoliaTask<E> task, Supplier<E> supplier) {
+        if (supplier == null) {
+            throw new IllegalArgumentException("WHY IS THIS NULL");
+        }
         return (t) -> {
             try {
                 task.complete(supplier.get());
-            } catch (RuntimeException re) {
+            } catch (Throwable re) {
                 task.logger().error("Failed to complete scheduled task", re);
                 task.complete(null);
             }

@@ -6,6 +6,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectCollection;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
+import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.minecraft.pluginbase.config.Configuration;
 import me.lauriichan.minecraft.pluginbase.config.IConfigHandler;
 import me.lauriichan.minecraft.pluginbase.config.ISingleConfigExtension;
@@ -47,7 +48,7 @@ public class RefreshConfig implements ISingleConfigExtension {
     }
 
     @Override
-    public void onPropergate(Configuration configuration) throws Exception {
+    public void onPropergate(ISimpleLogger logger, Configuration configuration) throws Exception {
         Configuration section = configuration.getConfiguration("example", true);
         section.set("__comment", "This an example group (which can also be used ingame), it defines a refresh interval of 3 hours.");
         section.set("unit", TimeUnit.HOURS.name());
@@ -57,7 +58,7 @@ public class RefreshConfig implements ISingleConfigExtension {
     }
 
     @Override
-    public void onLoad(Configuration configuration) throws Exception {
+    public void onLoad(ISimpleLogger logger, Configuration configuration) throws Exception {
         this.modified = false;
         ObjectArrayList<String> list = new ObjectArrayList<>();
         list.addAll(groups.keySet());
@@ -87,7 +88,7 @@ public class RefreshConfig implements ISingleConfigExtension {
     }
 
     @Override
-    public void onSave(Configuration configuration) throws Exception {
+    public void onSave(ISimpleLogger logger, Configuration configuration) throws Exception {
         this.modified = false;
         for (RefreshGroup group : groups.values()) {
             Configuration groupConfig = configuration.getConfiguration(group.id(), true);

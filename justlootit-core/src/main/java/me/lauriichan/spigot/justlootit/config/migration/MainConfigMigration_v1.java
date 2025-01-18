@@ -24,4 +24,11 @@ public final class MainConfigMigration_v1 extends ConfigMigrationExtension<MainC
         config.remove("player");
     }
 
+    public final void copy(Configuration config, String pathA, String pathB) {
+        if (!config.contains(pathA)) {
+            return;
+        }
+        config.set(pathB, config.get(pathA));
+    }
+
 }

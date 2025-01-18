@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>me.lauriichan.spigot.justlootit</groupId>
     <artifactId>justlootit-parent</artifactId>
-    <version>2.2.1</version>
+    <version>2.3.0</version>
     <packaging>pom</packaging>
     <name>JustLootIt</name>
     <modules>
@@ -26,9 +26,9 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- Versions -->
         <server.version>1.20.2</server.version>
-        <pluginbase.version>1.5.0</pluginbase.version>
+        <pluginbase.version>1.7.1</pluginbase.version>
         <betterinputs.version>0.3.0</betterinputs.version>
-        <laylib.version>0.4.0-SNAPSHOT</laylib.version>
+        <laylib.version>0.4.1-SNAPSHOT</laylib.version>
     </properties>
 
     <profiles>

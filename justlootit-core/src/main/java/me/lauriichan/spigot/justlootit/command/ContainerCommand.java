@@ -116,7 +116,7 @@ public class ContainerCommand implements ICommandExtension {
             plugin.versionHandler().getPlayer(actor.getHandle()).getCapability(PlayerGUICapability.class).ifPresent(guiCapability -> {
                 final IGuiInventory inventory = guiCapability.gui();
                 inventory.attrSet(ContainerPageHandler.ATTR_CONTAINER, container);
-                inventory.attrSet(ContainerPageHandler.ATTR_WORLD, CommandUtil.getLocation(actor, null, null, null, world).getWorld());
+                inventory.attrSet(ContainerPageHandler.ATTR_WORLD, CommandUtil.getWorld(actor, world));
                 inventory.setHandler(plugin.pagedInventoryRegistry().get(ContainerPageHandler.class));
                 inventory.open(actor.getHandle());
             });
