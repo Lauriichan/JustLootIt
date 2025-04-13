@@ -89,7 +89,7 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
 
     private final CacheTickTimer levelTickTimer = new CacheTickTimer();
     private final CacheTickTimer playerTickTimer = new CacheTickTimer();
-    
+
     private StorageMigrator storageMigrator;
     private StorageAdapterRegistry levelStorageRegistry;
     private StorageAdapterRegistry playerStorageRegistry;
@@ -130,6 +130,13 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     @Override
     protected void onPluginLoad() throws Throwable {
         platform = initPlatform();
+        if (platform.version().packageVersion() == null) {
+            logger().error(
+                "It seems like you are using paper or a fork of it and the minecraft version you are using is not yet known to JLI, please update your plugin or wait for an update.");
+            logger()
+                .error("You could also try to run the plugin on spigot, if its just a minor minecraft version update it could still work.");
+            return;
+        }
         if (!setupVersionHandler()) {
             return;
         }
@@ -201,7 +208,7 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     /*
      * Start
      */
-    
+
     @Override
     public void runTask(Runnable runnable) {
         scheduler().sync(runnable);
@@ -280,18 +287,18 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         });
         extension(CompatibilityDataExtension.class, true);
     }
-    
+
     private void setupStorage() {
         this.storageMigrator = new ExtensionStorageMigrator(this);
         this.levelStorageRegistry = new StorageAdapterRegistry(storageMigrator);
         this.playerStorageRegistry = new StorageAdapterRegistry(storageMigrator);
-        
+
         // Register level storage adapters
         levelStorageRegistry.register(CompatibilityContainer.ADAPTER);
         levelStorageRegistry.register(VanillaContainer.ADAPTER);
         levelStorageRegistry.register(StaticContainer.ADAPTER);
         levelStorageRegistry.register(FrameContainer.ADAPTER);
-        
+
         // Register player storage adapters
         playerStorageRegistry.register(CachedInventory.ADAPTER);
         playerStorageRegistry.register(CacheLookupTable.ADAPTER);
@@ -397,7 +404,7 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     public CacheTickTimer playerTickTimer() {
         return playerTickTimer;
     }
-    
+
     public StorageMigrator storageMigrator() {
         return storageMigrator;
     }
@@ -433,7 +440,7 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     public File mainWorldFolder() {
         return mainWorldFolder;
     }
-    
+
     public SpigotUpdater<PluginVersion> updater() {
         return updater;
     }
