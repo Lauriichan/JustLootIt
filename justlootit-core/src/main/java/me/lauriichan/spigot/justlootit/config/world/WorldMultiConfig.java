@@ -6,13 +6,20 @@ import org.bukkit.World;
 
 import me.lauriichan.minecraft.pluginbase.config.IMultiConfigExtension;
 import me.lauriichan.minecraft.pluginbase.extension.Extension;
+import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 
 @Extension
 public final class WorldMultiConfig implements IMultiConfigExtension<UUID, World, WorldConfig> {
 
+    private final boolean trialChamberBuggedVersion;
+
+    public WorldMultiConfig(final JustLootItPlugin plugin) {
+        this.trialChamberBuggedVersion = plugin.versionHelper().isTrialChamberBugged();
+    }
+
     @Override
     public WorldConfig create() {
-        return new WorldConfig();
+        return new WorldConfig(trialChamberBuggedVersion);
     }
 
     @Override

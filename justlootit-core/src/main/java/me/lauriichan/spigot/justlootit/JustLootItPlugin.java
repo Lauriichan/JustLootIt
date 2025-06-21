@@ -316,6 +316,12 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         CompatDependency.updateAll(this);
         // Check for updates
         runUpdateCheck();
+
+        // Warn about trial chambers
+        if (versionHelper.isTrialChamberBugged()) {
+            actor(Bukkit.getConsoleSender()).sendTranslatedMessage(Messages.WARNING_TRIAL_CHAMBER_BUG,
+                Key.of("bukkit.version", Bukkit.getVersion()));
+        }
     }
 
     private void runUpdateCheck() {

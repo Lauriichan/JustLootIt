@@ -22,6 +22,16 @@ public final class Messages implements IMessageExtension {
     public static MessageProvider PREFIX;
     
     /*
+     * Warnings
+     */
+
+    @Message(id = "warning.trial-chamber-bug", content = {
+        "$#plugin.prefix &4IMPORTANT: &7The server software version (&8$bukkit.version&7) you are using is bugged.&r",
+        "$#plugin.prefix &4IMPORTANT: &7JustLootIt will ignore &cTrial Chambers &cin this version, please be aware of that."
+    })
+    public static MessageProvider WARNING_TRIAL_CHAMBER_BUG;
+    
+    /*
      * Updater
      */
 

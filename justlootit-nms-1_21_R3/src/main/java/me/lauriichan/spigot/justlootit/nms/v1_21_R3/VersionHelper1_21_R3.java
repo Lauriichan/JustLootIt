@@ -1,11 +1,13 @@
 package me.lauriichan.spigot.justlootit.nms.v1_21_R3;
 
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.craftbukkit.v1_21_R3.CraftLootTable;
+import org.bukkit.craftbukkit.v1_21_R3.block.CraftTrialSpawner;
 import org.bukkit.craftbukkit.v1_21_R3.entity.CraftEntity;
 import org.bukkit.craftbukkit.v1_21_R3.entity.CraftPlayer;
 import org.bukkit.craftbukkit.v1_21_R3.inventory.CraftInventory;
@@ -106,6 +108,17 @@ public class VersionHelper1_21_R3 extends VersionHelper {
                 .withParameter(LootContextParams.THIS_ENTITY, minecraftPlayer).withLuck(minecraftPlayer.getLuck())
                 .create(LootContextParamSets.CHEST),
             seed);
+    }
+
+    @Override
+    public boolean isTrialChamberBugged() {
+        try {
+            return Modifier.isFinal(CraftTrialSpawner.class.getDeclaredField("normalConfig").getModifiers());
+        } catch (SecurityException e) {
+            throw new IllegalStateException("Failed to check if TrialSpawners are bugged", e);
+        } catch (NoSuchFieldException ignore) {
+            return false;
+        }
     }
 
 }

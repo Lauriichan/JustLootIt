@@ -28,5 +28,9 @@ public abstract class VersionHelper {
     public abstract LootTable getLootTable(NamespacedKey key);
 
     public abstract void fill(Inventory inventory, Player player, Location location, LootTable lootTable, long seed);
+    
+    public boolean isTrialChamberBugged() {
+        return false;
+    }
 
 }

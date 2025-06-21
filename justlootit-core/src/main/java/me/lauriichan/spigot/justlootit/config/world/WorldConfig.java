@@ -28,11 +28,17 @@ public class WorldConfig implements IConfigExtension {
 
     private final ObjectOpenHashSet<String> blacklistedCompatibilities = new ObjectOpenHashSet<>();
     
+    private final boolean trialChamberBuggedVersion;
+    
     private volatile boolean blacklistVanillaContainers = false;
     private volatile boolean blacklistStaticContainers = false;
     private volatile boolean blacklistFrameContainers = false;
     
     private volatile boolean modified = false;
+    
+    public WorldConfig(boolean trialChamberBuggedVersion) {
+        this.trialChamberBuggedVersion = trialChamberBuggedVersion;
+    }
     
     @Override
     public String name() {
@@ -74,6 +80,10 @@ public class WorldConfig implements IConfigExtension {
         List<String> list = configuration.getList("blacklist.containers.compatibilities", String.class);
         blacklistedCompatibilities.clear();
         addAll(blacklistedCompatibilities, list);
+        
+        if (trialChamberBuggedVersion && !isStructureBlacklisted("minecraft", "trial_chambers")) {
+            setStructureBlacklisted(NamespacedKey.minecraft("trial_chambers"), true);
+        }
     }
     
     @Override
