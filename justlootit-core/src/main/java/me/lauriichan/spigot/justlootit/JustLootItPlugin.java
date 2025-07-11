@@ -320,7 +320,8 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         // Warn about trial chambers
         if (versionHelper.isTrialChamberBugged()) {
             actor(Bukkit.getConsoleSender()).sendTranslatedMessage(Messages.WARNING_TRIAL_CHAMBER_BUG,
-                Key.of("bukkit.version", Bukkit.getVersion()));
+                Key.of("software.name", Bukkit.getName()),
+                Key.of("software.version", Bukkit.getVersion()));
         }
     }
 

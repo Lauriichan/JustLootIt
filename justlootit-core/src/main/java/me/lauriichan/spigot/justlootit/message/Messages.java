@@ -25,9 +25,14 @@ public final class Messages implements IMessageExtension {
      * Warnings
      */
 
-    @Message(id = "warning.trial-chamber-bug", content = {
-        "$#plugin.prefix &4IMPORTANT: &7The server software version (&8$bukkit.version&7) you are using is bugged.&r",
-        "$#plugin.prefix &4IMPORTANT: &7JustLootIt will ignore &cTrial Chambers &cin this version, please be aware of that."
+    @Message(id = "warning.trial-chamber-bug-updated", content = {
+        "",
+        "&8>== $#plugin.name &8| &4IMPORTANT&r",
+        "",
+        "&7The server software version (&8$software.name / $software.version&7) you are using is bugged.&r",
+        "&cJustLootIt will ignore Trial Chambers &cin this version, please be aware of that.&r",
+        "",
+        "&8>== $#plugin.name &8| &4IMPORTANT&r"
     })
     public static MessageProvider WARNING_TRIAL_CHAMBER_BUG;
     

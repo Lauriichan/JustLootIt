@@ -24,5 +24,10 @@ public final class SpigotPlatform extends JustLootItPlatform {
     public SpigotScheduler scheduler() {
         return scheduler;
     }
+    
+    @Override
+    public boolean isPaper() {
+        return false;
+    }
 
 }

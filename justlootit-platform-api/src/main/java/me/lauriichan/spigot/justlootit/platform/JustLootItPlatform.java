@@ -23,6 +23,10 @@ public abstract class JustLootItPlatform {
         return logger;
     }
     
+    public boolean isPaper() {
+        return true;
+    }
+    
     public abstract IVersion version();
     
     public abstract Scheduler scheduler();

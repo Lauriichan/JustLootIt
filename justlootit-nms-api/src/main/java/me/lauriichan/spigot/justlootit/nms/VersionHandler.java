@@ -26,6 +26,12 @@ import me.lauriichan.spigot.justlootit.platform.JustLootItPlatform;
 import me.lauriichan.spigot.justlootit.platform.scheduler.Scheduler;
 
 public abstract class VersionHandler {
+    
+    private static boolean IS_PAPER;
+    
+    public static boolean isPaper() {
+        return IS_PAPER;
+    }
 
     protected final VersionListener bukkitListener = new VersionListener(this);
 
@@ -44,6 +50,7 @@ public abstract class VersionHandler {
     }
 
     public VersionHandler(final IServiceProvider serviceProvider, final IDebugHelper debugHelper) {
+        IS_PAPER = serviceProvider.platform().isPaper();
         this.serviceProvider = serviceProvider;
         this.debugHelper = new DebugHelper(debugHelper);
     }

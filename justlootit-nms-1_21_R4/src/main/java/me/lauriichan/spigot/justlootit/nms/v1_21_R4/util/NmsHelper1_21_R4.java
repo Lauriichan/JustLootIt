@@ -16,6 +16,7 @@ import org.bukkit.persistence.PersistentDataType;
 
 import me.lauriichan.laylib.reflection.ClassUtil;
 import me.lauriichan.laylib.reflection.JavaLookup;
+import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -36,7 +37,7 @@ public final class NmsHelper1_21_R4 {
         }
 
         static MethodHandle getTileEntity() {
-            Method method = ClassUtil.getMethod(CraftBlockEntityState.class, "getTileEntity");
+            Method method = ClassUtil.getMethod(CraftBlockEntityState.class, VersionHandler.isPaper() ? "getBlockEntity" : "getTileEntity");
             if (method == null || !BlockEntity.class.isAssignableFrom(method.getReturnType())) {
                 throw new IllegalStateException("Couldn't find method 'getTileEntity', JustLootIt won't work here.");
             }
