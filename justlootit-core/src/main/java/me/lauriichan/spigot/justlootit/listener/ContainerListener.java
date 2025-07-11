@@ -381,35 +381,40 @@ public class ContainerListener implements IListenerExtension {
                 if (!dataContainer.value().access(playerId)) {
                     if (lookupTable.access(entryId)) {
                         final Stored<CachedInventory> storedCachedInventory = playerStorage.read(lookupTable.getEntryIdByMapped(entryId));
-                        final CachedInventory cachedInventory = storedCachedInventory.value();
-                        final int columnAmount = IGuiInventory.getColumnAmount(cachedInventory.getType());
-                        if (cachedInventory.size() % columnAmount == 0) {
-                            final int rowAmount = cachedInventory.size() / columnAmount;
-                            if (((columnAmount != 9) || ((rowAmount <= 6) && (rowAmount >= 1)))) {
-                                player.getCapability(PlayerGUICapability.class).ifPresent(guiCapability -> {
-                                    final IGuiInventory inventory = guiCapability.gui();
-                                    IGuiInventoryUpdater updater = inventory.updater()
-                                        .title(actor.getTranslatedMessageAsString(UIInventoryNames.LOOT_UI_NAME));
-                                    if (columnAmount == 9) {
-                                        updater.chestSize(CHEST_VALUES[rowAmount - 1]);
-                                    } else {
-                                        updater.type(cachedInventory.getType());
-                                    }
-                                    updater.apply();
-                                    player.setData(LootUIHandler.PLAYER_DATA_LOOTING, LootUIHandler.PLAYER_DATA_LOOTING_VALUE);
-                                    inventory.attrSet(LootUIHandler.ATTR_ID, storedCachedInventory.id());
-                                    inventory.setHandler(LootUIHandler.LOOT_HANDLER);
-                                    inventory.getInventory().setContents(cachedInventory.getItems());
-                                    inventory.open(bukkitPlayer);
-                                    if (inventoryHolder instanceof DoubleChest || inventoryHolder instanceof Lidded) {
-                                        inventory.attrSet(LootUIHandler.ATTR_LIDDED_LOCATION, location);
-                                        BlockUtil.sendBlockOpen(level, bukkitPlayer, location);
-                                    }
-                                });
-                                return;
+                        if (storedCachedInventory == null) {
+                            lookupTable.drop(entryId);
+                            actor.logger().warning("Dropped loot of container {0} for player {1} in world {2}", entryId.containerId(), playerId, entryId.worldId());
+                        } else {
+                            final CachedInventory cachedInventory = storedCachedInventory.value();
+                            final int columnAmount = IGuiInventory.getColumnAmount(cachedInventory.getType());
+                            if (cachedInventory.size() % columnAmount == 0) {
+                                final int rowAmount = cachedInventory.size() / columnAmount;
+                                if (((columnAmount != 9) || ((rowAmount <= 6) && (rowAmount >= 1)))) {
+                                    player.getCapability(PlayerGUICapability.class).ifPresent(guiCapability -> {
+                                        final IGuiInventory inventory = guiCapability.gui();
+                                        IGuiInventoryUpdater updater = inventory.updater()
+                                            .title(actor.getTranslatedMessageAsString(UIInventoryNames.LOOT_UI_NAME));
+                                        if (columnAmount == 9) {
+                                            updater.chestSize(CHEST_VALUES[rowAmount - 1]);
+                                        } else {
+                                            updater.type(cachedInventory.getType());
+                                        }
+                                        updater.apply();
+                                        player.setData(LootUIHandler.PLAYER_DATA_LOOTING, LootUIHandler.PLAYER_DATA_LOOTING_VALUE);
+                                        inventory.attrSet(LootUIHandler.ATTR_ID, storedCachedInventory.id());
+                                        inventory.setHandler(LootUIHandler.LOOT_HANDLER);
+                                        inventory.getInventory().setContents(cachedInventory.getItems());
+                                        inventory.open(bukkitPlayer);
+                                        if (inventoryHolder instanceof DoubleChest || inventoryHolder instanceof Lidded) {
+                                            inventory.attrSet(LootUIHandler.ATTR_LIDDED_LOCATION, location);
+                                            BlockUtil.sendBlockOpen(level, bukkitPlayer, location);
+                                        }
+                                    });
+                                    return;
+                                }
                             }
+                            playerStorage.delete(storedCachedInventory.id());
                         }
-                        playerStorage.delete(storedCachedInventory.id());
                     }
                     final Duration duration = dataContainer.value().durationUntilNextAccess(playerId);
                     if (duration.isNegative()) {

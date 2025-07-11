@@ -1,7 +1,6 @@
 package me.lauriichan.spigot.justlootit.nms.v1_21_R5;
 
 import org.bukkit.Location;
-import org.bukkit.craftbukkit.v1_21_R5.CraftRegistry;
 import org.bukkit.craftbukkit.v1_21_R5.CraftWorld;
 import org.bukkit.craftbukkit.v1_21_R5.entity.CraftPlayer;
 import org.bukkit.entity.Player;
@@ -48,7 +47,7 @@ public class LevelAdapter1_21_R5 extends LevelAdapter {
 
     @Override
     public void triggerGameEvent(Player player, org.bukkit.GameEvent event, Location location) {
-        level.gameEvent(((CraftPlayer) player).getHandle(), CraftRegistry.bukkitToMinecraftHolder(event, Registries.GAME_EVENT),
+        level.gameEvent(((CraftPlayer) player).getHandle(), PlatformHelper1_21_R5.bukkitToMinecraftHolder(event, Registries.GAME_EVENT),
             new BlockPos(location.getBlockX(), location.getBlockY(), location.getBlockZ()));
     }
 

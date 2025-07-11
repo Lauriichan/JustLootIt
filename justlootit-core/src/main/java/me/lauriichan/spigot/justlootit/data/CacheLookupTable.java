@@ -192,6 +192,14 @@ public class CacheLookupTable implements IModifiable {
         }
         return mappedToTable.get(mappedId).entryId;
     }
+    
+    public void drop(final WorldEntry mappedId) {
+        LookupEntry entry = mappedToTable.remove(mappedId);
+        if (entry == null) {
+            return;
+        }
+        entryIds.rem(entry.entryId);
+    }
 
     public boolean access(final WorldEntry mappedId) {
         update();
