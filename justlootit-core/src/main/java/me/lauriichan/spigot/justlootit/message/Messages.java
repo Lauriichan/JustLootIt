@@ -380,6 +380,14 @@ public final class Messages implements IMessageExtension {
         "&8| &7$key: &c$value"
     })
     public static MessageProvider COMMAND_CONTAINER_INFO_CONTAINER_COMPATIBILITY_FORMAT;
+    @Message(id = "command.container.info.container.compatibility.multi-format.header", content = {
+        "&8| &7$key:"
+    })
+    public static MessageProvider COMMAND_CONTAINER_INFO_CONTAINER_COMPATIBILITY_MULTI_FORMAT_HEADER;
+    @Message(id = "command.container.info.container.compatibility.multi-format.entry", content = {
+        "&8| &7- &c$value"
+    })
+    public static MessageProvider COMMAND_CONTAINER_INFO_CONTAINER_COMPATIBILITY_MULTI_FORMAT_ENTRY;
 
     @Message(id = "command.container.link.already-container.entity", content = "$#plugin.prefix Entity at &c$x $y $z &7in &c$world &7is already linked to a JustLootIt Container.")
     public static MessageProvider COMMAND_CONTAINER_LINK_ALREADY_CONTAINER_ENTITY;

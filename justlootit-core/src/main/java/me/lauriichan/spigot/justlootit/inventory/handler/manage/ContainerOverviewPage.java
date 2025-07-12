@@ -4,6 +4,8 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.lauriichan.laylib.command.Actor;
 import me.lauriichan.laylib.localization.Key;
 import me.lauriichan.minecraft.pluginbase.extension.Extension;
@@ -39,8 +41,9 @@ public final class ContainerOverviewPage extends ContainerPage {
         IGuiInventory inventory = context.inventory();
         @SuppressWarnings("unchecked")
         Stored<Container> storedContainer = inventory.attr(ContainerPageHandler.ATTR_CONTAINER, Stored.class).cast();
-        if (inventory.updater().chestSize(ChestSize.GRID_4x9)
-            .title(actor.getTranslatedMessageAsString(UIInventoryNames.CONTAINER_MANAGE_PAGE_OVERVIEW_NAME, Key.of("id", storedContainer.id())))
+        if (inventory
+            .updater().chestSize(ChestSize.GRID_4x9).title(actor
+                .getTranslatedMessageAsString(UIInventoryNames.CONTAINER_MANAGE_PAGE_OVERVIEW_NAME, Key.of("id", storedContainer.id())))
             .apply()) {
             return;
         }
@@ -104,20 +107,49 @@ public final class ContainerOverviewPage extends ContainerPage {
 
     private void onCompatibilityContainer(CompatibilityContainer container, IGuiInventory inventory, Actor<Player> actor) {
         ColoredLoreEditor loreEditor = ItemEditor.ofHead(Textures.GEODE_BLANK)
-            .setName(actor.getTranslatedMessageAsString(UIInventoryNames.CONTAINER_MANAGE_PAGE_OVERVIEW_ITEM_CONTAINER_INFO_COMPATIBILITY_NAME)).lore();
+            .setName(
+                actor.getTranslatedMessageAsString(UIInventoryNames.CONTAINER_MANAGE_PAGE_OVERVIEW_ITEM_CONTAINER_INFO_COMPATIBILITY_NAME))
+            .lore();
         loreEditor.clear();
-        container.getCompatibilityData()
-            .addInfoData(key -> loreEditor.add(actor.getTranslatedMessageAsString(
-                UIInventoryNames.CONTAINER_MANAGE_PAGE_OVERVIEW_ITEM_CONTAINER_INFO_COMPATIBILITY_LORE_FORMAT, Key.of("key", key.getKey()),
-                Key.of("value", key.getValue())).split("\n")));
-        if (loreEditor.length() == 0) {
-            loreEditor.add(actor.getTranslatedMessageAsString(UIInventoryNames.CONTAINER_MANAGE_PAGE_OVERVIEW_ITEM_CONTAINER_INFO_COMPATIBILITY_LORE_NO_DATA_AVAILABLE).split("\n"));
+        Object2ObjectArrayMap<String, ObjectArrayList<Object>> values = new Object2ObjectArrayMap<>();
+        container.getCompatibilityData().addInfoData(key -> {
+            ObjectArrayList<Object> list = values.get(key.getKey());
+            if (list == null) {
+                list = new ObjectArrayList<>();
+                values.put(key.getKey(), list);
+            }
+            list.add(key.getValue());
+        });
+        if (!values.isEmpty()) {
+            values.object2ObjectEntrySet().forEach(entry -> {
+                if (entry.getValue().size() == 1) {
+                    loreEditor.add(actor.getTranslatedMessageAsString(
+                        UIInventoryNames.CONTAINER_MANAGE_PAGE_OVERVIEW_ITEM_CONTAINER_INFO_COMPATIBILITY_LORE_FORMAT,
+                        Key.of("key", entry.getKey()), Key.of("value", entry.getValue().get(0))).split("\n"));
+                    return;
+                }
+                loreEditor.add(actor.getTranslatedMessageAsString(
+                    UIInventoryNames.CONTAINER_MANAGE_PAGE_OVERVIEW_ITEM_CONTAINER_INFO_COMPATIBILITY_LORE_MULTI_FORMAT_HEADER,
+                    Key.of("key", entry.getKey())).split("\n"));
+                for (Object value : entry.getValue()) {
+                    loreEditor.add(actor.getTranslatedMessageAsString(
+                        UIInventoryNames.CONTAINER_MANAGE_PAGE_OVERVIEW_ITEM_CONTAINER_INFO_COMPATIBILITY_LORE_MULTI_FORMAT_ENTRY,
+                        Key.of("value", value)).split("\n"));
+                }
+            });
+        } else {
+            loreEditor
+                .add(actor
+                    .getTranslatedMessageAsString(
+                        UIInventoryNames.CONTAINER_MANAGE_PAGE_OVERVIEW_ITEM_CONTAINER_INFO_COMPATIBILITY_LORE_NO_DATA_AVAILABLE)
+                    .split("\n"));
         }
         inventory.set(2, 1, loreEditor.apply());
     }
 
     @Override
-    public boolean onClickPickup(PageContext<ContainerPage, PlayerAdapter> context, ItemStack item, int slot, int amount, boolean cursor, ClickType type) {
+    public boolean onClickPickup(PageContext<ContainerPage, PlayerAdapter> context, ItemStack item, int slot, int amount, boolean cursor,
+        ClickType type) {
         @SuppressWarnings("unchecked")
         Stored<Container> container = context.inventory().attr(ContainerPageHandler.ATTR_CONTAINER, Stored.class);
         if (slot == InventoryMath.toSlot(2, 1, 9)) {

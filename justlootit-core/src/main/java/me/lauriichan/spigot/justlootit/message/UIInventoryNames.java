@@ -92,6 +92,15 @@ public final class UIInventoryNames implements IMessageExtension {
         "&8= &7$value"
     })
     public static MessageProvider CONTAINER_MANAGE_PAGE_OVERVIEW_ITEM_CONTAINER_INFO_COMPATIBILITY_LORE_FORMAT;
+    @Message(id = "inventory.container-manage.page.overview.item.container-info.compatibility.lore.multi-format.header", content = {
+        "&r",
+        "&8$key:",
+    })
+    public static MessageProvider CONTAINER_MANAGE_PAGE_OVERVIEW_ITEM_CONTAINER_INFO_COMPATIBILITY_LORE_MULTI_FORMAT_HEADER;
+    @Message(id = "inventory.container-manage.page.overview.item.container-info.compatibility.lore.multi-format.entry", content = {
+        "&8= &7$value"
+    })
+    public static MessageProvider CONTAINER_MANAGE_PAGE_OVERVIEW_ITEM_CONTAINER_INFO_COMPATIBILITY_LORE_MULTI_FORMAT_ENTRY;
     @Message(id = "inventory.container-manage.page.overview.item.container-info.compatibility.lore.no-data-available", content = {
         "&r",
         "&8No data available"

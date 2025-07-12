@@ -16,6 +16,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.loot.LootTable;
 import org.bukkit.persistence.PersistentDataContainer;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.lauriichan.laylib.command.Actor;
 import me.lauriichan.laylib.command.annotation.Action;
 import me.lauriichan.laylib.command.annotation.Argument;
@@ -58,8 +60,8 @@ import net.md_5.bungee.api.chat.HoverEvent;
 @Permission(JustLootItPermission.COMMAND_CONTAINER)
 public class ContainerCommand implements ICommandExtension {
 
-// TODO: Implement this
-//    @Action("alter loottable")
+    // TODO: Implement this
+    //    @Action("alter loottable")
     @Description("$#command.description.justlootit.container.alter.loottable")
     public void alter(final JustLootItPlugin plugin, final Actor<?> actor, @Argument(name = "world", index = 1) final World world,
         @Argument(name = "loottable to replace", index = 2) final NamespacedKey find,
@@ -763,15 +765,39 @@ public class ContainerCommand implements ICommandExtension {
             root.appendContent(actor.getTranslatedMessageAsString(Messages.COMMAND_CONTAINER_INFO_CONTAINER_COMPATIBILITY_HEADER,
                 Key.of("plugin", compat.getCompatibilityData().extension().id()))).finish();
             ComponentBuilder<?, ?> compatData = ComponentBuilder.create();
-            compat.getCompatibilityData()
-                .addInfoData(key -> compatData
-                    .appendContent(actor.getTranslatedMessageAsString(Messages.COMMAND_CONTAINER_INFO_CONTAINER_COMPATIBILITY_FORMAT,
-                        Key.of("key", key.getKey()), Key.of("value", key.getValue())))
-                    .appendChar('\n').finish());
-            root.send(actor);
-            if (compatData.isEmpty()) {
+            Object2ObjectArrayMap<String, ObjectArrayList<Object>> values = new Object2ObjectArrayMap<>();
+            compat.getCompatibilityData().addInfoData(key -> {
+                ObjectArrayList<Object> list = values.get(key.getKey());
+                if (list == null) {
+                    list = new ObjectArrayList<>();
+                    values.put(key.getKey(), list);
+                }
+                list.add(key.getValue());
+            });
+            if (!values.isEmpty()) {
+                values.object2ObjectEntrySet().forEach(entry -> {
+                    if (entry.getValue().size() == 1) {
+                        compatData.appendContent(
+                            actor.getTranslatedMessageAsString(Messages.COMMAND_CONTAINER_INFO_CONTAINER_COMPATIBILITY_FORMAT,
+                                Key.of("key", entry.getKey()), Key.of("value", entry.getValue().get(0))))
+                            .appendChar('\n').finish();
+                        return;
+                    }
+                    compatData
+                        .appendContent(actor.getTranslatedMessageAsString(
+                            Messages.COMMAND_CONTAINER_INFO_CONTAINER_COMPATIBILITY_MULTI_FORMAT_HEADER, Key.of("key", entry.getKey())))
+                        .appendChar('\n').finish();
+                    for (Object value : entry.getValue()) {
+                        compatData
+                            .appendContent(actor.getTranslatedMessageAsString(
+                                Messages.COMMAND_CONTAINER_INFO_CONTAINER_COMPATIBILITY_MULTI_FORMAT_ENTRY, Key.of("value", value)))
+                            .appendChar('\n').finish();
+                    }
+                });
+            } else {
                 compatData.appendContent(Messages.COMMAND_CONTAINER_INFO_CONTAINER_COMPATIBILITY_NO_DATA, actor).finish();
             }
+            root.send(actor);
             compatData.send(actor);
         }
     }

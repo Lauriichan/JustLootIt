@@ -69,41 +69,41 @@ public class CompatibilityContainer extends Container implements IInventoryConta
     @Override
     public ItemEditor createIcon() {
         CompatibilityDataExtension<?> extension = compatibilityData.extension();
-        ItemEditor editor = ItemEditor.of(extension.iconType()).setName("&9Compatibility (&b%s)".formatted(extension.id()));
+        ItemEditor editor = ItemEditor.of(extension.iconType()).setName("&9Compatibility (&b%s&9)".formatted(extension.id()));
         extension.modifyIcon(editor);
         return editor;
     }
 
     @Override
-    public void fillNoResult(final PlayerAdapter player, final InventoryHolder holder, final Location location, final Inventory inventory) {
+    public IResult fill(final PlayerAdapter player, final InventoryHolder holder, final Location location, final Inventory inventory) {
         if (!compatibilityData.extension().isActive()) {
             ActorCapability.actor(player).sendTranslatedMessage(Messages.CONTAINER_COMPATIBILITY_NOT_ACTIVE,
                 Key.of("plugin", compatibilityData.extension().id()));
-            return;
+            return IResult.failed();
         }
         try {
             if (holder instanceof Entity entity) {
                 if (!compatibilityData.canFill(entity, location)) {
                     ActorCapability.actor(player).sendTranslatedMessage(Messages.CONTAINER_COMPATIBILITY_FILL_NOT_AVAILABLE,
                         Key.of("plugin", compatibilityData.extension().id()));
-                    return;
+                    return IResult.failed();
                 }
                 if (!compatibilityData.fill(this, player, entity, location, inventory)) {
                     ActorCapability.actor(player).sendTranslatedMessage(Messages.CONTAINER_COMPATIBILITY_FILL_FAILED,
                         Key.of("plugin", compatibilityData.extension().id()));
-                    return;
+                    return IResult.failed();
                 }
             } else {
                 BlockState state = (BlockState) holder;
                 if (!compatibilityData.canFill(state, location)) {
                     ActorCapability.actor(player).sendTranslatedMessage(Messages.CONTAINER_COMPATIBILITY_FILL_NOT_AVAILABLE,
                         Key.of("plugin", compatibilityData.extension().id()));
-                    return;
+                    return IResult.failed();
                 }
                 if (!compatibilityData.fill(this, player, state, location, inventory)) {
                     ActorCapability.actor(player).sendTranslatedMessage(Messages.CONTAINER_COMPATIBILITY_FILL_FAILED,
                         Key.of("plugin", compatibilityData.extension().id()));
-                    return;
+                    return IResult.failed();
                 }
             }
         } catch (RuntimeException exp) {
@@ -111,7 +111,9 @@ public class CompatibilityContainer extends Container implements IInventoryConta
                 Key.of("plugin", compatibilityData.extension().id()));
             player.versionHandler().logger().error("Failed to fill compatibility container for plugin '{0}' with data version {1}.", exp,
                 compatibilityData.extension().id(), compatibilityData.version());
+            return IResult.failed();
         }
+        return IResult.empty();
     }
 
 }
