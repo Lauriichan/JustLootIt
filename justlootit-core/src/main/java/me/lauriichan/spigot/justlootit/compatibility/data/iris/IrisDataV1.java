@@ -1,11 +1,11 @@
 package me.lauriichan.spigot.justlootit.compatibility.data.iris;
 
-import com.volmit.iris.engine.framework.Engine;
-import com.volmit.iris.engine.object.IrisLootTable;
-import com.volmit.iris.util.collection.KList;
+import org.bukkit.World;
 
-import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.compatibility.data.CompatibilityDataExtension;
+import me.lauriichan.spigot.justlootit.compatibility.provider.CompatDependency;
+import me.lauriichan.spigot.justlootit.compatibility.provider.iris.IIrisAccess;
+import me.lauriichan.spigot.justlootit.compatibility.provider.iris.IIrisProvider;
 
 public final class IrisDataV1 implements IIrisData {
 
@@ -13,7 +13,7 @@ public final class IrisDataV1 implements IIrisData {
     private final IIrisTableKey[] keys;
     private final long seed;
 
-    private volatile KList<IrisLootTable> lootTables;
+    private volatile IIrisLootCache cache;
 
     public IrisDataV1(final CompatibilityDataExtension<?> extension, final IIrisTableKey[] keys, final long seed) {
         this.extension = extension;
@@ -30,11 +30,6 @@ public final class IrisDataV1 implements IIrisData {
     public int version() {
         return 0;
     }
-
-    @Override
-    public IIrisTableKey[] keys() {
-        return keys;
-    }
     
     @Override
     public long seed() {
@@ -42,20 +37,20 @@ public final class IrisDataV1 implements IIrisData {
     }
 
     @Override
-    public KList<IrisLootTable> tables(Engine engine) {
-        if (lootTables != null) {
-            return lootTables;
+    public IIrisTableKey[] keys() {
+        return keys;
+    }
+
+    @Override
+    public IIrisLootCache cache(IIrisAccess access, World world) {
+        if (cache != null) {
+            return cache;
         }
-        KList<IrisLootTable> tables = new KList<>(keys.length);
-        for (IIrisTableKey key : keys) {
-            IrisLootTable table = key.lootTable(engine);
-            if (table == null) {
-                JustLootItPlugin.get().logger().warning("Failed to retrieve iris loot table '{0}'", key.identifier());
-                continue;
-            }
-            tables.add(table);
+        IIrisProvider provider = CompatDependency.getActiveProvider(extension().id(), IIrisProvider.class);
+        if (provider == null) {
+            return null;
         }
-        return lootTables = tables;
+        return cache = provider.access().loadLootTables(world, keys);
     }
 
 }

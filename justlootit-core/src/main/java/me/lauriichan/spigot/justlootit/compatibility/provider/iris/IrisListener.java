@@ -1,5 +1,7 @@
 package me.lauriichan.spigot.justlootit.compatibility.provider.iris;
 
+import java.util.Collections;
+
 import org.bukkit.Location;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Container;
@@ -12,8 +14,12 @@ import com.volmit.iris.core.events.IrisLootEvent;
 import com.volmit.iris.engine.data.cache.Cache;
 import com.volmit.iris.engine.framework.Engine;
 import com.volmit.iris.engine.object.InventorySlotType;
+import com.volmit.iris.engine.object.IrisLootTable;
+import com.volmit.iris.engine.object.IrisVanillaLootTable;
+import com.volmit.iris.util.collection.KList;
 import com.volmit.iris.util.math.BlockPosition;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.lauriichan.minecraft.pluginbase.config.ConfigManager;
 import me.lauriichan.spigot.justlootit.JustLootItAccess;
 import me.lauriichan.spigot.justlootit.JustLootItConstant;
@@ -22,6 +28,8 @@ import me.lauriichan.spigot.justlootit.capability.StorageCapability;
 import me.lauriichan.spigot.justlootit.compatibility.data.CompatibilityDataExtension;
 import me.lauriichan.spigot.justlootit.compatibility.data.iris.IIrisTableKey;
 import me.lauriichan.spigot.justlootit.compatibility.data.iris.IrisDataExtension;
+import me.lauriichan.spigot.justlootit.compatibility.data.iris.IIrisTableKey.IrisTableKey;
+import me.lauriichan.spigot.justlootit.compatibility.data.iris.IIrisTableKey.VanillaTableKey;
 import me.lauriichan.spigot.justlootit.config.world.WorldConfig;
 import me.lauriichan.spigot.justlootit.config.world.WorldMultiConfig;
 import me.lauriichan.spigot.justlootit.data.CompatibilityContainer;
@@ -70,7 +78,7 @@ public class IrisListener implements Listener {
         if (structureId != null && config.isStructureBlacklisted(pluginId, structureId)) {
             return;
         }
-        IIrisTableKey[] keys = IIrisTableKey.create(pluginId, config, event.getTables());
+        IIrisTableKey[] keys = create(config, event.getTables());
         event.getTables().clear();
         BlockUtil.setContainerOffsetToNearbyChest(container);
         long seed = Cache.key(x >> 4, z >> 4) + BlockPosition.toLong(x, loc.getBlockY(), z);
@@ -81,6 +89,26 @@ public class IrisListener implements Listener {
             JustLootItAccess.setIdentity(container.getPersistentDataContainer(), stored.id());
             container.update();
         });
+    }
+    
+    private IIrisTableKey[] create(WorldConfig config, KList<IrisLootTable> lootTables) {
+        ObjectArrayList<IIrisTableKey> keys = new ObjectArrayList<>(lootTables.size());
+        for (IrisLootTable table : lootTables) {
+            if (table instanceof IrisVanillaLootTable vanilla) {
+                if (config.isLootTableBlacklisted(vanilla.getLootTable().getKey())) {
+                    continue;
+                }
+                keys.add(new VanillaTableKey(vanilla.getLootTable().getKey()));
+                continue;
+            }
+            if (config.isLootTableBlacklisted(pluginId, table.getLoadKey())) {
+                continue;
+            }
+            keys.add(new IrisTableKey(table.getLoadKey()));
+
+        }
+        Collections.sort(keys);
+        return keys.toArray(IIrisTableKey[]::new);
     }
 
     private String getStructureId(Engine engine, int x, int y, int z) {
