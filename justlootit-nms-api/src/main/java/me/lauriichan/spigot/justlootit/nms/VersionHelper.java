@@ -29,6 +29,8 @@ public abstract class VersionHelper {
 
     public abstract void fill(Inventory inventory, Player player, Location location, LootTable lootTable, long seed);
     
+    public abstract int getItemFrameItemDataId();
+    
     public boolean isTrialChamberBugged() {
         return false;
     }

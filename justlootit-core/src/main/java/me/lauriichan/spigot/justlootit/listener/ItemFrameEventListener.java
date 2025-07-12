@@ -164,7 +164,7 @@ public class ItemFrameEventListener implements IListenerExtension {
                     .createPacket(new ArgumentMap().set("entity", entity), PacketOutSetEntityData.class);
                 if (packet != null) {
                     final IEntityDataPack pack = packet.getData();
-                    final IEntityData data = pack.getById(8);
+                    final IEntityData data = pack.getById(actor.versionHelper().getItemFrameItemDataId());
                     if (data instanceof final IItemEntityData itemData) {
                         itemData.setItem(null);
                         adapter.send(packet);

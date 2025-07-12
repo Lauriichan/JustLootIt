@@ -30,6 +30,7 @@ import net.minecraft.server.ReloadableServerRegistries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.decoration.ItemFrame;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
@@ -106,6 +107,11 @@ public class VersionHelper1_20_R4 extends VersionHelper {
                 .withParameter(LootContextParams.THIS_ENTITY, minecraftPlayer).withLuck(minecraftPlayer.getLuck())
                 .create(LootContextParamSets.CHEST),
             seed);
+    }
+    
+    @Override
+    public int getItemFrameItemDataId() {
+        return ItemFrame.DATA_ITEM.id();
     }
 
 }

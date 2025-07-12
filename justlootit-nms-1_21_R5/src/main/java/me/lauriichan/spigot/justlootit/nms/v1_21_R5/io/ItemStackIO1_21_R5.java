@@ -9,6 +9,8 @@ import com.mojang.serialization.Dynamic;
 
 import me.lauriichan.laylib.reflection.ClassUtil;
 import me.lauriichan.laylib.reflection.JavaLookup;
+import me.lauriichan.spigot.justlootit.nms.v1_21_R5.util.NmsHelper1_21_R5;
+import net.minecraft.core.RegistryAccess.Frozen;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.util.datafix.fixes.References;
@@ -20,6 +22,8 @@ public final class ItemStackIO1_21_R5 extends NbtIO1_21_R5<org.bukkit.inventory.
 
     private static final MethodHandle CraftItemStack_handle = JavaLookup.PLATFORM
         .unreflectGetter(ClassUtil.getField(CraftItemStack.class, "handle"));
+    
+    private final Frozen registry = NmsHelper1_21_R5.getServer().registryAccess();
 
     private ItemStackIO1_21_R5() {
         super(org.bukkit.inventory.ItemStack.class, CompoundTag.TYPE);
@@ -31,13 +35,13 @@ public final class ItemStackIO1_21_R5 extends NbtIO1_21_R5<org.bukkit.inventory.
         if (itemStack == ItemStack.EMPTY) {
             return new CompoundTag();
         }
-        return (CompoundTag) ItemStack.CODEC.encodeStart(NbtOps.INSTANCE, itemStack).getOrThrow();
+        return (CompoundTag) ItemStack.CODEC.encodeStart(registry.createSerializationContext(NbtOps.INSTANCE), itemStack).getOrThrow();
     }
 
     @Override
     public org.bukkit.inventory.ItemStack fromNbt(final CompoundTag tag) {
         return CraftItemStack.asCraftMirror(tag.isEmpty() ? ItemStack.EMPTY
-            : ItemStack.CODEC.decode(new Dynamic<>(NbtOps.INSTANCE, tag)).result().map(pair -> pair.getFirst()).orElse(ItemStack.EMPTY));
+            : ItemStack.CODEC.decode(new Dynamic<>(registry.createSerializationContext(NbtOps.INSTANCE), tag)).result().map(pair -> pair.getFirst()).orElse(ItemStack.EMPTY));
     }
 
     public ItemStack asMinecraftStack(final org.bukkit.inventory.ItemStack itemStack) {
@@ -63,7 +67,7 @@ public final class ItemStackIO1_21_R5 extends NbtIO1_21_R5<org.bukkit.inventory.
 
     @Override
     public CompoundTag upgradeNbt(DataFixer fixer, CompoundTag tag, int tagVersion, int serverVersion) {
-        return (CompoundTag) fixer.update(References.ITEM_STACK, new Dynamic<>(NbtOps.INSTANCE, tag), tagVersion, serverVersion).getValue();
+        return (CompoundTag) fixer.update(References.ITEM_STACK, new Dynamic<>(registry.createSerializationContext(NbtOps.INSTANCE), tag), tagVersion, serverVersion).getValue();
     }
 
 }

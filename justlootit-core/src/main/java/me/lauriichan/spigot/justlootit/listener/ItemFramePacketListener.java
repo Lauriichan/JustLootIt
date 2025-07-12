@@ -50,7 +50,7 @@ public class ItemFramePacketListener implements IPacketListener {
             final PacketOutSetEntityData dataPacket = versionHandler.packetManager().createPacket(new ArgumentMap().set("entity", entity),
                 PacketOutSetEntityData.class);
             final IEntityDataPack pack = dataPacket.getData();
-            final IEntityData data = pack.getById(8);
+            final IEntityData data = pack.getById(versionHandler.versionHelper().getItemFrameItemDataId());
             if (!(data instanceof IItemEntityData)) {
                 return;
             }
