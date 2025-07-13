@@ -42,7 +42,7 @@ public class CompatibilityContainer extends Container implements IInventoryConta
             while (extension.hasUpgrade(compatData)) {
                 compatData = extension.upgrade(compatData);
             }
-            return new CompatibilityContainer(compatData);
+            return new CompatibilityContainer(data, compatData);
         }
 
     };
