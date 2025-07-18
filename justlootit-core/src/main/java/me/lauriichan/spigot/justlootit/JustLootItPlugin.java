@@ -135,6 +135,7 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
                 "It seems like you are using paper or a fork of it and the minecraft version you are using is not yet known to JLI, please update your plugin or wait for an update.");
             logger()
                 .error("You could also try to run the plugin on spigot, if its just a minor minecraft version update it could still work.");
+            actDisabled(true);
             return;
         }
         if (!setupVersionHandler()) {
