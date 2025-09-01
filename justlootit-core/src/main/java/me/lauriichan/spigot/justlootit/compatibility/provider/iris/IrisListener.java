@@ -30,6 +30,7 @@ import me.lauriichan.spigot.justlootit.compatibility.data.iris.IIrisTableKey;
 import me.lauriichan.spigot.justlootit.compatibility.data.iris.IrisDataExtension;
 import me.lauriichan.spigot.justlootit.compatibility.data.iris.IIrisTableKey.IrisTableKey;
 import me.lauriichan.spigot.justlootit.compatibility.data.iris.IIrisTableKey.VanillaTableKey;
+import me.lauriichan.spigot.justlootit.config.MainConfig;
 import me.lauriichan.spigot.justlootit.config.world.WorldConfig;
 import me.lauriichan.spigot.justlootit.config.world.WorldMultiConfig;
 import me.lauriichan.spigot.justlootit.data.CompatibilityContainer;
@@ -46,15 +47,25 @@ public class IrisListener implements Listener {
 
     private final VersionHandler versionHandler;
     private final ConfigManager configManager;
+    
+    private final MainConfig mainConfig;
 
     public IrisListener(final String pluginId, final VersionHandler versionHandler, final ConfigManager configManager) {
         this.pluginId = pluginId;
         this.versionHandler = versionHandler;
         this.configManager = configManager;
+        this.mainConfig = configManager.config(MainConfig.class);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onLoot(IrisLootEvent event) {
+        WorldConfig config = configManager.multiConfigOrCreate(WorldMultiConfig.class, event.getBlock().getWorld());
+        if (mainConfig.worldWhitelistEnabled() && !config.isWhitelisted()) {
+            return;
+        }
+        if (config.isCompatibilityContainerBlacklisted(pluginId)) {
+            return;
+        }
         if (event.getEngine().isStudio() || event.getSlot() != InventorySlotType.STORAGE || event.getTables().isEmpty()) {
             return;
         }
@@ -69,10 +80,6 @@ public class IrisListener implements Listener {
             return;
         }
         Location loc = event.getBlock().getLocation();
-        WorldConfig config = configManager.multiConfigOrCreate(WorldMultiConfig.class, event.getBlock().getWorld());
-        if (config.isCompatibilityContainerBlacklisted(pluginId)) {
-            return;
-        }
         int x = loc.getBlockX(), y = loc.getBlockY(), z = loc.getBlockZ();
         String structureId = getStructureId(event.getEngine(), x, y, z);
         if (structureId != null && config.isStructureBlacklisted(pluginId, structureId)) {

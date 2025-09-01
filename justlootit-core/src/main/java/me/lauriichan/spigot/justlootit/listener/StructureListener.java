@@ -13,6 +13,7 @@ import org.bukkit.entity.ItemFrame;
 import org.bukkit.entity.Minecart;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.world.AsyncStructureGenerateEvent;
+import org.bukkit.event.world.WorldLoadEvent;
 import org.bukkit.event.world.WorldUnloadEvent;
 import org.bukkit.generator.LimitedRegion;
 import org.bukkit.inventory.Inventory;
@@ -32,6 +33,7 @@ import me.lauriichan.spigot.justlootit.JustLootItFlag;
 import me.lauriichan.spigot.justlootit.JustLootItKey;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.capability.StorageCapability;
+import me.lauriichan.spigot.justlootit.config.MainConfig;
 import me.lauriichan.spigot.justlootit.config.world.WorldConfig;
 import me.lauriichan.spigot.justlootit.config.world.WorldMultiConfig;
 import me.lauriichan.spigot.justlootit.data.FrameContainer;
@@ -51,20 +53,32 @@ public class StructureListener implements IListenerExtension {
     private final VersionHandler versionHandler;
     private final ConfigManager configManager;
 
+    private final MainConfig mainConfig;
+
     public StructureListener(final JustLootItPlugin plugin) {
         this.versionHandler = plugin.versionHandler();
         this.configManager = plugin.configManager();
+        this.mainConfig = configManager.config(MainConfig.class);
+    }
+
+    @EventHandler
+    public void onWorldLoad(WorldLoadEvent event) {
+        configManager.multiWrapperOrCreate(WorldMultiConfig.class, event.getWorld()).reloadSingle(false, false);
     }
 
     @EventHandler
     public void onStructureGenerate(AsyncStructureGenerateEvent event) {
         WorldConfig config = configManager.multiConfigOrCreate(WorldMultiConfig.class, event.getWorld());
+        if (mainConfig.worldWhitelistEnabled() && !config.isWhitelisted()) {
+            return;
+        }
         if (config.isStructureBlacklisted(event.getStructure().getKey())) {
             return;
         }
         StructureTransformer transformer = transformers.get(event.getWorld().getUID());
         if (transformer == null || transformer.isTerminated()) {
-            transformers.put(event.getWorld().getUID(), transformer = new StructureTransformer(versionHandler.getLevel(event.getWorld()), config));
+            transformers.put(event.getWorld().getUID(),
+                transformer = new StructureTransformer(versionHandler.getLevel(event.getWorld()), config));
         }
         event.setBlockTransformer(JustLootItKey.identity(), transformer);
         event.setEntityTransformer(JustLootItKey.identity(), transformer);
@@ -128,7 +142,8 @@ public class StructureListener implements IListenerExtension {
                             return;
                         }
                         long id = getIdOfBlockState(region, x, y, z, capability.storage(), container);
-                        Stored<?> stored = capability.storage().registry().create(new VanillaContainer(lootable.getLootTable(), lootable.getSeed())).id(id);
+                        Stored<?> stored = capability.storage().registry()
+                            .create(new VanillaContainer(lootable.getLootTable(), lootable.getSeed())).id(id);
                         capability.storage().write(stored);
                         id = stored.id();
                         JustLootItAccess.setIdentity(dataContainer, id);
@@ -197,7 +212,8 @@ public class StructureListener implements IListenerExtension {
                             return;
                         }
                         Stored<?> stored;
-                        capability.storage().write(stored = capability.storage().registry().create(new VanillaContainer(lootable.getLootTable(), lootable.getSeed())));
+                        capability.storage().write(stored = capability.storage().registry()
+                            .create(new VanillaContainer(lootable.getLootTable(), lootable.getSeed())));
                         JustLootItAccess.setIdentity(entity.getPersistentDataContainer(), stored.id());
                         lootable.setSeed(0L);
                         lootable.setLootTable(null);

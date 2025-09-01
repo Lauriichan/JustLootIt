@@ -15,6 +15,7 @@ import me.lauriichan.spigot.justlootit.JustLootItFlag;
 import me.lauriichan.spigot.justlootit.capability.StorageCapability;
 import me.lauriichan.spigot.justlootit.compatibility.data.CompatibilityDataExtension;
 import me.lauriichan.spigot.justlootit.compatibility.data.customstructures.CustomStructuresDataExtension;
+import me.lauriichan.spigot.justlootit.config.MainConfig;
 import me.lauriichan.spigot.justlootit.config.world.WorldConfig;
 import me.lauriichan.spigot.justlootit.config.world.WorldMultiConfig;
 import me.lauriichan.spigot.justlootit.data.CompatibilityContainer;
@@ -32,15 +33,26 @@ public class CustomStructuresListener implements Listener {
 
     private final VersionHandler versionHandler;
     private final ConfigManager configManager;
+    
+    private final MainConfig mainConfig;
 
     public CustomStructuresListener(final String pluginId, final VersionHandler versionHandler, final ConfigManager configManager) {
         this.pluginId = pluginId;
         this.versionHandler = versionHandler;
         this.configManager = configManager;
+        this.mainConfig = configManager.config(MainConfig.class);
     }
 
     @EventHandler
     public void onLootPopulate(LootPopulateEvent event) {
+        WorldConfig config = configManager.multiConfigOrCreate(WorldMultiConfig.class, event.getLocation().getWorld());
+        if (mainConfig.worldWhitelistEnabled() && !config.isWhitelisted()) {
+            return;
+        }
+        if (config.isCompatibilityContainerBlacklisted(pluginId)
+            || config.isStructureBlacklisted(pluginId, event.getStructure().getName())) {
+            return;
+        }
         BlockState state = event.getLocation().getBlock().getState();
         if (!(state instanceof Container container) || JustLootItAccess.hasIdentity(container.getPersistentDataContainer())
             || JustLootItAccess.hasAnyOffset(container.getPersistentDataContainer())) {
@@ -49,11 +61,6 @@ public class CustomStructuresListener implements Listener {
         Inventory inventory = container.getInventory();
         if (!JustLootItFlag.TILE_ENTITY_CONTAINERS.isSet()
             && JustLootItConstant.UNSUPPORTED_CONTAINER_TYPES.contains(inventory.getType())) {
-            return;
-        }
-        WorldConfig config = configManager.multiConfigOrCreate(WorldMultiConfig.class, event.getLocation().getWorld());
-        if (config.isCompatibilityContainerBlacklisted(pluginId)
-            || config.isStructureBlacklisted(pluginId, event.getStructure().getName())) {
             return;
         }
         event.setCanceled(true);

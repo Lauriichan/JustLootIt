@@ -35,6 +35,8 @@ public class WorldConfig implements IConfigExtension {
     private volatile boolean blacklistFrameContainers = false;
     
     private volatile boolean modified = false;
+
+    private volatile boolean whitelisted = false;
     
     public WorldConfig(boolean trialChamberBuggedVersion) {
         this.trialChamberBuggedVersion = trialChamberBuggedVersion;
@@ -63,6 +65,7 @@ public class WorldConfig implements IConfigExtension {
     public void onPropergate(ISimpleLogger logger, Configuration configuration) throws Exception {
         propergate(configuration, "blacklist.structures", "example_structure_id", "another_example_structure_id");
         propergate(configuration, "blacklist.loottables", "example/loottable_id/with/category", "loottables/have/categories/example_loottable_name");
+        configuration.set("whitelisted", whitelisted);
         configuration.set("blacklist.containers.vanilla", blacklistVanillaContainers);
         configuration.set("blacklist.containers.static", blacklistStaticContainers);
         configuration.set("blacklist.containers.frame", blacklistFrameContainers);
@@ -74,6 +77,7 @@ public class WorldConfig implements IConfigExtension {
         this.modified = false;
         load(configuration, "blacklist.structures", blacklistedStructures);
         load(configuration, "blacklist.loottables", blacklistedLootTables);
+        this.whitelisted = configuration.getBoolean("whitelisted", false);
         this.blacklistVanillaContainers = configuration.getBoolean("blacklist.containers.vanilla", false);
         this.blacklistStaticContainers = configuration.getBoolean("blacklist.containers.static", false);
         this.blacklistFrameContainers = configuration.getBoolean("blacklist.containers.frame", false);
@@ -91,6 +95,7 @@ public class WorldConfig implements IConfigExtension {
         this.modified = false;
         save(configuration, "blacklist.structures", blacklistedStructures);
         save(configuration, "blacklist.loottables", blacklistedLootTables);
+        configuration.set("whitelisted", whitelisted);
         configuration.set("blacklist.containers.vanilla", blacklistVanillaContainers);
         configuration.set("blacklist.containers.static", blacklistStaticContainers);
         configuration.set("blacklist.containers.frame", blacklistFrameContainers);
@@ -100,6 +105,14 @@ public class WorldConfig implements IConfigExtension {
     /*
      * Access
      */
+    
+    public boolean isWhitelisted() {
+        return whitelisted;
+    }
+    
+    public void setWhitelisted(boolean whitelisted) {
+        this.whitelisted = whitelisted;
+    }
     
     public boolean isStructureBlacklisted(NamespacedKey key) {
         ObjectOpenHashSet<String> set = blacklistedStructures.get(key.getNamespace());

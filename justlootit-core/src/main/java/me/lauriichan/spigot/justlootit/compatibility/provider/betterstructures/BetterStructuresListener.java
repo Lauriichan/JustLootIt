@@ -27,6 +27,7 @@ import me.lauriichan.spigot.justlootit.JustLootItFlag;
 import me.lauriichan.spigot.justlootit.capability.StorageCapability;
 import me.lauriichan.spigot.justlootit.compatibility.data.CompatibilityDataExtension;
 import me.lauriichan.spigot.justlootit.compatibility.data.betterstructures.BetterStructuresDataExtension;
+import me.lauriichan.spigot.justlootit.config.MainConfig;
 import me.lauriichan.spigot.justlootit.config.world.WorldConfig;
 import me.lauriichan.spigot.justlootit.config.world.WorldMultiConfig;
 import me.lauriichan.spigot.justlootit.data.CompatibilityContainer;
@@ -48,17 +49,23 @@ public class BetterStructuresListener implements Listener {
 
     private final VersionHandler versionHandler;
     private final ConfigManager configManager;
+    
+    private final MainConfig mainConfig;
 
     public BetterStructuresListener(final String pluginId, final VersionHandler versionHandler, final ConfigManager configManager) {
         this.pluginId = pluginId;
         this.versionHandler = versionHandler;
         this.configManager = configManager;
+        this.mainConfig = configManager.config(MainConfig.class);
     }
 
     @EventHandler
     public void onChestFill(ChestFillEvent event) {
         Container container = event.getContainer();
         WorldConfig config = configManager.multiConfigOrCreate(WorldMultiConfig.class, container.getWorld());
+        if (mainConfig.worldWhitelistEnabled() && !config.isWhitelisted()) {
+            return;
+        }
         if (config.isCompatibilityContainerBlacklisted(pluginId) || blacklistedLocation.contains(container.getLocation())) {
             return;
         }

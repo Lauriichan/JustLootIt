@@ -38,6 +38,9 @@ public class MainConfigTemplate implements ISingleConfigExtension {
     @ConfigValue("loot.unique")
     public boolean uniqueLootPerPlayer = false;
     
+    @ConfigValue("worlds.enable-whitelist")
+    public boolean worldWhitelistEnabled = false;
+    
     private final VersionHandler versionHandler;
     
     public MainConfigTemplate(JustLootItPlugin plugin) {
