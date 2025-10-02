@@ -12,6 +12,7 @@ public @interface Event {
 
     public static final boolean DEFAULT_IS_INDEPENDENT = true;
     public static final boolean DEFAULT_IS_ABSTRACT = false;
+    public static final boolean DEFAULT_IS_ASYNC = false;
     public static final boolean DEFAULT_CANCELLABLE = false;
     
     /**
@@ -25,6 +26,11 @@ public @interface Event {
      * Abstract
      */
     boolean isAbstract() default DEFAULT_IS_ABSTRACT;
+
+    /**
+     * Async
+     */
+    boolean isAsync() default DEFAULT_IS_ASYNC;
 
     /**
      * Cancellable

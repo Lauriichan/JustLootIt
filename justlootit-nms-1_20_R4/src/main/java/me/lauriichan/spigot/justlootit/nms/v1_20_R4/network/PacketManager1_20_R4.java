@@ -69,11 +69,17 @@ public final class PacketManager1_20_R4 extends PacketManager {
     }
 
     boolean call(final PlayerAdapter1_20_R4 player, final Ref<Packet<?>> nmsPacket) {
-        final NmsPacketBuilder<?> builder = nmsBuilders.get(nmsPacket.get().getClass());
-        if (builder == null) {
+        final AbstractPacket packet;
+        try {
+            final NmsPacketBuilder<?> builder = nmsBuilders.get(nmsPacket.get().getClass());
+            if (builder == null) {
+                return false;
+            }
+            packet = builder.build(nmsPacket.get());
+        } catch (Throwable thrw) {
+            logger().error(thrw);
             return false;
         }
-        final AbstractPacket packet = builder.build(nmsPacket.get());
         if (packet == null) {
             return false;
         }

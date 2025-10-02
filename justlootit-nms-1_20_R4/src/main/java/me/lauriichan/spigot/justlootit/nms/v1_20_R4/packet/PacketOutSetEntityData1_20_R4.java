@@ -9,7 +9,6 @@ import org.bukkit.craftbukkit.v1_20_R4.entity.CraftEntity;
 import org.bukkit.entity.Entity;
 import org.bukkit.inventory.ItemStack;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import me.lauriichan.laylib.reflection.ClassUtil;
 import me.lauriichan.laylib.reflection.JavaLookup;
 import me.lauriichan.spigot.justlootit.nms.model.IEntityData;
@@ -26,17 +25,19 @@ import net.minecraft.network.syncher.SynchedEntityData.DataValue;
 public class PacketOutSetEntityData1_20_R4 extends PacketOutSetEntityData {
 
     private static final MethodHandle EntityData_map = JavaLookup.PLATFORM
-        .unreflectGetter(ClassUtil.getField(SynchedEntityData.class, false, Int2ObjectMap.class));
+        .unreflectGetter(ClassUtil.getField(SynchedEntityData.class, false, DataItem[].class));
 
     private static List<DataValue<?>> extractValues(final SynchedEntityData data) {
-        Int2ObjectMap<DataItem<?>> map;
+        DataItem<?>[] map;
         try {
-            map = (Int2ObjectMap<DataItem<?>>) EntityData_map.invoke(data);
+            map = (DataItem<?>[]) EntityData_map.invoke(data);
         } catch (final Throwable e) {
             return Collections.emptyList();
         }
         final ArrayList<DataValue<?>> values = new ArrayList<>();
-        map.values().stream().map(DataItem::value).forEach(values::add);
+        for (DataItem<?> item : map) {
+            values.add(item.value());
+        }
         return values;
     }
 

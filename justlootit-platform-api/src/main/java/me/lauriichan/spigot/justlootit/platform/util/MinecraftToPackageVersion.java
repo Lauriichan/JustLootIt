@@ -11,9 +11,10 @@ public enum MinecraftToPackageVersion {
     v1_21_R2(of(1, 21, 3)),
     v1_21_R3(of(1, 21, 4)),
     v1_21_R4(of(1, 21, 5)),
-    v1_21_R5(of(1, 21, 6), of(1, 21, 8));
+    v1_21_R5(of(1, 21, 6), of(1, 21, 8)),
+    v1_21_R6(of(1, 21, 9));
 
-    private static final MinecraftToPackageVersion[] values = MinecraftToPackageVersion.values();
+    private static final MinecraftToPackageVersion[] VALUES = MinecraftToPackageVersion.values();
 
     private final SimpleVersion min, max;
 
@@ -39,7 +40,7 @@ public enum MinecraftToPackageVersion {
     }
 
     public static String getPackageVersion(SimpleVersion version) {
-        for (MinecraftToPackageVersion value : values) {
+        for (MinecraftToPackageVersion value : VALUES) {
             if (value.isVersion(version)) {
                 return value.packageVersion();
             }

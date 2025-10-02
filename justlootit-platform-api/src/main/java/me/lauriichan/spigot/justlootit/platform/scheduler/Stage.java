@@ -27,6 +27,7 @@ abstract class Stage<E> {
             THREAD_HANDLE = threadHandle;
         }
         
+        @SuppressWarnings("unused")
         private volatile Thread thread = Thread.currentThread();
 
         @Override
@@ -39,6 +40,9 @@ abstract class Stage<E> {
 
         @Override
         public void start(Task<E> task) {
+            if (task.isCompleted()) {
+                return;
+            }
             Thread thr = (Thread) THREAD_HANDLE.get(this);
             if (thr != null) {
                 LockSupport.park(thr);

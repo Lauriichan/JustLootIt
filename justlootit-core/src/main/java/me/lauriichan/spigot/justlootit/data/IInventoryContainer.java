@@ -6,7 +6,7 @@ import org.bukkit.inventory.InventoryHolder;
 
 import me.lauriichan.minecraft.pluginbase.inventory.IGuiInventory;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
-import me.lauriichan.spigot.justlootit.api.event.player.AsyncJLIPlayerLootProvidedEvent;
+import me.lauriichan.spigot.justlootit.api.event.player.JLIPlayerLootProvidedEvent;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 
 public interface IInventoryContainer {
@@ -61,7 +61,7 @@ public interface IInventoryContainer {
 
     default void awaitProvidedEvent(PlayerAdapter player, IGuiInventory inventory, InventoryHolder entryHolder, Location entryLocation,
         IResult result) {
-        new AsyncJLIPlayerLootProvidedEvent((JustLootItPlugin) player.versionHandler().plugin(), player, inventory, entryHolder,
+        new JLIPlayerLootProvidedEvent((JustLootItPlugin) player.versionHandler().plugin(), player, inventory, entryHolder,
             entryLocation).call().join();
     }
 

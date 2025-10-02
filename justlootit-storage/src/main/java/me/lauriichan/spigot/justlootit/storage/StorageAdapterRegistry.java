@@ -62,6 +62,7 @@ public final class StorageAdapterRegistry {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public <T> StorageAdapter<T> findAdapter(final Class<T> type) {
         lock.readLock().lock();
         try {
@@ -80,6 +81,7 @@ public final class StorageAdapterRegistry {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public <T> StorageAdapter<T> findAdapter(final int typeId) {
         if (typeId > StorageAdapter.MAX_TYPE_ID || typeId < 0) {
             return null;
@@ -92,6 +94,7 @@ public final class StorageAdapterRegistry {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public <T> Stored<T> create(final T value) {
         Stored<T> stored = create((Class<T>) value.getClass());
         stored.value(value);

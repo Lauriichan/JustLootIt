@@ -5,13 +5,13 @@ import org.bukkit.loot.LootTable;
 import me.lauriichan.maven.justlootit.annotation.Event;
 import me.lauriichan.maven.justlootit.annotation.EventField;
 
-@Event
-public abstract class AsyncJLIPlayerVanillaLootGenerateEventTmp extends AsyncJLIPlayerEventTmp {
+@Event(isIndependent = false)
+public abstract class JLIPlayerVanillaLootProvidedEventTmp extends JLIPlayerLootProvidedEventTmp {
     
-    @EventField(setter = true)
+    @EventField
     private LootTable lootTable;
     
-    @EventField(setter = true)
+    @EventField
     private long seed;
 
 }

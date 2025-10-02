@@ -45,6 +45,7 @@ public final class Stored<T> {
         return type.cast(value);
     }
 
+    @SuppressWarnings("unchecked")
     public Stored<T> value(Object rawValue) {
         this.value = (T) rawValue;
         return this;
@@ -57,7 +58,8 @@ public final class Stored<T> {
     public boolean isPresent() {
         return value != null;
     }
-    
+
+    @SuppressWarnings("unchecked")
     public <E> Stored<E> cast() {
         return (Stored<E>) this;
     }

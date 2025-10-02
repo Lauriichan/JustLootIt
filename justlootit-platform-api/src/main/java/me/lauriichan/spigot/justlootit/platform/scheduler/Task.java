@@ -58,13 +58,17 @@ public abstract class Task<E> {
 
     @SuppressWarnings("unchecked")
     public final E value() throws IllegalStateException {
+        Object value = this.value;
         if (value == null) {
-            throw new IllegalStateException("Task isn't complete yet");
+            if (!isCompleted()) {
+                throw new IllegalStateException("Task isn't complete yet");
+            }
+            value = VALUE.getVolatile(this);
         }
         if (value instanceof Result) {
             return null;
         }
-        return (E) this.value;
+        return (E) value;
     }
 
     @SuppressWarnings("unchecked")

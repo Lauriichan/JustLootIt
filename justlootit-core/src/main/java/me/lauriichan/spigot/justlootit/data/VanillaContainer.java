@@ -15,8 +15,8 @@ import me.lauriichan.laylib.localization.Key;
 import me.lauriichan.minecraft.pluginbase.inventory.IGuiInventory;
 import me.lauriichan.minecraft.pluginbase.inventory.item.ItemEditor;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
-import me.lauriichan.spigot.justlootit.api.event.player.AsyncJLIPlayerVanillaLootGenerateEvent;
-import me.lauriichan.spigot.justlootit.api.event.player.AsyncJLIPlayerVanillaLootProvidedEvent;
+import me.lauriichan.spigot.justlootit.api.event.player.JLIPlayerVanillaLootGenerateEvent;
+import me.lauriichan.spigot.justlootit.api.event.player.JLIPlayerVanillaLootProvidedEvent;
 import me.lauriichan.spigot.justlootit.capability.ActorCapability;
 import me.lauriichan.spigot.justlootit.data.io.DataIO;
 import me.lauriichan.spigot.justlootit.message.Messages;
@@ -96,8 +96,8 @@ public final class VanillaContainer extends Container implements IInventoryConta
                 Key.of("lootTable", getLootTableKey()));
             return IResult.empty();
         }
-        AsyncJLIPlayerVanillaLootGenerateEvent event = new AsyncJLIPlayerVanillaLootGenerateEvent((JustLootItPlugin) player.versionHandler().plugin(), player, getLootTable(), generateSeed(player, seed));
-        event.call().join(); // <-------
+        JLIPlayerVanillaLootGenerateEvent event = new JLIPlayerVanillaLootGenerateEvent((JustLootItPlugin) player.versionHandler().plugin(), player, getLootTable(), generateSeed(player, seed));
+        event.call().join();
         player.versionHandler().versionHelper().fill(inventory, player.asBukkit(), location, event.lootTable(), event.seed());
         return new VanillaResult(event.lootTable(), event.seed());
     }
@@ -108,11 +108,11 @@ public final class VanillaContainer extends Container implements IInventoryConta
         // This does not use the loot table and seed set by the previous event
         // This should be kept in mind when using it
         if (result instanceof VanillaResult vanillaResult) {
-            new AsyncJLIPlayerVanillaLootProvidedEvent((JustLootItPlugin) player.versionHandler().plugin(), player, inventory, entryHolder,
+            new JLIPlayerVanillaLootProvidedEvent((JustLootItPlugin) player.versionHandler().plugin(), player, inventory, entryHolder,
                 entryLocation, vanillaResult.lootTable(), vanillaResult.seed()).call().join();
             return;
         }
-        new AsyncJLIPlayerVanillaLootProvidedEvent((JustLootItPlugin) player.versionHandler().plugin(), player, inventory, entryHolder,
+        new JLIPlayerVanillaLootProvidedEvent((JustLootItPlugin) player.versionHandler().plugin(), player, inventory, entryHolder,
             entryLocation, getLootTable(), seed).call().join();
     }
 

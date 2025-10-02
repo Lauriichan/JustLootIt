@@ -9,7 +9,7 @@ import me.lauriichan.maven.justlootit.annotation.EventField;
 import me.lauriichan.minecraft.pluginbase.inventory.IGuiInventory;
 
 @Event
-public abstract class AsyncJLIPlayerLootProvidedEventTmp extends AsyncJLIPlayerEventTmp {
+public abstract class JLIPlayerLootProvidedEventTmp extends JLIPlayerEventTmp {
     
     @EventField
     private IGuiInventory inventory;
