@@ -113,6 +113,8 @@ public final class JustLootItConverter {
                         }
                     }
                     logger.info("Conversion of level '{0}' done! [{1} Chunks]", world.getName(), progress.counter().max());
+                } catch (RuntimeException exp) {
+                    logger.error("Couldn't start conversion of world '{0}'...", file.getName(), exp);
                 }
             }
             return somethingWasConverted;
