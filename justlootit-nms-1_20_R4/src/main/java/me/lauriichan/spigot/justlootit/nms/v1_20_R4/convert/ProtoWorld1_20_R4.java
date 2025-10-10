@@ -224,8 +224,7 @@ public class ProtoWorld1_20_R4 extends ProtoWorld implements LevelHeightAccessor
                             thread.setTask("Reading sections");
                             for (int i = 0; i < listTag.size(); i++) {
                                 CompoundTag sectionTag = listTag.getCompound(i);
-                                byte y = sectionTag.getByte("Y");
-                                if (y < minSection || y > maxSection) {
+                                if (isInvalidSection(sectionTag, minSection, maxSection)) {
                                     continue;
                                 }
                                 chunkSectionCount++;
@@ -295,8 +294,7 @@ public class ProtoWorld1_20_R4 extends ProtoWorld implements LevelHeightAccessor
                                 sectionIndex = 0;
                                 for (int i = 0; i < listTag.size(); i++) {
                                     CompoundTag sectionTag = listTag.getCompound(i);
-                                    byte y = sectionTag.getByte("Y");
-                                    if (y < minSection || y > maxSection) {
+                                    if (isInvalidSection(sectionTag, minSection, maxSection)) {
                                         continue;
                                     }
                                     if (!sectionTag.contains("block_states", 10)) {
@@ -342,6 +340,14 @@ public class ProtoWorld1_20_R4 extends ProtoWorld implements LevelHeightAccessor
         thread.setRegion(null);
         thread.setChunk(0, 0);
         thread.setTask(null);
+    }
+
+    private boolean isInvalidSection(CompoundTag sectionTag, int min, int max) {
+        if (!sectionTag.contains("Y", 99)) {
+            return true;
+        }
+        byte y = sectionTag.getByte("Y");
+        return y < min || y >= max;
     }
 
     private CompoundTag readRegionTag(RegionFile file, ChunkPos pos) throws IOException {
