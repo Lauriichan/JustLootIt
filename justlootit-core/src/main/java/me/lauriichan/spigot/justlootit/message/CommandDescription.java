@@ -25,8 +25,8 @@ public enum CommandDescription implements IMessageDefinition, IMessageExtension 
     JUSTLOOTIT_CONTAINER_CREATE_ENTITY("Creates a new container and links it to a block or entity while prioritizing entities over blocks"),
     JUSTLOOTIT_CONTAINER_MANAGE_ID("Manages a container by id"),
     JUSTLOOTIT_CONTAINER_MANAGE_LOCATION("Manages a container linked to a block or entity"),
-//    JUSTLOOTIT_CONTAINER_BULK_REPLACE_LOOTTABLE("Bulk replaces a loottable with a different one for each container"),
-//    JUSTLOOTIT_CONTAINER_BULK_RESET_ACCESS("Bulk resets access to all containers for all players"),
+    JUSTLOOTIT_CONTAINER_BULK_REPLACE_LOOTTABLE("Bulk replaces a loottable with a different one for each container"),
+    JUSTLOOTIT_CONTAINER_BULK_RESET_ACCESS("Bulk resets access to all containers for all players"),
     
     JUSTLOOTIT_GROUP_CREATE("Creates a new refresh group"),
     JUSTLOOTIT_GROUP_DELETE("Deletes a refresh group"),

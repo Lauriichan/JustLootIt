@@ -64,7 +64,7 @@ import net.md_5.bungee.api.chat.HoverEvent;
 @Permission(JustLootItPermission.COMMAND_CONTAINER)
 public class ContainerCommand implements ICommandExtension {
 
-//    @Action("bulk replace loottable")
+    @Action("bulk replace loottable")
     @Description("$#command.description.justlootit.container.bulk.replace.loottable")
     public void bulkReplaceLootTable(final JustLootItPlugin plugin, final LootItActor<?> actor,
         @Argument(name = "world", index = 1) final World world,
@@ -92,7 +92,7 @@ public class ContainerCommand implements ICommandExtension {
         });
     }
 
-//    @Action("bulk reset access")
+    @Action("bulk reset access")
     @Description("$#command.description.justlootit.container.bulk.reset.access")
     public void bulkResetAccess(final JustLootItPlugin plugin, final LootItActor<?> actor,
         @Argument(name = "world", index = 1) final World world) {

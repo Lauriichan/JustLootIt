@@ -442,13 +442,13 @@ public final class Messages implements IMessageExtension {
     @Message(id = "command.container.group.removed.entity", content = "$#plugin.prefix Successfully removed the refresh group from the container linked to the entity at &c$x $y $z &7in &c$world&7.")
     public static MessageProvider COMMAND_CONTAINER_GROUP_REMOVED_ENTITY;
     
-//    @Message(id = "command.container.bulk.replace.loottable.progress", content = "&7Replacing loot table '&5$loottableFrom&7' with '&5$loottableTo&7' in '&d$world&7' ($progress / $current scanned)")
+    @Message(id = "command.container.bulk.replace.loottable.progress", content = "&7Replacing loot table '&5$loottableFrom&7' with '&5$loottableTo&7' in '&d$world&7' ($progress / $current scanned)")
     public static MessageProvider COMMAND_CONTAINER_BULK_REPLACE_LOOTTABLE_PROGRESS;
-//    @Message(id = "command.container.bulk.replace.loottable.done", content = "$#plugin.prefix Successfully scanned through all &d$amount containers &7and replaced the loot table '&5$loottableFrom&7' with '&5$loottableTo&7' in '&d$world&7'")
+    @Message(id = "command.container.bulk.replace.loottable.done", content = "$#plugin.prefix Successfully scanned through all &d$amount containers &7and replaced the loot table '&5$loottableFrom&7' with '&5$loottableTo&7' in '&d$world&7'")
     public static MessageProvider COMMAND_CONTAINER_BULK_REPLACE_LOOTTABLE_DONE;
-//    @Message(id = "command.container.bulk.reset.access.progress", content = "&7Resetting access of all containers in '&d$world&7' ($progress | $current/$amount)")
+    @Message(id = "command.container.bulk.reset.access.progress", content = "&7Resetting access of all containers in '&d$world&7' ($progress | $current/$amount)")
     public static MessageProvider COMMAND_CONTAINER_BULK_RESET_ACCESS_PROGRESS;
-//    @Message(id = "command.container.bulk.reset.access.done", content = "$#plugin.prefix Successfully resetted access of all &d$amount containers &7in '&d$world&7'")
+    @Message(id = "command.container.bulk.reset.access.done", content = "$#plugin.prefix Successfully resetted access of all &d$amount containers &7in '&d$world&7'")
     public static MessageProvider COMMAND_CONTAINER_BULK_RESET_ACCESS_DONE;
 
     // Config
