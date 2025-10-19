@@ -8,13 +8,22 @@ import org.bukkit.inventory.ItemStack;
 
 import io.netty.buffer.ByteBuf;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.minecraft.pluginbase.inventory.IGuiInventory;
 import me.lauriichan.minecraft.pluginbase.inventory.item.ItemEditor;
 import me.lauriichan.spigot.justlootit.data.io.DataIO;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
+import me.lauriichan.spigot.justlootit.nms.VersionHandler;
+import me.lauriichan.spigot.justlootit.nms.convert.ProtoBlockEntity;
+import me.lauriichan.spigot.justlootit.nms.convert.ProtoEntity;
 import me.lauriichan.spigot.justlootit.nms.io.IOHandler;
+import me.lauriichan.spigot.justlootit.nms.nbt.ICompoundTag;
+import me.lauriichan.spigot.justlootit.nms.nbt.IListTag;
+import me.lauriichan.spigot.justlootit.nms.nbt.NbtHelper;
+import me.lauriichan.spigot.justlootit.nms.nbt.TagType;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapter;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapterRegistry;
+import me.lauriichan.spigot.justlootit.util.EntityUtil;
 import me.lauriichan.spigot.justlootit.util.InventoryUtil;
 
 public final class StaticContainer extends Container implements IInventoryContainer {
@@ -28,7 +37,8 @@ public final class StaticContainer extends Container implements IInventoryContai
         }
 
         @Override
-        protected StaticContainer deserializeSpecial(final StorageAdapterRegistry registry, final ContainerData data, final ByteBuf buffer) {
+        protected StaticContainer deserializeSpecial(final StorageAdapterRegistry registry, final ContainerData data,
+            final ByteBuf buffer) {
             IOHandler.Result<ItemStack[]> items = itemIO.deserializeArray(buffer);
             StaticContainer container = new StaticContainer(data, items.value());
             if (items.dirty()) {
@@ -39,7 +49,7 @@ public final class StaticContainer extends Container implements IInventoryContai
     };
 
     private ItemStack[] items;
-    
+
     private volatile ItemStack[] editingItems = null;
     private final ObjectArrayList<IGuiInventory> editingInventories = new ObjectArrayList<>();
 
@@ -55,7 +65,7 @@ public final class StaticContainer extends Container implements IInventoryContai
         super(data);
         this.items = items;
     }
-    
+
     public void pushEditor(IGuiInventory inventory) {
         if (editingItems != null) {
             inventory.getInventory().setContents(editingItems);
@@ -67,7 +77,7 @@ public final class StaticContainer extends Container implements IInventoryContai
         }
         editingInventories.push(inventory);
     }
-    
+
     public boolean popEditor(IGuiInventory inventory) {
         if (editingInventories.remove(inventory) && editingInventories.isEmpty()) {
             editingItems = null;
@@ -75,8 +85,8 @@ public final class StaticContainer extends Container implements IInventoryContai
         }
         return false;
     }
-    
-    public void pubEdit(IGuiInventory inventory)  {
+
+    public void pubEdit(IGuiInventory inventory) {
         editingItems = inventory.getInventory().getContents();
         for (int i = 0; i < editingInventories.size(); i++) {
             IGuiInventory other = editingInventories.get(i);
@@ -86,7 +96,7 @@ public final class StaticContainer extends Container implements IInventoryContai
             other.update();
         }
     }
-    
+
     public int amount() {
         return items.length;
     }
@@ -94,7 +104,7 @@ public final class StaticContainer extends Container implements IInventoryContai
     public ItemStack[] getItems() {
         return items;
     }
-    
+
     public boolean isSame(final Inventory inventory) {
         ItemStack[] contents = inventory.getContents();
         ItemStack is1, is2;
@@ -150,6 +160,34 @@ public final class StaticContainer extends Container implements IInventoryContai
     @Override
     public void fillNoResult(final PlayerAdapter player, final InventoryHolder holder, final Location location, final Inventory inventory) {
         loadTo(inventory);
+    }
+
+    @Override
+    public void restore(ISimpleLogger logger, VersionHandler versionHandler, ProtoBlockEntity entity) {
+        loadTo(entity.getInventory());
+    }
+
+    @Override
+    public void restore(ISimpleLogger logger, VersionHandler versionHandler, ProtoEntity entity) {
+        NbtHelper helper = versionHandler.nbtHelper();
+        ICompoundTag root = entity.getNbt();
+        IListTag<ICompoundTag> listTag = root.getList("Items", TagType.COMPOUND);
+        if (listTag == null) {
+            listTag = helper.createList(TagType.COMPOUND);
+            root.set("Items", listTag);
+        } else {
+            listTag.clear();
+        }
+        final int size = Math.min(EntityUtil.getInventorySize(entity.getType()), items.length);
+        for (int index = 0; index < size; index++) {
+            final ItemStack item = items[index];
+            if (item == null) {
+                continue;
+            }
+            ICompoundTag tag = helper.asTag(item);
+            tag.set("Slot", index & 0xFF);
+            listTag.add(tag);
+        }
     }
 
     @Override

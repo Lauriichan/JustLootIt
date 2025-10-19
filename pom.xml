@@ -23,6 +23,7 @@
         <module>justlootit-platform-api</module>
         <module>justlootit-platform-paper</module>
         <module>justlootit-platform-folia</module>
+        <module>justlootit-terra-addon</module>
     </modules>
 
     <properties>

@@ -33,6 +33,11 @@ public final class JustLootItConverter {
         addConverter(converters, new LootinConverter(versionHandler, properties));
         addConverter(converters, new VanillaConverter(versionHandler, properties));
     }
+    
+    private static void createRestorators(ObjectArrayList<ChunkConverter> converters, JustLootItPlugin plugin, VersionHandler versionHandler,
+        ConversionProperties properties) {
+        addConverter(converters, new ContainerRestorer(versionHandler, properties));
+    }
 
     private static void addConverter(ObjectArrayList<ChunkConverter> converters, ChunkConverter converter) {
         if (!converter.isEnabled()) {
@@ -47,7 +52,11 @@ public final class JustLootItConverter {
             throw new UnsupportedOperationException();
         }
         ObjectArrayList<ChunkConverter> converters = new ObjectArrayList<>();
-        createConverters(converters, plugin, versionHandler, properties);
+        if (properties.isProperty(ConvProp.DO_RESTORATION, false)) {
+            createRestorators(converters, plugin, versionHandler, properties);
+        } else {
+            createConverters(converters, plugin, versionHandler, properties);
+        }
         if (converters.isEmpty()) {
             return false;
         }

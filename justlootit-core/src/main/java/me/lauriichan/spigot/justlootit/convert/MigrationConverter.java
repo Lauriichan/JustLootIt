@@ -10,7 +10,6 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
-import me.lauriichan.spigot.justlootit.capability.StorageCapability;
 import me.lauriichan.spigot.justlootit.convert.migration.provider.IBlockEntityMigration;
 import me.lauriichan.spigot.justlootit.convert.migration.provider.IChunkMigration;
 import me.lauriichan.spigot.justlootit.convert.migration.provider.IEntityMigration;
@@ -19,7 +18,6 @@ import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoBlockEntity;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoChunk;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoEntity;
-import me.lauriichan.spigot.justlootit.nms.convert.ProtoWorld;
 
 public class MigrationConverter extends ChunkConverter {
 
@@ -88,11 +86,6 @@ public class MigrationConverter extends ChunkConverter {
     @Override
     boolean isEnabled() {
         return properties.isProperty(ConvProp.DO_MIGRATION_CONVERSION);
-    }
-
-    @Override
-    boolean isEnabledFor(ProtoWorld world) {
-        return world.hasCapability(StorageCapability.class);
     }
 
 }

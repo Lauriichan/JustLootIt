@@ -12,6 +12,7 @@ import org.bukkit.loot.LootTable;
 
 import io.netty.buffer.ByteBuf;
 import me.lauriichan.laylib.localization.Key;
+import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.minecraft.pluginbase.inventory.IGuiInventory;
 import me.lauriichan.minecraft.pluginbase.inventory.item.ItemEditor;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
@@ -21,6 +22,10 @@ import me.lauriichan.spigot.justlootit.capability.ActorCapability;
 import me.lauriichan.spigot.justlootit.data.io.DataIO;
 import me.lauriichan.spigot.justlootit.message.Messages;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
+import me.lauriichan.spigot.justlootit.nms.VersionHandler;
+import me.lauriichan.spigot.justlootit.nms.convert.ProtoBlockEntity;
+import me.lauriichan.spigot.justlootit.nms.convert.ProtoEntity;
+import me.lauriichan.spigot.justlootit.nms.nbt.ICompoundTag;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapter;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapterRegistry;
 
@@ -114,6 +119,25 @@ public final class VanillaContainer extends Container implements IInventoryConta
         }
         new JLIPlayerVanillaLootProvidedEvent((JustLootItPlugin) player.versionHandler().plugin(), player, inventory, entryHolder,
             entryLocation, getLootTable(), seed).call().join();
+    }
+    
+    @Override
+    public boolean canBeRestored() {
+        return true;
+    }
+    
+    @Override
+    public void restore(ISimpleLogger logger, VersionHandler versionHandler, ProtoBlockEntity entity) {
+        ICompoundTag root = entity.getNbt();
+        root.set("LootTable", lootTableKey.toString());
+        root.set("LootTableSeed", seed);
+    }
+    
+    @Override
+    public void restore(ISimpleLogger logger, VersionHandler versionHandler, ProtoEntity entity) {
+        ICompoundTag root = entity.getNbt();
+        root.set("LootTable", lootTableKey.toString());
+        root.set("LootTableSeed", seed);
     }
 
     @Override

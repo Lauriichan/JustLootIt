@@ -6,6 +6,8 @@ public final class ConvProp {
         throw new UnsupportedOperationException();
     }
     
+    public static final String DO_RESTORATION = "DoRestoration";
+    
     public static final String DO_LOOTIN_CONVERSION = "DoLootinConversion";
     public static final String LOOTIN_DISABLE_STATIC_CONTAINER = "LootinDisableStaticContainerConversion";
     

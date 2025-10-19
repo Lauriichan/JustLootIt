@@ -35,7 +35,6 @@ import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoBlockEntity;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoChunk;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoEntity;
-import me.lauriichan.spigot.justlootit.nms.convert.ProtoWorld;
 import me.lauriichan.spigot.justlootit.nms.nbt.ICompoundTag;
 import me.lauriichan.spigot.justlootit.nms.nbt.TagType;
 import me.lauriichan.spigot.justlootit.nms.util.Vec3i;
@@ -306,11 +305,6 @@ public class LootinConverter extends ChunkConverter {
     @Override
     boolean isEnabled() {
         return properties.isProperty(ConvProp.DO_LOOTIN_CONVERSION);
-    }
-
-    @Override
-    boolean isEnabledFor(ProtoWorld world) {
-        return world.hasCapability(StorageCapability.class);
     }
 
 }

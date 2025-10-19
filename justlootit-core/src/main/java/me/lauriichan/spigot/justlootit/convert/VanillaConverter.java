@@ -23,7 +23,6 @@ import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoBlockEntity;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoChunk;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoEntity;
-import me.lauriichan.spigot.justlootit.nms.convert.ProtoWorld;
 import me.lauriichan.spigot.justlootit.nms.nbt.ICompoundTag;
 import me.lauriichan.spigot.justlootit.nms.nbt.IListTag;
 import me.lauriichan.spigot.justlootit.nms.nbt.TagType;
@@ -224,11 +223,6 @@ public class VanillaConverter extends ChunkConverter {
     @Override
     boolean isEnabled() {
         return properties.isProperty(ConvProp.DO_VANILLA_CONVERSION);
-    }
-
-    @Override
-    boolean isEnabledFor(ProtoWorld world) {
-        return world.hasCapability(StorageCapability.class);
     }
 
 }

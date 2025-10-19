@@ -3,6 +3,7 @@ package me.lauriichan.spigot.justlootit.convert;
 import java.util.Random;
 
 import me.lauriichan.laylib.logger.ISimpleLogger;
+import me.lauriichan.spigot.justlootit.capability.StorageCapability;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoChunk;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoWorld;
@@ -29,7 +30,7 @@ public abstract class ChunkConverter {
     abstract boolean isEnabled();
     
     boolean isEnabledFor(ProtoWorld world) {
-        return true;
+        return world.hasCapability(StorageCapability.class);
     }
 
 }

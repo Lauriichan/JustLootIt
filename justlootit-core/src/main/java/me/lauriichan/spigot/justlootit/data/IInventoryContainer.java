@@ -4,10 +4,14 @@ import org.bukkit.Location;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 
+import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.minecraft.pluginbase.inventory.IGuiInventory;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.api.event.player.JLIPlayerLootProvidedEvent;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
+import me.lauriichan.spigot.justlootit.nms.VersionHandler;
+import me.lauriichan.spigot.justlootit.nms.convert.ProtoBlockEntity;
+import me.lauriichan.spigot.justlootit.nms.convert.ProtoEntity;
 
 public interface IInventoryContainer {
 
@@ -63,6 +67,18 @@ public interface IInventoryContainer {
         IResult result) {
         new JLIPlayerLootProvidedEvent((JustLootItPlugin) player.versionHandler().plugin(), player, inventory, entryHolder,
             entryLocation).call().join();
+    }
+    
+    default boolean canBeRestored() {
+        return false;
+    }
+    
+    default void restore(ISimpleLogger logger, VersionHandler versionHandler, ProtoBlockEntity entity) {
+        logger.warning("Container of type '{0}' can not be restored", getClass().getSimpleName());
+    }
+    
+    default void restore(ISimpleLogger logger, VersionHandler versionHandler, ProtoEntity entity) {
+        logger.warning("Container of type '{0}' can not be restored", getClass().getSimpleName());
     }
 
 }
