@@ -1,6 +1,7 @@
 package me.lauriichan.spigot.justlootit.storage.util.executor;
 
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 
@@ -13,6 +14,85 @@ import it.unimi.dsi.fastutil.objects.ObjectLists;
 import me.lauriichan.laylib.logger.ISimpleLogger;
 
 public final class ProtoExecutor<T extends Thread> implements Executor {
+
+    public static class Builder<T extends Thread> {
+
+        private final ThreadSupplier<T> supplier;
+
+        private ISimpleLogger logger;
+        private ThreadInfo info;
+
+        private int minThreads = 4, maxThreads = 12;
+        private float percentage = 0.8f;
+
+        private Builder(ThreadSupplier<T> supplier) {
+            this.supplier = Objects.requireNonNull(supplier);
+        }
+
+        public ISimpleLogger logger() {
+            return logger;
+        }
+
+        public Builder<T> logger(ISimpleLogger logger) {
+            this.logger = logger;
+            return this;
+        }
+
+        public ThreadInfo info() {
+            return info;
+        }
+
+        public Builder<T> info(ThreadInfo info) {
+            this.info = info;
+            return this;
+        }
+
+        public int minThreads() {
+            return minThreads;
+        }
+
+        public Builder<T> minThreads(int minThreads) {
+            this.minThreads = Math.max(minThreads, 1);
+            if (this.minThreads > this.maxThreads) {
+                int tmp = this.maxThreads;
+                this.maxThreads = this.minThreads;
+                this.minThreads = tmp;
+            }
+            return this;
+        }
+
+        public int maxThreads() {
+            return maxThreads;
+        }
+
+        public Builder<T> maxThreads(int maxThreads) {
+            this.maxThreads = Math.max(maxThreads, 1);
+            if (this.minThreads > this.maxThreads) {
+                int tmp = this.maxThreads;
+                this.maxThreads = this.minThreads;
+                this.minThreads = tmp;
+            }
+            return this;
+        }
+
+        public float percentage() {
+            return percentage;
+        }
+
+        public Builder<T> percentage(float percentage) {
+            this.percentage = Math.max(Math.min(percentage, 0f), 1f);
+            return this;
+        }
+
+        public ProtoExecutor<T> build() {
+            return new ProtoExecutor<>(logger, supplier, info, minThreads, maxThreads, percentage);
+        }
+
+    }
+
+    public static <T extends Thread> Builder<T> of(ThreadSupplier<T> supplier) {
+        return new Builder<>(supplier);
+    }
 
     @FunctionalInterface
     public static interface ThreadInfo {
@@ -38,14 +118,12 @@ public final class ProtoExecutor<T extends Thread> implements Executor {
 
     private volatile boolean active = true;
 
-    public ProtoExecutor(ISimpleLogger logger, ThreadSupplier<T> supplier) {
-        this(logger, supplier, null);
-    }
-
-    public ProtoExecutor(ISimpleLogger logger, ThreadSupplier<T> supplier, ThreadInfo info) {
-        this.logger = logger;
+    private ProtoExecutor(ISimpleLogger logger, ThreadSupplier<T> supplier, ThreadInfo info, int minThreads, int maxThreads,
+        float percentage) {
+        Objects.requireNonNull(supplier, "Supplier missing");
+        this.logger = Objects.requireNonNull(logger, "Logger missing");
         int available = Runtime.getRuntime().availableProcessors();
-        T[] threads = supplier.createArray(Math.max((int) Math.floor(available * 0.8), 4));
+        T[] threads = supplier.createArray(Math.min(Math.max((int) Math.floor(available * percentage), minThreads), maxThreads));
         for (int i = 0; i < threads.length; i++) {
             T thread = supplier.createThread(i, this);
             threads[i] = thread;

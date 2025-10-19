@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -35,6 +36,8 @@ public final class RAFMultiStorage extends Storage {
     private final ThreadSafeMapCache<Integer, IRAFFile> files;
 
     private final IIdentifier identifier;
+
+    private final ReentrantLock fileLock = new ReentrantLock(true);
 
     public RAFMultiStorage(final StorageAdapterRegistry registry, final File directory) {
         this(registry, directory, RAFSettingsV0.DEFAULT);
@@ -86,6 +89,28 @@ public final class RAFMultiStorage extends Storage {
         files.set(file.id(), file);
     }
 
+    private IRAFFile openFile(int fileId, boolean exists) {
+        if (files.has(fileId)) {
+            return files.get(fileId);
+        }
+        fileLock.lock();
+        try {
+            IRAFFile file = files.get(fileId);
+            if (file != null) {
+                return file;
+            }
+            file = RAFFileHelper.create(registry, directory, fileId, settings);
+            if (exists && !file.exists()) {
+                return null;
+            }
+            file.open();
+            cacheFile(file);
+            return file;
+        } finally {
+            fileLock.unlock();
+        }
+    }
+
     @Override
     public boolean isSupported(long id) {
         return Long.compareUnsigned(id >> settings.valueIdBits | 0xFFFFFFFF, 0xFFFFFFFF) <= 0;
@@ -97,18 +122,10 @@ public final class RAFMultiStorage extends Storage {
         if (Long.compareUnsigned(possibleId | 0xFFFFFFFF, 0xFFFFFFFF) >= 1) {
             return false;
         }
-        final int fileId = (int) (possibleId & 0xFFFFFFFF);
-        if (files.has(fileId)) {
-            return files.get(fileId).has(id);
+        IRAFFile file = openFile((int) (possibleId & 0xFFFFFFFF), true);
+        if (file == null) {
+            return false;
         }
-        IRAFFile file = RAFFileHelper.create(registry, directory, fileId, settings);
-        if (!file.isOpen()) {
-            if (!file.exists()) {
-                return false;
-            }
-            file.open();
-        }
-        cacheFile(file);
         return file.has(id);
     }
 
@@ -118,18 +135,10 @@ public final class RAFMultiStorage extends Storage {
         if (Long.compareUnsigned(possibleId | 0xFFFFFFFF, 0xFFFFFFFF) >= 1) {
             throw new StorageException("Unsupported file id '" + Long.toHexString(possibleId) + "'!");
         }
-        final int fileId = (int) (possibleId & 0xFFFFFFFF);
-        if (files.has(fileId)) {
-            return read(files.get(fileId), id);
+        IRAFFile file = openFile((int) (possibleId & 0xFFFFFFFF), true);
+        if (file == null) {
+            return null;
         }
-        IRAFFile file = RAFFileHelper.create(registry, directory, fileId, settings);
-        if (!file.isOpen()) {
-            if (!file.exists()) {
-                return null;
-            }
-            file.open();
-        }
-        cacheFile(file);
         return read(file, id);
     }
 
@@ -166,17 +175,7 @@ public final class RAFMultiStorage extends Storage {
         if (Long.compareUnsigned(possibleId | 0xFFFFFFFF, 0xFFFFFFFF) >= 1) {
             throw new StorageException("Unsupported file id '" + Long.toHexString(possibleId) + "'!");
         }
-        final int fileId = (int) (possibleId & 0xFFFFFFFF);
-        if (files.has(fileId)) {
-            write(files.get(fileId), stored);
-            return;
-        }
-        IRAFFile file = RAFFileHelper.create(registry, directory, fileId, settings);
-        if (!file.isOpen()) {
-            file.open();
-        }
-        cacheFile(file);
-        write(file, stored);
+        write(openFile((int) (possibleId & 0xFFFFFFFF), false), stored);
     }
 
     private void write(IRAFFile file, Stored<?> stored) {
@@ -197,18 +196,10 @@ public final class RAFMultiStorage extends Storage {
         if (Long.compareUnsigned(possibleId | 0xFFFFFFFF, 0xFFFFFFFF) >= 1) {
             throw new StorageException("Unsupported file id '" + Long.toHexString(possibleId) + "'!");
         }
-        final int fileId = (int) (possibleId & 0xFFFFFFFF);
-        if (files.has(fileId)) {
-            return delete(files.get(fileId), id);
+        IRAFFile file = openFile((int) (possibleId & 0xFFFFFFFF), true);
+        if (file == null) {
+            return false;
         }
-        IRAFFile file = RAFFileHelper.create(registry, directory, fileId, settings);
-        if (!file.isOpen()) {
-            if (!file.exists()) {
-                return false;
-            }
-            file.open();
-        }
-        cacheFile(file);
         return delete(file, id);
     }
 

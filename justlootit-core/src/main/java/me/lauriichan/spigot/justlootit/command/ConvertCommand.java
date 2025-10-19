@@ -5,7 +5,6 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
-import org.bukkit.command.ConsoleCommandSender;
 
 import me.lauriichan.laylib.command.Actor;
 import me.lauriichan.laylib.command.annotation.Action;
@@ -38,12 +37,12 @@ public class ConvertCommand implements ICommandExtension {
     private volatile UUID conversionSetup;
 
     @Action("")
-    public void convert(final JustLootItPlugin plugin, Actor<?> actor) {
+    public void convert(final JustLootItPlugin plugin, LootItActor<?> actor) {
         if (conversionSetup != null) {
             actor.sendTranslatedMessage(Messages.COMMAND_CONVERT_PROCESS_ONGOING, Key.of("name", actorName(conversionSetup, plugin)));
             return;
         }
-        if (!actor.as(ConsoleCommandSender.class).isValid()) {
+        if (!actor.isConsole()) {
             if (requestExpiry != null && !OffsetDateTime.now().isAfter(requestExpiry)) {
                 actor.sendTranslatedMessage(Messages.COMMAND_CONVERT_PROCESS_ONGOING, Key.of("name", actorName(request, plugin)));
                 return;
@@ -78,7 +77,7 @@ public class ConvertCommand implements ICommandExtension {
         inputProvider.getBooleanInput(actor, actor.getTranslatedMessageAsString(Messages.INPUT_PROMPT_CONVERT_DO_LOOTIN),
             actor.getTranslatedMessageAsString(Messages.INPUT_RETRY_BOOLEAN), this::propertyDoLootin);
     }
-    
+
     private String actorName(final UUID uuid, final JustLootItPlugin plugin) {
         if (uuid == Actor.IMPL_ID) {
             return Bukkit.getConsoleSender().getName();

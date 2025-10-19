@@ -124,7 +124,7 @@ public abstract class MapCache<K, V> extends Cache {
         int purged = 0;
         for (final K key : keys) {
             final CachedValue<V> entry = getEntry(key);
-            if (entry.time() < cacheTime) {
+            if (entry == null || entry.time() < cacheTime) {
                 continue;
             }
             purged++;
@@ -156,7 +156,7 @@ public abstract class MapCache<K, V> extends Cache {
         final K[] keys = entryKeys();
         for (final K key : keys) {
             final CachedValue<V> entry = getEntry(key);
-            if (entry.tick() < cacheTime) {
+            if (entry == null || entry.tick() < cacheTime) {
                 continue;
             }
             removeEntry(key);

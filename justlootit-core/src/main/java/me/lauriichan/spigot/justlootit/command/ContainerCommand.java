@@ -11,6 +11,7 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.data.type.Chest;
+import org.bukkit.boss.BossBar;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.loot.LootTable;
@@ -37,6 +38,7 @@ import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.capability.PlayerGUICapability;
 import me.lauriichan.spigot.justlootit.capability.StorageCapability;
 import me.lauriichan.spigot.justlootit.command.argument.CoordinateArgument.Coord;
+import me.lauriichan.spigot.justlootit.command.impl.LootItActor;
 import me.lauriichan.spigot.justlootit.config.data.RefreshGroup;
 import me.lauriichan.spigot.justlootit.data.CompatibilityContainer;
 import me.lauriichan.spigot.justlootit.data.Container;
@@ -44,6 +46,7 @@ import me.lauriichan.spigot.justlootit.data.ContainerType;
 import me.lauriichan.spigot.justlootit.data.FrameContainer;
 import me.lauriichan.spigot.justlootit.data.VanillaContainer;
 import me.lauriichan.spigot.justlootit.data.alternation.AlternationAction;
+import me.lauriichan.spigot.justlootit.data.alternation.container.ResetAccessAction;
 import me.lauriichan.spigot.justlootit.data.alternation.container.vanilla.UpdateLootTableAction;
 import me.lauriichan.spigot.justlootit.inventory.handler.manage.ContainerPageHandler;
 import me.lauriichan.spigot.justlootit.message.Messages;
@@ -52,6 +55,7 @@ import me.lauriichan.spigot.justlootit.storage.Stored;
 import me.lauriichan.spigot.justlootit.util.BlockUtil;
 import me.lauriichan.spigot.justlootit.util.CommandUtil;
 import me.lauriichan.spigot.justlootit.util.EntityUtil;
+import me.lauriichan.spigot.justlootit.util.ProgressNotifier;
 import me.lauriichan.spigot.justlootit.util.TypeName;
 import net.md_5.bungee.api.chat.HoverEvent;
 
@@ -60,14 +64,55 @@ import net.md_5.bungee.api.chat.HoverEvent;
 @Permission(JustLootItPermission.COMMAND_CONTAINER)
 public class ContainerCommand implements ICommandExtension {
 
-    // TODO: Implement this
-    //    @Action("alter loottable")
-    @Description("$#command.description.justlootit.container.alter.loottable")
-    public void alter(final JustLootItPlugin plugin, final Actor<?> actor, @Argument(name = "world", index = 1) final World world,
+//    @Action("bulk replace loottable")
+    @Description("$#command.description.justlootit.container.bulk.replace.loottable")
+    public void bulkReplaceLootTable(final JustLootItPlugin plugin, final LootItActor<?> actor,
+        @Argument(name = "world", index = 1) final World world,
         @Argument(name = "loottable to replace", index = 2) final NamespacedKey find,
         @Argument(name = "loottable to set", index = 3) final LootTable replace) {
         plugin.versionHandler().getLevel(world).getCapability(StorageCapability.class).ifPresent(capability -> {
-            AlternationAction.apply(plugin.executor(), capability.storage(), new UpdateLootTableAction(find, replace));
+            plugin.scheduler().async(() -> {
+                ProgressNotifier notifier = actor.newNotifier().useBossBar(true)
+                    .progressMessage(Messages.COMMAND_CONTAINER_BULK_REPLACE_LOOTTABLE_PROGRESS)
+                    .doneMessage(Messages.COMMAND_CONTAINER_BULK_REPLACE_LOOTTABLE_DONE).build(Key.of("world", world.getName()),
+                        Key.of("loottableFrom", find.toString()), Key.of("loottableTo", replace.getKey().toString()));
+                if (actor.hasBossBar()) {
+                    BossBar bossBar = actor.bossBar();
+                    bossBar.setTitle("");
+                    bossBar.setProgress(0);
+                    bossBar.setVisible(true);
+                }
+                notifier
+                    .progress(AlternationAction.apply(plugin.executor(), capability.storage(), new UpdateLootTableAction(find, replace)))
+                    .waitTimeout(200).await();
+                if (actor.hasBossBar()) {
+                    actor.bossBar().setVisible(false);
+                }
+            });
+        });
+    }
+
+//    @Action("bulk reset access")
+    @Description("$#command.description.justlootit.container.bulk.reset.access")
+    public void bulkResetAccess(final JustLootItPlugin plugin, final LootItActor<?> actor,
+        @Argument(name = "world", index = 1) final World world) {
+        plugin.versionHandler().getLevel(world).getCapability(StorageCapability.class).ifPresent(capability -> {
+            plugin.scheduler().async(() -> {
+                ProgressNotifier notifier = actor.newNotifier().useBossBar(true)
+                    .progressMessage(Messages.COMMAND_CONTAINER_BULK_RESET_ACCESS_PROGRESS)
+                    .doneMessage(Messages.COMMAND_CONTAINER_BULK_RESET_ACCESS_DONE).build(Key.of("world", world.getName()));
+                if (actor.hasBossBar()) {
+                    BossBar bossBar = actor.bossBar();
+                    bossBar.setTitle("");
+                    bossBar.setProgress(0);
+                    bossBar.setVisible(true);
+                }
+                notifier.progress(AlternationAction.apply(plugin.executor(), capability.storage(), ResetAccessAction.RESET))
+                    .waitTimeout(200).await();
+                if (actor.hasBossBar()) {
+                    actor.bossBar().setVisible(false);
+                }
+            });
         });
     }
 

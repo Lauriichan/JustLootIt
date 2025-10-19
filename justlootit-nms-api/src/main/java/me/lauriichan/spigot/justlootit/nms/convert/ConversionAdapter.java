@@ -4,7 +4,6 @@ import java.io.File;
 
 import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.spigot.justlootit.storage.util.executor.ProtoExecutor;
-import me.lauriichan.spigot.justlootit.storage.util.executor.ProtoExecutor.ThreadSupplier;
 
 public abstract class ConversionAdapter implements AutoCloseable {
 
@@ -18,7 +17,7 @@ public abstract class ConversionAdapter implements AutoCloseable {
         if (executor != null) {
             return executor;
         }
-        return executor = new ProtoExecutor<>(logger, new ThreadSupplier<>() {
+        return executor = ProtoExecutor.<ConvThread>of(new ProtoExecutor.ThreadSupplier<ConvThread>() {
             @Override
             public ConvThread[] createArray(int size) {
                 return new ConvThread[size];
@@ -28,12 +27,12 @@ public abstract class ConversionAdapter implements AutoCloseable {
             public ConvThread createThread(int id, ProtoExecutor<ConvThread> executor) {
                 return new ConvThread(id, executor);
             }
-        }, (log, cpu, threads) -> {
+        }).info((log, cpu, threads) -> {
             log.info("Conversion will run with {0} threads.", threads);
             if (threads > cpu) {
                 log.warning("There are less cpus available ({0}) than allocated, this might slow down the conversion a little.", cpu);
             }
-        });
+        }).logger(logger).minThreads(4).maxThreads(32).percentage(0.75f).build();
     }
 
     public abstract ProtoWorld getWorld(File directory);

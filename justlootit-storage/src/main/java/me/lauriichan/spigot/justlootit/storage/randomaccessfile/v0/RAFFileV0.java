@@ -128,15 +128,15 @@ public final class RAFFileV0 implements IRAFFile {
 
     @Override
     public boolean has(long id) throws StorageException {
-        if (!isOpen()) {
-            throw new StorageException("File is not open");
-        }
         if (isInvalidId(id)) {
             return false;
         }
         final int valueId = (int) (id & settings.valueIdMask);
         lock.lock();
         try {
+            if (!isOpen()) {
+                throw new StorageException("File is not open");
+            }
             final long fileSize = fileAccess.length();
             if (fileSize == 0) {
                 internalCloseDelete();
@@ -157,15 +157,15 @@ public final class RAFFileV0 implements IRAFFile {
 
     @Override
     public RAFEntry read(final long id) throws StorageException {
-        if (!isOpen()) {
-            throw new StorageException("File is not open");
-        }
         if (isInvalidId(id)) {
             throw new StorageException("Invalid value id '" + id + "'!");
         }
         final int valueId = (int) (id & settings.valueIdMask);
         lock.lock();
         try {
+            if (!isOpen()) {
+                throw new StorageException("File is not open");
+            }
             final long fileSize = fileAccess.length();
             if (fileSize == 0) {
                 internalCloseDelete();
@@ -195,9 +195,6 @@ public final class RAFFileV0 implements IRAFFile {
 
     @Override
     public void write(IRAFEntry entry) throws StorageException {
-        if (!isOpen()) {
-            throw new StorageException("File is not open");
-        }
         if (isInvalidId(entry.id())) {
             throw new StorageException("Invalid value id '" + entry.id() + "'!");
         }
@@ -206,6 +203,9 @@ public final class RAFFileV0 implements IRAFFile {
         final int valueId = (int) (entry.id() & settings.valueIdMask);
         lock.lock();
         try {
+            if (!isOpen()) {
+                throw new StorageException("File is not open");
+            }
             final long fileSize = fileAccess.length();
             if (fileSize == 0) {
                 fileAccess.setLength(settings.lookupHeaderSize + bufferSize);
@@ -272,15 +272,15 @@ public final class RAFFileV0 implements IRAFFile {
 
     @Override
     public boolean delete(long id) throws StorageException {
-        if (!isOpen()) {
-            throw new StorageException("File is not open");
-        }
         if (isInvalidId(id)) {
             throw new StorageException("Invalid value id '" + id + "'!");
         }
         final int valueId = (int) (id & settings.valueIdMask);
         lock.lock();
         try {
+            if (!isOpen()) {
+                throw new StorageException("File is not open");
+            }
             final long fileSize = fileAccess.length();
             if (fileSize == 0) {
                 internalCloseDelete();
@@ -338,12 +338,12 @@ public final class RAFFileV0 implements IRAFFile {
     public Map.Entry<Counter, CompletableFuture<Void>> forEach(Consumer<IRAFEntry> consumer, Executor executor) {
         SimpleCounter counter = new SimpleCounter(settings.valueIdAmount);
         return Map.entry(counter, CompletableFuture.runAsync(() -> {
-            if (!isOpen()) {
-                counter.finish();
-                throw new StorageException("File is not open");
-            }
             lock.lock();
             try {
+                if (!isOpen()) {
+                    counter.finish();
+                    throw new StorageException("File is not open");
+                }
                 final long fileSize = fileAccess.length();
                 if (fileSize == 0) {
                     internalCloseDelete();
@@ -387,12 +387,12 @@ public final class RAFFileV0 implements IRAFFile {
     public Map.Entry<Counter, CompletableFuture<Void>> modifyEach(Function<IRAFEntry, IRAFEntry> func, Executor executor) {
         SimpleCounter counter = new SimpleCounter(settings.valueIdAmount);
         return Map.entry(counter, CompletableFuture.runAsync(() -> {
-            if (!isOpen()) {
-                counter.finish();
-                throw new StorageException("File is not open");
-            }
             lock.lock();
             try {
+                if (!isOpen()) {
+                    counter.finish();
+                    throw new StorageException("File is not open");
+                }
                 long fileSize = fileAccess.length();
                 if (fileSize == 0) {
                     internalCloseDelete();

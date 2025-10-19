@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -33,6 +34,7 @@ import me.lauriichan.minecraft.pluginbase.extension.IConditionMap;
 import me.lauriichan.minecraft.pluginbase.resource.source.IDataSource;
 import me.lauriichan.minecraft.pluginbase.util.spigot.SpigotUpdater;
 import me.lauriichan.minecraft.pluginbase.util.spigot.SpigotUpdater.SpigotUpdaterException;
+import me.lauriichan.spigot.justlootit.capability.ActorCapability;
 import me.lauriichan.spigot.justlootit.capability.JustLootItCapabilityProvider;
 import me.lauriichan.spigot.justlootit.command.*;
 import me.lauriichan.spigot.justlootit.command.argument.*;
@@ -106,6 +108,8 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
 
     private CommandManager commandManager;
     private BukkitCommandInjectableBridge<?> commandBridge;
+    
+    private ProtoExecutor<Thread> executor;
 
     private volatile InputProvider inputProvider = SimpleChatInputProvider.CHAT;
 
@@ -253,6 +257,20 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
             getServer().spigot().restart();
             return;
         }
+        executor = ProtoExecutor.of(new ProtoExecutor.ThreadSupplier<Thread>() {
+            @Override
+            public Thread[] createArray(int size) {
+                return new Thread[size];
+            }
+
+            @Override
+            public Thread createThread(int id, ProtoExecutor<Thread> executor) {
+                Thread thread = new Thread(executor::runQueue);
+                thread.setName("JLI-Worker-" + id);
+                thread.setDaemon(true);
+                return thread;
+            }
+        }).minThreads(1).maxThreads(4).percentage(0.5f).build();
         commandManager = new CommandManager(logger(), argumentRegistry());
         commandManager.setPrefix("/jli ");
         commandBridge = new BukkitCommandInjectableBridge<>(IBukkitCommandProcessor.commandLine(), commandManager, this,
@@ -321,8 +339,7 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         // Warn about trial chambers
         if (versionHelper.isTrialChamberBugged()) {
             actor(Bukkit.getConsoleSender()).sendTranslatedMessage(Messages.WARNING_TRIAL_CHAMBER_BUG,
-                Key.of("software.name", Bukkit.getName()),
-                Key.of("software.version", Bukkit.getVersion()));
+                Key.of("software.name", Bukkit.getName()), Key.of("software.version", Bukkit.getVersion()));
         }
     }
 
@@ -445,6 +462,10 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         return packetManager;
     }
 
+    public ProtoExecutor<?> executor() {
+        return executor;
+    }
+
     public File mainWorldFolder() {
         return mainWorldFolder;
     }
@@ -478,7 +499,11 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         return actor(sender, this);
     }
 
+    @SuppressWarnings("unchecked")
     private <T extends CommandSender> LootItActor<T> actor(final T sender, final BasePlugin<?> plugin) {
+        if (sender instanceof Player player) {
+            return (LootItActor<T>) ActorCapability.actor(this, player);
+        }
         return new LootItActor<>(sender, (JustLootItPlugin) plugin);
     }
 
@@ -517,10 +542,6 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         } catch (AccessFailedException exception) {
             throw new JLIInitializationException("Failed to initialize VersionHandler!", exception.getCause());
         }
-    }
-
-    public ProtoExecutor<?> executor() {
-        return null;
     }
 
 }

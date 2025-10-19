@@ -11,6 +11,7 @@ import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.spigot.justlootit.nms.convert.ConversionAdapter;
 import me.lauriichan.spigot.justlootit.nms.v1_21_R6.VersionHandler1_21_R6;
 import me.lauriichan.spigot.justlootit.nms.v1_21_R6.util.NmsHelper1_21_R6;
+import me.lauriichan.spigot.justlootit.nms.v1_21_R6.util.PlatformHelper1_21_R6;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.NbtException;
 import net.minecraft.resources.ResourceKey;
@@ -90,7 +91,7 @@ public final class ConversionAdapter1_21_R6 extends ConversionAdapter {
             // Ignore cause we're just closing :)
             return null;
         }
-        WorldLoader.DataLoadContext context = server.worldLoader;
+        WorldLoader.DataLoadContext context = PlatformHelper1_21_R6.getLoadContext(server);
         LevelDataAndDimensions levelData = LevelStorageSource.getLevelDataAndDimensions(dynamic, context.dataConfiguration(),
             context.datapackDimensions().lookupOrThrow(Registries.LEVEL_STEM), context.datapackWorldgen());
         return handler.applyCapabilities(new ProtoWorld1_21_R6(workerPool(logger), logger,

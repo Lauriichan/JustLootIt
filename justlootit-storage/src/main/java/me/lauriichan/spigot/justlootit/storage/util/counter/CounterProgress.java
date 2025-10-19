@@ -53,7 +53,7 @@ public final class CounterProgress {
     }
 
     public boolean isDone() {
-        return futures.stream().filter(future -> !future.isDone()).findAny().isPresent();
+        return futures.stream().noneMatch(future -> !future.isDone());
     }
 
 }

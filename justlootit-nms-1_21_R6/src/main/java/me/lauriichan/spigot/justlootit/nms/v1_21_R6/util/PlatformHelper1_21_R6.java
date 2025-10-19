@@ -1,6 +1,7 @@
 package me.lauriichan.spigot.justlootit.nms.v1_21_R6.util;
 
 import java.lang.invoke.MethodHandle;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 import org.bukkit.Keyed;
@@ -11,6 +12,8 @@ import me.lauriichan.laylib.reflection.JavaLookup;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.WorldLoader;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.entity.LevelEntityGetter;
@@ -18,6 +21,7 @@ import net.minecraft.world.level.entity.LevelEntityGetter;
 public final class PlatformHelper1_21_R6 {
 
     private static final MethodHandle GET_ENTITY_LOOKUP = Access.getEntityLookup();
+    private static final MethodHandle GET_WORLD_LOADER_CONTEXT = Access.getWorldLoaderContext();
     private static final MethodHandle BUKKIT_TO_MINECRAFT_HOLDER = Access.bukkitToMinecraftHolder();
 
     private static final class Access {
@@ -41,7 +45,15 @@ public final class PlatformHelper1_21_R6 {
             }
             return JavaLookup.PLATFORM.unreflect(method);
         }
-        
+
+        static MethodHandle getWorldLoaderContext() {
+            Field field = ClassUtil.getField(MinecraftServer.class, "worldLoaderContext");
+            if (field == null) {
+                return null;
+            }
+            return JavaLookup.PLATFORM.unreflectGetter(field);
+        }
+
         static MethodHandle bukkitToMinecraftHolder() {
             Method method = ClassUtil.getMethod(CraftRegistry.class, "bukkitToMinecraftHolder", Keyed.class);
             if (method == null || !Holder.class.isAssignableFrom(method.getReturnType())) {
@@ -66,7 +78,7 @@ public final class PlatformHelper1_21_R6 {
             throw new IllegalStateException("Failed to retrieve entity lookup", e);
         }
     }
-    
+
     public static <B extends Keyed, M> Holder<M> bukkitToMinecraftHolder(final B bukkit, final ResourceKey<Registry<M>> registry) {
         if (BUKKIT_TO_MINECRAFT_HOLDER == null) {
             return CraftRegistry.bukkitToMinecraftHolder(bukkit, registry);
@@ -75,6 +87,19 @@ public final class PlatformHelper1_21_R6 {
             return (Holder<M>) BUKKIT_TO_MINECRAFT_HOLDER.invoke(bukkit);
         } catch (Throwable e) {
             throw new IllegalStateException("Failed to retrieve holder", e);
+        }
+    }
+
+    public static WorldLoader.DataLoadContext getLoadContext(MinecraftServer server) {
+        // Fix for weird difference between Paper and Spigot mojang mappings
+        try {
+            return server.worldLoader;
+        } catch (NoSuchFieldError err) {
+            try {
+                return (WorldLoader.DataLoadContext) GET_WORLD_LOADER_CONTEXT.invoke(server);
+            } catch (Throwable e) {
+                throw new IllegalStateException("Failed to retrieve world loader", e);
+            }
         }
     }
 

@@ -1,11 +1,8 @@
 package me.lauriichan.spigot.justlootit.convert;
 
 import java.io.File;
-import java.text.DecimalFormat;
 import java.util.Random;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
 import org.bukkit.Bukkit;
@@ -15,18 +12,16 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.laylib.reflection.StackTracker;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
+import me.lauriichan.spigot.justlootit.capability.StorageCapability;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.nms.convert.ConvThread;
 import me.lauriichan.spigot.justlootit.nms.convert.ConversionAdapter;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoChunk;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoWorld;
 import me.lauriichan.spigot.justlootit.storage.util.counter.CounterProgress;
+import me.lauriichan.spigot.justlootit.util.ProgressNotifier;
 
 public final class JustLootItConverter {
-
-    private static final DecimalFormat PROGRESS_FORMAT = new DecimalFormat("0.00%");
-    
-    private static final long THREAD_DUMP_TIMEOUT_INFO = TimeUnit.SECONDS.toMillis(15);
 
     private JustLootItConverter() {
         throw new UnsupportedOperationException();
@@ -72,7 +67,7 @@ public final class JustLootItConverter {
                     }
                     ChunkConverter[] enabledConverters = converters.stream().filter(converter -> converter.isEnabledFor(world))
                         .toArray(ChunkConverter[]::new);
-                    if (enabledConverters.length == 0) {
+                    if (enabledConverters.length == 0 || world.getCapability(StorageCapability.class).isEmpty()) {
                         continue;
                     }
                     Consumer<ProtoChunk> chunkConsumer = chunk -> {
@@ -83,38 +78,25 @@ public final class JustLootItConverter {
                     };
                     somethingWasConverted = true;
                     logger.info("Starting conversion of level '{0}'...", world.getName());
-                    CounterProgress progress = world.streamChunks(chunkConsumer);
-                    if (!progress.hasFutures()) {
+                    CounterProgress counterProgress = world.streamChunks(chunkConsumer);
+                    if (!counterProgress.hasFutures()) {
                         logger.info("Skipping level '{0}', couldn't find any regions.", world.getName());
                         continue;
                     }
-                    long now = System.currentTimeMillis(), dumpTime = now;
-                    loop:
-                    while (true) {
-                        if (now > dumpTime + THREAD_DUMP_TIMEOUT_INFO) {
-                            dumpTime = now;
-                            printThreads(logger, world.getName(), progress, conversionAdapter.executor().threads());
-                        } else {
-                            logger.info("Converting level '{0}'... ({2}) [{1} / {3} Chunks]", world.getName(), progress.counter().current(),
-                                PROGRESS_FORMAT.format(progress.counter().progress()), progress.counter().max());
-                        }
-                        while (progress.future().isDone()) {
-                            if (!progress.next()) {
-                                break loop;
+                    new ProgressNotifier().progress(counterProgress).detailedTimeout(TimeUnit.SECONDS, 15)
+                        .waitTimeout(TimeUnit.SECONDS, 2)
+                        .progressNotifier((progress, elapsed, detailed) -> {
+                            if (detailed) {
+                                printThreads(logger, world.getName(), progress, conversionAdapter.executor().threads());
+                                return;
                             }
-                            dumpTime = now;
-                        }
-                        try {
-                            progress.future().get(5, TimeUnit.SECONDS);
-                        } catch (InterruptedException | ExecutionException | TimeoutException e) {
-                            continue;
-                        } finally {
-                            now = System.currentTimeMillis();
-                        }
-                    }
-                    logger.info("Conversion of level '{0}' done! [{1} Chunks]", world.getName(), progress.counter().max());
+                            logger.info("Converting level '{0}'... ({2}) [{1} / {3} Chunks]", world.getName(), progress.counter().current(),
+                                ProgressNotifier.asPercentage(progress), progress.counter().max());
+                        }).doneNotifier((progress, elapsed) -> logger.info("Conversion of level '{0}' done! [{1} Chunks]", world.getName(),
+                            progress.counter().max()))
+                        .await();
                 } catch (RuntimeException exp) {
-                    logger.error("Couldn't start conversion of world '{0}'...", file.getName(), exp);
+                    logger.error("Couldn't start conversion of world '{0}'...", exp, file.getName());
                 }
             }
             return somethingWasConverted;
@@ -137,7 +119,7 @@ public final class JustLootItConverter {
         logger.info("  ├► CHUNKS TOTAL: {0}", progress.counter().max());
         logger.info("  ├► CHUNKS DONE:  {0}", progress.counter().current());
         logger.info("  │");
-        logger.info("  ├► PROGRESS:     {0}", PROGRESS_FORMAT.format(progress.counter().progress()));
+        logger.info("  ├► PROGRESS:     {0}", ProgressNotifier.asPercentage(progress));
         logger.info("  │");
         logger.info("  └──► Conversion ({0})", level);
         logger.info(" ");
@@ -182,7 +164,7 @@ public final class JustLootItConverter {
         }
         logger.info("═════════════════════════════════════════════════════");
     }
-    
+
     private static String reformatClassName(String className) {
         String[] parts = className.split("\\.");
         StringBuilder builder = new StringBuilder();
@@ -197,7 +179,7 @@ public final class JustLootItConverter {
         }
         return builder.append(parts[parts.length - 1]).toString();
     }
-    
+
     private static String nonNull(String string) {
         if (string == null) {
             return "";

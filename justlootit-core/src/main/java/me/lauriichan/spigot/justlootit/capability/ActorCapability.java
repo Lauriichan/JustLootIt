@@ -1,7 +1,5 @@
 package me.lauriichan.spigot.justlootit.capability;
 
-import java.lang.ref.WeakReference;
-
 import org.bukkit.entity.Player;
 
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
@@ -27,7 +25,7 @@ public final class ActorCapability implements ICapability {
     private final PlayerAdapter adapter;
     private final JustLootItPlugin plugin;
 
-    private WeakReference<LootItActor<Player>> actor;
+    private LootItActor<Player> actor;
 
     public ActorCapability(PlayerAdapter adapter) {
         this.adapter = adapter;
@@ -35,21 +33,22 @@ public final class ActorCapability implements ICapability {
     }
 
     public LootItActor<Player> actor() {
-        if (this.actor == null) {
+        if (actor == null) {
             Player player = adapter.asBukkit();
             if (player == null) {
                 return null;
             }
-            LootItActor<Player> actor = plugin.actor(player);
-            this.actor = new WeakReference<>(actor);
-            return actor;
-        }
-        LootItActor<Player> actor = this.actor.get();
-        if (actor == null) {
-            this.actor = null;
-            return actor();
+            return this.actor = new LootItActor<>(player, plugin);
         }
         return actor;
+    }
+
+    @Override
+    public void terminate() {
+        if (actor == null) {
+            return;
+        }
+        actor.disconnect();
     }
 
 }
