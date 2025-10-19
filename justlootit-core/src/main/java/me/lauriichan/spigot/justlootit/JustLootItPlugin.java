@@ -270,7 +270,7 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
                 thread.setDaemon(true);
                 return thread;
             }
-        }).minThreads(1).maxThreads(4).percentage(0.5f).build();
+        }).logger(logger()).minThreads(1).maxThreads(4).percentage(0.5f).build();
         commandManager = new CommandManager(logger(), argumentRegistry());
         commandManager.setPrefix("/jli ");
         commandBridge = new BukkitCommandInjectableBridge<>(IBukkitCommandProcessor.commandLine(), commandManager, this,
