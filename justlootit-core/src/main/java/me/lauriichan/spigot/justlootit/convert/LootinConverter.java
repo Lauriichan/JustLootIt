@@ -217,9 +217,11 @@ public class LootinConverter extends ChunkConverter {
                 }
                 try {
                     Stored<?> stored;
-                    // we know it's an elytra cause Lootin doesn't support any other items
+                    // We know it's an elytra cause Lootin doesn't support any other items
                     storage.write(stored = storage.registry().create(new FrameContainer(new ItemStack(Material.ELYTRA))));
                     JustLootItAccess.setIdentity(dataContainer, stored.id());
+                    // We have to remove the item from the item frame otherwise this can be looted again apparently
+                    entity.getNbt().remove("Item");
                 } finally {
                     clearLootinKeys(dataContainer);
                     chunk.updateEntity(entity);

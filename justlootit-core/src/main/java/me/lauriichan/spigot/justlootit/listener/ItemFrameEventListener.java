@@ -39,6 +39,7 @@ import me.lauriichan.spigot.justlootit.nms.packet.PacketOutSetEntityData.IEntity
 import me.lauriichan.spigot.justlootit.nms.util.argument.ArgumentMap;
 import me.lauriichan.spigot.justlootit.storage.Stored;
 import me.lauriichan.spigot.justlootit.util.DataHelper;
+import me.lauriichan.spigot.justlootit.util.EntityUtil;
 
 @Extension
 public class ItemFrameEventListener implements IListenerExtension {
@@ -58,8 +59,7 @@ public class ItemFrameEventListener implements IListenerExtension {
     @EventHandler(ignoreCancelled = true)
     public void onInteractEvent(final PlayerInteractEntityEvent event) {
         final Entity entity = event.getRightClicked();
-        EntityType type;
-        if (entity == null || (type = entity.getType()) != EntityType.ITEM_FRAME && type != EntityType.GLOW_ITEM_FRAME) {
+        if (entity == null || !EntityUtil.isItemFrame(entity.getType())) {
             return;
         }
         final PersistentDataContainer container = entity.getPersistentDataContainer();
@@ -72,8 +72,7 @@ public class ItemFrameEventListener implements IListenerExtension {
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onHangingBreak(final HangingBreakEvent event) {
         final Entity entity = event.getEntity();
-        EntityType type;
-        if (entity == null || (type = entity.getType()) != EntityType.ITEM_FRAME && type != EntityType.GLOW_ITEM_FRAME) {
+        if (entity == null || !EntityUtil.isItemFrame(entity.getType())) {
             return;
         }
         event.setCancelled(JustLootItAccess.hasIdentity(entity.getPersistentDataContainer()));
@@ -86,7 +85,7 @@ public class ItemFrameEventListener implements IListenerExtension {
     public void onHangingBreakByEntity(final HangingBreakByEntityEvent event) {
         final Entity entity = event.getEntity();
         EntityType type;
-        if (entity == null || (type = entity.getType()) != EntityType.ITEM_FRAME && type != EntityType.GLOW_ITEM_FRAME) {
+        if (entity == null || !EntityUtil.isItemFrame(type = entity.getType())) {
             return;
         }
         final PersistentDataContainer container = entity.getPersistentDataContainer();

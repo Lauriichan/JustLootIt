@@ -63,8 +63,10 @@ public class ContainerRestorer extends ChunkConverter {
             if (storage.delete(containerId)) {
                 if (otherEntity != null) {
                     JustLootItAccess.removeOffset(dataContainer);
+                    chunk.updateBlock(otherEntity);
                 }
                 JustLootItAccess.removeIdentity(identityDataContainer);
+                chunk.updateBlock(blockEntity);
             }
         }
         processed.clear();
@@ -82,6 +84,7 @@ public class ContainerRestorer extends ChunkConverter {
                 entity.getNbt().set("Item", nbtHelper.asTag(stored.value().getItem()));
                 if (storage.delete(containerId)) {
                     JustLootItAccess.removeIdentity(dataContainer);
+                    chunk.updateEntity(entity);
                 }
             } else if (EntityUtil.isSupportedEntity(entity.getType())) {
                 long containerId = JustLootItAccess.getIdentity(dataContainer);
@@ -97,6 +100,7 @@ public class ContainerRestorer extends ChunkConverter {
                 container.restore(logger, versionHandler, entity);
                 if (storage.delete(containerId)) {
                     JustLootItAccess.removeIdentity(dataContainer);
+                    chunk.updateEntity(entity);
                 }
             }
         }
