@@ -72,6 +72,7 @@ public class ContainerCommand implements ICommandExtension {
         @Argument(name = "loottable to set", index = 3) final LootTable replace) {
         plugin.versionHandler().getLevel(world).getCapability(StorageCapability.class).ifPresent(capability -> {
             plugin.scheduler().async(() -> {
+                System.out.println("Hello");
                 ProgressNotifier notifier = actor.newNotifier().useBossBar(true)
                     .progressMessage(Messages.COMMAND_CONTAINER_BULK_REPLACE_LOOTTABLE_PROGRESS)
                     .doneMessage(Messages.COMMAND_CONTAINER_BULK_REPLACE_LOOTTABLE_DONE).build(Key.of("world", world.getName()),

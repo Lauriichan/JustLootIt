@@ -29,7 +29,12 @@ public class WriteUpdateReadTest extends BaseTest {
             return;
         }
         final SimpleObject[] objects = new SimpleObject[amount];
+        int actualAmount = amount;
         for (int id = 0; id < amount; id++) {
+            if (!storage.isSupported(id)) {
+                actualAmount = id;
+                break;
+            }
             final SimpleObject object = new SimpleObject(random.nextInt(Integer.MAX_VALUE));
             objects[id] = object;
             storage.write(storage.registry().create(object).id(id));
@@ -47,7 +52,7 @@ public class WriteUpdateReadTest extends BaseTest {
             return UpdateInfo.delete();
         }, Runnable::run);
 
-        for (int id = 0; id < amount; id++) {
+        for (int id = 0; id < actualAmount; id++) {
             final Stored<SimpleObject> loaded = storage.read(id);
             final long mod = id % 3;
             if (mod == 2) {

@@ -8,10 +8,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import org.apache.commons.io.FileUtils;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 
+import me.lauriichan.spigot.justlootit.storage.randomaccessfile.v0.RAFSettingsV0;
 import me.lauriichan.spigot.justlootlit.storage.test.Test.StorageProvider;
 import me.lauriichan.spigot.justlootlit.storage.test.simple.*;
 
@@ -22,20 +22,21 @@ public class FeatureTest {
      */
 
     public static final long SEED = 285428738523L;
+    
+    public static final int TEST_VOLUME = RAFSettingsV0.DEFAULT_VALUES_PER_FILE * 2;
 
     public static final Test[] TESTS = new Test[] {
-        new WriteReadTest(128),
-        new WriteReadDeleteTest(128),
-        new WriteUpdateReadTest(128),
-        new ShuffledWriteReadTest(128),
-        new WriteOverwriteReadTest(128)
+        new WriteReadTest(TEST_VOLUME),
+        new WriteReadDeleteTest(TEST_VOLUME),
+        new WriteUpdateReadTest(TEST_VOLUME),
+        new ShuffledWriteReadTest(TEST_VOLUME),
+        new WriteOverwriteReadTest(TEST_VOLUME)
     };
 
     /*
      * ONLY MODIFY PUBLIC FIELDS
      */
 
-    @Disabled
     @TestFactory
     public Collection<DynamicTest> featureTests() {
         final ArrayList<DynamicTest> tests = new ArrayList<>(TESTS.length);

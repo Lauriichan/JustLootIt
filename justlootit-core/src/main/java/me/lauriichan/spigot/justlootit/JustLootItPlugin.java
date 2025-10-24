@@ -392,6 +392,10 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     @Override
     public void onPluginDisable() {
         stopTimers();
+        if (executor != null) {
+            executor.setInactive();
+            executor.await();
+        }
         if (versionHandler != null) {
             packetManager.unregister(itemFrameContainer);
             versionHandler.disable();

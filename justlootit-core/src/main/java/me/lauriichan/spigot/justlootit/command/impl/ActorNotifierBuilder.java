@@ -2,6 +2,7 @@ package me.lauriichan.spigot.justlootit.command.impl;
 
 import java.util.Objects;
 
+import org.bukkit.Bukkit;
 import org.bukkit.boss.BossBar;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -9,6 +10,8 @@ import org.bukkit.entity.Player;
 import me.lauriichan.laylib.localization.IMessage;
 import me.lauriichan.laylib.localization.Key;
 import me.lauriichan.laylib.localization.MessageProvider;
+import me.lauriichan.minecraft.pluginbase.message.component.ComponentBuilder;
+import me.lauriichan.minecraft.pluginbase.message.component.SubComponentBuilder;
 import me.lauriichan.spigot.justlootit.util.ProgressNotifier;
 import net.md_5.bungee.api.ChatMessageType;
 
@@ -98,6 +101,7 @@ public final class ActorNotifierBuilder<P extends CommandSender> {
             detailedProgressMessage = translate(this.detailedProgressMessage);
         if (actor.isPlayer() && useBossBar) {
             final int ticks = this.messageUpdateDelay;
+            CommandSender console = Bukkit.getConsoleSender();
             notifier.progressNotifier((progress, elapsed, detailed) -> {
                 double progressPerc = progress.counter().progress();
                 Key[] mergedPlaceholders = merge(placeholders, Key.of("progress", ProgressNotifier.asPercentage(progressPerc)),
@@ -111,10 +115,20 @@ public final class ActorNotifierBuilder<P extends CommandSender> {
                     if (delay > ticks) {
                         return;
                     }
+                    notifier.attrUnset("delay");
                 }
+                ComponentBuilder<?, ?> builder = ComponentBuilder.parse(actor.getMessageManager().format(progressMessage, mergedPlaceholders));
                 BossBar bossBar = actor.bossBar();
                 bossBar.setProgress(progressPerc);
-                bossBar.setTitle(actor.getMessageManager().format(progressMessage, mergedPlaceholders));
+                bossBar.setTitle(builder.asLegacyText());
+                
+                int consoleDelay = notifier.attrOrDefault("consoleDelay", Number.class, 0).intValue() + 1;
+                notifier.attrSet("consoleDelay", consoleDelay);
+                if (consoleDelay > 10) {
+                    return;
+                }
+                notifier.attrUnset("consoleDelay");
+                builder.send(console);
             });
         } else {
             notifier.progressNotifier((progress, elapsed, detailed) -> {
@@ -135,8 +149,11 @@ public final class ActorNotifierBuilder<P extends CommandSender> {
         }
         if (doneMessage != null) {
             notifier.doneNotifier((progress, elapsed) -> {
-                actor.componentBuilder(progressMessage, merge(placeholders, Key.of("progress", ProgressNotifier.asPercentage(progress)),
-                    Key.of("current", progress.counter().current()), Key.of("amount", progress.counter().max()))).send(actor);
+                SubComponentBuilder<?> builder = actor.componentBuilder(progressMessage,
+                    merge(placeholders, Key.of("progress", ProgressNotifier.asPercentage(progress)),
+                        Key.of("current", progress.counter().current()), Key.of("amount", progress.counter().max())));
+                builder.send(actor);
+                builder.sendConsole();
             });
         }
         return notifier;

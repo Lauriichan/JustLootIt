@@ -28,7 +28,12 @@ public class ShuffledWriteReadTest extends BaseTest {
             return;
         }
         final ObjectArrayList<SimpleObject> objects = new ObjectArrayList<>(amount);
+        int actualAmount = amount;
         for (int id = 0; id < amount; id++) {
+            if (!storage.isSupported(id)) {
+                actualAmount = id;
+                break;
+            }
             objects.add(new SimpleObject(random.nextInt(Integer.MAX_VALUE)));
         }
 
@@ -40,7 +45,7 @@ public class ShuffledWriteReadTest extends BaseTest {
             storage.write(stored);
         }
 
-        for (int id = 0; id < amount; id++) {
+        for (int id = 0; id < actualAmount; id++) {
             final Stored<SimpleObject> loaded = storage.read(id);
             assertArrayEquals(objects.get(id).numbers, loaded.value().numbers, "Invalid entry " + id);
         }

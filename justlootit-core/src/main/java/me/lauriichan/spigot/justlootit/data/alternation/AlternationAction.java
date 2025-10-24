@@ -36,6 +36,7 @@ public abstract class AlternationAction<T> {
     protected abstract UpdateState updateEntry(ISimpleLogger logger, Stored<?> stored, T value, boolean possiblyModified);
 
     public static CounterProgress apply(ProtoExecutor<?> executor, IStorage storage, AlternationAction<?>... actions) {
+        System.out.println("Applying");
         return storage.updateEach(stored -> {
             UpdateState state = UpdateState.NONE;
             boolean possiblyModified = false;
@@ -53,11 +54,14 @@ public abstract class AlternationAction<T> {
             }
             switch (state) {
             case DELETE:
+                System.out.println("Delete");
                 return UpdateInfo.delete();
             case MODIFY:
+                System.out.println("Modify");
                 return UpdateInfo.modify();
             case NONE:
             default:
+                System.out.println("None");
                 // We set 'default' to NONE as null is not an option here
                 return UpdateInfo.none();
             }

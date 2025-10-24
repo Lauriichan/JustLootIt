@@ -26,7 +26,12 @@ public class WriteReadTest extends BaseTest {
             return;
         }
         final SimpleObject[] objects = new SimpleObject[amount];
+        int actualAmount = amount;
         for (int id = 0; id < amount; id++) {
+            if (!storage.isSupported(id)) {
+                actualAmount = id;
+                break;
+            }
             final SimpleObject object = new SimpleObject(id, random.nextInt(Integer.MAX_VALUE));
             objects[id] = object;
             final Stored<SimpleObject> stored = storage.registry().create(object);
@@ -34,7 +39,7 @@ public class WriteReadTest extends BaseTest {
             storage.write(stored);
         }
 
-        for (int id = 0; id < amount; id++) {
+        for (int id = 0; id < actualAmount; id++) {
             final Stored<SimpleObject> loaded = storage.read(id);
             assertArrayEquals(objects[id].numbers, loaded.value().numbers, "Invalid entry " + id);
         }
