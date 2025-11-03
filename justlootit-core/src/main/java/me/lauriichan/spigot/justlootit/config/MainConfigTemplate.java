@@ -35,6 +35,9 @@ public class MainConfigTemplate implements ISingleConfigExtension {
     @ConfigValue("container.delete-on-break")
     public boolean deleteOnBreak = true;
     
+    @ConfigValue("container.can-items-be-stored")
+    public boolean allowItemStorageInContainer = true;
+    
     @ConfigValue("loot.unique")
     public boolean uniqueLootPerPlayer = false;
     

@@ -26,6 +26,7 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.inventory.InventoryType;
+import org.bukkit.event.inventory.InventoryMoveItemEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.vehicle.VehicleDamageEvent;
@@ -236,6 +237,11 @@ public class ContainerListener implements IListenerExtension {
         }
     }
 
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
+    public void onItemTransfer(final InventoryMoveItemEvent event) {
+        event.setCancelled(InventoryUtil.isLootContainer(event.getDestination()) || InventoryUtil.isLootContainer(event.getSource()));
+    }
+
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
     public void onVehicleDamage(final VehicleDamageEvent event) {
         Vehicle vehicle = event.getVehicle();
@@ -383,7 +389,8 @@ public class ContainerListener implements IListenerExtension {
                         final Stored<CachedInventory> storedCachedInventory = playerStorage.read(lookupTable.getEntryIdByMapped(entryId));
                         if (storedCachedInventory == null) {
                             lookupTable.drop(entryId);
-                            actor.logger().warning("Dropped loot of container {0} for player {1} in world {2}", entryId.containerId(), playerId, entryId.worldId());
+                            actor.logger().warning("Dropped loot of container {0} for player {1} in world {2}", entryId.containerId(),
+                                playerId, entryId.worldId());
                         } else {
                             final CachedInventory cachedInventory = storedCachedInventory.value();
                             final int columnAmount = IGuiInventory.getColumnAmount(cachedInventory.getType());

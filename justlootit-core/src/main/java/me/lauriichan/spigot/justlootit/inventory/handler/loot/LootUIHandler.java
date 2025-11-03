@@ -1,13 +1,21 @@
 package me.lauriichan.spigot.justlootit.inventory.handler.loot;
 
+import java.util.Map;
+
 import org.bukkit.Location;
 import org.bukkit.entity.HumanEntity;
+import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.inventory.ItemStack;
 
+import me.lauriichan.minecraft.pluginbase.inventory.ClickType;
+import me.lauriichan.minecraft.pluginbase.inventory.DropType;
 import me.lauriichan.minecraft.pluginbase.inventory.IGuiInventory;
 import me.lauriichan.minecraft.pluginbase.inventory.IHandler;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.capability.StorageCapability;
+import me.lauriichan.spigot.justlootit.config.MainConfig;
 import me.lauriichan.spigot.justlootit.data.CachedInventory;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
@@ -25,6 +33,8 @@ public final class LootUIHandler implements IHandler {
 
     private final JustLootItPlugin plugin = JustLootItPlugin.get();
     private final VersionHandler versionHandler = plugin.versionHandler();
+
+    private final MainConfig config = plugin.configManager().config(MainConfig.class);
 
     private LootUIHandler() {}
 
@@ -66,10 +76,44 @@ public final class LootUIHandler implements IHandler {
         });
         return false;
     }
+    
+    @Override
+    public boolean onEventClick(HumanEntity entity, IGuiInventory inventory, InventoryClickEvent event) {
+        if (event.getAction() == InventoryAction.COLLECT_TO_CURSOR) {
+            return false;
+        }
+        return IHandler.super.onEventClick(entity, inventory, event);
+    }
 
     @Override
-    public boolean onEventClick(final HumanEntity entity, final IGuiInventory inventory, final InventoryClickEvent event) {
+    public boolean onEventDrag(HumanEntity entity, IGuiInventory inventory, InventoryDragEvent event) {
+        return !config.allowItemStorageInContainer();
+    }
+
+    @Override
+    public boolean onClickDrop(HumanEntity entity, IGuiInventory inventory, ItemStack item, int slot, int amount, DropType type) {
         return false;
+    }
+
+    @Override
+    public boolean onClickPickup(HumanEntity entity, IGuiInventory inventory, ItemStack item, int slot, int amount, boolean cursor,
+        ClickType type) {
+        return false;
+    }
+
+    @Override
+    public boolean onClickMove(HumanEntity entity, IGuiInventory inventory, Map<Integer, ItemStack> slots, ItemStack item, int amount) {
+        return !config.allowItemStorageInContainer();
+    }
+
+    @Override
+    public boolean onClickPlace(HumanEntity entity, IGuiInventory inventory, ItemStack item, int slot, int amount, ClickType type) {
+        return !config.allowItemStorageInContainer();
+    }
+
+    @Override
+    public boolean onClickSwap(HumanEntity entity, IGuiInventory inventory, ItemStack previous, ItemStack now, int slot, ClickType type) {
+        return !config.allowItemStorageInContainer();
     }
 
 }
