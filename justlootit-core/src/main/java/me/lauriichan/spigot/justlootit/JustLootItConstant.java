@@ -12,6 +12,12 @@ import me.lauriichan.laylib.reflection.ClassUtil;
 import me.lauriichan.laylib.reflection.JavaLookup;
 
 public final class JustLootItConstant {
+    
+    public static final String PLUGIN_NAMESPACE = "justlootit";
+    
+    public static final String STATIC_CONTAINER_REFRESH_KEY = "container/static";
+    public static final String FRAME_CONTAINER_REFRESH_KEY_FORMAT = "container/frame/%s/%s";
+    public static final String COMPATIBILITY_CONTAINER_REFRESH_KEY_FORMAT = "container/compatibility/%s";
 
     public static final List<InventoryType> UNSUPPORTED_CONTAINER_TYPES;
 

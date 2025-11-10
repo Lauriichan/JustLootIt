@@ -112,7 +112,7 @@ public final class ContainerOverviewPage extends ContainerPage {
             .lore();
         loreEditor.clear();
         Object2ObjectArrayMap<String, ObjectArrayList<Object>> values = new Object2ObjectArrayMap<>();
-        container.getCompatibilityData().addInfoData(key -> {
+        container.compatibilityData().addInfoData(key -> {
             ObjectArrayList<Object> list = values.get(key.getKey());
             if (list == null) {
                 list = new ObjectArrayList<>();

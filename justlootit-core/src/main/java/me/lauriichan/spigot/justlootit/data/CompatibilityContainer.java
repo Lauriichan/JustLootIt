@@ -11,9 +11,11 @@ import org.bukkit.inventory.InventoryHolder;
 import io.netty.buffer.ByteBuf;
 import me.lauriichan.laylib.localization.Key;
 import me.lauriichan.minecraft.pluginbase.inventory.item.ItemEditor;
+import me.lauriichan.spigot.justlootit.JustLootItConstant;
 import me.lauriichan.spigot.justlootit.capability.ActorCapability;
 import me.lauriichan.spigot.justlootit.compatibility.data.CompatibilityDataExtension;
 import me.lauriichan.spigot.justlootit.compatibility.data.ICompatibilityData;
+import me.lauriichan.spigot.justlootit.config.world.WorldConfig;
 import me.lauriichan.spigot.justlootit.data.io.BufIO;
 import me.lauriichan.spigot.justlootit.message.Messages;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
@@ -26,7 +28,7 @@ public class CompatibilityContainer extends Container implements IInventoryConta
 
         @Override
         protected void serializeSpecial(final StorageAdapterRegistry registry, CompatibilityContainer storable, ByteBuf buffer) {
-            ICompatibilityData data = storable.getCompatibilityData();
+            ICompatibilityData data = storable.compatibilityData();
             CompatibilityDataExtension<?> extension = data.extension();
             BufIO.writeString(buffer, extension.id());
             buffer.writeInt(data.version());
@@ -47,23 +49,38 @@ public class CompatibilityContainer extends Container implements IInventoryConta
 
     };
 
-    private ICompatibilityData compatibilityData;
+    private final ICompatibilityData compatibilityData;
+    private final String refreshId;
 
     public CompatibilityContainer(final ICompatibilityData compatibilityData) {
-        setCompatibilityData(compatibilityData);
+        this.compatibilityData = Objects.requireNonNull(compatibilityData);
+        this.refreshId = refreshId();
     }
 
     public CompatibilityContainer(ContainerData data, final ICompatibilityData compatibilityData) {
         super(data);
-        setCompatibilityData(compatibilityData);
+        this.compatibilityData = Objects.requireNonNull(compatibilityData);
+        this.refreshId = refreshId();
+    }
+    
+    private String refreshId() {
+        if (compatibilityData.refreshContainerId() == null) {
+            return null;
+        }
+        return JustLootItConstant.COMPATIBILITY_CONTAINER_REFRESH_KEY_FORMAT.formatted(compatibilityData.extension().id(),
+            compatibilityData.refreshContainerId());
     }
 
-    public ICompatibilityData getCompatibilityData() {
+    public ICompatibilityData compatibilityData() {
         return compatibilityData;
     }
-
-    public void setCompatibilityData(ICompatibilityData compatibilityData) {
-        this.compatibilityData = Objects.requireNonNull(compatibilityData);
+    
+    @Override
+    protected String containerBasedGroupId(WorldConfig worldConfig) {
+        if (refreshId == null) {
+            return null;
+        }
+        return worldConfig.getLootTableRefreshGroupId(JustLootItConstant.PLUGIN_NAMESPACE, refreshId);
     }
 
     @Override

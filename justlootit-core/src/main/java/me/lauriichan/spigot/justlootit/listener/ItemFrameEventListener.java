@@ -6,6 +6,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.SoundCategory;
+import org.bukkit.World;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -139,11 +140,12 @@ public class ItemFrameEventListener implements IListenerExtension {
         adapter.setData(PLAYER_DATA_FRAME_LOOTING, true);
         try {
             final long id = JustLootItAccess.getIdentity(container);
-            actor.versionHandler().getLevel(entity.getWorld()).getCapability(StorageCapability.class).ifPresent(capability -> {
+            final World world = entity.getWorld();
+            actor.versionHandler().getLevel(world).getCapability(StorageCapability.class).ifPresent(capability -> {
                 final Stored<FrameContainer> stored = capability.storage().read(id);
                 final FrameContainer frame = stored.value();
-                if (!frame.access(player.getUniqueId())) {
-                    final Duration duration = frame.durationUntilNextAccess(player.getUniqueId());
+                if (!frame.access(world, player.getUniqueId())) {
+                    final Duration duration = frame.durationUntilNextAccess(world, player.getUniqueId());
                     if (duration.isNegative()) {
                         actor.sendTranslatedBarMessage(Messages.CONTAINER_ACCESS_NOT_REPEATABLE);
                         return;

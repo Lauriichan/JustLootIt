@@ -1,11 +1,12 @@
 package me.lauriichan.spigot.justlootit.data;
 
-import java.lang.ref.WeakReference;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.UUID;
+
+import org.bukkit.World;
 
 import io.netty.buffer.ByteBuf;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
@@ -14,12 +15,15 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import me.lauriichan.minecraft.pluginbase.config.ConfigManager;
+import me.lauriichan.minecraft.pluginbase.config.MultiConfigWrapper;
 import me.lauriichan.minecraft.pluginbase.inventory.item.ItemEditor;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.config.MainConfig;
 import me.lauriichan.spigot.justlootit.config.RefreshConfig;
 import me.lauriichan.spigot.justlootit.config.data.RefreshGroup;
 import me.lauriichan.spigot.justlootit.config.data.RefreshGroup.UniqueType;
+import me.lauriichan.spigot.justlootit.config.world.WorldConfig;
+import me.lauriichan.spigot.justlootit.config.world.WorldMultiConfig;
 import me.lauriichan.spigot.justlootit.data.io.BufIO;
 import me.lauriichan.spigot.justlootit.data.io.DataIO;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
@@ -44,11 +48,8 @@ public abstract class Container implements IModifiable {
 
     protected static abstract class BaseAdapter<C extends Container> extends StorageAdapter<C> {
 
-        private final RefreshConfig config;
-
         public BaseAdapter(final Class<C> type, final int typeId) {
             super(type, typeId);
-            this.config = JustLootItPlugin.get().configManager().config(RefreshConfig.class);
         }
 
         @Override
@@ -66,7 +67,7 @@ public abstract class Container implements IModifiable {
 
         @Override
         public final C deserialize(final StorageAdapterRegistry registry, final ByteBuf buffer) {
-            final ContainerData data = new ContainerData(config);
+            final ContainerData data = new ContainerData();
             final int amount = buffer.readInt();
             for (int index = 0; index < amount; index++) {
                 final UUID uuid = DataIO.UUID.deserialize(buffer).value();
@@ -116,30 +117,13 @@ public abstract class Container implements IModifiable {
 
     protected static final class ContainerData {
 
-        private final RefreshConfig config;
         private final Object2ObjectMap<UUID, Access> playerAccess = Object2ObjectMaps
             .synchronize(new Object2ObjectLinkedOpenHashMap<>());
 
-        private WeakReference<RefreshGroup> refreshGroup;
         private volatile String refreshGroupId;
-
-        public ContainerData(RefreshConfig config) {
-            this.config = config;
-        }
-
-        public RefreshGroup group() {
-            if (refreshGroupId == null) {
-                return null;
-            }
-            if (refreshGroup != null) {
-                return refreshGroup.get();
-            }
-            RefreshGroup group = config.group(refreshGroupId);
-            refreshGroup = new WeakReference<>(group);
-            if (group == null) {
-                JustLootItPlugin.get().logger().warning("Refresh group '{0}' doesn't exist", refreshGroupId);
-            }
-            return group;
+        
+        public String group() {
+            return refreshGroupId;
         }
 
         public boolean group(String id) {
@@ -147,25 +131,28 @@ public abstract class Container implements IModifiable {
                 return false;
             }
             refreshGroupId = id;
-            refreshGroup = null;
             return true;
         }
 
     }
     
     final MainConfig mainConfig;
+    final RefreshConfig refreshConfig;
+    
+    final MultiConfigWrapper<?, World, WorldConfig, WorldMultiConfig> worldWrapper;
 
     final ContainerData data;
     private boolean dirty = false;
 
     public Container() {
-        ConfigManager manager = JustLootItPlugin.get().configManager();
-        this.mainConfig = manager.config(MainConfig.class);
-        this.data = new ContainerData(manager.config(RefreshConfig.class));
+        this(new ContainerData());
     }
 
     public Container(final ContainerData data) {
-        this.mainConfig = JustLootItPlugin.get().configManager().config(MainConfig.class);
+        ConfigManager manager = JustLootItPlugin.get().configManager();
+        this.mainConfig = manager.config(MainConfig.class);
+        this.refreshConfig = manager.config(RefreshConfig.class);
+        this.worldWrapper = manager.multiWrapper(WorldMultiConfig.class);
         this.data = data;
     }
 
@@ -180,6 +167,32 @@ public abstract class Container implements IModifiable {
 
     protected final void setDirty() {
         this.dirty = true;
+    }
+    
+    protected String containerBasedGroupId(WorldConfig worldConfig) {
+        return null;
+    }
+
+    public final RefreshGroup group(World world) {
+        RefreshGroup group = getGroup(data.group());
+        if (group == null) {
+            WorldConfig worldConfig = worldWrapper.config(world);
+            group = getGroup(containerBasedGroupId(worldConfig));
+            if (group == null) {
+                group = getGroup(worldConfig.getWorldRefreshGroupId());
+                if (group == null) {
+                    return null;
+                }
+            }
+        }
+        return group;
+    }
+
+    private final RefreshGroup getGroup(String id) {
+        if (id == null) {
+            return null;
+        }
+        return refreshConfig.group(id);
     }
 
     public int accessAmount() {
@@ -236,24 +249,24 @@ public abstract class Container implements IModifiable {
         return access.accessCount();
     }
 
-    public Duration durationUntilNextAccess(final UUID id) {
-        RefreshGroup group = data.group();
+    public Duration durationUntilNextAccess(final World world, final UUID id) {
+        RefreshGroup group = group(world);
         if (group == null) {
             return Duration.ofSeconds(-1);
         }
         return group.duration(getAccessTime(id), OffsetDateTime.now());
     }
 
-    public boolean canAccess(final UUID id) {
-        RefreshGroup group = data.group();
+    public boolean canAccess(final World world, final UUID id) {
+        RefreshGroup group = group(world);
         if (group == null) {
             return !data.playerAccess.containsKey(id);
         }
         return group.isAccessible(getAccessTime(id), OffsetDateTime.now());
     }
 
-    public boolean access(final UUID id) {
-        RefreshGroup group = data.group();
+    public boolean access(final World world, final UUID id) {
+        RefreshGroup group = group(world);
         if (group == null) {
             if (!data.playerAccess.containsKey(id)) {
                 data.playerAccess.put(id, new Access(id, OffsetDateTime.now()));
@@ -278,10 +291,6 @@ public abstract class Container implements IModifiable {
         return false;
     }
 
-    public RefreshGroup group() {
-        return data.group();
-    }
-
     public boolean hasGroupId() {
         return data.refreshGroupId != null;
     }
@@ -298,8 +307,8 @@ public abstract class Container implements IModifiable {
 
     public abstract ItemEditor createIcon();
 
-    public long generateSeed(PlayerAdapter player, long seed) {
-        RefreshGroup group = data.group();
+    public long generateSeed(World world, PlayerAdapter player, long seed) {
+        RefreshGroup group = group(world);
         boolean unique = mainConfig.uniqueLootPerPlayer();
         boolean incremental = false;
         if (group != null) {

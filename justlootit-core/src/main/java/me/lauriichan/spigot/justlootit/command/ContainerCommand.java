@@ -809,10 +809,10 @@ public class ContainerCommand implements ICommandExtension {
         } else if (container instanceof CompatibilityContainer compat) {
             ComponentBuilder<?, ?> root = ComponentBuilder.create();
             root.appendContent(actor.getTranslatedMessageAsString(Messages.COMMAND_CONTAINER_INFO_CONTAINER_COMPATIBILITY_HEADER,
-                Key.of("plugin", compat.getCompatibilityData().extension().id()))).finish();
+                Key.of("plugin", compat.compatibilityData().extension().id()))).finish();
             ComponentBuilder<?, ?> compatData = ComponentBuilder.create();
             Object2ObjectArrayMap<String, ObjectArrayList<Object>> values = new Object2ObjectArrayMap<>();
-            compat.getCompatibilityData().addInfoData(key -> {
+            compat.compatibilityData().addInfoData(key -> {
                 ObjectArrayList<Object> list = values.get(key.getKey());
                 if (list == null) {
                     list = new ObjectArrayList<>();

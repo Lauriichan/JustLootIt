@@ -52,6 +52,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.chunk.PalettedContainer;
@@ -60,7 +61,6 @@ import net.minecraft.world.level.chunk.PalettedContainer.Strategy;
 import net.minecraft.world.level.chunk.storage.ChunkSerializer;
 import net.minecraft.world.level.chunk.storage.ChunkStorage;
 import net.minecraft.world.level.chunk.storage.RegionFile;
-import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.dimension.LevelStem;
 
 public class ProtoWorld1_20_R2 extends ProtoWorld implements LevelHeightAccessor {
@@ -76,7 +76,7 @@ public class ProtoWorld1_20_R2 extends ProtoWorld implements LevelHeightAccessor
     private final Registry<Biome> biomeRegistry;
 
     private final ResourceKey<LevelStem> dimensionKey;
-    private final DimensionType dimensionType;
+    private final ChunkGenerator chunkGenerator;
 
     private final WorldData worldData;
 
@@ -95,7 +95,7 @@ public class ProtoWorld1_20_R2 extends ProtoWorld implements LevelHeightAccessor
         this.logger = logger;
         this.chunkStorage = chunkStorage;
         this.dimensionKey = dimensionKey;
-        this.dimensionType = registry.registryOrThrow(Registries.LEVEL_STEM).get(dimensionKey).type().value();
+        this.chunkGenerator = registry.registryOrThrow(Registries.LEVEL_STEM).get(dimensionKey).generator();
         this.biomeRegistry = registry.registryOrThrow(Registries.BIOME);
         this.worldKey = ResourceKey.create(Registries.DIMENSION, dimensionKey.location());
         Path dimensionPath = session.getDimensionPath(worldKey);
@@ -318,7 +318,9 @@ public class ProtoWorld1_20_R2 extends ProtoWorld implements LevelHeightAccessor
         } catch (IOException | RuntimeException e) {
             // Maybe mark as complete? Unsure tho
             counter.increment(counter.max() - counter.current());
-            logger.error("Failed to convert region '{1}' in level '{0}'!", e, worldData.getLevelName(), path.getFileName().toString());
+            logger.error(
+                "Failed to convert region '{1}' in level '{0}' (Current chunk: {2}, {3}; Sections - Min: {4}, Max: {5}, Expected Count: {6})!",
+                e, worldData.getLevelName(), path.getFileName().toString(), thread.cx(), thread.cz(), minSection, maxSection, sectionCount);
         }
         thread.setRegion(null);
         thread.setChunk(0, 0);
@@ -370,15 +372,14 @@ public class ProtoWorld1_20_R2 extends ProtoWorld implements LevelHeightAccessor
         }
         return Pair.of(DataFixTypes.ENTITY_CHUNK.updateToCurrentVersion(fixerUpper, tag, NbtUtils.getDataVersion(tag, -1)), "Entities");
     }
-
     @Override
     public int getHeight() {
-        return dimensionType.height();
+        return chunkGenerator.getGenDepth();
     }
 
     @Override
     public int getMinBuildHeight() {
-        return dimensionType.minY();
+        return chunkGenerator.getMinY();
     }
 
 }

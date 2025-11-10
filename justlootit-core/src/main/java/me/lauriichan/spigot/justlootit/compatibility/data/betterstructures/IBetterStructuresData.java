@@ -32,5 +32,10 @@ public interface IBetterStructuresData extends ICompatibilityData {
     default void addInfoData(Consumer<Key> add) {
         add.accept(Key.of("Settings file", fileName()));
     }
+    
+    @Override
+    default String refreshContainerId() {
+        return fileName();
+    }
 
 }

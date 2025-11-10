@@ -17,6 +17,10 @@ public interface ICompatibilityData {
     
     int version();
     
+    default String refreshContainerId() {
+        return null;
+    }
+    
     default boolean canFill(BlockState state, Location location) {
         return false;
     }

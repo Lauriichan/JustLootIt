@@ -11,6 +11,8 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.minecraft.pluginbase.inventory.IGuiInventory;
 import me.lauriichan.minecraft.pluginbase.inventory.item.ItemEditor;
+import me.lauriichan.spigot.justlootit.JustLootItConstant;
+import me.lauriichan.spigot.justlootit.config.world.WorldConfig;
 import me.lauriichan.spigot.justlootit.data.io.DataIO;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
@@ -64,6 +66,11 @@ public final class StaticContainer extends Container implements IInventoryContai
     private StaticContainer(final ContainerData data, final ItemStack[] items) {
         super(data);
         this.items = items;
+    }
+    
+    @Override
+    protected String containerBasedGroupId(WorldConfig worldConfig) {
+        return worldConfig.getLootTableRefreshGroupId(JustLootItConstant.PLUGIN_NAMESPACE, JustLootItConstant.STATIC_CONTAINER_REFRESH_KEY);
     }
 
     public void pushEditor(IGuiInventory inventory) {

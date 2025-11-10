@@ -371,9 +371,10 @@ public class ContainerListener implements IListenerExtension {
                 }
             });
         }
-        final WorldEntry entryId = new WorldEntry(location.getWorld(), id);
+        final World world = location.getWorld();
+        final WorldEntry entryId = new WorldEntry(world, id);
         final UUID playerId = bukkitPlayer.getUniqueId();
-        final LevelAdapter level = actor.versionHandler().getLevel(location.getWorld());
+        final LevelAdapter level = actor.versionHandler().getLevel(world);
         level.getCapability(StorageCapability.class).ifPresentOrElse(capability -> {
             final Stored<Container> dataContainer = capability.storage().read(id);
             if (dataContainer == null) {
@@ -384,7 +385,7 @@ public class ContainerListener implements IListenerExtension {
             player.getCapability(StorageCapability.class).ifPresent(playerCapability -> {
                 final IStorage playerStorage = playerCapability.storage();
                 final CacheLookupTable lookupTable = CacheLookupTable.retrieve(actor.plugin(), playerStorage);
-                if (!dataContainer.value().access(playerId)) {
+                if (!dataContainer.value().access(world, playerId)) {
                     if (lookupTable.access(entryId)) {
                         final Stored<CachedInventory> storedCachedInventory = playerStorage.read(lookupTable.getEntryIdByMapped(entryId));
                         if (storedCachedInventory == null) {
@@ -423,7 +424,7 @@ public class ContainerListener implements IListenerExtension {
                             playerStorage.delete(storedCachedInventory.id());
                         }
                     }
-                    final Duration duration = dataContainer.value().durationUntilNextAccess(playerId);
+                    final Duration duration = dataContainer.value().durationUntilNextAccess(world, playerId);
                     if (duration.isNegative()) {
                         actor.sendTranslatedBarMessage(Messages.CONTAINER_ACCESS_NOT_REPEATABLE);
                         return;

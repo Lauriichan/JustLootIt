@@ -19,6 +19,7 @@ import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.api.event.player.JLIPlayerVanillaLootGenerateEvent;
 import me.lauriichan.spigot.justlootit.api.event.player.JLIPlayerVanillaLootProvidedEvent;
 import me.lauriichan.spigot.justlootit.capability.ActorCapability;
+import me.lauriichan.spigot.justlootit.config.world.WorldConfig;
 import me.lauriichan.spigot.justlootit.data.io.DataIO;
 import me.lauriichan.spigot.justlootit.message.Messages;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
@@ -92,6 +93,11 @@ public final class VanillaContainer extends Container implements IInventoryConta
         this.seed = seed;
         setDirty();
     }
+    
+    @Override
+    protected String containerBasedGroupId(WorldConfig worldConfig) {
+        return worldConfig.getLootTableRefreshGroupId(lootTableKey);
+    }
 
     @Override
     public IResult fill(final PlayerAdapter player, final InventoryHolder holder, final Location location, final Inventory inventory) {
@@ -101,7 +107,7 @@ public final class VanillaContainer extends Container implements IInventoryConta
                 Key.of("lootTable", getLootTableKey()));
             return IResult.empty();
         }
-        JLIPlayerVanillaLootGenerateEvent event = new JLIPlayerVanillaLootGenerateEvent((JustLootItPlugin) player.versionHandler().plugin(), player, getLootTable(), generateSeed(player, seed));
+        JLIPlayerVanillaLootGenerateEvent event = new JLIPlayerVanillaLootGenerateEvent((JustLootItPlugin) player.versionHandler().plugin(), player, getLootTable(), generateSeed(location.getWorld(), player, seed));
         event.call().join();
         player.versionHandler().versionHelper().fill(inventory, player.asBukkit(), location, event.lootTable(), event.seed());
         return new VanillaResult(event.lootTable(), event.seed());

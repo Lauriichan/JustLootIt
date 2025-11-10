@@ -7,6 +7,7 @@ import org.bukkit.persistence.PersistentDataContainer;
 import me.lauriichan.spigot.justlootit.JustLootItAccess;
 import me.lauriichan.spigot.justlootit.capability.StorageCapability;
 import me.lauriichan.spigot.justlootit.data.FrameContainer;
+import me.lauriichan.spigot.justlootit.nms.LevelAdapter;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.nms.model.IEntityData;
@@ -33,7 +34,8 @@ public class ItemFramePacketListener implements IPacketListener {
         if (type != EntityType.ITEM_FRAME && type != EntityType.GLOW_ITEM_FRAME) {
             return;
         }
-        Entity entity = player.getLevel().getBukkitEntityById(packet.getEntityId());
+        LevelAdapter level = player.getLevel();
+        Entity entity = level.getBukkitEntityById(packet.getEntityId());
         if (entity == null) {
             return;
         }
@@ -44,7 +46,7 @@ public class ItemFramePacketListener implements IPacketListener {
         final long id = JustLootItAccess.getIdentity(container);
         player.getLevel().getCapability(StorageCapability.class).ifPresent(capability -> {
             final Stored<FrameContainer> stored = capability.storage().read(id);
-            if (!stored.value().canAccess(player.getUniqueId())) {
+            if (!stored.value().canAccess(level.asBukkit(), player.getUniqueId())) {
                 return;
             }
             final PacketOutSetEntityData dataPacket = versionHandler.packetManager().createPacket(new ArgumentMap().set("entity", entity),

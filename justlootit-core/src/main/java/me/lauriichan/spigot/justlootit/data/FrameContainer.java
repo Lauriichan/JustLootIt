@@ -5,6 +5,8 @@ import org.bukkit.inventory.ItemStack;
 
 import io.netty.buffer.ByteBuf;
 import me.lauriichan.minecraft.pluginbase.inventory.item.ItemEditor;
+import me.lauriichan.spigot.justlootit.JustLootItConstant;
+import me.lauriichan.spigot.justlootit.config.world.WorldConfig;
 import me.lauriichan.spigot.justlootit.data.io.DataIO;
 import me.lauriichan.spigot.justlootit.nms.io.IOHandler;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapter;
@@ -32,14 +34,32 @@ public final class FrameContainer extends Container {
     };
 
     private final ItemStack item;
+    private final String refreshId;
 
     public FrameContainer(final ItemStack item) {
         this.item = item == null ? null : item.clone();
+        this.refreshId = refreshIdForItem(item);
     }
 
     private FrameContainer(final ContainerData data, final ItemStack item) {
         super(data);
         this.item = item;
+        this.refreshId = refreshIdForItem(item);
+    }
+    
+    private String refreshIdForItem(ItemStack itemStack) {
+        if (itemStack == null) {
+            return null;
+        }
+        return JustLootItConstant.FRAME_CONTAINER_REFRESH_KEY_FORMAT.formatted(itemStack.getType().getKey().getKey());
+    }
+    
+    @Override
+    protected String containerBasedGroupId(WorldConfig worldConfig) {
+        if (refreshId == null) {
+            return null;
+        }
+        return worldConfig.getLootTableRefreshGroupId(JustLootItConstant.PLUGIN_NAMESPACE, refreshId);
     }
 
     public ItemStack getItem() {

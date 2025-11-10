@@ -58,7 +58,7 @@ public class PerformanceTest {
         }
         return tests;
     }
-
+    
     private static void runTest(final Test test) throws Throwable {
         final ArrayList<StorageProvider> providerList = new ArrayList<>();
         test.createProviders(providerList);

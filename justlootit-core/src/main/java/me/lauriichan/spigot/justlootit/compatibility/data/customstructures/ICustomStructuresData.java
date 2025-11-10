@@ -30,13 +30,18 @@ public interface ICustomStructuresData extends ICompatibilityData {
         if (provider == null) {
             return false;
         }
-        return provider.access().fillWithLootTable(inventory, state.getType(), location, structureName(), container.generateSeed(player, seed()));
+        return provider.access().fillWithLootTable(inventory, state.getType(), location, structureName(), container.generateSeed(location.getWorld(), player, seed()));
     }
     
     @Override
     default void addInfoData(Consumer<Key> add) {
         add.accept(Key.of("Structure", structureName()));
         add.accept(Key.of("Seed", seed()));
+    }
+    
+    @Override
+    default String refreshContainerId() {
+        return structureName();
     }
 
 }

@@ -92,7 +92,7 @@ public final class ContainerAccessListPage extends ContainerPage {
             iterator.next();
         }
         OffsetDateTime now = OffsetDateTime.now();
-        RefreshGroup group = container.group();
+        RefreshGroup group = container.group(context.player().asBukkit().getWorld());
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(actor.getTranslatedMessageAsString(UIInventoryNames.GENERAL_DATE_FORMAT));
         int slotIndex = 0;
         Key time;
