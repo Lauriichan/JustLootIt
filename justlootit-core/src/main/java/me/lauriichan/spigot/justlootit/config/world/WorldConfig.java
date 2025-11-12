@@ -155,8 +155,11 @@ public class WorldConfig implements IConfigExtension {
         }
     }
     
-    private void loadRefreshGroups(Configuration configuration) {
+    private boolean loadRefreshGroups(Configuration configuration) {
         containerRefreshGroupIds.clear();
+        if (configuration == null) {
+            return true;
+        }
         for (String namespace : configuration.keySet()) {
             Configuration namespaceSection = configuration.getConfiguration(namespace);
             if (namespaceSection == null) {
@@ -175,6 +178,7 @@ public class WorldConfig implements IConfigExtension {
             }
             containerRefreshGroupIds.put(namespace.toLowerCase(), namespaceMap);
         }
+        return false;
     }
 
     /*
