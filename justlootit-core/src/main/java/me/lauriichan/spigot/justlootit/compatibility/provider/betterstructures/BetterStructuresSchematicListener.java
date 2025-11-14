@@ -37,7 +37,7 @@ import me.lauriichan.spigot.justlootit.storage.IStorage;
 import me.lauriichan.spigot.justlootit.storage.Stored;
 import me.lauriichan.spigot.justlootit.util.BlockUtil;
 
-public class BetterStructuresListener implements Listener {
+public class BetterStructuresSchematicListener implements Listener {
 
     private final BetterStructuresDataExtension dataExtension = CompatibilityDataExtension.get("BetterStructures",
         BetterStructuresDataExtension.class);
@@ -52,7 +52,7 @@ public class BetterStructuresListener implements Listener {
     
     private final MainConfig mainConfig;
 
-    public BetterStructuresListener(final String pluginId, final VersionHandler versionHandler, final ConfigManager configManager) {
+    public BetterStructuresSchematicListener(final String pluginId, final VersionHandler versionHandler, final ConfigManager configManager) {
         this.pluginId = pluginId;
         this.versionHandler = versionHandler;
         this.configManager = configManager;
@@ -129,17 +129,15 @@ public class BetterStructuresListener implements Listener {
             return;
         }
         SchematicContainer schematic = fit.getSchematicContainer();
-        if (schematic.getGeneratorConfigFields().getChestContents() == null) {
-            return;
-        }
         boolean isBlacklisted = config.isStructureBlacklisted(pluginId, schematic.getConfigFilename());
+        String fileName = schematic.getGeneratorConfigFields().getChestContents() == null ? null : schematic.getGeneratorConfigFields().getFilename();
         schematic.getChestLocations().stream().map(vector -> LocationProjector.project(fit.getLocation(), fit.getSchematicOffset(), vector))
             .forEach(location -> {
                 if (isBlacklisted) {
                     blacklistedLocation.add(location);
                     return;
                 }
-                lootFileNameMap.put(location, schematic.getGeneratorConfigFields().getFilename());
+                lootFileNameMap.put(location, fileName);
             });
     }
 

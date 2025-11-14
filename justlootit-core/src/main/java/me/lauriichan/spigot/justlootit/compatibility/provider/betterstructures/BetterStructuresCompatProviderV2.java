@@ -9,32 +9,31 @@ import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.compatibility.provider.Compatibility;
 
 @Extension
-@Compatibility(name = "BetterStructures", minMajor = 1, minMinor = 0, maxMajor = 1)
-public class BetterStructuresCompatProvider implements IBetterStructuresProvider {
-    
+@Compatibility(name = "BetterStructures", minMajor = 2, minMinor = 0)
+public class BetterStructuresCompatProviderV2 extends BetterStructuresCompatProvider {
+
     private Listener listener;
-    private IBetterStructuresAccess access;
-    
+
     @Override
     public void onEnable(JustLootItPlugin jli, Plugin plugin) {
-        pluginManager().registerEvents(listener = new BetterStructuresSchematicListener(plugin.getName(), jli.versionHandler(), jli.configManager()), jli);
-        access = new BetterStructuresAccess();
+        pluginManager().registerEvents(
+            listener = new BetterStructuresModularListener(plugin.getName(), jli.versionHandler(), jli.configManager()), jli);
+
+        super.onEnable(jli, plugin);
     }
 
     @Override
     public void onDisable(JustLootItPlugin jli, Plugin plugin) {
         HandlerList.unregisterAll(listener);
-        clear();
-    }
-    
-    protected void clear() {
-        listener = null;
-        access = null;
+
+        super.onDisable(jli, plugin);
     }
 
     @Override
-    public IBetterStructuresAccess access() {
-        return access;
+    protected void clear() {
+        listener = null;
+
+        super.clear();
     }
 
 }
