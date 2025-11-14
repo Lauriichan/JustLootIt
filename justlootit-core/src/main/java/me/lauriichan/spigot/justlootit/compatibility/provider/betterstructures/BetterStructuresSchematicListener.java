@@ -75,7 +75,7 @@ public class BetterStructuresSchematicListener implements Listener {
             lootFileNameMap.remove(location);
             return;
         }
-        Inventory inventory = container.getInventory();
+        Inventory inventory = container.getSnapshotInventory();
         if (!JustLootItFlag.TILE_ENTITY_CONTAINERS.isSet()
             && JustLootItConstant.UNSUPPORTED_CONTAINER_TYPES.contains(inventory.getType())) {
             lootFileNameMap.remove(location);
