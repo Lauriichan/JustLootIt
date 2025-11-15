@@ -1,6 +1,7 @@
 package me.lauriichan.spigot.justlootit.data;
 
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
 
 import io.netty.buffer.ByteBuf;
@@ -51,7 +52,8 @@ public final class FrameContainer extends Container {
         if (itemStack == null) {
             return null;
         }
-        return JustLootItConstant.FRAME_CONTAINER_REFRESH_KEY_FORMAT.formatted(itemStack.getType().getKey().getKey());
+        NamespacedKey type = itemStack.getType().getKey();
+        return JustLootItConstant.FRAME_CONTAINER_REFRESH_KEY_FORMAT.formatted(type.getNamespace(), type.getKey());
     }
     
     @Override
