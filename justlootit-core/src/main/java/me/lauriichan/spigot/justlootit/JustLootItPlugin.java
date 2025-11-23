@@ -59,6 +59,7 @@ import me.lauriichan.spigot.justlootit.input.SimpleChatInputProvider;
 import me.lauriichan.spigot.justlootit.listener.ItemFramePacketListener;
 import me.lauriichan.spigot.justlootit.message.Messages;
 import me.lauriichan.spigot.justlootit.nms.IServiceProvider;
+import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.nms.VersionHelper;
 import me.lauriichan.spigot.justlootit.nms.capability.CapabilityManager;
@@ -67,6 +68,7 @@ import me.lauriichan.spigot.justlootit.nms.packet.listener.PacketManager;
 import me.lauriichan.spigot.justlootit.platform.JustLootItPlatform;
 import me.lauriichan.spigot.justlootit.platform.folia.FoliaPlatform;
 import me.lauriichan.spigot.justlootit.platform.paper.PaperPlatform;
+import me.lauriichan.spigot.justlootit.platform.scheduler.Task;
 import me.lauriichan.spigot.justlootit.platform.spigot.SpigotPlatform;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapterRegistry;
 import me.lauriichan.spigot.justlootit.storage.StorageMigrator;
@@ -99,6 +101,7 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     private volatile JustLootItPlatform platform;
 
     private SpigotUpdater<PluginVersion> updater;
+    private Task<Void> updaterTask;
 
     private File mainWorldFolder;
 
@@ -115,6 +118,20 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
 
     private final Property<Boolean> keepConversionFile = new Property<>("debug.conversion",
         "If set to true, the conversion will never delete its property file.", IPropertyIO.BOOLEAN, false);
+    private final Property<Boolean> updaterEnabled = new Property<>("updater.enabled",
+        "Determines if JLI should check for updates, true by default.", IPropertyIO.BOOLEAN, true, (enabled) -> {
+            if (enabled == (updaterTask != null)) {
+                return;
+            }
+            if (enabled) {
+                runUpdateCheck();
+                return;
+            }
+            if (updaterTask != null) {
+                updaterTask.cancel();
+                updaterTask = null;
+            }
+        });
 
     /*
      * PacketContainers
@@ -334,7 +351,9 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         // Update compatibilities
         CompatDependency.updateAll(this);
         // Check for updates
-        runUpdateCheck();
+        if (updaterEnabled.value()) {
+            runUpdateCheck();
+        }
 
         // Warn about trial chambers
         if (versionHelper.isTrialChamberBugged()) {
@@ -347,18 +366,24 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         if (updater == null) {
             return;
         }
-        platform().scheduler().async(() -> {
+        if (updaterTask != null) {
+            updaterTask.cancel();
+        }
+        updaterTask = platform().scheduler().asyncRepeat(() -> {
             Thread thread = Thread.currentThread();
             String threadName = thread.getName();
             thread.setName("Update checker");
             try {
-                Actor<?> console = actor(Bukkit.getConsoleSender());
-                if (updater.isUp2Date()) {
-                    console.sendTranslatedMessage(Messages.UPDATER_UPDATE_LATEST, Key.of("version.current", updater.getVersion()));
-                } else {
-                    console.sendTranslatedMessage(Messages.UPDATER_UPDATE_AVAILABLE, Key.of("version.current", updater.getVersion()),
-                        Key.of("version.latest", updater.getLatestVersion()));
+                PluginVersion before = null;
+                if (updater.hasLatestInfo()) {
+                    before = updater.getLatestVersion();
                 }
+                updater.updateInfo();
+                if (before != null && before.compareTo(updater.getLatestVersion()) == 0) {
+                    return;
+                }
+                Bukkit.getOnlinePlayers().forEach(player -> informAboutUpdate(player));
+                informAboutUpdate(actor(Bukkit.getConsoleSender()));
             } catch (SpigotUpdaterException e) {
                 if (logger().isDebug()) {
                     logger().error("Failed to retrieve update information", e);
@@ -368,7 +393,24 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
             } finally {
                 thread.setName(threadName);
             }
-        });
+        }, 0, 216000 /* Every 3 hours */);
+    }
+
+    private void informAboutUpdate(Player player) {
+        if (!player.hasPermission(JustLootItPermission.ADMIN_INFORM_VERSION)) {
+            return;
+        }
+        informAboutUpdate(actor(player));
+    }
+
+    private void informAboutUpdate(Actor<?> actor) {
+        PluginVersion latest = updater.latestVersion().get();
+        if (updater.getVersion().compareTo(latest) >= 0) {
+            actor.sendTranslatedMessage(Messages.UPDATER_UPDATE_LATEST, Key.of("version.current", updater.getVersion()));
+        } else {
+            actor.sendTranslatedMessage(Messages.UPDATER_UPDATE_AVAILABLE, Key.of("version.current", updater.getVersion()),
+                Key.of("version.latest", latest));
+        }
     }
 
     private void registerCommands(final CommandManager manager) {
@@ -412,6 +454,17 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         levelTickTimer.clear();
         playerTickTimer.stop();
         playerTickTimer.clear();
+    }
+    
+    /*
+     * Player listeners
+     */
+    
+    @Override
+    public void onPlayerJoin(PlayerAdapter adapter) {
+        if (updater != null && updater.hasLatestInfo()) {
+            informAboutUpdate(adapter.asBukkit());
+        }
     }
 
     /*

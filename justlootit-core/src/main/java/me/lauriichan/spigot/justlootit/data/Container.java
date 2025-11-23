@@ -176,7 +176,7 @@ public abstract class Container implements IModifiable {
     public final RefreshGroup group(World world) {
         RefreshGroup group = getGroup(data.group());
         if (group == null) {
-            WorldConfig worldConfig = worldWrapper.config(world);
+            WorldConfig worldConfig = worldWrapper.configOrCreate(world);
             group = getGroup(containerBasedGroupId(worldConfig));
             if (group == null) {
                 group = getGroup(worldConfig.getWorldRefreshGroupId());

@@ -21,5 +21,9 @@ public interface IServiceProvider {
     }
     
     File mainWorldFolder();
+    
+    default void onPlayerJoin(PlayerAdapter adapter) {}
+    
+    default void onPlayerLeave(PlayerAdapter adapter) {}
 
 }

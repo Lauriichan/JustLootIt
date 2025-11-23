@@ -29,7 +29,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- Versions -->
         <server.version>1.20.2</server.version>
-        <pluginbase.version>1.8.0</pluginbase.version>
+        <pluginbase.version>1.10.0</pluginbase.version>
         <betterinputs.version>0.3.0</betterinputs.version>
         <laylib.version>0.4.1-SNAPSHOT</laylib.version>
     </properties>

@@ -140,7 +140,9 @@ public abstract class VersionHandler {
         if (players.containsKey(player.getUniqueId())) {
             return;
         }
-        players.put(player.getUniqueId(), applyCapabilities(createAdapter(player)));
+        PlayerAdapter adapter = applyCapabilities(createAdapter(player));
+        players.put(player.getUniqueId(), adapter);
+        serviceProvider.onPlayerJoin(adapter);
     }
 
     final void quit(final Player player) {
@@ -148,6 +150,7 @@ public abstract class VersionHandler {
         if (adapter == null) {
             return;
         }
+        serviceProvider.onPlayerLeave(adapter);
         terminateAdapter(adapter);
         adapter.terminate();
     }

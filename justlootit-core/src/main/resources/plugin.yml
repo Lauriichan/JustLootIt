@@ -36,3 +36,6 @@ permissions:
     justlootit.remove.container.entity:
         description: Gives access to remove JustLootIt Entity containers
         default: false
+    justlootit.admin.version:
+        description: Informs the player of updates of JustLootIt
+        default: op

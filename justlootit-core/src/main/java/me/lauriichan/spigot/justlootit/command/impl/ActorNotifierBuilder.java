@@ -149,7 +149,7 @@ public final class ActorNotifierBuilder<P extends CommandSender> {
         }
         if (doneMessage != null) {
             notifier.doneNotifier((progress, elapsed) -> {
-                SubComponentBuilder<?> builder = actor.componentBuilder(progressMessage,
+                SubComponentBuilder<?, ?> builder = actor.componentBuilder(progressMessage,
                     merge(placeholders, Key.of("progress", ProgressNotifier.asPercentage(progress)),
                         Key.of("current", progress.counter().current()), Key.of("amount", progress.counter().max())));
                 builder.send(actor);

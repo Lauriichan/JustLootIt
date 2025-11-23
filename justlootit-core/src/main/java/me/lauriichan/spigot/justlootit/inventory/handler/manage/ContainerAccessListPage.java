@@ -102,27 +102,30 @@ public final class ContainerAccessListPage extends ContainerPage {
                 break;
             }
             Entry<UUID, Access> entry = iterator.next();
-            player = server.getOfflinePlayer(entry.getKey());
+            player = server.getPlayer(entry.getKey());
+            if (player == null) {
+                player = server.getOfflinePlayer(entry.getKey());
+            }
             time = Key.of("time", group == null ? actor.getTranslatedMessageAsString(UIInventoryNames.GENERAL_TIME_NEVER)
                 : DataHelper.formTimeString(actor, group.duration(entry.getValue().time(), now)));
-            inventory
-                .set(
-                    1 + Math.floorDiv(slotIndex, 7), 1 + slotIndex
-                        % 7,
-                    ItemEditor.ofHead(player)
-                        .setName(actor.getTranslatedMessageAsString(UIInventoryNames.CONTAINER_MANAGE_PAGE_ACCESSES_ITEM_PLAYER_NAME,
-                            Key.of("player", player.getName())))
-                        .lore()
-                        .set(actor.getTranslatedMessageAsString(UIInventoryNames.CONTAINER_MANAGE_PAGE_ACCESSES_ITEM_PLAYER_LORE,
-                            Key.of("id", entry.getKey().toString()), Key.of("date", formatter.format(entry.getValue().time())),
-                            Key.of("access.count", entry.getValue().accessCount()), time).split("\n"))
-                        .apply().applyItemMeta(
-                            meta -> meta.getPersistentDataContainer().set(JustLootItKey.identity(), SimpleDataType.UUID, entry.getKey())));
+            ItemEditor editor = ItemEditor.of(Material.PLAYER_HEAD)
+                .setName(actor.getTranslatedMessageAsString(UIInventoryNames.CONTAINER_MANAGE_PAGE_ACCESSES_ITEM_PLAYER_NAME,
+                    Key.of("player", player.getName())))
+                .lore()
+                .set(actor.getTranslatedMessageAsString(UIInventoryNames.CONTAINER_MANAGE_PAGE_ACCESSES_ITEM_PLAYER_LORE,
+                    Key.of("id", entry.getKey().toString()), Key.of("date", formatter.format(entry.getValue().time())),
+                    Key.of("access.count", entry.getValue().accessCount()), time).split("\n"))
+                .apply().applyItemMeta(
+                    meta -> meta.getPersistentDataContainer().set(JustLootItKey.identity(), SimpleDataType.UUID, entry.getKey()));
+            int row = 1 + Math.floorDiv(slotIndex, 7), column = 1 + slotIndex % 7;
+            editor.applyHeadTexture(player, item -> inventory.set(row, column, item));
+            inventory.set(row, column, editor);
         }
     }
 
     @Override
-    public boolean onClickPickup(PageContext<ContainerPage, PlayerAdapter> context, ItemStack item, int slot, int amount, boolean cursor, ClickType type) {
+    public boolean onClickPickup(PageContext<ContainerPage, PlayerAdapter> context, ItemStack item, int slot, int amount, boolean cursor,
+        ClickType type) {
         if (item.getType() != Material.PLAYER_HEAD) {
             return true;
         }

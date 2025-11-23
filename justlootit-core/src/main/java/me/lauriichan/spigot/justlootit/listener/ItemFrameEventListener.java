@@ -1,15 +1,22 @@
 package me.lauriichan.spigot.justlootit.listener;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 
-import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.SoundCategory;
 import org.bukkit.World;
-import org.bukkit.block.data.BlockData;
+import org.bukkit.block.Banner;
+import org.bukkit.block.BlockState;
+import org.bukkit.block.ShulkerBox;
+import org.bukkit.block.Skull;
+import org.bukkit.block.TileState;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -17,7 +24,12 @@ import org.bukkit.event.hanging.HangingBreakByEntityEvent;
 import org.bukkit.event.hanging.HangingBreakEvent;
 import org.bukkit.event.hanging.HangingBreakEvent.RemoveCause;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.BannerMeta;
+import org.bukkit.inventory.meta.BlockStateMeta;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 
 import me.lauriichan.laylib.localization.Key;
@@ -46,8 +58,6 @@ import me.lauriichan.spigot.justlootit.util.EntityUtil;
 public class ItemFrameEventListener implements IListenerExtension {
     
     public static final String PLAYER_DATA_FRAME_LOOTING = "PlayerIsLootingFrame";
-    
-    private static final BlockData AIR_DATA = Bukkit.createBlockData(Material.AIR);
 
     private final JustLootItPlugin plugin;
     private final MainConfig config;
@@ -73,12 +83,48 @@ public class ItemFrameEventListener implements IListenerExtension {
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onHangingBreak(final HangingBreakEvent event) {
         final Entity entity = event.getEntity();
-        if (entity == null || !EntityUtil.isItemFrame(entity.getType())) {
+        if (entity == null || !EntityUtil.isItemFrame(entity.getType()) || !JustLootItAccess.hasIdentity(entity.getPersistentDataContainer())) {
             return;
         }
-        event.setCancelled(JustLootItAccess.hasIdentity(entity.getPersistentDataContainer()));
-        if (event.getCause() == RemoveCause.OBSTRUCTION) {
-            entity.getWorld().setBlockData(event.getEntity().getLocation(), AIR_DATA);
+        event.setCancelled(true);
+        if (event.getCause() != RemoveCause.OBSTRUCTION) {
+            return;
+        }
+        BlockState state = entity.getWorld().getBlockState(event.getEntity().getLocation());
+        if (state.getType().isAir()) {
+            return;
+        }
+        List<ItemStack> drops = new ArrayList<>();
+        ItemStack stack = new ItemStack(state.getType());
+        drops.add(stack);
+        if (state instanceof TileState) {
+            ItemMeta meta = stack.getItemMeta();
+            if (meta instanceof BlockStateMeta blockMeta) {
+                if (state instanceof InventoryHolder holder && !(holder instanceof ShulkerBox)) {
+                    holder.getInventory().getViewers().forEach(HumanEntity::closeInventory);
+                    for (ItemStack content : holder.getInventory().getContents()) {
+                        if (content == null || content.getType().isAir()) {
+                            continue;
+                        }
+                        drops.add(content.clone());
+                    }
+                    holder.getInventory().clear();
+                } else {
+                    blockMeta.setBlockState(state.copy());
+                }
+            } else if (meta instanceof SkullMeta skullMeta) {
+                skullMeta.setOwnerProfile(((Skull) state).getOwnerProfile());
+            } else if (meta instanceof BannerMeta bannerMeta) {
+                bannerMeta.setPatterns(((Banner) state).getPatterns());
+            }
+            stack.setItemMeta(meta);
+        }
+        World world = entity.getWorld();
+        Location location = entity.getLocation();
+        state.setType(Material.AIR);
+        state.update(true, false);
+        for (ItemStack drop : drops) {
+            world.dropItem(location, drop);
         }
     }
 
