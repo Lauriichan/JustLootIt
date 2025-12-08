@@ -100,7 +100,7 @@ public class WorldConfig implements IConfigExtension {
         minecraftNamespace.set("example/loottable_id/with/category", "");
         Configuration justlootitNamespace = configuration.getConfiguration(JustLootItConstant.PLUGIN_NAMESPACE, true);
         justlootitNamespace.set(JustLootItConstant.STATIC_CONTAINER_REFRESH_KEY, "");
-        justlootitNamespace.set(JustLootItConstant.FRAME_CONTAINER_REFRESH_KEY_FORMAT.formatted("example_minecraft_item_id"), "");
+        justlootitNamespace.set(JustLootItConstant.FRAME_CONTAINER_REFRESH_KEY_FORMAT.formatted("example_namespace", "example_item_id"), "");
         justlootitNamespace.set(JustLootItConstant.COMPATIBILITY_CONTAINER_REFRESH_KEY_FORMAT.formatted("example_namespace", "example_loot_table"), "");
     }
 
