@@ -1,0 +1,20 @@
+name: Wiki issue
+description: Found an issue with the wiki or have an improvement? Tell me here!
+labels: ["Wiki"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this wiki issue!
+  - type: input
+    id: description
+    attributes:
+      label: What is the issue you are facing or the improvement you want to suggest?
+      description: Enter the issue or improvement here.
+    validations:
+      required: true
+  - type: textarea
+    id: additional-information
+    attributes:
+      label: Additional Information
+      description: Any additional information that you would like to share.
