@@ -11,6 +11,7 @@ import org.bukkit.craftbukkit.v1_20_R3.CraftServer;
 import org.bukkit.craftbukkit.v1_20_R3.entity.CraftEntity;
 import org.bukkit.craftbukkit.v1_20_R3.entity.CraftPlayer;
 import org.bukkit.craftbukkit.v1_20_R3.inventory.CraftInventory;
+import org.bukkit.craftbukkit.v1_20_R3.inventory.CraftItemStack;
 import org.bukkit.craftbukkit.v1_20_R3.util.CraftNamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -20,13 +21,18 @@ import me.lauriichan.spigot.justlootit.nms.VersionHelper;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.chat.ComponentSerializer;
+import net.minecraft.advancements.CriteriaTriggers;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.decoration.ItemFrame;
+import net.minecraft.world.entity.monster.piglin.PiglinAi;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.storage.loot.LootDataType;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.LootTable;
@@ -87,10 +93,12 @@ public class VersionHelper1_20_R3 extends VersionHelper {
         if (level.getServer() == null) {
             return;
         }
-        final LootTable table = level.getServer().getLootData().getLootTable(CraftNamespacedKey.toMinecraft(lootTable.getKey()));
+        final ResourceLocation id = CraftNamespacedKey.toMinecraft(lootTable.getKey());
+        final LootTable table = level.getServer().getLootData().getLootTable(id);
         if (table == null) {
             return;
         }
+        CriteriaTriggers.GENERATE_LOOT.trigger(minecraftPlayer, id);
         table.fill(((CraftInventory) inventory).getInventory(),
             new LootParams.Builder(minecraftPlayer.serverLevel())
                 .withParameter(LootContextParams.ORIGIN,
@@ -105,4 +113,20 @@ public class VersionHelper1_20_R3 extends VersionHelper {
         return ItemFrame.DATA_ITEM.getId();
     }
 
+    @Override
+    public void triggerItemUsedCriteria(Player player, Location block, org.bukkit.inventory.ItemStack bukkitStack) {
+        final ServerPlayer minecraftPlayer = ((CraftPlayer) player).getHandle();
+        final ServerLevel level = minecraftPlayer.serverLevel();
+        if (level.getServer() == null) {
+            return;
+        }
+        ItemStack itemStack = CraftItemStack.asNMSCopy(bukkitStack);
+        BlockPos pos = new BlockPos(block.getBlockX(), block.getBlockY(), block.getBlockZ());
+        CriteriaTriggers.ITEM_USED_ON_BLOCK.trigger(minecraftPlayer, pos, itemStack);
+    }
+
+    @Override
+    public void triggerPiglins(Player player) {
+        PiglinAi.angerNearbyPiglins(((CraftPlayer) player).getHandle(), true);
+    }
 }

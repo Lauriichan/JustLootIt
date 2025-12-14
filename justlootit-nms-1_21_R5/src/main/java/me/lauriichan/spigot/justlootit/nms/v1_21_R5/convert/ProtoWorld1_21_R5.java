@@ -371,7 +371,7 @@ public class ProtoWorld1_21_R5 extends ProtoWorld implements LevelHeightAccessor
         if (tag == null || tag.getString("Status").isEmpty()) {
             return null;
         }
-        return chunkStorage.upgradeChunkTag(dimensionKey, () -> null, tag, Optional.empty(), pos, null);
+        return chunkStorage.upgradeChunkTag(dimensionKey, () -> null, tag, chunkGenerator.getTypeNameForDataFixer(), pos, null);
     }
 
     private Pair<CompoundTag, String> readEntityTag(CompoundTag chunkTag, RegionFile file, ChunkPos pos) throws IOException {

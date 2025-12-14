@@ -17,6 +17,7 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Vehicle;
 import org.bukkit.event.Cancellable;
+import org.bukkit.event.Event.Result;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.Action;
@@ -64,6 +65,7 @@ import me.lauriichan.spigot.justlootit.message.Messages;
 import me.lauriichan.spigot.justlootit.message.UIInventoryNames;
 import me.lauriichan.spigot.justlootit.nms.LevelAdapter;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
+import me.lauriichan.spigot.justlootit.nms.VersionHelper;
 import me.lauriichan.spigot.justlootit.storage.IStorage;
 import me.lauriichan.spigot.justlootit.storage.Stored;
 import me.lauriichan.spigot.justlootit.util.BlockUtil;
@@ -330,8 +332,14 @@ public class ContainerListener implements IListenerExtension {
             && JustLootItConstant.UNSUPPORTED_CONTAINER_TYPES.contains(container.getInventory().getType())) {
             return;
         }
+        boolean isBlockCancelled = event.useInteractedBlock() == Result.DENY;
         accessContainer(block.getLocation(), container, dataContainer, event, event.getPlayer(),
             JustLootItAccess.getIdentity(dataContainer));
+        if (!isBlockCancelled && event.useItemInHand() == Result.DENY) {
+            VersionHelper helper = plugin.versionHelper();
+            helper.triggerItemUsedCriteria(player, block.getLocation(), event.getItem());
+            helper.triggerPiglins(player);
+        }
         if (JustLootItAccess.hasIdentity(dataContainer)) {
             return;
         }
@@ -350,6 +358,9 @@ public class ContainerListener implements IListenerExtension {
         }
         accessContainer(entity.getLocation(), (InventoryHolder) entity, dataContainer, event, event.getPlayer(),
             JustLootItAccess.getIdentity(dataContainer));
+        if (event.isCancelled()) {
+            plugin.versionHelper().triggerPiglins(event.getPlayer());
+        }
     }
 
     private void accessContainer(final Location location, final InventoryHolder inventoryHolder, final PersistentDataContainer data,

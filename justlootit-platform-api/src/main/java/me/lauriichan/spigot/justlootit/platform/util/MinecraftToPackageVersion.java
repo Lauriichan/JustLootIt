@@ -12,7 +12,8 @@ public enum MinecraftToPackageVersion {
     v1_21_R3(of(1, 21, 4)),
     v1_21_R4(of(1, 21, 5)),
     v1_21_R5(of(1, 21, 6), of(1, 21, 8)),
-    v1_21_R6(of(1, 21, 9), of(1, 21, 10));
+    v1_21_R6(of(1, 21, 9), of(1, 21, 10)),
+    v1_21_R7(of(1, 21, 11));
 
     private static final MinecraftToPackageVersion[] VALUES = MinecraftToPackageVersion.values();
 

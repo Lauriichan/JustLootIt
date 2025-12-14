@@ -8,7 +8,6 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
@@ -371,7 +370,7 @@ public class ProtoWorld1_21_R1 extends ProtoWorld implements LevelHeightAccessor
         if (tag == null || !tag.contains("Status", 8)) {
             return null;
         }
-        return chunkStorage.upgradeChunkTag(dimensionKey, () -> null, tag, Optional.empty(), pos, null);
+        return chunkStorage.upgradeChunkTag(dimensionKey, () -> null, tag, chunkGenerator.getTypeNameForDataFixer(), pos, null);
     }
 
     private Pair<CompoundTag, String> readEntityTag(CompoundTag chunkTag, RegionFile file, ChunkPos pos) throws IOException {
