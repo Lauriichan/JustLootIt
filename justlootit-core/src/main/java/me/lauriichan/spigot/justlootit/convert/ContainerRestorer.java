@@ -1,5 +1,6 @@
 package me.lauriichan.spigot.justlootit.convert;
 
+import java.io.IOException;
 import java.util.Random;
 
 import org.bukkit.block.data.type.Chest;
@@ -24,6 +25,7 @@ import me.lauriichan.spigot.justlootit.nms.util.Vec3i;
 import me.lauriichan.spigot.justlootit.storage.IStorage;
 import me.lauriichan.spigot.justlootit.storage.Stored;
 import me.lauriichan.spigot.justlootit.util.EntityUtil;
+import me.lauriichan.spigot.justlootit.util.IOUtil;
 
 public class ContainerRestorer extends ChunkConverter {
 
@@ -74,7 +76,7 @@ public class ContainerRestorer extends ChunkConverter {
                 logger.warning("Type '{0}' doesn't support restoration yet", container.getClass().getSimpleName());
                 continue;
             }
-            container.restore(logger, versionHandler, otherEntity != null ? blockEntity : otherEntity);
+            container.restore(logger, versionHandler, otherEntity != null ? otherEntity : blockEntity);
             if (otherEntity != null) {
                 JustLootItAccess.removeOffset(dataContainer);
                 chunk.updateBlock(otherEntity);
@@ -117,12 +119,17 @@ public class ContainerRestorer extends ChunkConverter {
 
     @Override
     void finish(ProtoWorld world) {
-        IStorage storage = world.getCapability(StorageCapability.class).map(StorageCapability::storage).get();
-        storage.clear();
-
+        try {
+            IOUtil.delete(world.getWorldFolder().toPath().resolve("justlootit"));
+        } catch (IOException e) {
+            logger.warning("Failed to delete JLI storage directory for world '{0}'", e, world.getName());
+        }
+        
         // Now we want to disable JLI for this world
         ConfigWrapper<WorldConfig> wrapper = ConfigWrapper.single(plugin, new WorldConfig(trialChamberBuggedVersion),
             WorldMultiConfig.path(world.getName()));
+        // We need to load it first
+        wrapper.reload();
         wrapper.config().setWhitelisted(false);
         wrapper.save();
     }

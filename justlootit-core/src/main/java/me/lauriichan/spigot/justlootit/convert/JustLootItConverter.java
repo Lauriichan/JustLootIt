@@ -104,11 +104,11 @@ public final class JustLootItConverter {
                         }).doneNotifier((progress, elapsed) -> logger.info("Conversion of level '{0}' done! [{1} Chunks]", world.getName(),
                             progress.counter().max()))
                         .await();
-                    logger.info("Finishing up level '{0}'...");
+                    logger.info("Finishing up level '{0}'...", world.getName());
                     for (ChunkConverter converter : enabledConverters) {
                         converter.finish(world);
                     }
-                    logger.info("Level '{0}' has fully completed the conversion process!");
+                    logger.info("Level '{0}' has fully completed the conversion process!", world.getName());
                 } catch (RuntimeException exp) {
                     logger.error("Couldn't start conversion of world '{0}'...", exp, file.getName());
                 }

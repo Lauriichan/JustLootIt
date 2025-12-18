@@ -41,6 +41,7 @@ public class ConvertCommand implements ICommandExtension {
         if (!setup(plugin, actor)) {
             return;
         }
+        properties(actor).setProperty(ConvProp.DO_RESTORATION, true);
         inputProvider.getStringInput(actor, actor.getTranslatedMessageAsString(Messages.INPUT_PROMPT_CONVERT_BLACKLIST_WORLD_INFO), null,
             this::blacklistWorldSubmit);
     }
@@ -50,7 +51,6 @@ public class ConvertCommand implements ICommandExtension {
         if (!setup(plugin, actor)) {
             return;
         }
-        properties(actor).setProperty(ConvProp.DO_RESTORATION, true);
         inputProvider.getBooleanInput(actor, actor.getTranslatedMessageAsString(Messages.INPUT_PROMPT_CONVERT_DO_LOOTIN),
             actor.getTranslatedMessageAsString(Messages.INPUT_RETRY_BOOLEAN), this::propertyDoLootin);
     }

@@ -129,7 +129,7 @@ public final class Messages implements IMessageExtension {
     })
     public static MessageProvider INPUT_PROMPT_CONVERT_BLACKLIST_WORLD_FAILED;
     @Message(id = "input.prompt.convert.restoration.are-you-sure", content = {
-        "&7The restoration process is &4&lunreverseable&7, no backups will be created beforehand.",
+        "&7The restoration process is &4&lunreverseable&r&7, no backups will be created beforehand.",
         "&7This process will remove all JLI containers from not blacklisted worlds (they turn back to normal).",
         "&7It will also prevent these worlds from getting new containers.",
         "&7Some data might get lost due to issues with your Server software or partially wrong world data.",

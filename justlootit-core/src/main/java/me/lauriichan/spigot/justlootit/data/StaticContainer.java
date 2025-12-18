@@ -196,6 +196,11 @@ public final class StaticContainer extends Container implements IInventoryContai
             listTag.add(tag);
         }
     }
+    
+    @Override
+    public boolean canBeRestored() {
+        return true;
+    }
 
     @Override
     public ItemEditor createIcon() {
