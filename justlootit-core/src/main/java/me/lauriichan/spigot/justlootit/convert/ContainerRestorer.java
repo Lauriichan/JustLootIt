@@ -6,8 +6,13 @@ import org.bukkit.block.data.type.Chest;
 import org.bukkit.persistence.PersistentDataContainer;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import me.lauriichan.minecraft.pluginbase.config.ConfigWrapper;
 import me.lauriichan.spigot.justlootit.JustLootItAccess;
+import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.capability.StorageCapability;
+import me.lauriichan.spigot.justlootit.config.MainConfig;
+import me.lauriichan.spigot.justlootit.config.world.WorldConfig;
+import me.lauriichan.spigot.justlootit.config.world.WorldMultiConfig;
 import me.lauriichan.spigot.justlootit.data.FrameContainer;
 import me.lauriichan.spigot.justlootit.data.IInventoryContainer;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
@@ -22,8 +27,18 @@ import me.lauriichan.spigot.justlootit.util.EntityUtil;
 
 public class ContainerRestorer extends ChunkConverter {
 
+    private final JustLootItPlugin plugin;
+    private final boolean trialChamberBuggedVersion;
+
     public ContainerRestorer(VersionHandler versionHandler, ConversionProperties properties) {
         super(versionHandler, properties);
+        this.plugin = (JustLootItPlugin) versionHandler.plugin();
+        this.trialChamberBuggedVersion = versionHandler.versionHelper().isTrialChamberBugged();
+
+        // First we enable the world whitelist if it isn't
+        ConfigWrapper<MainConfig> wrapper = plugin.configManager().wrapper(MainConfig.class);
+        wrapper.config().worldWhitelistEnabled(true);
+        wrapper.save();
     }
 
     @Override
@@ -104,6 +119,12 @@ public class ContainerRestorer extends ChunkConverter {
     void finish(ProtoWorld world) {
         IStorage storage = world.getCapability(StorageCapability.class).map(StorageCapability::storage).get();
         storage.clear();
+
+        // Now we want to disable JLI for this world
+        ConfigWrapper<WorldConfig> wrapper = ConfigWrapper.single(plugin, new WorldConfig(trialChamberBuggedVersion),
+            WorldMultiConfig.path(world.getName()));
+        wrapper.config().setWhitelisted(false);
+        wrapper.save();
     }
 
     @Override

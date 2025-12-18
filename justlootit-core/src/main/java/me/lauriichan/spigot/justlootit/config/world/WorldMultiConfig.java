@@ -29,12 +29,16 @@ public final class WorldMultiConfig implements IMultiConfigExtension<UUID, World
 
     @Override
     public String path(World element) {
-        return "data://worlds/%s/settings.json".formatted(element.getName());
+        return path(element.getName());
     }
 
     @Override
     public Class<WorldConfig> type() {
         return WorldConfig.class;
+    }
+    
+    public static String path(String worldName) {
+        return "data://worlds/%s/settings.json".formatted(worldName);
     }
 
 }
