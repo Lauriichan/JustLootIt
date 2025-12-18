@@ -128,25 +128,16 @@ public final class Messages implements IMessageExtension {
         "&7Otherwise press enter or type '#start' to start the process."
     })
     public static MessageProvider INPUT_PROMPT_CONVERT_BLACKLIST_WORLD_FAILED;
-    
-    // Prompts (Uninstallation)
-    @Message(id = "input.prompt.convert.whitelist-world.info", content = {
-        "&7Please enter which worlds JLI should be uninstalled from now.",
-        "&7Once you're done press enter or type '#start' to start the process."
+    @Message(id = "input.prompt.convert.restoration.are-you-sure", content = {
+        "&7The restoration process is &4&lunreverseable&7, no backups will be created beforehand.",
+        "&7This process will remove all JLI containers from not blacklisted worlds (they turn back to normal).",
+        "&7It will also prevent these worlds from getting new containers.",
+        "&7Some data might get lost due to issues with your Server software or partially wrong world data.",
+        "&7Do you still want to go through this? (yes/no)",
+        "",
+        "&7Note: A fully restored world can be converted back to JLI using &c/jli convert&7."
     })
-    public static MessageProvider INPUT_PROMPT_UNINSTALL_WHITELIST_WORLD_INFO;
-    @Message(id = "input.prompt.convert.whitelist-world.added", content = {
-        "&7The world folder '&a$worldName&7' was added to the uninstallation list.",
-        "&7If you want to uninstall JLI from another world do so now.",
-        "&7Otherwise press enter or type '#start' to start the process."
-    })
-    public static MessageProvider INPUT_PROMPT_UNINSTALL_WHITELIST_WORLD_ADDED;
-    @Message(id = "input.prompt.convert.whitelist-world.failed", content = {
-        "&7The world folder '&c$worldName&7' doesn't exist.",
-        "&7If you want to uninstall JLI from another world do so now.",
-        "&7Otherwise press enter or type '#start' to start the process."
-    })
-    public static MessageProvider INPUT_PROMPT_UNINSTALL_WHITELIST_WORLD_FAILED;
+    public static MessageProvider INPUT_PROMPT_CONVERT_RESTORATION_ARE_YOU_SURE;
     
     
     
@@ -522,23 +513,5 @@ public final class Messages implements IMessageExtension {
     public static MessageProvider COMMAND_CONVERT_PROCESS_ONGOING;
     @Message(id = "command.convert.process-done", content = "$#plugin.prefix &7Successfully set up conversion process, restarting server in 5 seconds (might require manual start)")
     public static MessageProvider COMMAND_CONVERT_PROCESS_DONE;
-    
-    // Uninstall
-
-    @Message(id = "command.uninstall.proccess.user.request", content = {
-        "$#plugin.prefix &7Your request to start a conversion process has been aknowledged.",
-        "$#plugin.prefix &7Please confirm your request by using '/jli convert' in your console in the next 3 minutes."
-    })
-    public static MessageProvider COMMAND_UNINSTALL_PROCESS_USER_REQUEST;
-    @Message(id = "command.uninstall.proccess.user.confirmed.player", content = "$#plugin.prefix &7Your conversion request has been aknowledged, starting setup...")
-    public static MessageProvider COMMAND_UNINSTALL_PROCESS_USER_CONFIRMED_PLAYER;
-    @Message(id = "command.uninstall.proccess.user.confirmed.console", content = "$#plugin.prefix &7You confirmed the conversion request of &c$name&7.")
-    public static MessageProvider COMMAND_UNINSTALL_PROCESS_USER_CONFIRMED_CONSOLE;
-    @Message(id = "command.uninstall.proccess.user.expired", content = "$#plugin.prefix &7The current conversion request expired, to start a conversion process in console please re-enter the command.")
-    public static MessageProvider COMMAND_UNINSTALL_PROCESS_USER_EXPIRED;
-    @Message(id = "command.uninstall.proccess-on-going", content = "$#plugin.prefix &cThere is already a conversion process setup on-going and run by &4$name&c!")
-    public static MessageProvider COMMAND_UNINSTALL_PROCESS_ONGOING;
-    @Message(id = "command.uninstall.process-done", content = "$#plugin.prefix &7Successfully set up conversion process, restarting server in 5 seconds (might require manual start)")
-    public static MessageProvider COMMAND_UNINSTALL_PROCESS_DONE;
     
 }

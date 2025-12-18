@@ -36,33 +36,51 @@ public class ConvertCommand implements ICommandExtension {
 
     private volatile UUID conversionSetup;
 
+    @Action("restore")
+    public void restore(final JustLootItPlugin plugin, LootItActor<?> actor) {
+        if (!setup(plugin, actor)) {
+            return;
+        }
+        inputProvider.getStringInput(actor, actor.getTranslatedMessageAsString(Messages.INPUT_PROMPT_CONVERT_BLACKLIST_WORLD_INFO), null,
+            this::blacklistWorldSubmit);
+    }
+
     @Action("")
     public void convert(final JustLootItPlugin plugin, LootItActor<?> actor) {
+        if (!setup(plugin, actor)) {
+            return;
+        }
+        properties(actor).setProperty(ConvProp.DO_RESTORATION, true);
+        inputProvider.getBooleanInput(actor, actor.getTranslatedMessageAsString(Messages.INPUT_PROMPT_CONVERT_DO_LOOTIN),
+            actor.getTranslatedMessageAsString(Messages.INPUT_RETRY_BOOLEAN), this::propertyDoLootin);
+    }
+
+    private boolean setup(final JustLootItPlugin plugin, LootItActor<?> actor) {
         if (conversionSetup != null) {
             actor.sendTranslatedMessage(Messages.COMMAND_CONVERT_PROCESS_ONGOING, Key.of("name", actorName(conversionSetup, plugin)));
-            return;
+            return false;
         }
         if (!actor.isConsole()) {
             if (requestExpiry != null && !OffsetDateTime.now().isAfter(requestExpiry)) {
                 actor.sendTranslatedMessage(Messages.COMMAND_CONVERT_PROCESS_ONGOING, Key.of("name", actorName(request, plugin)));
-                return;
+                return false;
             }
             requestExpiry = OffsetDateTime.now().plusMinutes(3);
             request = actor.getId();
             actor.sendTranslatedMessage(Messages.COMMAND_CONVERT_PROCESS_USER_REQUEST);
-            return;
+            return false;
         }
         if (request != null) {
             if (requestExpiry != null && OffsetDateTime.now().isAfter(requestExpiry)) {
                 requestExpiry = null;
                 request = null;
                 actor.sendTranslatedMessage(Messages.COMMAND_CONVERT_PROCESS_USER_EXPIRED);
-                return;
+                return false;
             }
             PlayerAdapter adapter = plugin.versionHandler().getPlayer(request);
             if (adapter == null) {
                 actor.sendTranslatedMessage(Messages.COMMAND_CONVERT_PROCESS_USER_EXPIRED);
-                return;
+                return false;
             }
             actor.sendTranslatedMessage(Messages.COMMAND_CONVERT_PROCESS_USER_CONFIRMED_CONSOLE, Key.of("name", adapter.getName()));
             conversionSetup = adapter.getUniqueId();
@@ -74,8 +92,7 @@ public class ConvertCommand implements ICommandExtension {
             conversionSetup = actor.getId();
         }
         newProperties(plugin, actor);
-        inputProvider.getBooleanInput(actor, actor.getTranslatedMessageAsString(Messages.INPUT_PROMPT_CONVERT_DO_LOOTIN),
-            actor.getTranslatedMessageAsString(Messages.INPUT_RETRY_BOOLEAN), this::propertyDoLootin);
+        return true;
     }
 
     private String actorName(final UUID uuid, final JustLootItPlugin plugin) {
@@ -189,8 +206,12 @@ public class ConvertCommand implements ICommandExtension {
     }
 
     private void blacklistWorldSubmit(Actor<?> actor, String worldName) {
+        if (worldName == null) {
+            clearProperties(actor);
+            return;
+        }
         if (worldName.equalsIgnoreCase("#start") || worldName.isBlank()) {
-            runConversion(actor);
+            prepareConversion(actor);
             return;
         }
         File world = new File(Bukkit.getWorldContainer(), worldName);
@@ -206,7 +227,23 @@ public class ConvertCommand implements ICommandExtension {
         }
     }
 
-    private void runConversion(Actor<?> actor) {
+    private void prepareConversion(Actor<?> actor) {
+        ConversionProperties properties = properties(actor);
+        if (properties.isProperty(ConvProp.DO_RESTORATION)) {
+            inputProvider.getBooleanInput(actor, actor.getTranslatedMessageAsString(Messages.INPUT_PROMPT_CONVERT_RESTORATION_ARE_YOU_SURE),
+                null, this::runConversion);
+            return;
+        }
+        runConversion(actor, true);
+    }
+
+    private void runConversion(Actor<?> actor, Boolean doRun) {
+        // This has to be this way as doRun can be null
+        if (doRun != true) {
+            actor.sendTranslatedMessage(Messages.INPUT_MANUAL_CANCEL);
+            clearProperties(actor);
+            return;
+        }
         properties(actor).save();
         actor.sendTranslatedMessage(Messages.COMMAND_CONVERT_PROCESS_DONE);
         JustLootItPlugin.get().scheduler().syncLater(() -> Bukkit.getServer().spigot().restart(), 100);
