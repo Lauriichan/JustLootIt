@@ -9,6 +9,7 @@ import org.bukkit.Bukkit;
 import me.lauriichan.laylib.command.Actor;
 import me.lauriichan.laylib.command.annotation.Action;
 import me.lauriichan.laylib.command.annotation.Command;
+import me.lauriichan.laylib.command.annotation.Description;
 import me.lauriichan.laylib.command.annotation.Permission;
 import me.lauriichan.laylib.localization.Key;
 import me.lauriichan.minecraft.pluginbase.extension.Extension;
@@ -37,6 +38,7 @@ public class ConvertCommand implements ICommandExtension {
     private volatile UUID conversionSetup;
 
     @Action("restore")
+    @Description("$#command.description.justlootit.convert.restore")
     public void restore(final JustLootItPlugin plugin, LootItActor<?> actor) {
         if (!setup(plugin, actor)) {
             return;
@@ -47,6 +49,7 @@ public class ConvertCommand implements ICommandExtension {
     }
 
     @Action("")
+    @Description("$#command.description.justlootit.convert.conversion")
     public void convert(final JustLootItPlugin plugin, LootItActor<?> actor) {
         if (!setup(plugin, actor)) {
             return;

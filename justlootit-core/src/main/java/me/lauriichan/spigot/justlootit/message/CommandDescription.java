@@ -38,8 +38,9 @@ public enum CommandDescription implements IMessageDefinition, IMessageExtension 
     
     JUSTLOOTIT_CONFIG_SAVE("Saves all or just the specified config(s)"),
     JUSTLOOTIT_CONFIG_RELOAD("Reloads all or just the specified config(s)"),
-    
-    JUSTLOOTIT_CONVERT("Triggers a world conversion process")
+
+    JUSTLOOTIT_CONVERT_RESTORE("Triggers a world restoration process"),
+    JUSTLOOTIT_CONVERT_CONVERSION("Triggers a world conversion process")
     ;
 
     private final String id;
