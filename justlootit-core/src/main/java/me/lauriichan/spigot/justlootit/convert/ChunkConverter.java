@@ -27,6 +27,8 @@ public abstract class ChunkConverter {
     
     abstract void convert(ProtoChunk chunk, Random random);
     
+    void finish(ProtoWorld world) {}
+    
     abstract boolean isEnabled();
     
     boolean isEnabledFor(ProtoWorld world) {

@@ -60,14 +60,12 @@ public class ContainerRestorer extends ChunkConverter {
                 continue;
             }
             container.restore(logger, versionHandler, otherEntity != null ? blockEntity : otherEntity);
-            if (storage.delete(containerId)) {
-                if (otherEntity != null) {
-                    JustLootItAccess.removeOffset(dataContainer);
-                    chunk.updateBlock(otherEntity);
-                }
-                JustLootItAccess.removeIdentity(identityDataContainer);
-                chunk.updateBlock(blockEntity);
+            if (otherEntity != null) {
+                JustLootItAccess.removeOffset(dataContainer);
+                chunk.updateBlock(otherEntity);
             }
+            JustLootItAccess.removeIdentity(identityDataContainer);
+            chunk.updateBlock(blockEntity);
         }
         processed.clear();
         for (ProtoEntity entity : chunk.getEntities()) {
@@ -82,10 +80,8 @@ public class ContainerRestorer extends ChunkConverter {
                     continue;
                 }
                 entity.getNbt().set("Item", nbtHelper.asTag(stored.value().getItem()));
-                if (storage.delete(containerId)) {
-                    JustLootItAccess.removeIdentity(dataContainer);
-                    chunk.updateEntity(entity);
-                }
+                JustLootItAccess.removeIdentity(dataContainer);
+                chunk.updateEntity(entity);
             } else if (EntityUtil.isSupportedEntity(entity.getType())) {
                 long containerId = JustLootItAccess.getIdentity(dataContainer);
                 Stored<IInventoryContainer> stored = storage.read(containerId);
@@ -98,12 +94,16 @@ public class ContainerRestorer extends ChunkConverter {
                     continue;
                 }
                 container.restore(logger, versionHandler, entity);
-                if (storage.delete(containerId)) {
-                    JustLootItAccess.removeIdentity(dataContainer);
-                    chunk.updateEntity(entity);
-                }
+                JustLootItAccess.removeIdentity(dataContainer);
+                chunk.updateEntity(entity);
             }
         }
+    }
+
+    @Override
+    void finish(ProtoWorld world) {
+        IStorage storage = world.getCapability(StorageCapability.class).map(StorageCapability::storage).get();
+        storage.clear();
     }
 
     @Override
