@@ -70,7 +70,7 @@ This allows players to loot a container more than one time if the server owner w
 <!-- GETTING STARTED -->
 ## Getting Started
 
-To get a local copy you only need to download it from [Spigot](https://www.spigotmc.org/resources/justlootit.116493/)
+To get a local copy you only need to download it from [Spigot](https://www.spigotmc.org/resources/justlootit.116493/) or [Modrinth](https://modrinth.com/plugin/justlootit)
 or if you want to get the Source just fork this repository or download it as zip.
 
 ### Installation
