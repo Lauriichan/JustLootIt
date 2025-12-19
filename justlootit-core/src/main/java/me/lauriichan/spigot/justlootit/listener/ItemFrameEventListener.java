@@ -45,6 +45,7 @@ import me.lauriichan.spigot.justlootit.config.MainConfig;
 import me.lauriichan.spigot.justlootit.data.FrameContainer;
 import me.lauriichan.spigot.justlootit.message.Messages;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
+import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.nms.model.IEntityData;
 import me.lauriichan.spigot.justlootit.nms.model.IItemEntityData;
 import me.lauriichan.spigot.justlootit.nms.packet.PacketOutSetEntityData;
@@ -60,10 +61,12 @@ public class ItemFrameEventListener implements IListenerExtension {
     public static final String PLAYER_DATA_FRAME_LOOTING = "PlayerIsLootingFrame";
 
     private final JustLootItPlugin plugin;
+    private final VersionHandler versionHandler;
     private final MainConfig config;
 
     public ItemFrameEventListener(final JustLootItPlugin plugin) {
         this.plugin = plugin;
+        this.versionHandler = plugin.versionHandler();
         this.config = plugin.configManager().config(MainConfig.class);
     }
 
@@ -78,6 +81,33 @@ public class ItemFrameEventListener implements IListenerExtension {
             return;
         }
         event.setCancelled(true);
+        if (!VersionHandler.isPaper()) {
+            return;
+        }
+        // Paper for some reason decides to send a entity update here,
+        // since the ItemFrame is being cleared by JLI on container creation it will
+        // send the player an empty ItemFrame as a result.
+        // Therefore a packet needs to be sent in order to fix this issue.
+        // So just for Paper we have to read the container into memory and send a fix...
+        final long id = JustLootItAccess.getIdentity(container);
+        final World world = entity.getWorld();
+        versionHandler.getLevel(world).getCapability(StorageCapability.class).ifPresent(capability -> {
+            final Stored<FrameContainer> stored = capability.storage().read(id);
+            if (!stored.value().canAccess(world, event.getPlayer().getUniqueId())) {
+                // If the player can not access this item frame we don't need to send an update
+                return;
+            }
+            final PacketOutSetEntityData dataPacket = versionHandler.packetManager().createPacket(new ArgumentMap().set("entity", entity),
+                PacketOutSetEntityData.class);
+            final IEntityDataPack pack = dataPacket.getData();
+            final IEntityData data = pack.getById(versionHandler.versionHelper().getItemFrameItemDataId());
+            if (!(data instanceof IItemEntityData itemData)) {
+                return;
+            }
+            itemData.setItem(stored.value().getItem());
+            final PlayerAdapter player = versionHandler.getPlayer(event.getPlayer());
+            versionHandler.platform().scheduler().sync(() -> player.send(dataPacket));
+        });
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)

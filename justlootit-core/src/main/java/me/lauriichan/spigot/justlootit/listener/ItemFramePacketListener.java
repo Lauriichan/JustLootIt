@@ -53,10 +53,10 @@ public class ItemFramePacketListener implements IPacketListener {
                 PacketOutSetEntityData.class);
             final IEntityDataPack pack = dataPacket.getData();
             final IEntityData data = pack.getById(versionHandler.versionHelper().getItemFrameItemDataId());
-            if (!(data instanceof IItemEntityData)) {
+            if (!(data instanceof IItemEntityData itemData)) {
                 return;
             }
-            ((IItemEntityData) data).setItem(stored.value().getItem());
+            itemData.setItem(stored.value().getItem());
             versionHandler.platform().scheduler().sync(() -> player.send(dataPacket));
         });
     }
