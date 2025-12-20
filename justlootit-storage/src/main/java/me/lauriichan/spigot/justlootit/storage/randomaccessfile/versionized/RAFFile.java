@@ -406,7 +406,7 @@ public final class RAFFile implements IRAFFile {
                 }
                 ShortArrayList deleteList = new ShortArrayList();
                 fileAccess.seek(LOOKUP_AMOUNT_OFFSET);
-                int items = fileAccess.readShort();
+                int items = fileAccess.readUnsignedShort();
                 long headerOffset;
                 long lookupPosition;
                 for (int valueId = 0; valueId < settings.valueIdAmount; valueId++) {
@@ -463,102 +463,9 @@ public final class RAFFile implements IRAFFile {
                 if (deleteList.isEmpty()) {
                     return;
                 }
-                int amount = deleteList.size();
-                fileAccess.seek(LOOKUP_AMOUNT_OFFSET);
-                fileAccess.writeShort(items);
                 // Here we delete all entries mentioned above
                 // This should speed up this process by a lot compared to individual delete operations
-                fileSize = fileAccess.length();
-                final Long2IntOpenHashMap keysToIndex = new Long2IntOpenHashMap(items);
-                final LongArrayList headerKeys = new LongArrayList(items);
-                final LongArrayList headerValues = new LongArrayList(items);
-                final LongArrayList headerNewValues = new LongArrayList(items);
-                int headerAmount = 0;
-                final Short2LongOpenHashMap deleteHeaders = new Short2LongOpenHashMap(amount);
-                final Short2LongOpenHashMap modifiedDeleteHeaders = new Short2LongOpenHashMap(amount);
-                for (int valueId = 0; valueId < settings.valueIdAmount; valueId++) {
-                    headerOffset = LOOKUP_ENTRY_BASE_OFFSET + LOOKUP_ENTRY_SIZE * valueId;
-                    fileAccess.seek(headerOffset);
-                    lookupPosition = fileAccess.readLong();
-                    if (lookupPosition == INVALID_HEADER_OFFSET) {
-                        continue;
-                    }
-                    if (deleteList.contains((short) valueId)) {
-                        deleteHeaders.put((short) valueId, lookupPosition);
-                        modifiedDeleteHeaders.put((short) valueId, lookupPosition);
-                        continue;
-                    }
-                    keysToIndex.put(headerOffset, headerAmount++);
-                    headerKeys.add(headerOffset);
-                    headerValues.add(lookupPosition);
-                    headerNewValues.add(lookupPosition);
-                }
-                int dataSize;
-                long offsetLookupPosition;
-                while (amount != 0) {
-                    final short valueIdShort = deleteList.removeShort(0);
-                    final int valueId = Short.toUnsignedInt(valueIdShort);
-                    amount--;
-                    offsetLookupPosition = modifiedDeleteHeaders.remove(valueIdShort);
-                    headerOffset = LOOKUP_ENTRY_BASE_OFFSET + LOOKUP_ENTRY_SIZE * valueId;
-                    fileAccess.seek(headerOffset);
-                    fileAccess.writeLong(INVALID_HEADER_OFFSET);
-                    lookupPosition = deleteHeaders.remove(valueIdShort);
-                    fileAccess.seek(lookupPosition + VALUE_HEADER_ID_VERSION_SIZE);
-                    dataSize = fileAccess.readInt() + VALUE_HEADER_SIZE;
-                    fileSize -= dataSize;
-                    for (int headerIdx = 0; headerIdx < items; headerIdx++) {
-                        final long headerValue = headerNewValues.getLong(headerIdx);
-                        if (headerValue < offsetLookupPosition) {
-                            continue;
-                        }
-                        headerNewValues.set(headerIdx, headerValue - dataSize);
-                    }
-                    for (int entry = 0; entry < amount; entry++) {
-                        final short entryId = deleteList.getShort(entry);
-                        final long headerValue = modifiedDeleteHeaders.get(entryId);
-                        if (headerValue < offsetLookupPosition) {
-                            continue;
-                        }
-                        modifiedDeleteHeaders.put(entryId, headerValue - dataSize);
-                    }
-                }
-                headerKeys.sort(
-                    (k1, k2) -> Long.compare(headerNewValues.getLong(keysToIndex.get(k1)), headerNewValues.getLong(keysToIndex.get(k2))));
-                int valueIdx;
-                long copyFrom, copyTo, copyEnd, copyAmount;
-                final byte[] buffer = new byte[settings.copyBufferSize];
-                ScaledCounter scaledCounter = new ScaledCounter(counter, headerAmount);
-                for (int keyIdx = 0; keyIdx < headerAmount; keyIdx++) {
-                    headerOffset = headerKeys.getLong(keyIdx);
-                    valueIdx = keysToIndex.get(headerOffset);
-                    copyFrom = headerValues.getLong(valueIdx);
-                    copyTo = headerNewValues.getLong(valueIdx);
-                    if (copyTo == copyFrom) {
-                        scaledCounter.increment();
-                        continue;
-                    }
-                    fileAccess.seek(headerOffset);
-                    fileAccess.writeLong(copyTo);
-                    fileAccess.seek(copyFrom + VALUE_HEADER_ID_VERSION_SIZE);
-                    dataSize = fileAccess.readInt() + VALUE_HEADER_SIZE;
-                    fileAccess.seek(copyFrom);
-                    lookupPosition = copyFrom;
-                    copyEnd = copyFrom + dataSize;
-                    copyAmount = 0;
-                    while (lookupPosition != copyEnd) {
-                        final long diff = copyEnd - lookupPosition;
-                        final int size = diff > buffer.length ? buffer.length : (int) diff;
-                        fileAccess.seek(lookupPosition);
-                        fileAccess.read(buffer, 0, size);
-                        fileAccess.seek(copyTo + copyAmount);
-                        fileAccess.write(buffer, 0, size);
-                        lookupPosition += size;
-                        copyAmount += size;
-                    }
-                    scaledCounter.increment();
-                }
-                fileAccess.setLength(fileSize);
+                doMassDeletion(counter, deleteList, items);
             } catch (final IOException e) {
                 counter.finish();
                 throw new StorageException("Failed to modify all entries from file!", e);
@@ -567,6 +474,104 @@ public final class RAFFile implements IRAFFile {
                 counter.finish();
             }
         }, executor));
+    }
+    
+    private void doMassDeletion(SimpleCounter counter, ShortArrayList deleteList, int items) throws IOException {
+        int amount = deleteList.size();
+        fileAccess.seek(LOOKUP_AMOUNT_OFFSET);
+        fileAccess.writeShort(items);
+        long fileSize = fileAccess.length();
+        final Long2IntOpenHashMap keysToIndex = new Long2IntOpenHashMap(items);
+        final LongArrayList headerKeys = new LongArrayList(items);
+        final LongArrayList headerValues = new LongArrayList(items);
+        final LongArrayList headerNewValues = new LongArrayList(items);
+        int headerAmount = 0;
+        final Short2LongOpenHashMap deleteHeaders = new Short2LongOpenHashMap(amount);
+        final Short2LongOpenHashMap modifiedDeleteHeaders = new Short2LongOpenHashMap(amount);
+        long headerOffset, lookupPosition;
+        for (int valueId = 0; valueId < settings.valueIdAmount; valueId++) {
+            headerOffset = LOOKUP_ENTRY_BASE_OFFSET + LOOKUP_ENTRY_SIZE * valueId;
+            fileAccess.seek(headerOffset);
+            lookupPosition = fileAccess.readLong();
+            if (lookupPosition == INVALID_HEADER_OFFSET) {
+                continue;
+            }
+            if (deleteList.contains((short) valueId)) {
+                deleteHeaders.put((short) valueId, lookupPosition);
+                modifiedDeleteHeaders.put((short) valueId, lookupPosition);
+                continue;
+            }
+            keysToIndex.put(headerOffset, headerAmount++);
+            headerKeys.add(headerOffset);
+            headerValues.add(lookupPosition);
+            headerNewValues.add(lookupPosition);
+        }
+        int dataSize;
+        long offsetLookupPosition;
+        while (amount != 0) {
+            final short valueIdShort = deleteList.removeShort(0);
+            final int valueId = Short.toUnsignedInt(valueIdShort);
+            amount--;
+            offsetLookupPosition = modifiedDeleteHeaders.remove(valueIdShort);
+            headerOffset = LOOKUP_ENTRY_BASE_OFFSET + LOOKUP_ENTRY_SIZE * valueId;
+            fileAccess.seek(headerOffset);
+            fileAccess.writeLong(INVALID_HEADER_OFFSET);
+            lookupPosition = deleteHeaders.remove(valueIdShort);
+            fileAccess.seek(lookupPosition + VALUE_HEADER_ID_VERSION_SIZE);
+            dataSize = fileAccess.readInt() + VALUE_HEADER_SIZE;
+            fileSize -= dataSize;
+            for (int headerIdx = 0; headerIdx < items; headerIdx++) {
+                final long headerValue = headerNewValues.getLong(headerIdx);
+                if (headerValue < offsetLookupPosition) {
+                    continue;
+                }
+                headerNewValues.set(headerIdx, headerValue - dataSize);
+            }
+            for (int entry = 0; entry < amount; entry++) {
+                final short entryId = deleteList.getShort(entry);
+                final long headerValue = modifiedDeleteHeaders.get(entryId);
+                if (headerValue < offsetLookupPosition) {
+                    continue;
+                }
+                modifiedDeleteHeaders.put(entryId, headerValue - dataSize);
+            }
+        }
+        headerKeys.sort(
+            (k1, k2) -> Long.compare(headerNewValues.getLong(keysToIndex.get(k1)), headerNewValues.getLong(keysToIndex.get(k2))));
+        int valueIdx;
+        long copyFrom, copyTo, copyEnd, copyAmount;
+        final byte[] buffer = new byte[settings.copyBufferSize];
+        ScaledCounter scaledCounter = new ScaledCounter(counter, headerAmount);
+        for (int keyIdx = 0; keyIdx < headerAmount; keyIdx++) {
+            headerOffset = headerKeys.getLong(keyIdx);
+            valueIdx = keysToIndex.get(headerOffset);
+            copyFrom = headerValues.getLong(valueIdx);
+            copyTo = headerNewValues.getLong(valueIdx);
+            if (copyTo == copyFrom) {
+                scaledCounter.increment();
+                continue;
+            }
+            fileAccess.seek(headerOffset);
+            fileAccess.writeLong(copyTo);
+            fileAccess.seek(copyFrom + VALUE_HEADER_ID_VERSION_SIZE);
+            dataSize = fileAccess.readInt() + VALUE_HEADER_SIZE;
+            fileAccess.seek(copyFrom);
+            lookupPosition = copyFrom;
+            copyEnd = copyFrom + dataSize;
+            copyAmount = 0;
+            while (lookupPosition != copyEnd) {
+                final long diff = copyEnd - lookupPosition;
+                final int size = diff > buffer.length ? buffer.length : (int) diff;
+                fileAccess.seek(lookupPosition);
+                fileAccess.read(buffer, 0, size);
+                fileAccess.seek(copyTo + copyAmount);
+                fileAccess.write(buffer, 0, size);
+                lookupPosition += size;
+                copyAmount += size;
+            }
+            scaledCounter.increment();
+        }
+        fileAccess.setLength(fileSize);
     }
 
     /*
@@ -594,38 +599,57 @@ public final class RAFFile implements IRAFFile {
                 version = fileAccess.readUnsignedShort();
                 fileAccess.seek(0);
             }
-            updateFile();
-            resizeFile();
+            boolean changed = false;
+            try {
+                changed |= updateFile();
+                changed |= resizeFile();
+            } catch (StorageException exp) {
+                // We close on exception
+                fileAccess.close();
+                fileAccess = null;
+                throw exp;
+            }
+            if (changed) {
+                // Reopen RandomAccessFile to store changes
+                fileAccess.close();
+                fileAccess = new RandomAccessFile(file, "rw");
+            }
         } catch (IOException exp) {
+            if (fileAccess != null) {
+                try {
+                    fileAccess.close();
+                } catch (IOException ignore) {}
+                fileAccess = null;
+            }
             throw new StorageException("Failed to open file '" + file.getName() + "'", exp);
         } finally {
             lock.unlock();
         }
     }
 
-    private void updateFile() throws IOException {
+    private boolean updateFile() throws IOException {
         if (version == VERSION) {
-            return;
+            return false;
         }
         if (settings.migrationSupport == null) {
             throw new StorageException(
                 "Old file version detected, migration support not provided, can't migrate file '" + file.getName() + "'");
         }
         int version = this.version;
-        while (version++ != VERSION) {
+        while (version != VERSION) {
             // This is the target version
-            switch (version) {
+            switch (++version) {
             case 1 -> {
                 // Add space after FORMAT_VERSION for the new lookup table size
                 expandFile(FORMAT_VERSION, LOOKUP_TABLE_BITS_SIZE);
                 fileAccess.seek(FORMAT_VERSION);
                 fileAccess.writeByte(settings.migrationSupport.valueIdBitsBeforeV1());
-                fileAccess.seek(LOOKUP_ENTRY_BASE_OFFSET);
-                while (fileAccess.getFilePointer() != settings.lookupHeaderSize) {
-                    final long entryOffset = fileAccess.readLong();
-                    fileAccess.seek(fileAccess.getFilePointer() - LOOKUP_ENTRY_SIZE);
-                    fileAccess.writeLong(entryOffset + LOOKUP_TABLE_BITS_SIZE);
+                // Calculate header size based on the migration support information
+                int valueIdAmount = 0;
+                for (int i = 0; i < settings.migrationSupport.valueIdBitsBeforeV1(); i++) {
+                    valueIdAmount |= 0x1 << i;
                 }
+                updateAllLookupTableOffsets(LOOKUP_TABLE_BITS_SIZE, LOOKUP_ENTRY_BASE_OFFSET + LOOKUP_ENTRY_SIZE * valueIdAmount);
             }
             }
         }
@@ -634,14 +658,15 @@ public final class RAFFile implements IRAFFile {
         this.version = version;
         fileAccess.writeShort(version);
         fileAccess.seek(0);
+        return true;
     }
     
-    private void resizeFile() throws IOException {
+    private boolean resizeFile() throws IOException {
         fileAccess.seek(FORMAT_VERSION);
         int bits = fileAccess.readUnsignedByte();
         try {
             if (bits == settings.valueIdBits) {
-                return;
+                return false;
             }
             int valueIdAmount = 0;
             for (int i = 0; i < bits; i++) {
@@ -650,38 +675,31 @@ public final class RAFFile implements IRAFFile {
             int headerSize = LOOKUP_ENTRY_BASE_OFFSET + LOOKUP_ENTRY_SIZE * valueIdAmount;
             if (bits > settings.valueIdBits) {
                 // TODO: This looses data, improve somehow
-                int dataSize;
-                long headerOffset, lookupPosition;
-                for (int id = settings.valueIdAmount; id < valueIdAmount; id++) {
-                    headerOffset = LOOKUP_ENTRY_BASE_OFFSET + LOOKUP_ENTRY_SIZE * id;
-                    fileAccess.seek(headerOffset);
-                    if ((lookupPosition = fileAccess.readLong()) == INVALID_HEADER_OFFSET) {
+                fileAccess.seek(LOOKUP_AMOUNT_OFFSET);
+                int items = fileAccess.readUnsignedShort();
+                ShortArrayList deleteList = new ShortArrayList(settings.valueIdAmount - valueIdAmount);
+                for (short id = (short) settings.valueIdAmount; id < valueIdAmount; id++) {
+                    fileAccess.seek(LOOKUP_ENTRY_BASE_OFFSET + LOOKUP_ENTRY_SIZE * id);
+                    if (fileAccess.readLong() == INVALID_HEADER_OFFSET) {
                         continue;
                     }
-                    fileAccess.seek(lookupPosition + VALUE_HEADER_ID_VERSION_SIZE);
-                    dataSize = fileAccess.readInt();
-                    deleteEntry(lookupPosition, dataSize, headerOffset);
+                    deleteList.add(id);
+                    items--;
                 }
-                long sizeDiff = headerSize - settings.lookupHeaderSize;
+                SimpleCounter counter = new SimpleCounter(deleteList.size());
+                doMassDeletion(counter, deleteList, items);
+                long sizeDiff = settings.lookupHeaderSize - headerSize;
                 shrinkFile(headerSize, sizeDiff);
-                fileAccess.seek(LOOKUP_ENTRY_BASE_OFFSET);
-                while (fileAccess.getFilePointer() != settings.lookupHeaderSize) {
-                    final long entryOffset = fileAccess.readLong();
-                    fileAccess.seek(fileAccess.getFilePointer() - LOOKUP_ENTRY_SIZE);
-                    fileAccess.writeLong(entryOffset - sizeDiff);
-                }
+                updateAllLookupTableOffsets(-sizeDiff, settings.lookupHeaderSize);
             } else {
                 long sizeDiff = settings.lookupHeaderSize - headerSize;
                 expandFile(headerSize, sizeDiff);
-                fileAccess.seek(LOOKUP_ENTRY_BASE_OFFSET);
-                while (fileAccess.getFilePointer() != settings.lookupHeaderSize) {
-                    final long entryOffset = fileAccess.readLong();
-                    fileAccess.seek(fileAccess.getFilePointer() - LOOKUP_ENTRY_SIZE);
-                    fileAccess.writeLong(entryOffset + sizeDiff);
-                }
+                updateAllLookupTableOffsets(sizeDiff, headerSize);
+                zeroOutAllLookupTableOffsets(headerSize);
             }
             fileAccess.seek(FORMAT_VERSION);
             fileAccess.writeByte(settings.valueIdBits);
+            return true;
         } finally {
             fileAccess.seek(0);
         }
@@ -715,6 +733,34 @@ public final class RAFFile implements IRAFFile {
     private void internalCloseDelete() throws IOException {
         internalClose();
         file.delete();
+    }
+    
+    /*
+     * Lookup table helper
+     */
+    
+    private void zeroOutAllLookupTableOffsets(final long startOffset) throws IOException {
+        fileAccess.seek(startOffset);
+        while (fileAccess.getFilePointer() != settings.lookupHeaderSize) {
+            final long entryOffset = fileAccess.readLong();
+            if (entryOffset == INVALID_HEADER_OFFSET) {
+                continue;
+            }
+            fileAccess.seek(fileAccess.getFilePointer() - LOOKUP_ENTRY_SIZE);
+            fileAccess.writeLong(INVALID_HEADER_OFFSET);
+        }
+    }
+    
+    private void updateAllLookupTableOffsets(final long offset, final long headerSize) throws IOException {
+        fileAccess.seek(LOOKUP_ENTRY_BASE_OFFSET);
+        while (fileAccess.getFilePointer() != headerSize) {
+            final long entryOffset = fileAccess.readLong();
+            if (entryOffset == INVALID_HEADER_OFFSET) {
+                continue;
+            }
+            fileAccess.seek(fileAccess.getFilePointer() - LOOKUP_ENTRY_SIZE);
+            fileAccess.writeLong(entryOffset + offset);
+        }
     }
 
     /*
