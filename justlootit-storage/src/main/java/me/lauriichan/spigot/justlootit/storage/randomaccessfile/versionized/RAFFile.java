@@ -598,21 +598,21 @@ public final class RAFFile implements IRAFFile {
             } else {
                 version = fileAccess.readUnsignedShort();
                 fileAccess.seek(0);
-            }
-            boolean changed = false;
-            try {
-                changed |= updateFile();
-                changed |= resizeFile();
-            } catch (StorageException exp) {
-                // We close on exception
-                fileAccess.close();
-                fileAccess = null;
-                throw exp;
-            }
-            if (changed) {
-                // Reopen RandomAccessFile to store changes
-                fileAccess.close();
-                fileAccess = new RandomAccessFile(file, "rw");
+                boolean changed = false;
+                try {
+                    changed |= updateFile();
+                    changed |= resizeFile();
+                } catch (StorageException exp) {
+                    // We close on exception
+                    fileAccess.close();
+                    fileAccess = null;
+                    throw exp;
+                }
+                if (changed) {
+                    // Reopen RandomAccessFile to store changes
+                    fileAccess.close();
+                    fileAccess = new RandomAccessFile(file, "rw");
+                }
             }
         } catch (IOException exp) {
             if (fileAccess != null) {
