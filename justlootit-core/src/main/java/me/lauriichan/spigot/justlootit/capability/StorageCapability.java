@@ -15,30 +15,37 @@ import me.lauriichan.spigot.justlootit.storage.IStorage;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapterRegistry;
 import me.lauriichan.spigot.justlootit.storage.randomaccessfile.RAFMultiStorage;
 import me.lauriichan.spigot.justlootit.storage.randomaccessfile.RAFSingleStorage;
-import me.lauriichan.spigot.justlootit.storage.randomaccessfile.v0.RAFSettingsV0;
+import me.lauriichan.spigot.justlootit.storage.randomaccessfile.versionized.RAFSettings;
+import me.lauriichan.spigot.justlootit.storage.randomaccessfile.versionized.RAFSettings.MigrationSettings;
 import me.lauriichan.spigot.justlootit.storage.util.cache.CacheTickTimer;
 
 public abstract class StorageCapability implements ICapability {
 
     static final class LevelContainerImpl extends StorageCapability {
+        public static final MigrationSettings MIGRATION = new MigrationSettings(1024);
+        public static final RAFSettings SETTINGS = RAFSettings.builder().migrationSupport(MIGRATION).build();
+
         public LevelContainerImpl(final VersionHandler handler, final LevelAdapter adapter) {
-            super((JustLootItPlugin) handler.plugin(),
-                (plugin, registry) -> new RAFMultiStorage(registry, new File(adapter.asBukkit().getWorldFolder(), "justlootit/containers")),
-                false, true);
+            super((JustLootItPlugin) handler.plugin(), (plugin, registry) -> new RAFMultiStorage(registry,
+                new File(adapter.asBukkit().getWorldFolder(), "justlootit/containers"), SETTINGS), false, true);
         }
+
         public LevelContainerImpl(final VersionHandler handler, final ProtoWorld world) {
             super((JustLootItPlugin) handler.plugin(),
-                (plugin, registry) -> new RAFMultiStorage(registry, new File(world.getWorldFolder(), "justlootit/containers")), false,
-                false);
+                (plugin, registry) -> new RAFMultiStorage(registry, new File(world.getWorldFolder(), "justlootit/containers"), SETTINGS),
+                false, false);
         }
     }
 
     static final class PlayerImpl extends StorageCapability {
+        public static final MigrationSettings MIGRATION = new MigrationSettings(64);
+        public static final RAFSettings SETTINGS = RAFSettings.builder().migrationSupport(MIGRATION).copyBufferBytes(128).valuesPerFile(256)
+            .build();
+
         public PlayerImpl(final VersionHandler handler, final PlayerAdapter adapter) {
             super((JustLootItPlugin) handler.plugin(),
                 (plugin, registry) -> new RAFSingleStorage(registry,
-                    new File(plugin.mainWorldFolder(), "justlootit/players/" + adapter.getUniqueId().toString() + ".jli"),
-                    RAFSettingsV0.builder().copyBufferBytes(128).valuesPerFile(64).build()),
+                    new File(plugin.mainWorldFolder(), "justlootit/players/" + adapter.getUniqueId().toString() + ".jli"), SETTINGS),
                 true, true);
         }
     }

@@ -11,11 +11,11 @@
 
 # Player Storage
 
-| Id      | Name             |
-|---------|------------------|
-| 0 - 14  |                  |
-| 15      | CacheLookupTable |
-| 16 - 63 | CachedInventory  |
+| Id       | Name             |
+|----------|------------------|
+| 0 - 14   |                  |
+| 15       | CacheLookupTable |
+| 16 - 255 | CachedInventory  |
 
 # Level Container Storage
 

@@ -90,7 +90,7 @@ public class MainConfigTemplate implements ISingleConfigExtension {
 
     @ConfigValueValidator("cache.player.size")
     public int validateConfigSize(int value) {
-        return Math.max(Math.min(value, 48), 1);
+        return Math.max(Math.min(value, 240), 1);
     }
 
     @ConfigValueValidator("cache.player.timeout-inventory-days")
