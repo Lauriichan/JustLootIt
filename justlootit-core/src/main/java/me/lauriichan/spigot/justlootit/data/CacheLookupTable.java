@@ -114,9 +114,7 @@ public class CacheLookupTable implements IModifiable {
         int days = config.playerInventoryDayTimeout();
         this.maxSize = config.playerInventoryCacheSize();
         this.maxEntryId = MIN_ENTRY_ID + maxSize;
-        if (days == 0) {
-            return;
-        }
+        // This has to be moved here because of table resizing
         int tableSize = tableToMapped.size();
         if (tableSize > maxSize) {
             for (int i = maxSize; i < tableSize; i++) {
@@ -127,6 +125,9 @@ public class CacheLookupTable implements IModifiable {
                 mappedToTable.remove(entry.mappedId);
                 entryIds.rem(entry.entryId);
             }
+        }
+        if (days == 0) {
+            return;
         }
         int offset = 0;
         final OffsetDateTime now = OffsetDateTime.now();
