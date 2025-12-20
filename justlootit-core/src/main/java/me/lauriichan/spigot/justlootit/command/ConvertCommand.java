@@ -43,6 +43,7 @@ public class ConvertCommand implements ICommandExtension {
         if (!setup(plugin, actor)) {
             return;
         }
+        actor = correctActor(plugin, actor);
         properties(actor).setProperty(ConvProp.DO_RESTORATION, true);
         inputProvider.getStringInput(actor, actor.getTranslatedMessageAsString(Messages.INPUT_PROMPT_CONVERT_BLACKLIST_WORLD_INFO), null,
             this::blacklistWorldSubmit);
@@ -54,8 +55,22 @@ public class ConvertCommand implements ICommandExtension {
         if (!setup(plugin, actor)) {
             return;
         }
+        actor = correctActor(plugin, actor);
         inputProvider.getBooleanInput(actor, actor.getTranslatedMessageAsString(Messages.INPUT_PROMPT_CONVERT_DO_LOOTIN),
             actor.getTranslatedMessageAsString(Messages.INPUT_RETRY_BOOLEAN), this::propertyDoLootin);
+    }
+    
+    private LootItActor<?> correctActor(final JustLootItPlugin plugin, LootItActor<?> actor) {
+        if (actor.getId().equals(conversionSetup)) {
+            return actor;
+        }
+        // This is a console confirming that the player can continue
+        // We need the player actor here
+        PlayerAdapter adapter = plugin.versionHandler().getPlayer(conversionSetup);
+        if (adapter == null) {
+            throw new IllegalStateException("Player logged off");
+        }
+        return ActorCapability.actor(adapter);
     }
 
     private boolean setup(final JustLootItPlugin plugin, LootItActor<?> actor) {
