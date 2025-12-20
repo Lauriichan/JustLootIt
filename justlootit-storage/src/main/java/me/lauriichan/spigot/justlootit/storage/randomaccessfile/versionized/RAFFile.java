@@ -620,6 +620,12 @@ public final class RAFFile implements IRAFFile {
                 expandFile(FORMAT_VERSION, LOOKUP_TABLE_BITS_SIZE);
                 fileAccess.seek(FORMAT_VERSION);
                 fileAccess.writeByte(settings.migrationSupport.valueIdBitsBeforeV1());
+                fileAccess.seek(LOOKUP_ENTRY_BASE_OFFSET);
+                while (fileAccess.getFilePointer() != settings.lookupHeaderSize) {
+                    final long entryOffset = fileAccess.readLong();
+                    fileAccess.seek(fileAccess.getFilePointer() - LOOKUP_ENTRY_SIZE);
+                    fileAccess.writeLong(entryOffset + LOOKUP_TABLE_BITS_SIZE);
+                }
             }
             }
         }
@@ -656,9 +662,23 @@ public final class RAFFile implements IRAFFile {
                     dataSize = fileAccess.readInt();
                     deleteEntry(lookupPosition, dataSize, headerOffset);
                 }
-                shrinkFile(headerSize, headerSize - settings.lookupHeaderSize);
+                long sizeDiff = headerSize - settings.lookupHeaderSize;
+                shrinkFile(headerSize, sizeDiff);
+                fileAccess.seek(LOOKUP_ENTRY_BASE_OFFSET);
+                while (fileAccess.getFilePointer() != settings.lookupHeaderSize) {
+                    final long entryOffset = fileAccess.readLong();
+                    fileAccess.seek(fileAccess.getFilePointer() - LOOKUP_ENTRY_SIZE);
+                    fileAccess.writeLong(entryOffset - sizeDiff);
+                }
             } else {
-                expandFile(headerSize, settings.lookupHeaderSize - headerSize);
+                long sizeDiff = settings.lookupHeaderSize - headerSize;
+                expandFile(headerSize, sizeDiff);
+                fileAccess.seek(LOOKUP_ENTRY_BASE_OFFSET);
+                while (fileAccess.getFilePointer() != settings.lookupHeaderSize) {
+                    final long entryOffset = fileAccess.readLong();
+                    fileAccess.seek(fileAccess.getFilePointer() - LOOKUP_ENTRY_SIZE);
+                    fileAccess.writeLong(entryOffset + sizeDiff);
+                }
             }
             fileAccess.seek(FORMAT_VERSION);
             fileAccess.writeByte(settings.valueIdBits);
