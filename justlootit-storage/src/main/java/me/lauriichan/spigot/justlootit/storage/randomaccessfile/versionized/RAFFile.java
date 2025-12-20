@@ -607,7 +607,7 @@ public final class RAFFile implements IRAFFile {
         if (version == VERSION) {
             return;
         }
-        if (settings.migrationSupport != null) {
+        if (settings.migrationSupport == null) {
             throw new StorageException(
                 "Old file version detected, migration support not provided, can't migrate file '" + file.getName() + "'");
         }
