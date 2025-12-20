@@ -18,7 +18,7 @@ import me.lauriichan.spigot.justlootit.storage.UpdateInfo;
 import me.lauriichan.spigot.justlootit.storage.UpdateInfo.UpdateState;
 import me.lauriichan.spigot.justlootit.storage.identifier.FileIdentifier;
 import me.lauriichan.spigot.justlootit.storage.identifier.IIdentifier;
-import me.lauriichan.spigot.justlootit.storage.randomaccessfile.v0.RAFSettingsV0;
+import me.lauriichan.spigot.justlootit.storage.randomaccessfile.versionized.RAFSettings;
 import me.lauriichan.spigot.justlootit.storage.util.counter.Counter;
 import me.lauriichan.spigot.justlootit.storage.util.counter.CounterProgress;
 import me.lauriichan.spigot.justlootit.storage.util.counter.SimpleCounter;
@@ -30,10 +30,10 @@ public final class RAFSingleStorage extends Storage {
     private final IIdentifier identifier;
 
     public RAFSingleStorage(final StorageAdapterRegistry registry, final File file) {
-        this(registry, file, RAFSettingsV0.DEFAULT);
+        this(registry, file, RAFSettings.DEFAULT);
     }
 
-    public RAFSingleStorage(final StorageAdapterRegistry registry, final File file, final RAFSettingsV0 settings) {
+    public RAFSingleStorage(final StorageAdapterRegistry registry, final File file, final RAFSettings settings) {
         super(registry);
         this.file = RAFFileHelper.create(registry, file, settings);
         this.identifier = new FileIdentifier(logger, file);
@@ -93,7 +93,7 @@ public final class RAFSingleStorage extends Storage {
         }
         ByteBuf buffer = Unpooled.buffer();
         stored.write(logger, buffer);
-        IRAFEntry entry = RAFFileHelper.newEntry(stored.id(), stored.adapter().typeId(), stored.version(), buffer);
+        IRAFEntry entry = file.newEntry(stored.id(), stored.adapter().typeId(), stored.version(), buffer);
         if (!file.isOpen()) {
             file.open();
         }
@@ -171,7 +171,7 @@ public final class RAFSingleStorage extends Storage {
                     }
                 }
                 stored.write(logger, buffer);
-                return RAFFileHelper.newEntry(entry.id(), stored.adapter().typeId(), stored.version(), buffer);
+                return file.newEntry(entry.id(), stored.adapter().typeId(), stored.version(), buffer);
             } catch (RuntimeException exp) {
                 logger.warning("Failed to modify entry '{0}'", exp, entry.id());
                 return entry;

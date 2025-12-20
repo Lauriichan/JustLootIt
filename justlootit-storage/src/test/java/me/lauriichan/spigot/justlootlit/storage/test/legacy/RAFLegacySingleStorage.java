@@ -20,7 +20,6 @@ import me.lauriichan.spigot.justlootit.storage.identifier.FileIdentifier;
 import me.lauriichan.spigot.justlootit.storage.identifier.IIdentifier;
 import me.lauriichan.spigot.justlootit.storage.randomaccessfile.IRAFEntry;
 import me.lauriichan.spigot.justlootit.storage.randomaccessfile.IRAFFile;
-import me.lauriichan.spigot.justlootit.storage.randomaccessfile.RAFFileHelper;
 import me.lauriichan.spigot.justlootit.storage.randomaccessfile.legacy.RAFFileLegacy;
 import me.lauriichan.spigot.justlootit.storage.randomaccessfile.legacy.RAFSettingsLegacy;
 import me.lauriichan.spigot.justlootit.storage.util.counter.Counter;
@@ -97,7 +96,7 @@ public final class RAFLegacySingleStorage extends Storage {
         }
         ByteBuf buffer = Unpooled.buffer();
         stored.write(logger, buffer);
-        IRAFEntry entry = RAFFileHelper.newEntry(stored.id(), stored.adapter().typeId(), stored.version(), buffer);
+        IRAFEntry entry = file.newEntry(stored.id(), stored.adapter().typeId(), stored.version(), buffer);
         if (!file.isOpen()) {
             file.open();
         }
@@ -175,7 +174,7 @@ public final class RAFLegacySingleStorage extends Storage {
                     }
                 }
                 stored.write(logger, buffer);
-                return RAFFileHelper.newEntry(entry.id(), stored.adapter().typeId(), stored.version(), buffer);
+                return file.newEntry(entry.id(), stored.adapter().typeId(), stored.version(), buffer);
             } catch (RuntimeException exp) {
                 logger.warning("Failed to modify entry '{0}'", exp, entry.id());
                 return entry;

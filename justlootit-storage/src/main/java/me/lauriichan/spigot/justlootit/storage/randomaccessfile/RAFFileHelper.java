@@ -11,8 +11,8 @@ import me.lauriichan.spigot.justlootit.storage.StorageAdapterRegistry;
 import me.lauriichan.spigot.justlootit.storage.StorageException;
 import me.lauriichan.spigot.justlootit.storage.randomaccessfile.legacy.RAFFileLegacy;
 import me.lauriichan.spigot.justlootit.storage.randomaccessfile.legacy.RAFSettingsLegacy;
-import me.lauriichan.spigot.justlootit.storage.randomaccessfile.v0.RAFFileV0;
-import me.lauriichan.spigot.justlootit.storage.randomaccessfile.v0.RAFSettingsV0;
+import me.lauriichan.spigot.justlootit.storage.randomaccessfile.versionized.RAFFile;
+import me.lauriichan.spigot.justlootit.storage.randomaccessfile.versionized.RAFSettings;
 
 public final class RAFFileHelper {
 
@@ -21,7 +21,7 @@ public final class RAFFileHelper {
     public static final FilenameFilter FILE_FILTER = (dir, name) -> {
         if (name.endsWith(RAFFileLegacy.FILE_EXTENSION)) {
             return IS_HEX.test(name.substring(0, name.length() - 4));
-        } else if (name.endsWith(RAFFileV0.FILE_EXTENSION)) {
+        } else if (name.endsWith(RAFFile.FILE_EXTENSION)) {
             return IS_HEX.test(name.substring(0, name.length() - 5));
         }
         return false;
@@ -35,31 +35,19 @@ public final class RAFFileHelper {
         String name = file.getName();
         if (name.endsWith(RAFFileLegacy.FILE_EXTENSION)) {
             return name.substring(0, name.length() - 4);
-        } else if (name.endsWith(RAFFileV0.FILE_EXTENSION)) {
+        } else if (name.endsWith(RAFFile.FILE_EXTENSION)) {
             return name.substring(0, name.length() - 5);
         }
         return name;
     }
 
-    public static IRAFEntry newEntry(long id, int typeId, int version, ByteBuf buffer) {
-        return new RAFFileV0.RAFEntry(id, typeId, version, buffer);
-    }
-
-    public static IRAFFile create(StorageAdapterRegistry registry, File file) throws StorageException {
-        return create(registry, file, RAFSettingsV0.DEFAULT);
-    }
-
-    public static IRAFFile create(StorageAdapterRegistry registry, File file, int id) throws StorageException {
-        return create(registry, file, id, RAFSettingsV0.DEFAULT);
-    }
-
-    public static IRAFFile create(StorageAdapterRegistry registry, File file, RAFSettingsV0 settings) throws StorageException {
-        RAFFileV0 raf = new RAFFileV0(settings, file);
+    public static IRAFFile create(StorageAdapterRegistry registry, File file, RAFSettings settings) throws StorageException {
+        RAFFile raf = new RAFFile(settings, file);
         upgradeFile(registry, raf, file, settings);
         return raf;
     }
 
-    private static void upgradeFile(StorageAdapterRegistry registry, RAFFileV0 raf, File file, RAFSettingsV0 settings)
+    private static void upgradeFile(StorageAdapterRegistry registry, RAFFile raf, File file, RAFSettings settings)
         throws StorageException {
         try {
             if (RAFFileLegacy.create(file).exists()) {
@@ -79,7 +67,7 @@ public final class RAFFileHelper {
                                 buffer = newEntry.getValue();
                             }
                         }
-                        raf.write(newEntry(entry.id(), entry.typeId(), version, buffer));
+                        raf.write(raf.newEntry(entry.id(), entry.typeId(), version, buffer));
                     }, Runnable::run);
                     registry.migrator().logger().info("File '{0}' successfully upgraded to '{1}'.", legacy.file().getPath(),
                         raf.file().getPath());
@@ -95,13 +83,13 @@ public final class RAFFileHelper {
         }
     }
 
-    public static IRAFFile create(StorageAdapterRegistry registry, File file, int id, RAFSettingsV0 settings) throws StorageException {
-        RAFFileV0 raf = new RAFFileV0(settings, file, id);
+    public static IRAFFile create(StorageAdapterRegistry registry, File file, int id, RAFSettings settings) throws StorageException {
+        RAFFile raf = new RAFFile(settings, file, id);
         upgradeFile(registry, raf, file, id, settings);
         return raf;
     }
 
-    private static void upgradeFile(StorageAdapterRegistry registry, RAFFileV0 raf, File file, int id, RAFSettingsV0 settings)
+    private static void upgradeFile(StorageAdapterRegistry registry, RAFFile raf, File file, int id, RAFSettings settings)
         throws StorageException {
         try {
             if (RAFFileLegacy.create(file, id).exists()) {
@@ -121,7 +109,7 @@ public final class RAFFileHelper {
                                 buffer = newEntry.getValue();
                             }
                         }
-                        raf.write(newEntry(entry.id(), entry.typeId(), version, buffer));
+                        raf.write(raf.newEntry(entry.id(), entry.typeId(), version, buffer));
                     }, Runnable::run);
                     registry.migrator().logger().info("File '{0}' successfully upgraded to '{1}'.", legacy.file().getPath(),
                         raf.file().getPath());

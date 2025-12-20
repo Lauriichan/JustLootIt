@@ -1,6 +1,6 @@
-package me.lauriichan.spigot.justlootit.storage.randomaccessfile.v0;
+package me.lauriichan.spigot.justlootit.storage.randomaccessfile.versionized;
 
-import static me.lauriichan.spigot.justlootit.storage.randomaccessfile.v0.RAFSettingsV0.*;
+import static me.lauriichan.spigot.justlootit.storage.randomaccessfile.versionized.RAFSettings.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,9 +26,9 @@ import me.lauriichan.spigot.justlootit.storage.util.counter.Counter;
 import me.lauriichan.spigot.justlootit.storage.util.counter.ScaledCounter;
 import me.lauriichan.spigot.justlootit.storage.util.counter.SimpleCounter;
 
-public final class RAFFileV0 implements IRAFFile {
+public final class RAFFile implements IRAFFile {
 
-    public static final int VERSION = 0;
+    public static final int VERSION = 1;
 
     public static record RAFEntry(long id, int typeId, int version, ByteBuf buffer) implements IRAFEntry {}
 
@@ -64,9 +64,9 @@ public final class RAFFileV0 implements IRAFFile {
 
     private final ReentrantLock lock = new ReentrantLock();
 
-    private final RAFSettingsV0 settings;
+    private final RAFSettings settings;
 
-    public RAFFileV0(final RAFSettingsV0 settings, final File directory, final int id) {
+    public RAFFile(final RAFSettings settings, final File directory, final int id) {
         this.id = id;
         this.hexId = Integer.toHexString(id);
         this.file = create(directory, id);
@@ -74,7 +74,7 @@ public final class RAFFileV0 implements IRAFFile {
         this.idBase = id == -1 ? 0 : id << settings.valueIdBits;
     }
 
-    public RAFFileV0(final RAFSettingsV0 settings, final File file) {
+    public RAFFile(final RAFSettings settings, final File file) {
         this.id = -1;
         this.hexId = "";
         this.file = create(file);
@@ -120,6 +120,11 @@ public final class RAFFileV0 implements IRAFFile {
     @Override
     public boolean isOpen() {
         return fileAccess != null;
+    }
+
+    @Override
+    public IRAFEntry newEntry(long id, int typeId, int version, ByteBuf buffer) {
+        return new RAFFile.RAFEntry(id, typeId, version, buffer);
     }
 
     /*
@@ -210,7 +215,8 @@ public final class RAFFileV0 implements IRAFFile {
             if (fileSize == 0) {
                 fileAccess.setLength(settings.lookupHeaderSize + bufferSize);
                 fileAccess.seek(0);
-                fileAccess.writeShort(VERSION);
+                fileAccess.writeShort(this.version);
+                fileAccess.writeByte(settings.valueIdBits);
                 fileAccess.writeShort(1);
                 fileAccess.skipBytes(LOOKUP_ENTRY_SIZE * valueId);
                 fileAccess.writeLong(settings.lookupHeaderSize);
@@ -247,9 +253,9 @@ public final class RAFFileV0 implements IRAFFile {
                 entry.buffer().readBytes(fileAccess.getChannel(), fileAccess.getFilePointer(), bufferSize);
                 return;
             }
-            fileAccess.seek(FORMAT_VERSION);
+            fileAccess.seek(LOOKUP_AMOUNT_OFFSET);
             final int amount = fileAccess.readUnsignedShort();
-            fileAccess.seek(FORMAT_VERSION);
+            fileAccess.seek(LOOKUP_AMOUNT_OFFSET);
             fileAccess.writeShort(amount + 1);
             fileAccess.setLength(fileSize + bufferSize + VALUE_HEADER_SIZE);
             fileAccess.seek(headerOffset);
@@ -306,12 +312,12 @@ public final class RAFFileV0 implements IRAFFile {
     }
 
     private boolean deleteEntry(final long lookupPosition, final int dataSize, final long headerOffset) throws IOException {
-        fileAccess.seek(FORMAT_VERSION);
+        fileAccess.seek(LOOKUP_AMOUNT_OFFSET);
         final int amount = fileAccess.readUnsignedShort();
         if (amount - 1 == 0) {
             return true;
         }
-        fileAccess.seek(FORMAT_VERSION);
+        fileAccess.seek(LOOKUP_AMOUNT_OFFSET);
         fileAccess.writeShort(amount - 1);
         fileAccess.seek(headerOffset);
         fileAccess.writeLong(INVALID_HEADER_OFFSET);
@@ -399,7 +405,7 @@ public final class RAFFileV0 implements IRAFFile {
                     return;
                 }
                 ShortArrayList deleteList = new ShortArrayList();
-                fileAccess.seek(FORMAT_VERSION);
+                fileAccess.seek(LOOKUP_AMOUNT_OFFSET);
                 int items = fileAccess.readShort();
                 long headerOffset;
                 long lookupPosition;
@@ -458,7 +464,7 @@ public final class RAFFileV0 implements IRAFFile {
                     return;
                 }
                 int amount = deleteList.size();
-                fileAccess.seek(FORMAT_VERSION);
+                fileAccess.seek(LOOKUP_AMOUNT_OFFSET);
                 fileAccess.writeShort(items);
                 // Here we delete all entries mentioned above
                 // This should speed up this process by a lot compared to individual delete operations
@@ -588,10 +594,76 @@ public final class RAFFileV0 implements IRAFFile {
                 version = fileAccess.readUnsignedShort();
                 fileAccess.seek(0);
             }
+            updateFile();
+            resizeFile();
         } catch (IOException exp) {
             throw new StorageException("Failed to open file '" + file.getName() + "'", exp);
         } finally {
             lock.unlock();
+        }
+    }
+
+    private void updateFile() throws IOException {
+        if (version == VERSION) {
+            return;
+        }
+        if (settings.migrationSupport != null) {
+            throw new StorageException(
+                "Old file version detected, migration support not provided, can't migrate file '" + file.getName() + "'");
+        }
+        int version = this.version;
+        while (version++ != VERSION) {
+            // This is the target version
+            switch (version) {
+            case 1 -> {
+                // Add space after FORMAT_VERSION for the new lookup table size
+                expandFile(FORMAT_VERSION, LOOKUP_TABLE_BITS_SIZE);
+                fileAccess.seek(FORMAT_VERSION);
+                fileAccess.writeByte(settings.migrationSupport.valueIdBitsBeforeV1());
+            }
+            }
+        }
+        // Write version back
+        fileAccess.seek(0);
+        this.version = version;
+        fileAccess.writeShort(version);
+        fileAccess.seek(0);
+    }
+    
+    private void resizeFile() throws IOException {
+        fileAccess.seek(FORMAT_VERSION);
+        int bits = fileAccess.readUnsignedByte();
+        try {
+            if (bits == settings.valueIdBits) {
+                return;
+            }
+            int valueIdAmount = 0;
+            for (int i = 0; i < bits; i++) {
+                valueIdAmount |= 0x1 << i;
+            }
+            int headerSize = LOOKUP_ENTRY_BASE_OFFSET + LOOKUP_ENTRY_SIZE * valueIdAmount;
+            if (bits > settings.valueIdBits) {
+                // TODO: This looses data, improve somehow
+                int dataSize;
+                long headerOffset, lookupPosition;
+                for (int id = settings.valueIdAmount; id < valueIdAmount; id++) {
+                    headerOffset = LOOKUP_ENTRY_BASE_OFFSET + LOOKUP_ENTRY_SIZE * id;
+                    fileAccess.seek(headerOffset);
+                    if ((lookupPosition = fileAccess.readLong()) == INVALID_HEADER_OFFSET) {
+                        continue;
+                    }
+                    fileAccess.seek(lookupPosition + VALUE_HEADER_ID_VERSION_SIZE);
+                    dataSize = fileAccess.readInt();
+                    deleteEntry(lookupPosition, dataSize, headerOffset);
+                }
+                shrinkFile(headerSize, headerSize - settings.lookupHeaderSize);
+            } else {
+                expandFile(headerSize, settings.lookupHeaderSize - headerSize);
+            }
+            fileAccess.seek(FORMAT_VERSION);
+            fileAccess.writeByte(settings.valueIdBits);
+        } finally {
+            fileAccess.seek(0);
         }
     }
 

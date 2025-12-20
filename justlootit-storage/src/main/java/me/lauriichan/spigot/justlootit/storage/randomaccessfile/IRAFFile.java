@@ -8,6 +8,7 @@ import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import io.netty.buffer.ByteBuf;
 import me.lauriichan.spigot.justlootit.storage.StorageException;
 import me.lauriichan.spigot.justlootit.storage.util.counter.Counter;
 
@@ -26,6 +27,8 @@ public interface IRAFFile extends Closeable {
     default boolean exists() {
         return file().exists();
     }
+    
+    IRAFEntry newEntry(long id, int typeId, int version, ByteBuf buffer);
     
     boolean isOpen();
     

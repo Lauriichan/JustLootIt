@@ -1,14 +1,19 @@
-package me.lauriichan.spigot.justlootit.storage.randomaccessfile.v0;
+package me.lauriichan.spigot.justlootit.storage.randomaccessfile.versionized;
 
 import me.lauriichan.spigot.justlootit.storage.randomaccessfile.IRAFSettings;
 
 /**
  * Settings for the {@link RAFLegacyMultiStorage}
  */
-public final class RAFSettingsV0 implements IRAFSettings {
+public final class RAFSettings implements IRAFSettings {
+    
+    public static final record MigrationSettings(int valuesPerFileBeforeV1) {}
+    
+    static final record MigrationSupport(int valueIdBitsBeforeV1) {}
 
     public static final class Builder {
 
+        private MigrationSupport migrationSupport;
         private int valuesPerFile = DEFAULT_VALUES_PER_FILE;
         private int copyBufferBytes = DEFAULT_COPY_BUFFER_BYTES;
         private long fileCacheTicks = DEFAULT_FILE_CACHE_TICKS;
@@ -16,6 +21,21 @@ public final class RAFSettingsV0 implements IRAFSettings {
         private int fileCacheMaxAmount = DEFAULT_FILE_CHANNEL_MAX_AMOUNT;
 
         private Builder() {}
+        
+        /**
+         * Sets up migration support for RAF files.
+         * 
+         * @param  settings the migration settings for the migration support
+         *
+         * @return          the same builder
+         */
+        public Builder migrationSupport(MigrationSettings settings) {
+            int valueIdAmount = Math.max(Integer.highestOneBit((settings.valuesPerFileBeforeV1 - 1) & 0xFFFF), 1) << 1;
+            int valueIdMask = valueIdAmount - 1;
+            int valueIdBits = Integer.bitCount(valueIdMask);
+            this.migrationSupport = new MigrationSupport(valueIdBits);
+            return this;
+        }
 
         /**
          * Sets the amount of values that should be written to one file
@@ -86,8 +106,8 @@ public final class RAFSettingsV0 implements IRAFSettings {
             return this;
         }
 
-        public RAFSettingsV0 build() {
-            return new RAFSettingsV0(valuesPerFile, copyBufferBytes, fileCacheTicks, fileCachePurgeStep, fileCacheMaxAmount);
+        public RAFSettings build() {
+            return new RAFSettings(migrationSupport, valuesPerFile, copyBufferBytes, fileCacheTicks, fileCachePurgeStep, fileCacheMaxAmount);
         }
 
     }
@@ -104,15 +124,17 @@ public final class RAFSettingsV0 implements IRAFSettings {
 
     public static final int DEFAULT_FILE_CHANNEL_MAX_AMOUNT = 64;
 
-    public static final RAFSettingsV0 DEFAULT = new RAFSettingsV0(DEFAULT_VALUES_PER_FILE, DEFAULT_COPY_BUFFER_BYTES,
+    public static final RAFSettings DEFAULT = new RAFSettings(null, DEFAULT_VALUES_PER_FILE, DEFAULT_COPY_BUFFER_BYTES,
         DEFAULT_FILE_CACHE_TICKS, DEFAULT_FILE_CACHE_PURGE_STEP, DEFAULT_FILE_CHANNEL_MAX_AMOUNT);
 
     public static final int FORMAT_VERSION = Short.BYTES;
+    public static final int LOOKUP_TABLE_BITS_SIZE = Byte.BYTES;
 
     public static final int LOOKUP_AMOUNT_SIZE = Short.BYTES;
     public static final int LOOKUP_ENTRY_SIZE = Long.BYTES;
 
-    public static final int LOOKUP_ENTRY_BASE_OFFSET = FORMAT_VERSION + LOOKUP_AMOUNT_SIZE;
+    public static final int LOOKUP_AMOUNT_OFFSET = FORMAT_VERSION + LOOKUP_TABLE_BITS_SIZE;
+    public static final int LOOKUP_ENTRY_BASE_OFFSET = LOOKUP_AMOUNT_OFFSET + LOOKUP_AMOUNT_SIZE;
 
     public static final int VALUE_HEADER_ID_SIZE = Short.BYTES;
     public static final int VALUE_HEADER_VERSION_SIZE = Short.BYTES;
@@ -135,14 +157,17 @@ public final class RAFSettingsV0 implements IRAFSettings {
     public final long fileCachePurgeStep;
 
     public final int fileCacheMaxAmount;
+    
+    public final MigrationSupport migrationSupport;
 
-    private RAFSettingsV0(final int valuesPerFile, final int copyBufferBytes, final long fileCacheTicks, final long fileCachePurgeStep,
+    private RAFSettings(final MigrationSupport migrationSupport, final int valuesPerFile, final int copyBufferBytes, final long fileCacheTicks, final long fileCachePurgeStep,
         final int fileCacheMaxAmount) {
+        this.migrationSupport = migrationSupport;
         this.copyBufferSize = Math.max(copyBufferBytes * 1024, 1024);
         this.valueIdAmount = Math.max(Integer.highestOneBit((valuesPerFile - 1) & 0xFFFF), 1) << 1;
         this.valueIdMask = valueIdAmount - 1;
         this.valueIdBits = Integer.bitCount(valueIdMask);
-        this.lookupHeaderSize = valueIdAmount * LOOKUP_ENTRY_SIZE + LOOKUP_AMOUNT_SIZE + FORMAT_VERSION;
+        this.lookupHeaderSize = valueIdAmount * LOOKUP_ENTRY_SIZE + LOOKUP_ENTRY_BASE_OFFSET;
         this.fileCacheTicks = Math.max(fileCacheTicks, 30);
         this.fileCachePurgeStep = Math.max(fileCachePurgeStep, 1);
         this.fileCacheMaxAmount = Math.max(fileCacheMaxAmount, 4);

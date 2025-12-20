@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 
-import me.lauriichan.spigot.justlootit.storage.randomaccessfile.v0.RAFSettingsV0;
+import me.lauriichan.spigot.justlootit.storage.randomaccessfile.versionized.RAFSettings;
 import me.lauriichan.spigot.justlootlit.storage.test.Test.StorageProvider;
 import me.lauriichan.spigot.justlootlit.storage.test.simple.*;
 
@@ -24,7 +24,7 @@ public class FeatureTest {
 
     public static final long SEED = 285428738523L;
     
-    public static final int TEST_VOLUME = RAFSettingsV0.DEFAULT_VALUES_PER_FILE * 2;
+    public static final int TEST_VOLUME = RAFSettings.DEFAULT_VALUES_PER_FILE * 2;
 
     public static final Test[] TESTS = new Test[] {
         new WriteReadTest(TEST_VOLUME),

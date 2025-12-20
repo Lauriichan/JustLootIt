@@ -120,6 +120,11 @@ public final class RAFFileLegacy implements IRAFFile {
     public boolean isOpen() {
         return fileAccess != null;
     }
+    
+    @Override
+    public IRAFEntry newEntry(long id, int typeId, int version, ByteBuf buffer) {
+        return new RAFEntry(id, typeId, buffer);
+    }
 
     /*
      * Has

@@ -20,7 +20,7 @@ import me.lauriichan.spigot.justlootit.storage.UpdateInfo;
 import me.lauriichan.spigot.justlootit.storage.UpdateInfo.UpdateState;
 import me.lauriichan.spigot.justlootit.storage.identifier.FileIdentifier;
 import me.lauriichan.spigot.justlootit.storage.identifier.IIdentifier;
-import me.lauriichan.spigot.justlootit.storage.randomaccessfile.v0.RAFSettingsV0;
+import me.lauriichan.spigot.justlootit.storage.randomaccessfile.versionized.RAFSettings;
 import me.lauriichan.spigot.justlootit.storage.util.cache.Int2ObjectMapCache;
 import me.lauriichan.spigot.justlootit.storage.util.cache.ThreadSafeMapCache;
 import me.lauriichan.spigot.justlootit.storage.util.counter.CompositeCounter;
@@ -30,7 +30,7 @@ import me.lauriichan.spigot.justlootit.storage.util.counter.SimpleCounter;
 
 public final class RAFMultiStorage extends Storage {
 
-    private final RAFSettingsV0 settings;
+    private final RAFSettings settings;
 
     private final File directory;
     private final ThreadSafeMapCache<Integer, IRAFFile> files;
@@ -40,10 +40,10 @@ public final class RAFMultiStorage extends Storage {
     private final ReentrantLock fileLock = new ReentrantLock(true);
 
     public RAFMultiStorage(final StorageAdapterRegistry registry, final File directory) {
-        this(registry, directory, RAFSettingsV0.DEFAULT);
+        this(registry, directory, RAFSettings.DEFAULT);
     }
 
-    public RAFMultiStorage(final StorageAdapterRegistry registry, final File directory, final RAFSettingsV0 settings) {
+    public RAFMultiStorage(final StorageAdapterRegistry registry, final File directory, final RAFSettings settings) {
         super(registry);
         this.settings = settings;
         this.directory = directory;
@@ -182,7 +182,7 @@ public final class RAFMultiStorage extends Storage {
         try {
             ByteBuf buffer = Unpooled.buffer();
             stored.write(logger, buffer);
-            file.write(RAFFileHelper.newEntry(stored.id(), stored.adapter().typeId(), stored.version(), buffer));
+            file.write(file.newEntry(stored.id(), stored.adapter().typeId(), stored.version(), buffer));
         } finally {
             if (!file.isOpen()) {
                 files.remove(file.id());
@@ -407,7 +407,7 @@ public final class RAFMultiStorage extends Storage {
                     }
                 }
                 stored.write(logger, buffer);
-                return RAFFileHelper.newEntry(entry.id(), stored.adapter().typeId(), stored.version(), buffer);
+                return file.newEntry(entry.id(), stored.adapter().typeId(), stored.version(), buffer);
             } catch (RuntimeException exp) {
                 logger.warning("Failed to modify entry '{0}' of file '{1}'", entry.id(), file.hexId());
                 return entry;

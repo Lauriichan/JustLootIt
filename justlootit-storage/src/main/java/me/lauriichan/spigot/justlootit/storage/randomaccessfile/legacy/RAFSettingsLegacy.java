@@ -1,7 +1,7 @@
 package me.lauriichan.spigot.justlootit.storage.randomaccessfile.legacy;
 
 import me.lauriichan.spigot.justlootit.storage.randomaccessfile.IRAFSettings;
-import me.lauriichan.spigot.justlootit.storage.randomaccessfile.v0.RAFSettingsV0;
+import me.lauriichan.spigot.justlootit.storage.randomaccessfile.versionized.RAFSettings;
 
 /**
  * Settings for the {@link RAFLegacyMultiStorage}
@@ -97,7 +97,7 @@ public final class RAFSettingsLegacy implements IRAFSettings {
         return new Builder();
     }
 
-    public static RAFSettingsLegacy of(RAFSettingsV0 settings) {
+    public static RAFSettingsLegacy of(RAFSettings settings) {
         return new RAFSettingsLegacy(settings.valueIdAmount, settings.copyBufferSize / 1024, settings.fileCacheTicks,
             settings.fileCachePurgeStep, settings.fileCacheMaxAmount);
     }

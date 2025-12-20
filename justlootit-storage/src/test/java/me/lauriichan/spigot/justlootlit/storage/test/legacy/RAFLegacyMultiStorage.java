@@ -191,7 +191,7 @@ public final class RAFLegacyMultiStorage extends Storage {
         try {
             ByteBuf buffer = Unpooled.buffer();
             stored.write(logger, buffer);
-            file.write(RAFFileHelper.newEntry(stored.id(), stored.adapter().typeId(), stored.version(), buffer));
+            file.write(file.newEntry(stored.id(), stored.adapter().typeId(), stored.version(), buffer));
         } finally {
             if (!file.isOpen()) {
                 files.remove(file.id());
@@ -424,7 +424,7 @@ public final class RAFLegacyMultiStorage extends Storage {
                     }
                 }
                 stored.write(logger, buffer);
-                return RAFFileHelper.newEntry(entry.id(), stored.adapter().typeId(), stored.version(), buffer);
+                return file.newEntry(entry.id(), stored.adapter().typeId(), stored.version(), buffer);
             } catch (RuntimeException exp) {
                 logger.warning("Failed to modify entry '{0}' of file '{1}'", entry.id(), file.hexId());
                 return entry;
