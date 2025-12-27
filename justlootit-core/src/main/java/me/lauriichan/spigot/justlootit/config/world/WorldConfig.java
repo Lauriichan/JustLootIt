@@ -3,10 +3,12 @@ package me.lauriichan.spigot.justlootit.config.world;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Map.Entry;
 
 import org.bukkit.NamespacedKey;
 
+import it.unimi.dsi.fastutil.objects.Object2BooleanArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -21,9 +23,14 @@ import me.lauriichan.minecraft.pluginbase.config.IConfigExtension;
 import me.lauriichan.minecraft.pluginbase.config.IConfigHandler;
 import me.lauriichan.minecraft.pluginbase.config.handler.JsonConfigHandler;
 import me.lauriichan.spigot.justlootit.JustLootItConstant;
+import me.lauriichan.spigot.justlootit.util.ExplosionType;
 import me.lauriichan.spigot.justlootit.util.TypeName;
 
 public class WorldConfig implements IConfigExtension {
+    
+    private static final ExplosionType[] EXPLOSION_TYPES = ExplosionType.values();
+    
+    private static final String EXPLOSION_KEY = "destruction.explosion.%s_allowed";
 
     private final Object2ObjectArrayMap<String, ObjectOpenHashSet<String>> blacklistedStructures = new Object2ObjectArrayMap<>();
     private final Object2ObjectArrayMap<String, ObjectOpenHashSet<String>> blacklistedLootTables = new Object2ObjectArrayMap<>();
@@ -39,6 +46,8 @@ public class WorldConfig implements IConfigExtension {
     private volatile boolean blacklistVanillaContainers = false;
     private volatile boolean blacklistStaticContainers = false;
     private volatile boolean blacklistFrameContainers = false;
+    
+    private final Object2BooleanArrayMap<ExplosionType> explosionsAllowed = new Object2BooleanArrayMap<>();
 
     private volatile boolean modified = false;
 
@@ -46,6 +55,8 @@ public class WorldConfig implements IConfigExtension {
 
     public WorldConfig(boolean trialChamberBuggedVersion) {
         this.trialChamberBuggedVersion = trialChamberBuggedVersion;
+        explosionsAllowed.defaultReturnValue(false);
+        resetExplosionTypes();
     }
 
     @Override
@@ -81,6 +92,9 @@ public class WorldConfig implements IConfigExtension {
         configuration.set("blacklist.containers.static", blacklistStaticContainers);
         configuration.set("blacklist.containers.frame", blacklistFrameContainers);
         configuration.set("blacklist.containers.compatibilities", Collections.emptyList());
+        
+        resetExplosionTypes();
+        saveExplosionTypes(configuration);
 
         configuration.set("refresh.world_group", "");
         propergateRefreshGroups(configuration.getConfiguration("refresh.container_groups", true));
@@ -103,6 +117,12 @@ public class WorldConfig implements IConfigExtension {
         justlootitNamespace.set(JustLootItConstant.FRAME_CONTAINER_REFRESH_KEY_FORMAT.formatted("example_namespace", "example_item_id"), "");
         justlootitNamespace.set(JustLootItConstant.COMPATIBILITY_CONTAINER_REFRESH_KEY_FORMAT.formatted("example_namespace", "example_loot_table"), "");
     }
+    
+    private void resetExplosionTypes() {
+        for (ExplosionType type : EXPLOSION_TYPES) {
+            explosionsAllowed.put(type, false);
+        }
+    }
 
     /*
      * Load
@@ -124,6 +144,8 @@ public class WorldConfig implements IConfigExtension {
         if (trialChamberBuggedVersion && !isStructureBlacklisted("minecraft", "trial_chambers")) {
             setStructureBlacklisted(NamespacedKey.minecraft("trial_chambers"), true);
         }
+        
+        loadExplosionTypes(configuration);
 
         worldRefreshGroupId = configuration.get("refresh.world_group", String.class);
         if (worldRefreshGroupId != null && worldRefreshGroupId.isEmpty()) {
@@ -180,6 +202,12 @@ public class WorldConfig implements IConfigExtension {
         }
         return false;
     }
+    
+    private void loadExplosionTypes(Configuration configuration) {
+        for (ExplosionType type : EXPLOSION_TYPES) {
+            explosionsAllowed.put(type, configuration.getBoolean(EXPLOSION_KEY.formatted(type.configName()), false));
+        }
+    }
 
     /*
      * Save
@@ -195,6 +223,8 @@ public class WorldConfig implements IConfigExtension {
         configuration.set("blacklist.containers.static", blacklistStaticContainers);
         configuration.set("blacklist.containers.frame", blacklistFrameContainers);
         configuration.set("blacklist.containers.compatibilities", new ObjectArrayList<>(blacklistedCompatibilities));
+        
+        saveExplosionTypes(configuration);
 
         configuration.set("refresh.world_group", worldRefreshGroupId == null ? "" : worldRefreshGroupId);
         saveRefreshGroups(configuration.getConfiguration("refresh.container_groups", true));
@@ -217,6 +247,29 @@ public class WorldConfig implements IConfigExtension {
                 namespace.set(keyEntry.getKey(), keyEntry.getValue() == null ? "" : keyEntry.getValue());
             }
         }
+    }
+    
+    private void saveExplosionTypes(Configuration configuration) {
+        for (ExplosionType type : EXPLOSION_TYPES) {
+            configuration.set(EXPLOSION_KEY.formatted(type.configName()), explosionsAllowed.getBoolean(type));
+        }
+    }
+    
+    /*
+     * Explosions
+     */
+    
+    public void setExplosionAllowed(ExplosionType type, boolean allowed) {
+        Objects.requireNonNull(type);
+        if (explosionsAllowed.getBoolean(type) == allowed) {
+            return;
+        }
+        setDirty();
+        explosionsAllowed.put(type, allowed);
+    }
+
+    public boolean isExplosionAllowed(ExplosionType type) {
+        return explosionsAllowed.getBoolean(type);
     }
     
     /*

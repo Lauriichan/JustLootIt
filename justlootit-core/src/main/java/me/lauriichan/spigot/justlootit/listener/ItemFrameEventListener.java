@@ -20,6 +20,9 @@ import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
+import org.bukkit.event.entity.EntityDamageByBlockEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.hanging.HangingBreakByEntityEvent;
 import org.bukkit.event.hanging.HangingBreakEvent;
 import org.bukkit.event.hanging.HangingBreakEvent.RemoveCause;
@@ -42,6 +45,8 @@ import me.lauriichan.spigot.justlootit.capability.ActorCapability;
 import me.lauriichan.spigot.justlootit.capability.StorageCapability;
 import me.lauriichan.spigot.justlootit.command.impl.LootItActor;
 import me.lauriichan.spigot.justlootit.config.MainConfig;
+import me.lauriichan.spigot.justlootit.config.world.WorldConfig;
+import me.lauriichan.spigot.justlootit.config.world.WorldMultiConfig;
 import me.lauriichan.spigot.justlootit.data.FrameContainer;
 import me.lauriichan.spigot.justlootit.message.Messages;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
@@ -54,10 +59,11 @@ import me.lauriichan.spigot.justlootit.nms.util.argument.ArgumentMap;
 import me.lauriichan.spigot.justlootit.storage.Stored;
 import me.lauriichan.spigot.justlootit.util.DataHelper;
 import me.lauriichan.spigot.justlootit.util.EntityUtil;
+import me.lauriichan.spigot.justlootit.util.ExplosionType;
 
 @Extension
 public class ItemFrameEventListener implements IListenerExtension {
-    
+
     public static final String PLAYER_DATA_FRAME_LOOTING = "PlayerIsLootingFrame";
 
     private final JustLootItPlugin plugin;
@@ -113,11 +119,16 @@ public class ItemFrameEventListener implements IListenerExtension {
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onHangingBreak(final HangingBreakEvent event) {
         final Entity entity = event.getEntity();
-        if (entity == null || !EntityUtil.isItemFrame(entity.getType()) || !JustLootItAccess.hasIdentity(entity.getPersistentDataContainer())) {
+        if (entity == null || !EntityUtil.isItemFrame(entity.getType())
+            || !JustLootItAccess.hasIdentity(entity.getPersistentDataContainer())) {
             return;
         }
         event.setCancelled(true);
         if (event.getCause() != RemoveCause.OBSTRUCTION) {
+            if (event.getCause() == RemoveCause.EXPLOSION) {
+                event.setCancelled(handleExplosion(entity, null, entity.getLastDamageCause()));
+                return;
+            }
             return;
         }
         BlockState state = entity.getWorld().getBlockState(event.getEntity().getLocation());
@@ -171,6 +182,10 @@ public class ItemFrameEventListener implements IListenerExtension {
         }
         event.setCancelled(true);
         final Entity remover = event.getRemover();
+        if (event.getCause() == RemoveCause.EXPLOSION) {
+            event.setCancelled(handleExplosion(entity, remover, entity.getLastDamageCause()));
+            return;
+        }
         if (remover.getType() != EntityType.PLAYER) {
             return;
         }
@@ -185,6 +200,34 @@ public class ItemFrameEventListener implements IListenerExtension {
             return;
         }
         breakFrame(entity, actor, container);
+    }
+
+    private boolean handleExplosion(Entity entity, Entity remover, EntityDamageEvent lastCause) {
+        ExplosionType type;
+        if (lastCause instanceof EntityDamageByBlockEvent dmgBlock) {
+            type = ExplosionType.fromBlock(dmgBlock.getDamager().getBlockData().getMaterial());
+        } else if (lastCause instanceof EntityDamageByEntityEvent dmgEntity) {
+            type = ExplosionType.fromEntity(dmgEntity.getEntityType());
+        } else {
+            // We add a special type cause it seems like the last damage cause is never given.
+            // Instead it is always just destroyed with the Removal cause of EXPLOSION which sadly makes this
+            // basically undetectable other than saying yeah it is player caused.
+            type = remover == null ? ExplosionType.UNKNOWN : ExplosionType.fromEntity(remover.getType());
+        }
+        WorldConfig worldConfig = plugin.configManager().multiConfig(WorldMultiConfig.class, entity.getWorld());
+        if (!worldConfig.isExplosionAllowed(type)) {
+            return true;
+        }
+        PersistentDataContainer container = entity.getPersistentDataContainer();
+        final long id = JustLootItAccess.getIdentity(container);
+        JustLootItAccess.removeIdentity(container);
+        versionHandler
+            .broadcast(versionHandler.packetManager().createPacket(new ArgumentMap().set("entity", entity), PacketOutSetEntityData.class));
+        if (config.deleteOnBreak()) {
+            versionHandler.getLevel(entity.getWorld()).getCapability(StorageCapability.class)
+                .ifPresent(capability -> capability.storage().delete(id));
+        }
+        return false;
     }
 
     private void breakFrame(Entity entity, LootItActor<Player> actor, PersistentDataContainer container) {

@@ -2,6 +2,7 @@ package me.lauriichan.spigot.justlootit.listener;
 
 import java.time.Duration;
 import java.util.Iterator;
+import java.util.List;
 import java.util.UUID;
 
 import org.bukkit.Location;
@@ -54,6 +55,7 @@ import me.lauriichan.spigot.justlootit.capability.PlayerGUICapability;
 import me.lauriichan.spigot.justlootit.capability.StorageCapability;
 import me.lauriichan.spigot.justlootit.command.impl.LootItActor;
 import me.lauriichan.spigot.justlootit.config.MainConfig;
+import me.lauriichan.spigot.justlootit.config.world.WorldMultiConfig;
 import me.lauriichan.spigot.justlootit.data.CacheLookupTable;
 import me.lauriichan.spigot.justlootit.data.CachedInventory;
 import me.lauriichan.spigot.justlootit.data.Container;
@@ -71,6 +73,7 @@ import me.lauriichan.spigot.justlootit.storage.Stored;
 import me.lauriichan.spigot.justlootit.util.BlockUtil;
 import me.lauriichan.spigot.justlootit.util.DataHelper;
 import me.lauriichan.spigot.justlootit.util.EntityUtil;
+import me.lauriichan.spigot.justlootit.util.ExplosionType;
 import me.lauriichan.spigot.justlootit.util.InventoryUtil;
 
 @Extension
@@ -196,22 +199,19 @@ public class ContainerListener implements IListenerExtension {
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
     public void onEntityExplode(final EntityExplodeEvent event) {
-        Iterator<Block> iterator = event.blockList().iterator();
-        while (iterator.hasNext()) {
-            Block block = iterator.next();
-            if (!(block.getState() instanceof org.bukkit.block.Container container)) {
-                continue;
-            }
-            PersistentDataContainer dataContainer = container.getPersistentDataContainer();
-            if (JustLootItAccess.hasIdentity(dataContainer) || JustLootItAccess.hasAnyOffset(dataContainer)) {
-                iterator.remove();
-            }
-        }
+        filterExplosion(event.getLocation().getWorld(), ExplosionType.fromEntity(event.getEntityType()), event.blockList());
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
     public void onBlockExplode(BlockExplodeEvent event) {
-        Iterator<Block> iterator = event.blockList().iterator();
+        filterExplosion(event.getBlock().getWorld(), ExplosionType.fromBlock(event.getBlock().getBlockData().getMaterial()),
+            event.blockList());
+    }
+
+    private void filterExplosion(World world, ExplosionType type, List<Block> blockList) {
+        boolean allowed = plugin.configManager().multiConfig(WorldMultiConfig.class, world).isExplosionAllowed(type);
+        Iterator<Block> iterator = blockList.iterator();
+        LevelAdapter level = plugin.versionHandler().getLevel(world);
         while (iterator.hasNext()) {
             Block block = iterator.next();
             if (!(block.getState() instanceof org.bukkit.block.Container container)) {
@@ -219,8 +219,59 @@ public class ContainerListener implements IListenerExtension {
             }
             PersistentDataContainer dataContainer = container.getPersistentDataContainer();
             if (JustLootItAccess.hasIdentity(dataContainer) || JustLootItAccess.hasAnyOffset(dataContainer)) {
-                iterator.remove();
+                if (!allowed) {
+                    iterator.remove();
+                    continue;
+                }
+                breakContainerNaturally(level, container, dataContainer);
             }
+        }
+    }
+    
+    private void breakContainerNaturally(LevelAdapter level, org.bukkit.block.Container container, PersistentDataContainer dataContainer) {
+        org.bukkit.block.Container otherContainer = BlockUtil.getContainerByOffset(container);
+        if (!JustLootItAccess.hasIdentity(dataContainer)) {
+            if (otherContainer == null) {
+                return;
+            }
+            PersistentDataContainer otherDataContainer = otherContainer.getPersistentDataContainer();
+            if (!JustLootItAccess.hasIdentity(otherDataContainer)) {
+                JustLootItAccess.removeOffset(otherDataContainer);
+                JustLootItAccess.removeOffset(dataContainer);
+                otherContainer.update(false, false);
+                container.update(false, false);
+                return;
+            }
+        }
+        if (otherContainer != null) {
+            if (!JustLootItAccess.hasIdentity(dataContainer)) {
+                JustLootItAccess.removeOffset(otherContainer.getPersistentDataContainer());
+                JustLootItAccess.removeOffset(dataContainer);
+                container.update(false, false);
+                Chest chest = (Chest) otherContainer.getBlockData();
+                chest.setType(Type.SINGLE);
+                otherContainer.setBlockData(chest);
+                otherContainer.update(true, false);
+                return;
+            }
+            final long id = JustLootItAccess.getIdentity(dataContainer);
+            JustLootItAccess.removeOffset(dataContainer);
+            JustLootItAccess.removeIdentity(dataContainer);
+            container.update(false, false);
+            PersistentDataContainer otherDataContainer = otherContainer.getPersistentDataContainer();
+            JustLootItAccess.removeOffset(otherDataContainer);
+            JustLootItAccess.setIdentity(otherDataContainer, id);
+            Chest chest = (Chest) otherContainer.getBlockData();
+            chest.setType(Type.SINGLE);
+            otherContainer.setBlockData(chest);
+            otherContainer.update(true, false);
+            return;
+        }
+        final long id = JustLootItAccess.getIdentity(dataContainer);
+        JustLootItAccess.removeIdentity(dataContainer);
+        container.update(true, false);
+        if (config.deleteOnBreak()) {
+            level.getCapability(StorageCapability.class).ifPresent(capability -> capability.storage().delete(id));
         }
     }
 
