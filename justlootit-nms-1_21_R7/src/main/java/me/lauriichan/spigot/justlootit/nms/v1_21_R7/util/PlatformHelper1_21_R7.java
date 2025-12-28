@@ -11,11 +11,15 @@ import me.lauriichan.laylib.reflection.ClassUtil;
 import me.lauriichan.laylib.reflection.JavaLookup;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.WorldLoader;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.chunk.storage.SimpleRegionStorage;
 import net.minecraft.world.level.entity.LevelEntityGetter;
 
 public final class PlatformHelper1_21_R7 {
@@ -23,6 +27,8 @@ public final class PlatformHelper1_21_R7 {
     private static final MethodHandle GET_ENTITY_LOOKUP = Access.getEntityLookup();
     private static final MethodHandle GET_WORLD_LOADER_CONTEXT = Access.getWorldLoaderContext();
     private static final MethodHandle BUKKIT_TO_MINECRAFT_HOLDER = Access.bukkitToMinecraftHolder();
+    
+    private static final MethodHandle UPGRADE_CHUNK_TAG = Access.getUpgradeChunkTag();
 
     private static final class Access {
 
@@ -57,6 +63,14 @@ public final class PlatformHelper1_21_R7 {
         static MethodHandle bukkitToMinecraftHolder() {
             Method method = ClassUtil.getMethod(CraftRegistry.class, "bukkitToMinecraftHolder", Keyed.class);
             if (method == null || !Holder.class.isAssignableFrom(method.getReturnType())) {
+                return null;
+            }
+            return JavaLookup.PLATFORM.unreflect(method);
+        }
+        
+        static MethodHandle getUpgradeChunkTag() {
+            Method method = ClassUtil.getMethod(SimpleRegionStorage.class, "upgradeChunkTag", CompoundTag.class, int.class, CompoundTag.class, LevelAccessor.class);
+            if (method == null || !CompoundTag.class.isAssignableFrom(method.getReturnType())) {
                 return null;
             }
             return JavaLookup.PLATFORM.unreflect(method);
@@ -99,6 +113,18 @@ public final class PlatformHelper1_21_R7 {
                 return (WorldLoader.DataLoadContext) GET_WORLD_LOADER_CONTEXT.invoke(server);
             } catch (Throwable e) {
                 throw new IllegalStateException("Failed to retrieve world loader", e);
+            }
+        }
+    }
+    
+    public static CompoundTag upgradeChunkTag(SimpleRegionStorage storage, CompoundTag chunkTag, int fallbackVersion, CompoundTag contextTag, ChunkPos pos) {
+        try {
+            return storage.upgradeChunkTag(chunkTag, fallbackVersion, contextTag, pos, null);
+        } catch(NoSuchMethodError err) {
+            try {
+                return (CompoundTag) UPGRADE_CHUNK_TAG.invoke(storage, chunkTag, fallbackVersion, contextTag, null);
+            } catch (Throwable e) {
+                throw new IllegalStateException("Failed to upgrade chunk tag", e);
             }
         }
     }

@@ -28,6 +28,7 @@ import me.lauriichan.spigot.justlootit.storage.util.counter.Counter;
 import me.lauriichan.spigot.justlootit.storage.util.counter.CounterProgress;
 import me.lauriichan.spigot.justlootit.storage.util.counter.SimpleCounter;
 import me.lauriichan.spigot.justlootit.nms.v1_21_R7.util.NmsHelper1_21_R7;
+import me.lauriichan.spigot.justlootit.nms.v1_21_R7.util.PlatformHelper1_21_R7;
 import net.minecraft.world.level.storage.LevelStorageSource.LevelStorageAccess;
 import net.minecraft.world.level.storage.WorldData;
 import net.minecraft.core.BlockPos;
@@ -359,7 +360,7 @@ public class ProtoWorld1_21_R7 extends ProtoWorld implements LevelHeightAccessor
         if (tag == null || tag.getString("Status").isEmpty()) {
             return null;
         }
-        return chunkStorage.upgradeChunkTag(tag, -1, ChunkMap.getChunkDataFixContextTag(dimensionKey, chunkGenerator.getTypeNameForDataFixer()), pos, null);
+        return PlatformHelper1_21_R7.upgradeChunkTag(chunkStorage, tag, -1, ChunkMap.getChunkDataFixContextTag(dimensionKey, chunkGenerator.getTypeNameForDataFixer()), pos);
     }
 
     private Pair<CompoundTag, String> readEntityTag(CompoundTag chunkTag, RegionFile file, ChunkPos pos) throws IOException {
