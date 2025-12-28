@@ -90,6 +90,12 @@ public class InputListener implements IListenerExtension {
         ChatInput input = provider.get(event.getPlayer().getUniqueId());
         if (input != null) {
             input.remove();
+            // We have to cancel after removing
+            try {
+                input.consumer().accept(input.actor(), null);
+            } catch(RuntimeException ignore) {
+                // We ignore the exception here c.c
+            }
         }
     }
 
