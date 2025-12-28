@@ -306,7 +306,7 @@ public class WorldConfig implements IConfigExtension {
             if (map == null) {
                 return;
             }
-            if (map.remove(key) != null) {
+            if (map.remove(key.getKey()) != null) {
                 setDirty();
                 if (map.isEmpty()) {
                     containerRefreshGroupIds.remove(key.getNamespace());
