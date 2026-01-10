@@ -383,7 +383,7 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
                     return;
                 }
                 Bukkit.getOnlinePlayers().forEach(player -> informAboutUpdate(player));
-                informAboutUpdate(actor(Bukkit.getConsoleSender()));
+                informAboutUpdate(actor(Bukkit.getConsoleSender()), true);
             } catch (SpigotUpdaterException e) {
                 if (logger().isDebug()) {
                     logger().error("Failed to retrieve update information", e);
@@ -400,16 +400,16 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         if (!player.hasPermission(JustLootItPermission.ADMIN_INFORM_VERSION)) {
             return;
         }
-        informAboutUpdate(actor(player));
+        informAboutUpdate(actor(player), player.hasPermission(JustLootItPermission.ADMIN_INFORM_VERSION_UP2DATE));
     }
 
-    private void informAboutUpdate(Actor<?> actor) {
+    private void informAboutUpdate(Actor<?> actor, boolean sendUpToDate) {
         PluginVersion latest = updater.latestVersion().get();
-        if (updater.getVersion().compareTo(latest) >= 0) {
-            actor.sendTranslatedMessage(Messages.UPDATER_UPDATE_LATEST, Key.of("version.current", updater.getVersion()));
-        } else {
+        if (updater.getVersion().compareTo(latest) < 0) {
             actor.sendTranslatedMessage(Messages.UPDATER_UPDATE_AVAILABLE, Key.of("version.current", updater.getVersion()),
                 Key.of("version.latest", latest));
+        } else if (sendUpToDate) {
+            actor.sendTranslatedMessage(Messages.UPDATER_UPDATE_LATEST, Key.of("version.current", updater.getVersion()));
         }
     }
 
