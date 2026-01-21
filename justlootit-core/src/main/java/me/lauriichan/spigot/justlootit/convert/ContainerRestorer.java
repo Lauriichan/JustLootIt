@@ -78,6 +78,7 @@ public class ContainerRestorer extends ChunkConverter {
             }
             container.restore(logger, versionHandler, otherEntity != null ? otherEntity : blockEntity);
             if (otherEntity != null) {
+                JustLootItAccess.removeOffset(identityDataContainer);
                 JustLootItAccess.removeOffset(dataContainer);
                 chunk.updateBlock(otherEntity);
             }

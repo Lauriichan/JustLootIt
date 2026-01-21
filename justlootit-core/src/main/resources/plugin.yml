@@ -39,6 +39,6 @@ permissions:
     justlootit.admin.version:
         description: Informs the player of updates of JustLootIt
         default: op
-	justlootit.admin.version.up2date:
-	    description: Informs the player even if the version of JustLootIt is up2date
-	    default: op
+    justlootit.admin.version.up2date:
+        description: Informs the player even if the version of JustLootIt is up2date
+        default: op

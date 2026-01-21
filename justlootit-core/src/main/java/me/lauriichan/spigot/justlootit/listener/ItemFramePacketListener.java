@@ -49,16 +49,25 @@ public class ItemFramePacketListener implements IPacketListener {
             if (!stored.value().canAccess(level.asBukkit(), player.getUniqueId())) {
                 return;
             }
-            final PacketOutSetEntityData dataPacket = versionHandler.packetManager().createPacket(new ArgumentMap().set("entity", entity),
-                PacketOutSetEntityData.class);
-            final IEntityDataPack pack = dataPacket.getData();
-            final IEntityData data = pack.getById(versionHandler.versionHelper().getItemFrameItemDataId());
-            if (!(data instanceof IItemEntityData itemData)) {
-                return;
+            if (versionHandler.platform().scheduler().isRegional()) {
+                // God I hate Folia
+                versionHandler.platform().scheduler().regional(entity.getLocation(), () -> sendDataPacket(stored, player, entity));
+            } else {
+                sendDataPacket(stored, player, entity);
             }
-            itemData.setItem(stored.value().getItem());
-            versionHandler.platform().scheduler().sync(() -> player.send(dataPacket));
         });
+    }
+    
+    private void sendDataPacket(Stored<FrameContainer> stored, PlayerAdapter player, Entity entity) {
+        final PacketOutSetEntityData dataPacket = versionHandler.packetManager().createPacket(new ArgumentMap().set("entity", entity),
+            PacketOutSetEntityData.class);
+        final IEntityDataPack pack = dataPacket.getData();
+        final IEntityData data = pack.getById(versionHandler.versionHelper().getItemFrameItemDataId());
+        if (!(data instanceof IItemEntityData itemData)) {
+            return;
+        }
+        itemData.setItem(stored.value().getItem());
+        versionHandler.platform().scheduler().sync(() -> player.send(dataPacket));
     }
 
 }
