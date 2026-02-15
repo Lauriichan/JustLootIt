@@ -49,6 +49,10 @@ public class ProtoBlockEntity1_21_R7 extends ProtoBlockEntity {
         this.registry = registry;
         this.pos = pos;
         this.data = CraftBlockData.fromData(state);
+        if (pos.getX() == 5668 && pos.getZ() == 6456 && pos.getY() == 6) {
+            System.out.println(state);
+            System.out.println(data);
+        }
         this.container = new CraftPersistentDataContainer(ConversionAdapter1_21_R7.DATA_TYPE_REGISTRY);
         if (blockTag.get("PublicBukkitValues") instanceof CompoundTag tag) {
             container.putAll(tag);

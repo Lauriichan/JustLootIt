@@ -7,6 +7,8 @@ import java.lang.reflect.Method;
 import org.bukkit.Keyed;
 import org.bukkit.craftbukkit.v1_21_R6.CraftRegistry;
 
+import com.mojang.serialization.Codec;
+
 import me.lauriichan.laylib.reflection.ClassUtil;
 import me.lauriichan.laylib.reflection.JavaLookup;
 import net.minecraft.core.Holder;
@@ -16,13 +18,18 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.WorldLoader;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.chunk.PalettedContainer;
+import net.minecraft.world.level.chunk.PalettedContainerFactory;
 import net.minecraft.world.level.entity.LevelEntityGetter;
 
 public final class PlatformHelper1_21_R6 {
 
     private static final MethodHandle GET_ENTITY_LOOKUP = Access.getEntityLookup();
     private static final MethodHandle GET_WORLD_LOADER_CONTEXT = Access.getWorldLoaderContext();
-    private static final MethodHandle BUKKIT_TO_MINECRAFT_HOLDER = Access.bukkitToMinecraftHolder();
+    private static final MethodHandle BUKKIT_TO_MINECRAFT_HOLDER = Access.getBukkitToMinecraftHolder();
+    
+    private static final MethodHandle BIOME_CONTAINER_RW_CODEC = Access.getBiomeContainerRWCodec();
 
     private static final class Access {
 
@@ -54,9 +61,17 @@ public final class PlatformHelper1_21_R6 {
             return JavaLookup.PLATFORM.unreflectGetter(field);
         }
 
-        static MethodHandle bukkitToMinecraftHolder() {
+        static MethodHandle getBukkitToMinecraftHolder() {
             Method method = ClassUtil.getMethod(CraftRegistry.class, "bukkitToMinecraftHolder", Keyed.class);
             if (method == null || !Holder.class.isAssignableFrom(method.getReturnType())) {
+                return null;
+            }
+            return JavaLookup.PLATFORM.unreflect(method);
+        }
+
+        static MethodHandle getBiomeContainerRWCodec() {
+            Method method = ClassUtil.getMethod(PalettedContainerFactory.class, "biomeContainerRWCodec");
+            if (method == null || !Codec.class.isAssignableFrom(method.getReturnType())) {
                 return null;
             }
             return JavaLookup.PLATFORM.unreflect(method);
@@ -99,6 +114,18 @@ public final class PlatformHelper1_21_R6 {
                 return (WorldLoader.DataLoadContext) GET_WORLD_LOADER_CONTEXT.invoke(server);
             } catch (Throwable e) {
                 throw new IllegalStateException("Failed to retrieve world loader", e);
+            }
+        }
+    }
+
+    public static Codec<PalettedContainer<Holder<Biome>>> biomeContainerCodecRW(PalettedContainerFactory containerFactory) {
+        try {
+            return containerFactory.biomeContainerCodecRW();
+        } catch (NoSuchMethodError err) {
+            try {
+                return (Codec<PalettedContainer<Holder<Biome>>>) BIOME_CONTAINER_RW_CODEC.invoke(containerFactory);
+            } catch (Throwable e) {
+                throw new IllegalStateException("Failed to retrieve biome container codec", e);
             }
         }
     }

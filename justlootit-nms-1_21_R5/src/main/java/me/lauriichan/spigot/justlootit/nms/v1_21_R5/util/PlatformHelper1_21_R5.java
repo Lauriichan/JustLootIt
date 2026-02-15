@@ -18,7 +18,7 @@ import net.minecraft.world.level.entity.LevelEntityGetter;
 public final class PlatformHelper1_21_R5 {
 
     private static final MethodHandle GET_ENTITY_LOOKUP = Access.getEntityLookup();
-    private static final MethodHandle BUKKIT_TO_MINECRAFT_HOLDER = Access.bukkitToMinecraftHolder();
+    private static final MethodHandle BUKKIT_TO_MINECRAFT_HOLDER = Access.getBukkitToMinecraftHolder();
 
     private static final class Access {
 
@@ -42,7 +42,7 @@ public final class PlatformHelper1_21_R5 {
             return JavaLookup.PLATFORM.unreflect(method);
         }
         
-        static MethodHandle bukkitToMinecraftHolder() {
+        static MethodHandle getBukkitToMinecraftHolder() {
             Method method = ClassUtil.getMethod(CraftRegistry.class, "bukkitToMinecraftHolder", Keyed.class);
             if (method == null || !Holder.class.isAssignableFrom(method.getReturnType())) {
                 return null;

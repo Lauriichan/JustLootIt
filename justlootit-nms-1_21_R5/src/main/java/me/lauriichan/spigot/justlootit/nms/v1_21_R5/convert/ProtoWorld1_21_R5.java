@@ -8,7 +8,6 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
@@ -16,7 +15,6 @@ import java.util.function.Consumer;
 import com.mojang.datafixers.DataFixer;
 import com.mojang.datafixers.util.Pair;
 
-import it.unimi.dsi.fastutil.objects.Object2IntArrayMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.spigot.justlootit.nms.convert.ConvThread;
@@ -30,14 +28,12 @@ import me.lauriichan.spigot.justlootit.storage.util.counter.SimpleCounter;
 import me.lauriichan.spigot.justlootit.nms.v1_21_R5.util.NmsHelper1_21_R5;
 import net.minecraft.world.level.storage.LevelStorageSource.LevelStorageAccess;
 import net.minecraft.world.level.storage.WorldData;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess.Frozen;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtIo;
-import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.datafix.DataFixTypes;
@@ -50,7 +46,6 @@ import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.chunk.LevelChunkSection;
@@ -61,7 +56,7 @@ import net.minecraft.world.level.chunk.status.ChunkType;
 import net.minecraft.world.level.chunk.storage.ChunkStorage;
 import net.minecraft.world.level.chunk.storage.RegionFile;
 import net.minecraft.world.level.chunk.storage.RegionStorageInfo;
-import net.minecraft.world.level.chunk.storage.SerializableChunkData;
+import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.dimension.LevelStem;
 
 public class ProtoWorld1_21_R5 extends ProtoWorld implements LevelHeightAccessor {
@@ -82,6 +77,7 @@ public class ProtoWorld1_21_R5 extends ProtoWorld implements LevelHeightAccessor
 
     private final ResourceKey<LevelStem> dimensionKey;
     private final ChunkGenerator chunkGenerator;
+    private final DimensionType dimensionType;
 
     private final WorldData worldData;
 
@@ -103,7 +99,9 @@ public class ProtoWorld1_21_R5 extends ProtoWorld implements LevelHeightAccessor
         this.registry = NmsHelper1_21_R5.getServer().registryAccess();
         this.logger = logger;
         this.dimensionKey = dimensionKey;
-        this.chunkGenerator = registry.lookupOrThrow(Registries.LEVEL_STEM).getValue(dimensionKey).generator();
+        LevelStem levelStem = registry.lookupOrThrow(Registries.LEVEL_STEM).getValue(dimensionKey);
+        this.chunkGenerator = levelStem.generator();
+        this.dimensionType = levelStem.type().value();
         this.biomeRegistry = registry.lookupOrThrow(Registries.BIOME);
         this.worldKey = ResourceKey.create(Registries.DIMENSION, dimensionKey.location());
         Path dimensionPath = session.getDimensionPath(worldKey);
@@ -206,51 +204,23 @@ public class ProtoWorld1_21_R5 extends ProtoWorld implements LevelHeightAccessor
                             if (chunkTag == null) {
                                 continue;
                             }
-                            ListTag listTag = chunkTag.getList("sections").filter(list -> list.identifyRawElementType() == 10)
-                                .orElseGet(ListTag::new);
+                            thread.setTask("Reading chunk data");
+                            ProtoChunkData1_21_R5 chunkData = ProtoChunkData1_21_R5.parse(this, registry, chunkTag);
                             LevelChunkSection[] sections = new LevelChunkSection[sectionCount];
-                            int sectionIndex = 0;
-                            int sectionOffset = 0;
-                            int chunkSectionCount = 0;
-                            int chunkY = chunkTag.getIntOr("yPos", 0);
-                            if (chunkY != minSection) {
-                                sectionOffset = -chunkY;
-                                for (int i = 0; i < sectionOffset; i++) {
-                                    sections[i] = new LevelChunkSection(
-                                        new PalettedContainer<>(Block.BLOCK_STATE_REGISTRY, Blocks.AIR.defaultBlockState(),
-                                            Strategy.SECTION_STATES),
-                                        new PalettedContainer<>(biomeRegistry.asHolderIdMap(), biomeRegistry.getOrThrow(Biomes.PLAINS),
-                                            Strategy.SECTION_BIOMES));
-                                }
-                            }
-                            thread.setTask("Reading sections");
-                            for (int i = 0; i < listTag.size(); i++) {
-                                CompoundTag sectionTag = listTag.getCompoundOrEmpty(i);
-                                if (isInvalidSection(sectionTag, minSection, maxSection)) {
+                            int foundSections = 0;
+                            for (ProtoChunkData1_21_R5.SectionData sectionData : chunkData.sectionData()) {
+                                if (sectionData.chunkSection() == null) {
                                     continue;
                                 }
-                                chunkSectionCount++;
-                                if (sectionTag.getCompound("block_states").isEmpty()) {
-                                    sections[sectionOffset + sectionIndex++] = new LevelChunkSection(
-                                        new PalettedContainer<>(Block.BLOCK_STATE_REGISTRY, Blocks.AIR.defaultBlockState(),
-                                            Strategy.SECTION_STATES),
-                                        new PalettedContainer<>(biomeRegistry.asHolderIdMap(), biomeRegistry.getOrThrow(Biomes.PLAINS),
-                                            Strategy.SECTION_BIOMES));
-                                    continue;
-                                }
-                                try {
-                                    sections[sectionOffset + sectionIndex++] = new LevelChunkSection(SerializableChunkData.BLOCK_STATE_CODEC
-                                        .parse(NbtOps.INSTANCE, sectionTag.getCompoundOrEmpty("block_states")).promotePartial((sx) -> {
-                                            logger.warning("Something went wrong when reading chunk section: " + sx);
-                                        }).getOrThrow(), new PalettedContainer<>(biomeRegistry.asHolderIdMap(),
-                                            biomeRegistry.getOrThrow(Biomes.PLAINS), Strategy.SECTION_BIOMES));
-                                } catch (IllegalStateException ise) {
-                                    logger.warning("Something went wrong when reading chunk section", ise);
-                                }
+                                sections[sectionData.y() - minSection] = sectionData.chunkSection();
+                                foundSections++;
                             }
                             thread.setTask("Creating empty sections");
-                            if (chunkSectionCount != sectionCount) {
-                                for (int i = chunkSectionCount; i < sectionCount; i++) {
+                            if (foundSections != sectionCount) {
+                                for (int i = 0; i < sectionCount; i++) {
+                                    if (sections[i] != null) {
+                                        continue;
+                                    }
                                     sections[i] = new LevelChunkSection(
                                         new PalettedContainer<>(Block.BLOCK_STATE_REGISTRY, Blocks.AIR.defaultBlockState(),
                                             Strategy.SECTION_STATES),
@@ -259,10 +229,10 @@ public class ProtoWorld1_21_R5 extends ProtoWorld implements LevelHeightAccessor
                                 }
                             }
                             thread.setTask("Loading blocks");
-                            int cx = chunkTag.getIntOr("xPos", 0), cz = chunkTag.getIntOr("zPos", 0);
+                            int cx = chunkData.chunkPos().x, cz = chunkData.chunkPos().z;
                             net.minecraft.world.level.chunk.ProtoChunk chunk = new net.minecraft.world.level.chunk.ProtoChunk(
-                                new ChunkPos(cx, cz), null, sections, null, null, this, biomeRegistry, null);
-                            if (chunkTag.get("ChunkBukkitValues") instanceof CompoundTag persistentDataTag) {
+                                chunkData.chunkPos(), null, sections, null, null, this, biomeRegistry, null);
+                            if (chunkData.persistentDataContainer() instanceof CompoundTag persistentDataTag) {
                                 chunk.persistentDataContainer.putAll(persistentDataTag);
                             }
                             thread.setTask("Reading entities");
@@ -275,14 +245,8 @@ public class ProtoWorld1_21_R5 extends ProtoWorld implements LevelHeightAccessor
                                 }
                             }
                             thread.setTask("Loading block entities");
-                            Object2IntArrayMap<BlockPos> blockEntityMap = new Object2IntArrayMap<>();
-                            blockEntityMap.defaultReturnValue(-1);
-                            ListTag blockEntityListTag = chunkTag.getList("block_entities").filter(list -> list.identifyRawElementType() == 10)
-                                .orElseGet(ListTag::new);
-                            for (int i = 0; i < blockEntityListTag.size(); i++) {
-                                CompoundTag blockEntityTag = blockEntityListTag.getCompoundOrEmpty(i);
+                            for (CompoundTag blockEntityTag : chunkData.blockEntities()) {
                                 chunk.setBlockEntityNbt(blockEntityTag);
-                                blockEntityMap.put(BlockEntity.getPosFromTag(chunk.getPos(), blockEntityTag), i);
                             }
                             thread.setTask("Constructing chunk");
                             ProtoChunk1_21_R5 protoChunk = new ProtoChunk1_21_R5(this, chunk, cx, cz);
@@ -290,33 +254,14 @@ public class ProtoWorld1_21_R5 extends ProtoWorld implements LevelHeightAccessor
                             consumer.accept(protoChunk);
                             if (protoChunk.isDirty()) {
                                 thread.setTask("Preparing entites");
-                                blockEntityListTag.clear();
+                                chunkData.blockEntities().clear();
                                 for (ProtoBlockEntity rawBlock : protoChunk.getBlockEntities()) {
-                                    blockEntityListTag.add(((ProtoBlockEntity1_21_R5) rawBlock).tag());
+                                    chunkData.blockEntities().add(((ProtoBlockEntity1_21_R5) rawBlock).tag());
                                 }
                                 thread.setTask("Preparing sections");
-                                sectionIndex = 0;
-                                for (int i = 0; i < listTag.size(); i++) {
-                                    CompoundTag sectionTag = listTag.getCompoundOrEmpty(i);
-                                    if (isInvalidSection(sectionTag, minSection, maxSection)) {
-                                        continue;
-                                    }
-                                    if (sectionTag.getCompound("block_states").isEmpty()) {
-                                        sectionIndex++;
-                                        continue;
-                                    }
-                                    try {
-                                        sectionTag.put("block_states",
-                                            SerializableChunkData.BLOCK_STATE_CODEC
-                                                .encodeStart(NbtOps.INSTANCE, sections[sectionOffset + sectionIndex++].getStates())
-                                                .getOrThrow());
-                                    } catch (IllegalStateException ise) {
-                                        logger.warning("Something went wrong when writing chunk section", ise);
-                                    }
-                                }
                                 thread.setTask("Saving chunk");
                                 try (DataOutputStream output = chunkRegion.getChunkDataOutputStream(posInRegion)) {
-                                    NbtIo.write(chunkTag, output);
+                                    NbtIo.write(chunkData.write(), output);
                                 }
                                 if (entityTag != null && entityTag.getFirst() != chunkTag) {
                                     thread.setTask("Saving external entities");
@@ -325,6 +270,11 @@ public class ProtoWorld1_21_R5 extends ProtoWorld implements LevelHeightAccessor
                                     }
                                 }
                             }
+                        } catch (Throwable e) {
+                            logger.error(
+                                "Failed to convert chunk '{2}, {3}' in region '{1}' in level '{0}' (Sections - Min: {4}, Max: {5}, Expected Count: {6})!",
+                                e, worldData.getLevelName(), path.getFileName().toString(), thread.cx(), thread.cz(), minSection,
+                                maxSection, sectionCount);
                         } finally {
                             counter.increment();
                         }
@@ -339,22 +289,12 @@ public class ProtoWorld1_21_R5 extends ProtoWorld implements LevelHeightAccessor
         } catch (Throwable e) {
             // Maybe mark as complete? Unsure tho
             counter.increment(counter.max() - counter.current());
-            logger.error(
-                "Failed to convert region '{1}' in level '{0}' (Current chunk: {2}, {3}; Sections - Min: {4}, Max: {5}, Expected Count: {6})!",
-                e, worldData.getLevelName(), path.getFileName().toString(), thread.cx(), thread.cz(), minSection, maxSection, sectionCount);
+            logger.error("Failed to convert region '{1}' in level '{0}' (Sections - Min: {4}, Max: {5}, Expected Count: {6})!", e,
+                worldData.getLevelName(), path.getFileName().toString(), minSection, maxSection, sectionCount);
         }
         thread.setRegion(null);
         thread.setChunk(0, 0);
         thread.setTask(null);
-    }
-
-    private boolean isInvalidSection(CompoundTag sectionTag, int min, int max) {
-        Optional<Byte> optional = sectionTag.getByte("Y");
-        if (optional.isEmpty()) {
-            return true;
-        }
-        byte y = optional.get();
-        return y < min || y >= max;
     }
 
     private CompoundTag readRegionTag(RegionFile file, ChunkPos pos) throws IOException {
@@ -401,12 +341,12 @@ public class ProtoWorld1_21_R5 extends ProtoWorld implements LevelHeightAccessor
 
     @Override
     public int getHeight() {
-        return chunkGenerator.getGenDepth();
+        return dimensionType.height();
     }
 
     @Override
     public int getMinY() {
-        return chunkGenerator.getMinY();
+        return dimensionType.minY();
     }
 
 }
