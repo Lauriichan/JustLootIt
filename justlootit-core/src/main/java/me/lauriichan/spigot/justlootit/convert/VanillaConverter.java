@@ -151,7 +151,7 @@ public class VanillaConverter extends ChunkConverter {
             ICompoundTag tag = entity.getNbt();
             EntityType type = entity.getType();
             if (EntityUtil.isItemFrame(type)) {
-                if (!properties.isProperty(ConvProp.VANILLA_ALLOW_STATIC_CONTAINER) || !tag.has("Item", TagType.COMPOUND)) {
+                if (!properties.isProperty(ConvProp.VANILLA_ALLOW_ITEM_FRAME) || !tag.has("Item", TagType.COMPOUND)) {
                     continue;
                 }
                 ItemStack item = nbtHelper.asItem(tag.getCompound("Item"));
