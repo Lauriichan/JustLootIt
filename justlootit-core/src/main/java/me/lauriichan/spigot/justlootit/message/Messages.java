@@ -35,6 +35,11 @@ public final class Messages implements IMessageExtension {
         "&8>== $#plugin.name &8| &4IMPORTANT&r"
     })
     public static MessageProvider WARNING_TRIAL_CHAMBER_BUG;
+
+    @Message(id = "warning.work-in-progress", content = {
+        "$#plugin.prefix &cThis feature is currently disabled as its work in progress."
+    })
+    public static MessageProvider WARNING_WIP;
     
     /*
      * Updater

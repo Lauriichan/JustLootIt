@@ -24,6 +24,10 @@ public class SimpleVersion implements Comparable<SimpleVersion> {
         return new SimpleVersion(major, minor, patch);
     }
 
+    public static SimpleVersion of(int major, int minor) {
+        return new SimpleVersion(major, minor, 0);
+    }
+
     protected final int major, minor, patch;
 
     protected SimpleVersion(int major, int minor, int patch) {

@@ -66,6 +66,13 @@ public class ContainerCommand implements ICommandExtension {
 
     @Action("bulk replace loottable")
     @Description("$#command.description.justlootit.container.bulk.replace.loottable")
+    public void bulkReplaceLootTableWIP(final JustLootItPlugin plugin, final LootItActor<?> actor,
+        @Argument(name = "world", index = 1) final World world,
+        @Argument(name = "loottable to replace", index = 2) final NamespacedKey find,
+        @Argument(name = "loottable to set", index = 3) final LootTable replace) {
+        actor.sendTranslatedMessage(Messages.WARNING_WIP);
+    }
+    
     public void bulkReplaceLootTable(final JustLootItPlugin plugin, final LootItActor<?> actor,
         @Argument(name = "world", index = 1) final World world,
         @Argument(name = "loottable to replace", index = 2) final NamespacedKey find,
@@ -94,6 +101,11 @@ public class ContainerCommand implements ICommandExtension {
 
     @Action("bulk reset access")
     @Description("$#command.description.justlootit.container.bulk.reset.access")
+    public void bulkResetAccessWIP(final JustLootItPlugin plugin, final LootItActor<?> actor,
+        @Argument(name = "world", index = 1) final World world) {
+        actor.sendTranslatedMessage(Messages.WARNING_WIP);
+    }
+
     public void bulkResetAccess(final JustLootItPlugin plugin, final LootItActor<?> actor,
         @Argument(name = "world", index = 1) final World world) {
         plugin.versionHandler().getLevel(world).getCapability(StorageCapability.class).ifPresent(capability -> {
