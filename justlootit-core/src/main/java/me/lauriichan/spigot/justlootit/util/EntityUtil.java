@@ -4,6 +4,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 
 import me.lauriichan.spigot.justlootit.JustLootItFlag;
+import me.lauriichan.spigot.justlootit.util.registry.EntityRegistry;
 
 public final class EntityUtil {
 
@@ -16,8 +17,8 @@ public final class EntityUtil {
     }
 
     public static boolean isSupportedEntity(EntityType type) {
-        return type == EntityType.CHEST_BOAT || type == EntityType.MINECART_CHEST
-            || JustLootItFlag.TILE_ENTITY_CONTAINERS.isSet() && type == EntityType.MINECART_HOPPER;
+        return EntityRegistry.CHEST_BOAT.isValue(type) || EntityRegistry.MINECART_CHEST.isValue(type)
+            || JustLootItFlag.TILE_ENTITY_CONTAINERS.isSet() && EntityRegistry.MINECART_HOPPER.isValue(type);
     }
 
     public static boolean isItemFrame(Entity entity) {
@@ -25,13 +26,13 @@ public final class EntityUtil {
     }
 
     public static boolean isItemFrame(EntityType type) {
-        return type == EntityType.ITEM_FRAME || type == EntityType.GLOW_ITEM_FRAME;
+        return EntityRegistry.ITEM_FRAME.isValue(type);
     }
-    
+
     public static int getInventorySize(EntityType type) {
-        if (type == EntityType.CHEST_BOAT || type == EntityType.MINECART_CHEST) {
+        if (EntityRegistry.CHEST_BOAT.isValue(type) || EntityRegistry.MINECART_CHEST.isValue(type)) {
             return 27;
-        } else if (type == EntityType.MINECART_HOPPER) {
+        } else if (EntityRegistry.MINECART_HOPPER.isValue(type)) {
             return 5;
         }
         return 0;

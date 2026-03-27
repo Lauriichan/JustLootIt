@@ -10,6 +10,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.loot.LootTable;
 
+import me.lauriichan.spigot.justlootit.nms.util.RegistryUtil;
 import net.md_5.bungee.api.chat.ItemTag;
 import net.md_5.bungee.api.chat.hover.content.Item;
 
@@ -18,7 +19,7 @@ public abstract class VersionHelper {
     public abstract VersionHandler handler();
 
     public final Item createItemHover(ItemStack itemStack) {
-        return new Item(itemStack.getType().getKey().toString(), itemStack.getAmount(),
+        return new Item(RegistryUtil.getKey(itemStack.getType()).toString(), itemStack.getAmount(),
             ItemTag.ofNbt(handler().nbtHelper().asTag(itemStack).asString()));
     }
 

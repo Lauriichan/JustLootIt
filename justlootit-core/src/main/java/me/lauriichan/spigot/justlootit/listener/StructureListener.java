@@ -8,7 +8,6 @@ import org.bukkit.block.data.type.Chest;
 import org.bukkit.block.data.type.Chest.Type;
 import org.bukkit.entity.ChestBoat;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
 import org.bukkit.entity.ItemFrame;
 import org.bukkit.entity.Minecart;
 import org.bukkit.event.EventHandler;
@@ -41,9 +40,11 @@ import me.lauriichan.spigot.justlootit.data.StaticContainer;
 import me.lauriichan.spigot.justlootit.data.VanillaContainer;
 import me.lauriichan.spigot.justlootit.nms.LevelAdapter;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
+import me.lauriichan.spigot.justlootit.nms.util.RegistryUtil;
 import me.lauriichan.spigot.justlootit.storage.IStorage;
 import me.lauriichan.spigot.justlootit.storage.Stored;
 import me.lauriichan.spigot.justlootit.util.BlockUtil;
+import me.lauriichan.spigot.justlootit.util.registry.EntityRegistry;
 
 @Extension
 public class StructureListener implements IListenerExtension {
@@ -72,7 +73,7 @@ public class StructureListener implements IListenerExtension {
         if (mainConfig.worldWhitelistEnabled() && !config.isWhitelisted()) {
             return;
         }
-        if (config.isStructureBlacklisted(event.getStructure().getKey())) {
+        if (config.isStructureBlacklisted(RegistryUtil.getKey(event.getStructure()))) {
             return;
         }
         StructureTransformer transformer = transformers.get(event.getWorld().getUID());
@@ -203,7 +204,7 @@ public class StructureListener implements IListenerExtension {
                     });
                 }
             } else if (entity instanceof Minecart && entity instanceof Lootable lootable) {
-                if (!JustLootItFlag.TILE_ENTITY_CONTAINERS.isSet() && entity.getType() == EntityType.MINECART_HOPPER) {
+                if (!JustLootItFlag.TILE_ENTITY_CONTAINERS.isSet() && EntityRegistry.MINECART_HOPPER.isValue(entity.getType())) {
                     return allowedToSpawn;
                 }
                 if (lootable.getLootTable() != null) {

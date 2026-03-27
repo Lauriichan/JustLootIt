@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
+import java.util.Base64;
 import java.util.Random;
 
 import org.bukkit.Material;
@@ -16,7 +17,6 @@ import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.io.BukkitObjectInputStream;
 import org.bukkit.util.io.BukkitObjectOutputStream;
-import org.yaml.snakeyaml.external.biz.base64Coder.Base64Coder;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.lauriichan.minecraft.pluginbase.inventory.item.ItemEditor;
@@ -284,7 +284,7 @@ public class LootinConverter extends ChunkConverter {
         } else if (container.has(dataKey, PersistentDataType.STRING)) {
             try (
                 ByteArrayInputStream inputStream = new ByteArrayInputStream(
-                    Base64Coder.decodeLines(container.get(dataKey, PersistentDataType.STRING)));
+                    Base64.getDecoder().decode(container.get(dataKey, PersistentDataType.STRING)));
                 BukkitObjectInputStream objectInputStream = new BukkitObjectInputStream(inputStream)) {
                 ItemStack[] items = new ItemStack[objectInputStream.readInt()];
                 for (int i = 0; i < items.length; i++) {

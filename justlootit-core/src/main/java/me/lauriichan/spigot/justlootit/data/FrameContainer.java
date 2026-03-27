@@ -10,6 +10,7 @@ import me.lauriichan.spigot.justlootit.JustLootItConstant;
 import me.lauriichan.spigot.justlootit.config.world.WorldConfig;
 import me.lauriichan.spigot.justlootit.data.io.DataIO;
 import me.lauriichan.spigot.justlootit.nms.io.IOHandler;
+import me.lauriichan.spigot.justlootit.nms.util.RegistryUtil;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapter;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapterRegistry;
 
@@ -25,7 +26,7 @@ public final class FrameContainer extends Container {
 
         @Override
         protected FrameContainer deserializeSpecial(final StorageAdapterRegistry registry, final ContainerData data, final ByteBuf buffer) {
-            IOHandler.Result<ItemStack> item = itemIO.deserialize(buffer); 
+            IOHandler.Result<ItemStack> item = itemIO.deserialize(buffer);
             FrameContainer container = new FrameContainer(data, item.value());
             if (item.dirty()) {
                 container.setDirty();
@@ -47,15 +48,15 @@ public final class FrameContainer extends Container {
         this.item = item;
         this.refreshId = refreshIdForItem(item);
     }
-    
+
     private String refreshIdForItem(ItemStack itemStack) {
         if (itemStack == null) {
             return null;
         }
-        NamespacedKey type = itemStack.getType().getKey();
+        NamespacedKey type = RegistryUtil.getKey(itemStack.getType());
         return JustLootItConstant.FRAME_CONTAINER_REFRESH_KEY_FORMAT.formatted(type.getNamespace(), type.getKey());
     }
-    
+
     @Override
     protected String containerBasedGroupId(WorldConfig worldConfig) {
         if (refreshId == null) {

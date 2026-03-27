@@ -11,6 +11,7 @@ import org.bukkit.block.BlockState;
 import org.bukkit.block.Container;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.material.MaterialData;
 import org.bukkit.metadata.MetadataValue;
 import org.bukkit.persistence.PersistentDataContainer;
@@ -20,11 +21,11 @@ import org.bukkit.plugin.Plugin;
 public class FakeBukkitContainer implements Container {
 
     private final Inventory inventory;
-    
+
     public FakeBukkitContainer(final Inventory inventory) {
         this.inventory = inventory;
     }
-    
+
     @Override
     public PersistentDataContainer getPersistentDataContainer() {
         return null;
@@ -178,5 +179,11 @@ public class FakeBukkitContainer implements Container {
     public Inventory getSnapshotInventory() {
         return inventory;
     }
-    
+
+    public BlockState copy(Location location) {
+        return null;
+    }
+
+    public void setLockItem(ItemStack key) {}
+
 }

@@ -29,6 +29,7 @@ import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.inventory.InventoryMoveItemEvent;
+import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.vehicle.VehicleDamageEvent;
@@ -227,7 +228,7 @@ public class ContainerListener implements IListenerExtension {
             }
         }
     }
-    
+
     private void breakContainerNaturally(LevelAdapter level, org.bukkit.block.Container container, PersistentDataContainer dataContainer) {
         org.bukkit.block.Container otherContainer = BlockUtil.getContainerByOffset(container);
         if (!JustLootItAccess.hasIdentity(dataContainer)) {
@@ -399,6 +400,23 @@ public class ContainerListener implements IListenerExtension {
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
     public void onInteractEntity(final PlayerInteractEntityEvent event) {
+        final Entity entity = event.getRightClicked();
+        if (!EntityUtil.isSupportedEntity(entity)) {
+            return;
+        }
+        final PersistentDataContainer dataContainer = entity.getPersistentDataContainer();
+        if (!JustLootItAccess.hasIdentity(dataContainer)) {
+            return;
+        }
+        accessContainer(entity.getLocation(), (InventoryHolder) entity, dataContainer, event, event.getPlayer(),
+            JustLootItAccess.getIdentity(dataContainer));
+        if (event.isCancelled()) {
+            plugin.versionHelper().triggerPiglins(event.getPlayer());
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
+    public void onInteractAtEntity(final PlayerInteractAtEntityEvent event) {
         final Entity entity = event.getRightClicked();
         if (!EntityUtil.isSupportedEntity(entity)) {
             return;

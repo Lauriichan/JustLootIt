@@ -3,6 +3,8 @@ package me.lauriichan.spigot.justlootit.util;
 import org.bukkit.Material;
 import org.bukkit.entity.EntityType;
 
+import me.lauriichan.spigot.justlootit.util.registry.EntityRegistry;
+
 public enum ExplosionType {
 
     UNKNOWN,
@@ -50,19 +52,16 @@ public enum ExplosionType {
     }
 
     public static ExplosionType fromEntity(EntityType entityType) {
-        switch (entityType) {
-        case CREEPER:
+        if (EntityRegistry.CREEPER.isValue(entityType)) {
             return ExplosionType.CREEPER;
-        case PRIMED_TNT:
-        case MINECART_TNT:
+        } else if (EntityRegistry.TNT.isValue(entityType)) {
             return ExplosionType.TNT;
-        case ENDER_CRYSTAL:
+        } else if (EntityRegistry.END_CRYSTAL.isValue(entityType)) {
             return ExplosionType.END_CRYSTAL;
-        case PLAYER:
+        } else if (EntityRegistry.PLAYER.isValue(entityType)) {
             return ExplosionType.PLAYER_UNRECOGNISED_EXPLOSION;
-        default:
-            return ExplosionType.UNKNOWN;
         }
+        return ExplosionType.UNKNOWN;
     }
 
 }
