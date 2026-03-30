@@ -10,8 +10,10 @@ import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.v1_21_R1.CraftServer;
 import org.bukkit.craftbukkit.v1_21_R1.block.CraftBlockEntityState;
 import org.bukkit.craftbukkit.v1_21_R1.entity.CraftEntity;
+import org.bukkit.craftbukkit.v1_21_R1.inventory.CraftItemStack;
 import org.bukkit.craftbukkit.v1_21_R1.persistence.CraftPersistentDataContainer;
 import org.bukkit.craftbukkit.v1_21_R1.persistence.CraftPersistentDataTypeRegistry;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 
 import me.lauriichan.laylib.reflection.ClassUtil;
@@ -26,6 +28,8 @@ public final class NmsHelper1_21_R1 {
     private static final MethodHandle WRAP = Access.wrap();
     private static final VarHandle DATA_TYPE_REGISTRY = Access.dataTypeRegistry();
     private static final VarHandle TAGS = Access.tags();
+    
+    private static final VarHandle CUSTOM_DATA = Access.customData();
     
     private static volatile boolean dataTypeRegistrySetup = false;
 
@@ -63,6 +67,18 @@ public final class NmsHelper1_21_R1 {
             Field field = ClassUtil.getField(CompoundTag.class, false, Map.class);
             if (field == null) {
                 throw new IllegalStateException("Couldn't find field 'tags', JustLootIt won't be able to convert anything here.");
+            }
+            return JavaLookup.PLATFORM.unreflect(field);
+        }
+
+        static VarHandle customData() {
+            Class<?> craftMetaItem = ClassUtil.findClass(CraftItemStack.class.getPackageName() + ".CraftMetaItem");
+            if (craftMetaItem == null) {
+                throw new IllegalStateException("Couldn't find class 'CraftMetaItem', JustLootIt won't work here.");
+            }
+            Field field = ClassUtil.getField(craftMetaItem, "customTag");
+            if (field == null || !CompoundTag.class.isAssignableFrom(field.getType())) {
+                throw new IllegalStateException("Couldn't find field 'customTag', JustLootIt won't be able to convert anything here.");
             }
             return JavaLookup.PLATFORM.unreflect(field);
         }
@@ -105,6 +121,14 @@ public final class NmsHelper1_21_R1 {
         } catch (Throwable e) {
             throw new RuntimeException("Failed to wrap primitive '" + type.getPrimitiveType().getName() + "'", e);
         }
+    }
+
+    public static CompoundTag getCustomData(ItemMeta meta) {
+        return (CompoundTag) CUSTOM_DATA.get(meta);
+    }
+
+    public static void setCustomData(ItemMeta meta, CompoundTag tag) {
+        CUSTOM_DATA.set(meta, tag);
     }
     
     public static void clearCompound(CompoundTag tag) {

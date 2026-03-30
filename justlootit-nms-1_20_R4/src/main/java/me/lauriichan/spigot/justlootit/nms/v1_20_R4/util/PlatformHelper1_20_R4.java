@@ -19,7 +19,7 @@ public final class PlatformHelper1_20_R4 {
 
     private static final MethodHandle GET_ENTITY_LOOKUP = Access.getEntityLookup();
     private static final Field ENUM_VALUES = Access.enumValues();
-    
+
     private static volatile boolean blockDataPatchApplied = false;
 
     private static final class Access {
@@ -39,7 +39,7 @@ public final class PlatformHelper1_20_R4 {
             }
             return JavaLookup.PLATFORM.unreflect(method);
         }
-        
+
         static Field enumValues() {
             Field field = ClassUtil.getField(CraftBlockData.class, "ENUM_VALUES");
             if (field == null || !Map.class.isAssignableFrom(field.getType())) {
@@ -64,7 +64,7 @@ public final class PlatformHelper1_20_R4 {
             throw new IllegalStateException("Failed to retrieve entity lookup", e);
         }
     }
-    
+
     @SuppressWarnings("rawtypes")
     public static void patchCraftBlockDataEnumValues() {
         if (blockDataPatchApplied) {

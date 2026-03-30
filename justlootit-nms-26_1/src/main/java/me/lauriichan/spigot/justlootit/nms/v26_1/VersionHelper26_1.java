@@ -70,7 +70,8 @@ public class VersionHelper26_1 extends VersionHelper {
         if (minecraftEntity.getCustomName() == null) {
             return new net.md_5.bungee.api.chat.hover.content.Entity(type, id, null);
         }
-        final BaseComponent[] array = ComponentSerializer.parse(ComponentSerialization.CODEC.encodeStart(JsonOps.INSTANCE, minecraftEntity.getCustomName()).getOrThrow().toString());
+        final BaseComponent[] array = ComponentSerializer
+            .parse(ComponentSerialization.CODEC.encodeStart(JsonOps.INSTANCE, minecraftEntity.getCustomName()).getOrThrow().toString());
         if (array.length == 1) {
             return new net.md_5.bungee.api.chat.hover.content.Entity(type, id, array[0]);
         }
@@ -116,7 +117,7 @@ public class VersionHelper26_1 extends VersionHelper {
                 .create(LootContextParamSets.CHEST),
             seed);
     }
-    
+
     @Override
     public int getItemFrameItemDataId() {
         return ItemFrame.DATA_ITEM.id();

@@ -45,7 +45,7 @@ import net.minecraft.world.phys.Vec3;
 public class VersionHelper1_20_R4 extends VersionHelper {
 
     private final VersionHandler1_20_R4 handler;
-    
+
     private final Frozen registry;
     private final ReloadableServerRegistries.Holder resourceRegistry;
 
@@ -79,8 +79,7 @@ public class VersionHelper1_20_R4 extends VersionHelper {
     @Override
     public List<NamespacedKey> getLootTables() {
         ArrayList<NamespacedKey> lootTables = new ArrayList<>();
-        resourceRegistry.getKeys(Registries.LOOT_TABLE)
-            .forEach(location -> lootTables.add(CraftNamespacedKey.fromMinecraft(location)));
+        resourceRegistry.getKeys(Registries.LOOT_TABLE).forEach(location -> lootTables.add(CraftNamespacedKey.fromMinecraft(location)));
         return lootTables;
     }
 
@@ -115,7 +114,7 @@ public class VersionHelper1_20_R4 extends VersionHelper {
                 .create(LootContextParamSets.CHEST),
             seed);
     }
-    
+
     @Override
     public int getItemFrameItemDataId() {
         return ItemFrame.DATA_ITEM.id();
@@ -138,4 +137,5 @@ public class VersionHelper1_20_R4 extends VersionHelper {
     public void triggerPiglins(Player player) {
         PiglinAi.angerNearbyPiglins(((CraftPlayer) player).getHandle(), true);
     }
+
 }

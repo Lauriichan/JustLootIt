@@ -116,7 +116,7 @@ public class VersionHelper1_21_R4 extends VersionHelper {
                 .create(LootContextParamSets.CHEST),
             seed);
     }
-    
+
     @Override
     public int getItemFrameItemDataId() {
         return ItemFrame.DATA_ITEM.id();
