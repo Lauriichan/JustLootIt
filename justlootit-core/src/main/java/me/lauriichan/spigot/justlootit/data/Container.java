@@ -16,12 +16,15 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import me.lauriichan.minecraft.pluginbase.config.ConfigManager;
 import me.lauriichan.minecraft.pluginbase.config.MultiConfigWrapper;
+import me.lauriichan.minecraft.pluginbase.data.DataManager;
 import me.lauriichan.minecraft.pluginbase.inventory.item.ItemEditor;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.config.MainConfig;
 import me.lauriichan.spigot.justlootit.config.RefreshConfig;
 import me.lauriichan.spigot.justlootit.config.data.RefreshGroup;
 import me.lauriichan.spigot.justlootit.config.data.RefreshGroup.UniqueType;
+import me.lauriichan.spigot.justlootit.config.loot.LootModificationDirectoryData;
+import me.lauriichan.spigot.justlootit.config.loot.LootTableDirectoryData;
 import me.lauriichan.spigot.justlootit.config.world.WorldConfig;
 import me.lauriichan.spigot.justlootit.config.world.WorldMultiConfig;
 import me.lauriichan.spigot.justlootit.data.io.BufIO;
@@ -84,44 +87,43 @@ public abstract class Container implements IModifiable {
         protected abstract C deserializeSpecial(final StorageAdapterRegistry registry, final ContainerData data, final ByteBuf buffer);
 
     }
-    
+
     public static final class Access {
-        
+
         private final UUID uuid;
         private volatile OffsetDateTime time;
         private volatile int accessCount;
-        
+
         private Access(UUID uuid, OffsetDateTime time) {
             this(uuid, time, 1);
         }
-        
+
         private Access(UUID uuid, OffsetDateTime time, int accessCount) {
             this.uuid = uuid;
             this.time = time;
             this.accessCount = accessCount;
         }
-        
+
         public UUID uuid() {
             return uuid;
         }
-        
+
         public OffsetDateTime time() {
             return time;
         }
-        
+
         public int accessCount() {
             return accessCount;
         }
-        
+
     }
 
     protected static final class ContainerData {
 
-        private final Object2ObjectMap<UUID, Access> playerAccess = Object2ObjectMaps
-            .synchronize(new Object2ObjectLinkedOpenHashMap<>());
+        private final Object2ObjectMap<UUID, Access> playerAccess = Object2ObjectMaps.synchronize(new Object2ObjectLinkedOpenHashMap<>());
 
         private volatile String refreshGroupId;
-        
+
         public String group() {
             return refreshGroupId;
         }
@@ -135,11 +137,14 @@ public abstract class Container implements IModifiable {
         }
 
     }
-    
+
     final MainConfig mainConfig;
     final RefreshConfig refreshConfig;
-    
+
     final MultiConfigWrapper<?, World, WorldConfig, WorldMultiConfig> worldWrapper;
+
+    final LootTableDirectoryData lootTables;
+    final LootModificationDirectoryData lootModifications;
 
     final ContainerData data;
     private boolean dirty = false;
@@ -149,10 +154,14 @@ public abstract class Container implements IModifiable {
     }
 
     public Container(final ContainerData data) {
-        ConfigManager manager = JustLootItPlugin.get().configManager();
-        this.mainConfig = manager.config(MainConfig.class);
-        this.refreshConfig = manager.config(RefreshConfig.class);
-        this.worldWrapper = manager.multiWrapper(WorldMultiConfig.class);
+        JustLootItPlugin plugin = JustLootItPlugin.get();
+        ConfigManager configManager = plugin.configManager();
+        this.mainConfig = configManager.config(MainConfig.class);
+        this.refreshConfig = configManager.config(RefreshConfig.class);
+        this.worldWrapper = configManager.multiWrapper(WorldMultiConfig.class);
+        DataManager dataManager = plugin.dataManager();
+        this.lootTables = dataManager.directoryData(LootTableDirectoryData.class);
+        this.lootModifications = dataManager.directoryData(LootModificationDirectoryData.class);
         this.data = data;
     }
 
@@ -168,7 +177,7 @@ public abstract class Container implements IModifiable {
     protected final void setDirty() {
         this.dirty = true;
     }
-    
+
     protected String containerBasedGroupId(WorldConfig worldConfig) {
         return null;
     }
@@ -202,7 +211,7 @@ public abstract class Container implements IModifiable {
     public ObjectSet<Entry<UUID, Access>> accesses() {
         return data.playerAccess.entrySet();
     }
-    
+
     public void resetAllAccesses() {
         data.playerAccess.clear();
     }
@@ -212,9 +221,10 @@ public abstract class Container implements IModifiable {
             setDirty();
         }
     }
-    
+
     public void decreaseAccessCount(final UUID id) {
-        Access access = data.playerAccess.get(id);;
+        Access access = data.playerAccess.get(id);
+        ;
         if (access == null) {
             return;
         }
@@ -228,7 +238,7 @@ public abstract class Container implements IModifiable {
     public boolean hasAccessed(final UUID id) {
         return data.playerAccess.containsKey(id);
     }
-    
+
     public Access getAccess(final UUID id) {
         return data.playerAccess.get(id);
     }
@@ -325,5 +335,5 @@ public abstract class Container implements IModifiable {
         }
         return seed;
     }
-    
+
 }

@@ -11,8 +11,10 @@ import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.v1_21_R7.CraftServer;
 import org.bukkit.craftbukkit.v1_21_R7.block.CraftBlockEntityState;
 import org.bukkit.craftbukkit.v1_21_R7.entity.CraftEntity;
+import org.bukkit.craftbukkit.v1_21_R7.inventory.CraftItemStack;
 import org.bukkit.craftbukkit.v1_21_R7.persistence.CraftPersistentDataContainer;
 import org.bukkit.craftbukkit.v1_21_R7.persistence.CraftPersistentDataTypeRegistry;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 
 import com.mojang.serialization.DynamicOps;
@@ -35,6 +37,8 @@ public final class NmsHelper1_21_R7 {
     private static final VarHandle TAGS = Access.tags();
     
     private static final MethodHandle CREATE_TAG_VALUE_WRAPPER = Access.createTagValueWrapper();
+    
+    private static final VarHandle CUSTOM_DATA = Access.customData();
     
     private static volatile boolean dataTypeRegistrySetup = false;
 
@@ -84,6 +88,18 @@ public final class NmsHelper1_21_R7 {
             return JavaLookup.PLATFORM.unreflect(constructor);
         }
 
+        static VarHandle customData() {
+            Class<?> craftMetaItem = ClassUtil.findClass(CraftItemStack.class.getPackageName() + ".CraftMetaItem");
+            if (craftMetaItem == null) {
+                throw new IllegalStateException("Couldn't find class 'CraftMetaItem', JustLootIt won't work here.");
+            }
+            Field field = ClassUtil.getField(craftMetaItem, "customTag");
+            if (field == null || !CompoundTag.class.isAssignableFrom(field.getType())) {
+                throw new IllegalStateException("Couldn't find field 'customTag', JustLootIt won't be able to convert anything here.");
+            }
+            return JavaLookup.PLATFORM.unreflect(field);
+        }
+
     }
     
     public static <E extends BlockEntity> E getTileEntity(CraftBlockEntityState<E> state) {
@@ -130,6 +146,14 @@ public final class NmsHelper1_21_R7 {
         } catch (Throwable e) {
             throw new RuntimeException("Failed to create tag output", e);
         }
+    }
+
+    public static CompoundTag getCustomData(ItemMeta meta) {
+        return (CompoundTag) CUSTOM_DATA.get(meta);
+    }
+
+    public static void setCustomData(ItemMeta meta, CompoundTag tag) {
+        CUSTOM_DATA.set(meta, tag);
     }
     
     public static void clearCompound(CompoundTag tag) {

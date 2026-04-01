@@ -26,6 +26,11 @@ public final class NbtHelper1_20_R2 extends NbtHelper {
     }
     
     @Override
+    public ICompoundTag getCustomDataTag(ItemStack itemStack) {
+        return createCompound();
+    }
+    
+    @Override
     public ItemStack asItem(ICompoundTag tag) {
         return ItemStackIO1_20_R2.ITEM_STACK.fromNbt(((CompoundTag1_20_R2) tag).handle());
     }

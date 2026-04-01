@@ -8,7 +8,7 @@ import me.lauriichan.laylib.json.JsonArray;
 import me.lauriichan.laylib.json.JsonObject;
 import me.lauriichan.laylib.json.JsonType;
 
-final class JsonNbtHelper {
+public final class JsonNbtHelper {
 
     private static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
     private static final int[] EMPTY_INT_ARRAY = new int[0];
@@ -199,7 +199,7 @@ final class JsonNbtHelper {
         return tag;
     }
 
-    private static byte[] asByteArray(JsonArray array) {
+    public static byte[] asByteArray(JsonArray array) {
         if (array.isEmpty()) {
             return EMPTY_BYTE_ARRAY;
         }
@@ -222,7 +222,7 @@ final class JsonNbtHelper {
         return output;
     }
 
-    private static int[] asIntArray(JsonArray array) {
+    public static int[] asIntArray(JsonArray array) {
         if (array.isEmpty()) {
             return EMPTY_INT_ARRAY;
         }
@@ -245,7 +245,7 @@ final class JsonNbtHelper {
         return output;
     }
 
-    private static long[] asLongArray(JsonArray array) {
+    public static long[] asLongArray(JsonArray array) {
         if (array.isEmpty()) {
             return EMPTY_LONG_ARRAY;
         }
@@ -364,6 +364,30 @@ final class JsonNbtHelper {
         object.put("list", output);
         return object;
     }
+    
+    public static JsonArray asJsonArray(byte[] array) {
+        JsonArray output = new JsonArray();
+        for (byte value : array) {
+            output.add(IJson.of(value));
+        }
+        return output;
+    }
+    
+    public static JsonArray asJsonArray(int[] array) {
+        JsonArray output = new JsonArray();
+        for (int value : array) {
+            output.add(IJson.of(value));
+        }
+        return output;
+    }
+    
+    public static JsonArray asJsonArray(long[] array) {
+        JsonArray output = new JsonArray();
+        for (long value : array) {
+            output.add(IJson.of(value));
+        }
+        return output;
+    }
 
     private static JsonObject asJson(byte value) {
         JsonObject object = new JsonObject();
@@ -411,11 +435,7 @@ final class JsonNbtHelper {
         JsonObject object = new JsonObject();
         object.put("type", TagType.BYTE.name());
         object.put("array", true);
-        JsonArray output = new JsonArray();
-        for (byte value : array) {
-            output.add(IJson.of(value));
-        }
-        object.put("list", output);
+        object.put("list", asJsonArray(array));
         return object;
     }
 
@@ -423,11 +443,7 @@ final class JsonNbtHelper {
         JsonObject object = new JsonObject();
         object.put("type", TagType.INT.name());
         object.put("array", true);
-        JsonArray output = new JsonArray();
-        for (int value : array) {
-            output.add(IJson.of(value));
-        }
-        object.put("list", output);
+        object.put("list", asJsonArray(array));
         return object;
     }
 
@@ -435,11 +451,7 @@ final class JsonNbtHelper {
         JsonObject object = new JsonObject();
         object.put("type", TagType.LONG.name());
         object.put("array", true);
-        JsonArray output = new JsonArray();
-        for (long value : array) {
-            output.add(IJson.of(value));
-        }
-        object.put("list", output);
+        object.put("list", asJsonArray(array));
         return object;
     }
 

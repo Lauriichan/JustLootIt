@@ -1,12 +1,15 @@
 package me.lauriichan.spigot.justlootit.nms.v1_21_R2.nbt;
 
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 
 import me.lauriichan.spigot.justlootit.nms.nbt.ICompoundTag;
 import me.lauriichan.spigot.justlootit.nms.nbt.IListTag;
 import me.lauriichan.spigot.justlootit.nms.nbt.NbtHelper;
 import me.lauriichan.spigot.justlootit.nms.nbt.TagType;
 import me.lauriichan.spigot.justlootit.nms.v1_21_R2.io.ItemStackIO1_21_R2;
+import me.lauriichan.spigot.justlootit.nms.v1_21_R2.util.NmsHelper1_21_R2;
+import net.minecraft.nbt.CompoundTag;
 
 public final class NbtHelper1_21_R2 extends NbtHelper {
 
@@ -23,6 +26,19 @@ public final class NbtHelper1_21_R2 extends NbtHelper {
     @Override
     public ICompoundTag asTag(ItemStack itemStack) {
         return new CompoundTag1_21_R2(ItemStackIO1_21_R2.ITEM_STACK.asNbt(itemStack));
+    }
+
+    @Override
+    public ICompoundTag getCustomDataTag(ItemStack itemStack) {
+        ItemMeta meta = itemStack.getItemMeta();
+        if (meta == null) {
+            return null;
+        }
+        CompoundTag tag = NmsHelper1_21_R2.getCustomData(itemStack.getItemMeta());
+        if (tag == null) {
+            NmsHelper1_21_R2.setCustomData(meta, tag = new CompoundTag());
+        }
+        return new CompoundTag1_21_R2(tag);
     }
     
     @Override

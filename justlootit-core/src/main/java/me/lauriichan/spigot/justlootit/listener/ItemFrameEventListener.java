@@ -273,7 +273,7 @@ public class ItemFrameEventListener implements IListenerExtension {
                         Key.of("time", DataHelper.formTimeString(actor, duration)));
                     return;
                 }
-                final ItemStack itemStack = frame.getItem().clone();
+                final ItemStack itemStack = frame.generateItem(adapter, entity.getLocation());
                 if (!player.getInventory().addItem(itemStack).isEmpty()) {
                     player.getWorld().dropItemNaturally(entity.getLocation(), itemStack);
                 }

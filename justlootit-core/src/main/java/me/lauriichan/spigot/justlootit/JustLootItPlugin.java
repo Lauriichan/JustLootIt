@@ -49,6 +49,7 @@ import me.lauriichan.spigot.justlootit.convert.JustLootItConverter;
 import me.lauriichan.spigot.justlootit.data.CacheLookupTable;
 import me.lauriichan.spigot.justlootit.data.CachedInventory;
 import me.lauriichan.spigot.justlootit.data.CompatibilityContainer;
+import me.lauriichan.spigot.justlootit.data.CustomContainer;
 import me.lauriichan.spigot.justlootit.data.FrameContainer;
 import me.lauriichan.spigot.justlootit.data.StaticContainer;
 import me.lauriichan.spigot.justlootit.data.VanillaContainer;
@@ -256,6 +257,7 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         registry.registerArgumentType(RefreshGroupArgument.class);
         registry.registerArgumentType(OfflinePlayerArgument.class);
         registry.registerArgumentType(NamespacedKeyArgument.class);
+        registry.registerArgumentType(CustomLootTableArgument.class);
 
         // Register providers
         registry.setProvider(new PluginProvider(this));
@@ -332,6 +334,7 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         // Register level storage adapters
         levelStorageRegistry.register(CompatibilityContainer.ADAPTER);
         levelStorageRegistry.register(VanillaContainer.ADAPTER);
+        levelStorageRegistry.register(CustomContainer.ADAPTER);
         levelStorageRegistry.register(StaticContainer.ADAPTER);
         levelStorageRegistry.register(FrameContainer.ADAPTER);
 

@@ -16,6 +16,8 @@ public abstract class NbtHelper {
      */
 
     public abstract ICompoundTag asTag(ItemStack itemStack);
+    
+    public abstract ICompoundTag getCustomDataTag(ItemStack itemStack);
 
     public final ICompoundTag asCompoundTag(JsonObject json) {
         return JsonNbtHelper.asCompoundTag(this, json);

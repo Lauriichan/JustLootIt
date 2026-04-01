@@ -1,5 +1,6 @@
 package me.lauriichan.spigot.justlootit.data;
 
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
@@ -9,10 +10,12 @@ import me.lauriichan.minecraft.pluginbase.inventory.item.ItemEditor;
 import me.lauriichan.spigot.justlootit.JustLootItConstant;
 import me.lauriichan.spigot.justlootit.config.world.WorldConfig;
 import me.lauriichan.spigot.justlootit.data.io.DataIO;
+import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.nms.io.IOHandler;
 import me.lauriichan.spigot.justlootit.nms.util.RegistryUtil;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapter;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapterRegistry;
+import me.lauriichan.spigot.justlootit.util.BlockUtil;
 
 public final class FrameContainer extends Container {
 
@@ -67,6 +70,10 @@ public final class FrameContainer extends Container {
 
     public ItemStack getItem() {
         return item;
+    }
+
+    public ItemStack generateItem(PlayerAdapter player, Location location) {
+        return lootModifications.applyModifications(this, player, location, item.clone(), null, generateSeed(location.getWorld(), player, BlockUtil.getSeed(location)));
     }
 
     @Override

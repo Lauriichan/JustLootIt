@@ -11,11 +11,11 @@ import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.compatibility.provider.CompatDependency;
 
 @Extension
-public final class CompatbilityListener implements IListenerExtension {
+public final class CompatibilityListener implements IListenerExtension {
 
     private final JustLootItPlugin plugin;
 
-    public CompatbilityListener(final JustLootItPlugin plugin) {
+    public CompatibilityListener(final JustLootItPlugin plugin) {
         this.plugin = plugin;
     }
 

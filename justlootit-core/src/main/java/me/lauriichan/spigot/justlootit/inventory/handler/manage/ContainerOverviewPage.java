@@ -60,6 +60,9 @@ public final class ContainerOverviewPage extends ContainerPage {
         case VANILLA:
             onVanillaContainer((VanillaContainer) container, inventory, actor);
             break;
+        case CUSTOM:
+            onCustomContainer((CustomContainer) container, inventory, actor);
+            break;
         case COMPATIBILITY:
             onCompatibilityContainer((CompatibilityContainer) container, inventory, actor);
             break;
@@ -101,6 +104,14 @@ public final class ContainerOverviewPage extends ContainerPage {
         inventory.set(2, 1, ItemEditor.ofHead(Textures.GEODE_BLANK)
             .setName(actor.getTranslatedMessageAsString(UIInventoryNames.CONTAINER_MANAGE_PAGE_OVERVIEW_ITEM_CONTAINER_INFO_VANILLA_NAME))
             .lore().set(actor.getTranslatedMessageAsString(UIInventoryNames.CONTAINER_MANAGE_PAGE_OVERVIEW_ITEM_CONTAINER_INFO_VANILLA_LORE,
+                Key.of("seed", container.getSeed()), Key.of("lootTable", container.getLootTableKey())).split("\n"))
+            .apply());
+    }
+
+    private void onCustomContainer(CustomContainer container, IGuiInventory inventory, Actor<Player> actor) {
+        inventory.set(2, 1, ItemEditor.ofHead(Textures.GEODE_BLANK)
+            .setName(actor.getTranslatedMessageAsString(UIInventoryNames.CONTAINER_MANAGE_PAGE_OVERVIEW_ITEM_CONTAINER_INFO_CUSTOM_NAME))
+            .lore().set(actor.getTranslatedMessageAsString(UIInventoryNames.CONTAINER_MANAGE_PAGE_OVERVIEW_ITEM_CONTAINER_INFO_CUSTOM_LORE,
                 Key.of("seed", container.getSeed()), Key.of("lootTable", container.getLootTableKey())).split("\n"))
             .apply());
     }

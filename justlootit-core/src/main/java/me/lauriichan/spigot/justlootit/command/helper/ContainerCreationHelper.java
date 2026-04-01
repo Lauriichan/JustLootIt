@@ -17,9 +17,12 @@ import me.lauriichan.laylib.command.Actor;
 import me.lauriichan.laylib.localization.Key;
 import me.lauriichan.spigot.justlootit.JustLootItAccess;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
+import me.lauriichan.spigot.justlootit.command.argument.CustomLootTableArgument;
 import me.lauriichan.spigot.justlootit.command.argument.LootTableArgument;
+import me.lauriichan.spigot.justlootit.config.data.CustomLootTable;
 import me.lauriichan.spigot.justlootit.data.Container;
 import me.lauriichan.spigot.justlootit.data.ContainerType;
+import me.lauriichan.spigot.justlootit.data.CustomContainer;
 import me.lauriichan.spigot.justlootit.data.FrameContainer;
 import me.lauriichan.spigot.justlootit.data.StaticContainer;
 import me.lauriichan.spigot.justlootit.data.VanillaContainer;
@@ -155,11 +158,11 @@ public final class ContainerCreationHelper {
                     }
                     plugin.inputProvider().getStringInput(actor, actor.getTranslatedMessageAsString(Messages.INPUT_PROMPT_LOOTTABLE_KEY),
                         actor.getTranslatedMessageAsString(Messages.INPUT_RETRY_LOOTTABLE_KEY),
-                        (str) -> LootTableArgument.isLootTable(plugin.versionHelper(), str), (a2, rawLootTable) -> {
+                        (str) -> LootTableArgument.isLootTable(plugin, str), (a2, rawLootTable) -> {
                             if (rawLootTable == null) {
                                 return;
                             }
-                            LootTable lootTable = LootTableArgument.parseLootTable(plugin.versionHelper(), rawLootTable);
+                            LootTable lootTable = LootTableArgument.parseLootTable(plugin, rawLootTable);
                             plugin.scheduler().syncEntity(entity, () -> {
                                 if (entity.isDead()) {
                                     actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_CHANGED_ENTITY,
@@ -196,11 +199,11 @@ public final class ContainerCreationHelper {
                     }
                     plugin.inputProvider().getStringInput(actor, actor.getTranslatedMessageAsString(Messages.INPUT_PROMPT_LOOTTABLE_KEY),
                         actor.getTranslatedMessageAsString(Messages.INPUT_RETRY_LOOTTABLE_KEY),
-                        (str) -> LootTableArgument.isLootTable(plugin.versionHelper(), str), (a2, rawLootTable) -> {
+                        (str) -> LootTableArgument.isLootTable(plugin, str), (a2, rawLootTable) -> {
                             if (rawLootTable == null) {
                                 return;
                             }
-                            LootTable lootTable = LootTableArgument.parseLootTable(plugin.versionHelper(), rawLootTable);
+                            LootTable lootTable = LootTableArgument.parseLootTable(plugin, rawLootTable);
                             plugin.scheduler().syncRegional(location, () -> {
                                 if (!(block.getBlock().getState() instanceof org.bukkit.block.Container blockContainer)) {
                                     actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_CHANGED_BLOCK,
@@ -254,5 +257,91 @@ public final class ContainerCreationHelper {
                 block.update(false, false);
                 block.getInventory().clear();
             });
+        });
+
+    public static final EntityContainerCreator ENTITY_CUSTOM = new EntityContainerCreator(CustomContainer.class,
+        (plugin, actor, location, entity, creator) -> {
+            PersistentDataContainer dataContainer = entity.getPersistentDataContainer();
+            if (JustLootItAccess.hasIdentity(dataContainer)) {
+                actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_ALREADY_CONTAINER_ENTITY, Key.of("x", location.getBlockX()),
+                    Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()));
+                return;
+            }
+            plugin.inputProvider().getLongInput(actor, actor.getTranslatedMessageAsString(Messages.INPUT_PROMPT_LOOTTABLE_SEED),
+                actor.getTranslatedMessageAsString(Messages.INPUT_RETRY_LOOTTABLE_SEED), (a1, seed) -> {
+                    if (seed == null) {
+                        return;
+                    }
+                    plugin.inputProvider().getStringInput(actor, actor.getTranslatedMessageAsString(Messages.INPUT_PROMPT_LOOTTABLE_KEY),
+                        actor.getTranslatedMessageAsString(Messages.INPUT_RETRY_LOOTTABLE_KEY),
+                        (str) -> CustomLootTableArgument.isLootTable(plugin, str), (a2, rawLootTable) -> {
+                            if (rawLootTable == null) {
+                                return;
+                            }
+                            CustomLootTable lootTable = CustomLootTableArgument.parseLootTable(plugin, rawLootTable);
+                            plugin.scheduler().syncEntity(entity, () -> {
+                                if (entity.isDead()) {
+                                    actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_CHANGED_ENTITY,
+                                        Key.of("x", location.getBlockX()), Key.of("y", location.getBlockY()),
+                                        Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()));
+                                    return;
+                                }
+                                if (JustLootItAccess.hasIdentity(dataContainer)) {
+                                    actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_ALREADY_CONTAINER_ENTITY,
+                                        Key.of("x", location.getBlockX()), Key.of("y", location.getBlockY()),
+                                        Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()));
+                                    return;
+                                }
+                                creator.accept(() -> new CustomContainer(lootTable.getKey(), seed), id -> {
+                                    JustLootItAccess.setIdentity(dataContainer, id);
+                                    ((InventoryHolder) entity).getInventory().clear();
+                                });
+                            });
+                        });
+                });
+        }, EntityUtil::isSupportedEntity);
+    public static final BlockContainerCreator BLOCK_CUSTOM = new BlockContainerCreator(CustomContainer.class,
+        (plugin, actor, location, block, creator) -> {
+            PersistentDataContainer blockData = block.getPersistentDataContainer();
+            if (JustLootItAccess.hasIdentity(blockData) || JustLootItAccess.hasAnyOffset(blockData)) {
+                actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_ALREADY_CONTAINER_BLOCK, Key.of("x", location.getBlockX()),
+                    Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()));
+                return;
+            }
+            plugin.inputProvider().getLongInput(actor, actor.getTranslatedMessageAsString(Messages.INPUT_PROMPT_LOOTTABLE_SEED),
+                actor.getTranslatedMessageAsString(Messages.INPUT_RETRY_LOOTTABLE_SEED), (a1, seed) -> {
+                    if (seed == null) {
+                        return;
+                    }
+                    plugin.inputProvider().getStringInput(actor, actor.getTranslatedMessageAsString(Messages.INPUT_PROMPT_LOOTTABLE_KEY),
+                        actor.getTranslatedMessageAsString(Messages.INPUT_RETRY_LOOTTABLE_KEY),
+                        (str) -> CustomLootTableArgument.isLootTable(plugin, str), (a2, rawLootTable) -> {
+                            if (rawLootTable == null) {
+                                return;
+                            }
+                            CustomLootTable lootTable = CustomLootTableArgument.parseLootTable(plugin, rawLootTable);
+                            plugin.scheduler().syncRegional(location, () -> {
+                                if (!(block.getBlock().getState() instanceof org.bukkit.block.Container blockContainer)) {
+                                    actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_CHANGED_BLOCK,
+                                        Key.of("x", location.getBlockX()), Key.of("y", location.getBlockY()),
+                                        Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()));
+                                    return;
+                                }
+                                PersistentDataContainer dataContainer = blockContainer.getPersistentDataContainer();
+                                if (JustLootItAccess.hasIdentity(dataContainer)) {
+                                    actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_ALREADY_CONTAINER_BLOCK,
+                                        Key.of("x", location.getBlockX()), Key.of("y", location.getBlockY()),
+                                        Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()));
+                                    return;
+                                }
+                                creator.accept(() -> new CustomContainer(lootTable.getKey(), seed), id -> {
+                                    BlockUtil.setContainerOffsetToNearbyChest(blockContainer);
+                                    JustLootItAccess.setIdentity(dataContainer, id);
+                                    blockContainer.update(false, false);
+                                    blockContainer.getInventory().clear();
+                                });
+                            });
+                        });
+                });
         });
 }

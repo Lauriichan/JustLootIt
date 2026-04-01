@@ -1,6 +1,7 @@
 package me.lauriichan.spigot.justlootit.compatibility.data.betterstructures;
 
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 
 import io.netty.buffer.ByteBuf;
 import me.lauriichan.minecraft.pluginbase.extension.Extension;
@@ -9,6 +10,8 @@ import me.lauriichan.spigot.justlootit.data.io.BufIO;
 
 @Extension
 public class BetterStructuresDataExtension extends CompatibilityDataExtension<IBetterStructuresData> {
+
+    private static final NamespacedKey GENERIC = NamespacedKey.fromString("betterstructures:justlootit/generic");
 
     public BetterStructuresDataExtension() {
         super("BetterStructures", IBetterStructuresData.class);
@@ -34,13 +37,21 @@ public class BetterStructuresDataExtension extends CompatibilityDataExtension<IB
         switch (version) {
         case 0:
             String fileName_v1 = BufIO.readString(buffer);
-            return new BetterStructuresDataV1(this, fileName_v1);
+            return new BetterStructuresDataV1(this, NamespacedKey.fromString("betterstructures:" + fileName_v1), fileName_v1);
         }
         return null;
     }
 
     public IBetterStructuresData create(String fileName) {
-        return new BetterStructuresDataV1(this, fileName);
+        return new BetterStructuresDataV1(this, createDataId(fileName), fileName);
+    }
+
+    private NamespacedKey createDataId(String name) {
+        try {
+            return NamespacedKey.fromString("betterstructures:" + name);
+        } catch (IllegalArgumentException iae) {
+            return GENERIC;
+        }
     }
 
 }
