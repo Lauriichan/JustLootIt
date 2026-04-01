@@ -11,6 +11,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import me.lauriichan.spigot.justlootit.loot.ILootFilter;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
+import me.lauriichan.spigot.justlootit.nms.util.Ref;
 
 public record LoreRegexFilter(String stringPattern, Predicate<String> predicate, boolean withColors) implements ILootFilter {
 
@@ -19,11 +20,8 @@ public record LoreRegexFilter(String stringPattern, Predicate<String> predicate,
     }
 
     @Override
-    public boolean includes(VersionHandler versionHandler, Random random, ItemStack itemStack) {
-        if (!itemStack.hasItemMeta()) {
-            return false;
-        }
-        ItemMeta itemMeta = itemStack.getItemMeta();
+    public boolean includes(VersionHandler versionHandler, Random random, Ref<ItemStack> itemRef, Ref<ItemMeta> metaRef) {
+        ItemMeta itemMeta = metaRef.get();
         if (!itemMeta.hasLore()) {
             return false;
         }

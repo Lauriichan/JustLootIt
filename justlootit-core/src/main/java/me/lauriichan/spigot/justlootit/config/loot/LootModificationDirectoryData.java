@@ -6,6 +6,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.lauriichan.laylib.json.IJson;
 import me.lauriichan.laylib.json.JsonObject;
 import me.lauriichan.laylib.json.JsonType;
@@ -22,6 +23,9 @@ import me.lauriichan.spigot.justlootit.config.io.JsonIO;
 import me.lauriichan.spigot.justlootit.data.Container;
 import me.lauriichan.spigot.justlootit.loot.ILootCondition;
 import me.lauriichan.spigot.justlootit.loot.ILootModifier;
+import me.lauriichan.spigot.justlootit.loot.condition.LootTableCondition;
+import me.lauriichan.spigot.justlootit.loot.condition.WorldRegexCondition;
+import me.lauriichan.spigot.justlootit.loot.modifier.SetAmountModifier;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 
 @Extension
@@ -33,6 +37,25 @@ public class LootModificationDirectoryData extends DirectoryDataExtension<IJson<
 
     public LootModificationDirectoryData(JustLootItPlugin plugin) {
         this.ioManager = plugin.ioManager();
+        populateExample(plugin);
+    }
+
+    private void populateExample(JustLootItPlugin plugin) {
+        JsonObject object = new JsonObject();
+        ObjectArrayList<ILootCondition> conditions = new ObjectArrayList<>();
+        // This condition is invalid as the predicate is not set but for serialization it is enough
+        conditions.add(new WorldRegexCondition("world", null));
+        conditions.add(new LootTableCondition(NamespacedKey.fromString("iris:justlootit/v1")));
+        object.put("condition", JsonIO.serialize(ioManager, conditions));
+        object.put("modifier", JsonIO.serialize(ioManager, new SetAmountModifier(2, 10)));
+        FileData<IJson<?>> wrapper = new FileData<>(null, null);
+        wrapper.value(object);
+        wrapper.version(0);
+        try {
+            handler().save(wrapper, plugin.resource("data://loot/example_loot_table.json"));
+        } catch (Exception e) {
+            plugin.logger().warning("Failed to write loot table example", e);
+        }
     }
 
     @Override
@@ -96,7 +119,8 @@ public class LootModificationDirectoryData extends DirectoryDataExtension<IJson<
         object.put("modifier", JsonIO.serialize(ioManager, modification.modifier()));
     }
 
-    public void applyModifications(Container container, PlayerAdapter player, Location location, Inventory inventory, NamespacedKey lootTableKey, long seed) {
+    public void applyModifications(Container container, PlayerAdapter player, Location location, Inventory inventory,
+        NamespacedKey lootTableKey, long seed) {
         for (LootModification modification : modifications.values()) {
             if (modification.isApplicable(container, player, location, lootTableKey)) {
                 modification.apply(player.versionHandler(), inventory, seed);
@@ -104,7 +128,8 @@ public class LootModificationDirectoryData extends DirectoryDataExtension<IJson<
         }
     }
 
-    public ItemStack applyModifications(Container container, PlayerAdapter player, Location location, ItemStack itemStack, NamespacedKey lootTableKey, long seed) {
+    public ItemStack applyModifications(Container container, PlayerAdapter player, Location location, ItemStack itemStack,
+        NamespacedKey lootTableKey, long seed) {
         for (LootModification modification : modifications.values()) {
             if (modification.isApplicable(container, player, location, lootTableKey)) {
                 itemStack = modification.apply(player.versionHandler(), itemStack, seed);
