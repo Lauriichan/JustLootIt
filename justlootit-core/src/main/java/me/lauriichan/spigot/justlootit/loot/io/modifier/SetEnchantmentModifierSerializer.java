@@ -10,28 +10,28 @@ import me.lauriichan.minecraft.pluginbase.extension.Extension;
 import me.lauriichan.minecraft.pluginbase.io.HandlerId;
 import me.lauriichan.minecraft.pluginbase.io.serialization.json.JsonSerializationHandler;
 import me.lauriichan.spigot.justlootit.loot.io.LootIO;
-import me.lauriichan.spigot.justlootit.loot.modifier.SetEnchantmentFunc;
+import me.lauriichan.spigot.justlootit.loot.modifier.SetEnchantmentModifier;
 
 @Extension
-@HandlerId("loot/modifier_func/set_enchantment")
-public class SetEnchantmentFuncSerializer extends JsonSerializationHandler<SetEnchantmentFunc> {
+@HandlerId("loot/modifier/set_enchantment")
+public class SetEnchantmentModifierSerializer extends JsonSerializationHandler<SetEnchantmentModifier> {
 
     private final Registry<Enchantment> registry;
     
-    public SetEnchantmentFuncSerializer(BasePlugin<?> plugin) {
-        super(plugin, SetEnchantmentFunc.class);
+    public SetEnchantmentModifierSerializer(BasePlugin<?> plugin) {
+        super(plugin, SetEnchantmentModifier.class);
         this.registry = Bukkit.getRegistry(Enchantment.class);
     }
 
     @Override
-    public SetEnchantmentFunc deserialize(JsonObject buffer) {
+    public SetEnchantmentModifier deserialize(JsonObject buffer) {
         Enchantment enchantment = LootIO.readRegistry(registry, buffer, "enchantment", null);
         int level = buffer.getAsInt("level", 1);
-        return new SetEnchantmentFunc(enchantment, level);
+        return new SetEnchantmentModifier(enchantment, level);
     }
 
     @Override
-    protected void serialize(JsonObject buffer, SetEnchantmentFunc value) {
+    protected void serialize(JsonObject buffer, SetEnchantmentModifier value) {
         LootIO.writeRegistry(buffer, "enchantment", value.enchantment());
         buffer.put("level", value.level());
     }

@@ -1,5 +1,6 @@
 package me.lauriichan.spigot.justlootit.compatibility.data.iris;
 
+import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 
 import me.lauriichan.spigot.justlootit.compatibility.data.CompatibilityDataExtension;
@@ -8,6 +9,8 @@ import me.lauriichan.spigot.justlootit.compatibility.provider.iris.IIrisAccess;
 import me.lauriichan.spigot.justlootit.compatibility.provider.iris.IIrisProvider;
 
 public final class IrisDataV1 implements IIrisData {
+    
+    private static final NamespacedKey IRIS_V1 = NamespacedKey.fromString("iris:justlootit/v1");
 
     private final CompatibilityDataExtension<?> extension;
     private final IIrisTableKey[] keys;
@@ -24,6 +27,11 @@ public final class IrisDataV1 implements IIrisData {
     @Override
     public CompatibilityDataExtension<?> extension() {
         return extension;
+    }
+
+    @Override
+    public NamespacedKey dataId() {
+        return IRIS_V1;
     }
 
     @Override

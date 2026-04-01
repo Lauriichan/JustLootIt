@@ -5,7 +5,6 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import org.bukkit.Location;
-import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.ItemFrame;
 import org.bukkit.inventory.InventoryHolder;
@@ -268,7 +267,6 @@ public final class ContainerCreationHelper {
                     Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()));
                 return;
             }
-            World world = location.getWorld();
             plugin.inputProvider().getLongInput(actor, actor.getTranslatedMessageAsString(Messages.INPUT_PROMPT_LOOTTABLE_SEED),
                 actor.getTranslatedMessageAsString(Messages.INPUT_RETRY_LOOTTABLE_SEED), (a1, seed) -> {
                     if (seed == null) {
@@ -276,11 +274,11 @@ public final class ContainerCreationHelper {
                     }
                     plugin.inputProvider().getStringInput(actor, actor.getTranslatedMessageAsString(Messages.INPUT_PROMPT_LOOTTABLE_KEY),
                         actor.getTranslatedMessageAsString(Messages.INPUT_RETRY_LOOTTABLE_KEY),
-                        (str) -> CustomLootTableArgument.isLootTable(plugin, world, str), (a2, rawLootTable) -> {
+                        (str) -> CustomLootTableArgument.isLootTable(plugin, str), (a2, rawLootTable) -> {
                             if (rawLootTable == null) {
                                 return;
                             }
-                            CustomLootTable lootTable = CustomLootTableArgument.parseLootTable(plugin, world, rawLootTable);
+                            CustomLootTable lootTable = CustomLootTableArgument.parseLootTable(plugin, rawLootTable);
                             plugin.scheduler().syncEntity(entity, () -> {
                                 if (entity.isDead()) {
                                     actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_CHANGED_ENTITY,
@@ -294,7 +292,7 @@ public final class ContainerCreationHelper {
                                         Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()));
                                     return;
                                 }
-                                creator.accept(() -> new CustomContainer(plugin.configManager(), lootTable.getKey(), seed), id -> {
+                                creator.accept(() -> new CustomContainer(lootTable.getKey(), seed), id -> {
                                     JustLootItAccess.setIdentity(dataContainer, id);
                                     ((InventoryHolder) entity).getInventory().clear();
                                 });
@@ -310,7 +308,6 @@ public final class ContainerCreationHelper {
                     Key.of("y", location.getBlockY()), Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()));
                 return;
             }
-            World world = location.getWorld();
             plugin.inputProvider().getLongInput(actor, actor.getTranslatedMessageAsString(Messages.INPUT_PROMPT_LOOTTABLE_SEED),
                 actor.getTranslatedMessageAsString(Messages.INPUT_RETRY_LOOTTABLE_SEED), (a1, seed) -> {
                     if (seed == null) {
@@ -318,11 +315,11 @@ public final class ContainerCreationHelper {
                     }
                     plugin.inputProvider().getStringInput(actor, actor.getTranslatedMessageAsString(Messages.INPUT_PROMPT_LOOTTABLE_KEY),
                         actor.getTranslatedMessageAsString(Messages.INPUT_RETRY_LOOTTABLE_KEY),
-                        (str) -> CustomLootTableArgument.isLootTable(plugin, world, str), (a2, rawLootTable) -> {
+                        (str) -> CustomLootTableArgument.isLootTable(plugin, str), (a2, rawLootTable) -> {
                             if (rawLootTable == null) {
                                 return;
                             }
-                            CustomLootTable lootTable = CustomLootTableArgument.parseLootTable(plugin, world, rawLootTable);
+                            CustomLootTable lootTable = CustomLootTableArgument.parseLootTable(plugin, rawLootTable);
                             plugin.scheduler().syncRegional(location, () -> {
                                 if (!(block.getBlock().getState() instanceof org.bukkit.block.Container blockContainer)) {
                                     actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_CREATE_CHANGED_BLOCK,
@@ -337,7 +334,7 @@ public final class ContainerCreationHelper {
                                         Key.of("z", location.getBlockZ()), Key.of("world", location.getWorld()));
                                     return;
                                 }
-                                creator.accept(() -> new CustomContainer(plugin.configManager(), lootTable.getKey(), seed), id -> {
+                                creator.accept(() -> new CustomContainer(lootTable.getKey(), seed), id -> {
                                     BlockUtil.setContainerOffsetToNearbyChest(blockContainer);
                                     JustLootItAccess.setIdentity(dataContainer, id);
                                     blockContainer.update(false, false);

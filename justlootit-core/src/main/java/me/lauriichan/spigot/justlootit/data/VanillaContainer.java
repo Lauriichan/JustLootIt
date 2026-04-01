@@ -27,11 +27,12 @@ import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoBlockEntity;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoEntity;
 import me.lauriichan.spigot.justlootit.nms.nbt.ICompoundTag;
+import me.lauriichan.spigot.justlootit.nms.util.RegistryUtil;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapter;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapterRegistry;
 
 public final class VanillaContainer extends Container implements IInventoryContainer {
-    
+
     public static final record VanillaResult(LootTable lootTable, long seed) implements IResult {}
 
     public static final StorageAdapter<VanillaContainer> ADAPTER = new BaseAdapter<>(VanillaContainer.class, 16) {
@@ -42,7 +43,8 @@ public final class VanillaContainer extends Container implements IInventoryConta
         }
 
         @Override
-        protected VanillaContainer deserializeSpecial(final StorageAdapterRegistry registry, final ContainerData data, final ByteBuf buffer) {
+        protected VanillaContainer deserializeSpecial(final StorageAdapterRegistry registry, final ContainerData data,
+            final ByteBuf buffer) {
             final NamespacedKey key = DataIO.NAMESPACED_KEY.deserialize(buffer).value();
             final long seed = buffer.readLong();
             return new VanillaContainer(data, key, seed);
@@ -53,7 +55,7 @@ public final class VanillaContainer extends Container implements IInventoryConta
     private long seed;
 
     public VanillaContainer(final LootTable lootTable, final long seed) {
-        this(lootTable.getKey(), seed);
+        this(RegistryUtil.getKey(lootTable), seed);
     }
 
     public VanillaContainer(final NamespacedKey lootTableKey, final long seed) {
@@ -70,7 +72,7 @@ public final class VanillaContainer extends Container implements IInventoryConta
     public NamespacedKey getLootTableKey() {
         return lootTableKey;
     }
-    
+
     public void setLootTableKey(final NamespacedKey lootTableKey) {
         this.lootTableKey = Objects.requireNonNull(lootTableKey, "LootTable key can't be null");
         setDirty();
@@ -93,7 +95,7 @@ public final class VanillaContainer extends Container implements IInventoryConta
         this.seed = seed;
         setDirty();
     }
-    
+
     @Override
     protected String containerBasedGroupId(WorldConfig worldConfig) {
         return worldConfig.getLootTableRefreshGroupId(lootTableKey);
@@ -105,14 +107,19 @@ public final class VanillaContainer extends Container implements IInventoryConta
         if (table == null) {
             ActorCapability.actor(player).sendTranslatedMessage(Messages.CONTAINER_VANILLA_LOOTTABLE_NOT_AVAILABLE,
                 Key.of("lootTable", getLootTableKey()));
-            return IResult.empty();
+            return IResult.failed();
         }
-        JLIPlayerVanillaLootGenerateEvent event = new JLIPlayerVanillaLootGenerateEvent((JustLootItPlugin) player.versionHandler().plugin(), player, getLootTable(), generateSeed(location.getWorld(), player, seed));
+        JLIPlayerVanillaLootGenerateEvent event = new JLIPlayerVanillaLootGenerateEvent((JustLootItPlugin) player.versionHandler().plugin(),
+            player, getLootTable(), generateSeed(location.getWorld(), player, seed));
         event.call().join();
+
         player.versionHandler().versionHelper().fill(inventory, player.asBukkit(), location, event.lootTable(), event.seed());
+
+        lootModifications.applyModifications(this, player, inventory, RegistryUtil.getKey(event.lootTable()), seed);
+
         return new VanillaResult(event.lootTable(), event.seed());
     }
-    
+
     @Override
     public void awaitProvidedEvent(PlayerAdapter player, IGuiInventory inventory, InventoryHolder entryHolder, Location entryLocation,
         IResult result) {
@@ -126,19 +133,19 @@ public final class VanillaContainer extends Container implements IInventoryConta
         new JLIPlayerVanillaLootProvidedEvent((JustLootItPlugin) player.versionHandler().plugin(), player, inventory, entryHolder,
             entryLocation, getLootTable(), seed).call().join();
     }
-    
+
     @Override
     public boolean canBeRestored() {
         return true;
     }
-    
+
     @Override
     public void restore(ISimpleLogger logger, VersionHandler versionHandler, ProtoBlockEntity entity) {
         ICompoundTag root = entity.getNbt();
         root.set("LootTable", lootTableKey.toString());
         root.set("LootTableSeed", seed);
     }
-    
+
     @Override
     public void restore(ISimpleLogger logger, VersionHandler versionHandler, ProtoEntity entity) {
         ICompoundTag root = entity.getNbt();

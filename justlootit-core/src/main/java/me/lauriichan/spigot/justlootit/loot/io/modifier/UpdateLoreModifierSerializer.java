@@ -14,18 +14,18 @@ import me.lauriichan.minecraft.pluginbase.io.serialization.json.JsonSerializatio
 import me.lauriichan.minecraft.pluginbase.io.serialization.json.KeyedJsonSerializationHandler;
 import me.lauriichan.spigot.justlootit.loot.io.LootIO;
 import me.lauriichan.spigot.justlootit.loot.modifier.InsertionMode;
-import me.lauriichan.spigot.justlootit.loot.modifier.UpdateLoreFunc;
+import me.lauriichan.spigot.justlootit.loot.modifier.UpdateLoreModifier;
 
 @Extension
-@HandlerId("loot/modifier_func/update_lore")
-public class UpdateLoreFuncSerializer extends JsonSerializationHandler<UpdateLoreFunc> {
+@HandlerId("loot/modifier/update_lore")
+public class UpdateLoreModifierSerializer extends JsonSerializationHandler<UpdateLoreModifier> {
 
-    public UpdateLoreFuncSerializer(BasePlugin<?> plugin) {
-        super(plugin, UpdateLoreFunc.class);
+    public UpdateLoreModifierSerializer(BasePlugin<?> plugin) {
+        super(plugin, UpdateLoreModifier.class);
     }
 
     @Override
-    public UpdateLoreFunc deserialize(JsonObject buffer) {
+    public UpdateLoreModifier deserialize(JsonObject buffer) {
         ObjectList<String> lines = ObjectLists.unmodifiable(buffer.getAsArray("lines").stream().map(json -> {
             JsonString str = KeyedJsonSerializationHandler.STRING.from(json);
             if (str == null) {
@@ -34,11 +34,11 @@ public class UpdateLoreFuncSerializer extends JsonSerializationHandler<UpdateLor
             return str.value();
         }).filter(str -> str != null).collect(ObjectArrayList.toList()));
         InsertionMode insertionMode = LootIO.readInsertionMode(buffer, "insertion_mode");
-        return new UpdateLoreFunc(lines, insertionMode);
+        return new UpdateLoreModifier(lines, insertionMode);
     }
 
     @Override
-    protected void serialize(JsonObject buffer, UpdateLoreFunc value) {
+    protected void serialize(JsonObject buffer, UpdateLoreModifier value) {
         JsonArray array = new JsonArray();
         for (String str : value.lines()) {
             if (str.contains("\n")) {

@@ -25,6 +25,7 @@ import me.lauriichan.spigot.justlootit.nms.nbt.NbtHelper;
 import me.lauriichan.spigot.justlootit.nms.nbt.TagType;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapter;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapterRegistry;
+import me.lauriichan.spigot.justlootit.util.BlockUtil;
 import me.lauriichan.spigot.justlootit.util.EntityUtil;
 import me.lauriichan.spigot.justlootit.util.InventoryUtil;
 
@@ -67,7 +68,7 @@ public final class StaticContainer extends Container implements IInventoryContai
         super(data);
         this.items = items;
     }
-    
+
     @Override
     protected String containerBasedGroupId(WorldConfig worldConfig) {
         return worldConfig.getLootTableRefreshGroupId(JustLootItConstant.PLUGIN_NAMESPACE, JustLootItConstant.STATIC_CONTAINER_REFRESH_KEY);
@@ -167,6 +168,7 @@ public final class StaticContainer extends Container implements IInventoryContai
     @Override
     public void fillNoResult(final PlayerAdapter player, final InventoryHolder holder, final Location location, final Inventory inventory) {
         loadTo(inventory);
+        lootModifications.applyModifications(this, player, inventory, null, generateSeed(location.getWorld(), player, BlockUtil.getSeed(location)));
     }
 
     @Override
@@ -196,7 +198,7 @@ public final class StaticContainer extends Container implements IInventoryContai
             listTag.add(tag);
         }
     }
-    
+
     @Override
     public boolean canBeRestored() {
         return true;

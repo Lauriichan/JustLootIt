@@ -8,7 +8,7 @@ import me.lauriichan.minecraft.pluginbase.io.HandlerId;
 import me.lauriichan.minecraft.pluginbase.io.serialization.json.JsonSerializationHandler;
 import me.lauriichan.spigot.justlootit.config.io.JsonIO;
 import me.lauriichan.spigot.justlootit.loot.ILootItemProvider;
-import me.lauriichan.spigot.justlootit.loot.ILootModifierFunc;
+import me.lauriichan.spigot.justlootit.loot.ILootModifier;
 import me.lauriichan.spigot.justlootit.loot.provider.ModifiedItemProvider;
 
 @Extension
@@ -22,7 +22,7 @@ public class ModifiedItemProviderSerializer extends JsonSerializationHandler<Mod
     @Override
     public ModifiedItemProvider deserialize(JsonObject buffer) {
         ILootItemProvider provider = JsonIO.deserialize(ioManager, buffer.getAsObject("item_provider"), ILootItemProvider.class);
-        ObjectList<ILootModifierFunc> modifiers = JsonIO.deserialize(ioManager, buffer.getAsArray("modifiers"), ILootModifierFunc.class);
+        ObjectList<ILootModifier> modifiers = JsonIO.deserialize(ioManager, buffer.getAsArray("modifiers"), ILootModifier.class);
         return new ModifiedItemProvider(provider, modifiers);
     }
 

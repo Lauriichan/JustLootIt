@@ -8,7 +8,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.nms.util.Ref;
 
-public interface ILootModifierFunc {
+public interface ILootModifier {
     
     void modify(VersionHandler versionHandler, Random random, Ref<ItemStack> itemRef, Ref<ItemMeta> metaRef);
 

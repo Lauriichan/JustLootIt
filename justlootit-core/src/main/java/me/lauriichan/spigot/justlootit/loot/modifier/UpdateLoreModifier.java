@@ -5,32 +5,35 @@ import java.util.Random;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import me.lauriichan.minecraft.pluginbase.message.component.ComponentBuilder;
-import me.lauriichan.spigot.justlootit.loot.ILootModifierFunc;
+import me.lauriichan.spigot.justlootit.loot.ILootModifier;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.nms.util.Ref;
 
-public record UpdateNameFunc(String newNameText, InsertionMode insertionMode) implements ILootModifierFunc {
+public record UpdateLoreModifier(ObjectList<String> lines, InsertionMode insertionMode) implements ILootModifier {
 
     @Override
     public void modify(VersionHandler versionHandler, Random random, Ref<ItemStack> itemRef, Ref<ItemMeta> metaRef) {
         if (metaRef.isEmpty()) {
             return;
         }
-        String newName = ComponentBuilder.parse(newNameText).asLegacyText();
+        ObjectArrayList<String> newLore = lines.stream().map(line -> ComponentBuilder.parse(line).asLegacyText())
+            .collect(ObjectArrayList.toList());
         if (insertionMode == InsertionMode.SET) {
-            metaRef.get().setDisplayName(newName);
+            metaRef.get().setLore(newLore);
             return;
         }
         ItemMeta meta = metaRef.get();
         if (meta.hasLore()) {
             if (insertionMode == InsertionMode.PREPEND) {
-                newName = newName + meta.getDisplayName();
+                newLore.addAll(meta.getLore());
             } else {
-                newName = meta.getDisplayName() + newName;
+                newLore.addAll(0, meta.getLore());
             }
         }
-        meta.setDisplayName(newName);
+        meta.setLore(newLore);
     }
 
 }

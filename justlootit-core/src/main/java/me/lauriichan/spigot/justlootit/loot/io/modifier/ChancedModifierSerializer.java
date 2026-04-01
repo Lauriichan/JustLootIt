@@ -6,27 +6,27 @@ import me.lauriichan.minecraft.pluginbase.extension.Extension;
 import me.lauriichan.minecraft.pluginbase.io.HandlerId;
 import me.lauriichan.minecraft.pluginbase.io.serialization.json.JsonSerializationHandler;
 import me.lauriichan.spigot.justlootit.config.io.JsonIO;
-import me.lauriichan.spigot.justlootit.loot.ILootModifierFunc;
-import me.lauriichan.spigot.justlootit.loot.modifier.ChancedFunc;
+import me.lauriichan.spigot.justlootit.loot.ILootModifier;
+import me.lauriichan.spigot.justlootit.loot.modifier.ChancedModifier;
 
 @Extension
-@HandlerId("loot/modifier_func/chanced")
-public class ChancedFuncSerializer extends JsonSerializationHandler<ChancedFunc> {
+@HandlerId("loot/modifier/chanced")
+public class ChancedModifierSerializer extends JsonSerializationHandler<ChancedModifier> {
 
-    public ChancedFuncSerializer(BasePlugin<?> plugin) {
-        super(plugin, ChancedFunc.class);
+    public ChancedModifierSerializer(BasePlugin<?> plugin) {
+        super(plugin, ChancedModifier.class);
     }
 
     @Override
-    public ChancedFunc deserialize(JsonObject buffer) {
+    public ChancedModifier deserialize(JsonObject buffer) {
         int threshold = Math.max(0, buffer.getAsInt("threshold", 25));
         int bound = Math.max(threshold, buffer.getAsInt("upper_bound", 100));
-        return new ChancedFunc(JsonIO.deserialize(ioManager, buffer.getAsObject("function"), ILootModifierFunc.class), threshold, bound);
+        return new ChancedModifier(JsonIO.deserialize(ioManager, buffer.getAsObject("modifier"), ILootModifier.class), threshold, bound);
     }
 
     @Override
-    protected void serialize(JsonObject buffer, ChancedFunc value) {
-        buffer.put("function", JsonIO.serialize(ioManager, value.func()));
+    protected void serialize(JsonObject buffer, ChancedModifier value) {
+        buffer.put("modifier", JsonIO.serialize(ioManager, value.func()));
         buffer.put("threshold", value.threshold());
         buffer.put("upper_bound", value.bound());
     }

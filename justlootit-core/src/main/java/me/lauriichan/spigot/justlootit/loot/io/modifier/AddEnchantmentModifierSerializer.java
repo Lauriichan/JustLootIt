@@ -10,31 +10,31 @@ import me.lauriichan.minecraft.pluginbase.extension.Extension;
 import me.lauriichan.minecraft.pluginbase.io.HandlerId;
 import me.lauriichan.minecraft.pluginbase.io.serialization.json.JsonSerializationHandler;
 import me.lauriichan.spigot.justlootit.loot.io.LootIO;
-import me.lauriichan.spigot.justlootit.loot.modifier.AddEnchantmentFunc;
+import me.lauriichan.spigot.justlootit.loot.modifier.AddEnchantmentModifier;
 
 @Extension
-@HandlerId("loot/modifier_func/add_enchantment")
-public class AddEnchantmentFuncSerializer extends JsonSerializationHandler<AddEnchantmentFunc> {
+@HandlerId("loot/modifier/add_enchantment")
+public class AddEnchantmentModifierSerializer extends JsonSerializationHandler<AddEnchantmentModifier> {
 
     private final Registry<Enchantment> registry;
 
-    public AddEnchantmentFuncSerializer(BasePlugin<?> plugin) {
-        super(plugin, AddEnchantmentFunc.class);
+    public AddEnchantmentModifierSerializer(BasePlugin<?> plugin) {
+        super(plugin, AddEnchantmentModifier.class);
         this.registry = Bukkit.getRegistry(Enchantment.class);
     }
 
     @Override
-    public AddEnchantmentFunc deserialize(JsonObject buffer) {
+    public AddEnchantmentModifier deserialize(JsonObject buffer) {
         Enchantment enchantment = LootIO.readRegistry(registry, buffer, "enchantment", null);
         int level = buffer.getAsInt("level", 1);
         int minLevel = Math.max(0, buffer.getAsInt("min_level", 0));
         int maxLevel = Math.max(0, buffer.getAsInt("max_level", 255));
         boolean ignoreRestrictions = buffer.getAsBoolean("ignore_restrictions", false);
-        return new AddEnchantmentFunc(enchantment, level, Math.min(minLevel, maxLevel), Math.max(minLevel, maxLevel), ignoreRestrictions);
+        return new AddEnchantmentModifier(enchantment, level, Math.min(minLevel, maxLevel), Math.max(minLevel, maxLevel), ignoreRestrictions);
     }
 
     @Override
-    protected void serialize(JsonObject buffer, AddEnchantmentFunc value) {
+    protected void serialize(JsonObject buffer, AddEnchantmentModifier value) {
         LootIO.writeRegistry(buffer, "enchantment", value.enchantment());
         buffer.put("level", value.level());
         buffer.put("min_level", value.minLevel());

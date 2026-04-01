@@ -21,6 +21,7 @@ import me.lauriichan.spigot.justlootit.message.Messages;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapter;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapterRegistry;
+import me.lauriichan.spigot.justlootit.util.BlockUtil;
 
 public class CompatibilityContainer extends Container implements IInventoryContainer {
 
@@ -62,7 +63,7 @@ public class CompatibilityContainer extends Container implements IInventoryConta
         this.compatibilityData = Objects.requireNonNull(compatibilityData);
         this.refreshId = refreshId();
     }
-    
+
     private String refreshId() {
         if (compatibilityData.refreshContainerId() == null) {
             return null;
@@ -74,7 +75,7 @@ public class CompatibilityContainer extends Container implements IInventoryConta
     public ICompatibilityData compatibilityData() {
         return compatibilityData;
     }
-    
+
     @Override
     protected String containerBasedGroupId(WorldConfig worldConfig) {
         if (refreshId == null) {
@@ -130,6 +131,7 @@ public class CompatibilityContainer extends Container implements IInventoryConta
                 compatibilityData.extension().id(), compatibilityData.version());
             return IResult.failed();
         }
+        lootModifications.applyModifications(this, player, inventory, compatibilityData.dataId(), generateSeed(location.getWorld(), player, BlockUtil.getSeed(location)));
         return IResult.empty();
     }
 

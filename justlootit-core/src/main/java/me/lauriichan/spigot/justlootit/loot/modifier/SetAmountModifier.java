@@ -5,11 +5,11 @@ import java.util.Random;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import me.lauriichan.spigot.justlootit.loot.ILootModifierFunc;
+import me.lauriichan.spigot.justlootit.loot.ILootModifier;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.nms.util.Ref;
 
-public record SetAmountFunc(int min, int max) implements ILootModifierFunc {
+public record SetAmountModifier(int min, int max) implements ILootModifier {
 
     @Override
     public void modify(VersionHandler versionHandler, Random random, Ref<ItemStack> itemRef, Ref<ItemMeta> metaRef) {

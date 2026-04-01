@@ -11,29 +11,29 @@ import me.lauriichan.minecraft.pluginbase.io.serialization.json.JsonSerializatio
 import me.lauriichan.minecraft.pluginbase.io.serialization.json.KeyedJsonSerializationHandler;
 import me.lauriichan.spigot.justlootit.loot.io.LootIO;
 import me.lauriichan.spigot.justlootit.loot.modifier.InsertionMode;
-import me.lauriichan.spigot.justlootit.loot.modifier.UpdateNameFunc;
+import me.lauriichan.spigot.justlootit.loot.modifier.UpdateNameModifier;
 
 @Extension
-@HandlerId("loot/modifier_func/update_name")
-public class UpdateNameFuncSerializer extends JsonSerializationHandler<UpdateNameFunc> {
+@HandlerId("loot/modifier/update_name")
+public class UpdateNameModifierSerializer extends JsonSerializationHandler<UpdateNameModifier> {
 
-    public UpdateNameFuncSerializer(BasePlugin<?> plugin) {
-        super(plugin, UpdateNameFunc.class);
+    public UpdateNameModifierSerializer(BasePlugin<?> plugin) {
+        super(plugin, UpdateNameModifier.class);
     }
 
     @Override
-    public UpdateNameFunc deserialize(JsonObject buffer) {
+    public UpdateNameModifier deserialize(JsonObject buffer) {
         JsonString nameJson = KeyedJsonSerializationHandler.STRING.from(buffer.get("name"));
         String name = "N/A";
         if (nameJson != null) {
             name = nameJson.value();
         }
         InsertionMode insertionMode = LootIO.readInsertionMode(buffer, "insertion_mode");
-        return new UpdateNameFunc(name, insertionMode);
+        return new UpdateNameModifier(name, insertionMode);
     }
 
     @Override
-    protected void serialize(JsonObject buffer, UpdateNameFunc value) {
+    protected void serialize(JsonObject buffer, UpdateNameModifier value) {
         if (value.newNameText().contains("\n")) {
             JsonArray array = new JsonArray();
             for (String line : value.newNameText().split("\n")) {

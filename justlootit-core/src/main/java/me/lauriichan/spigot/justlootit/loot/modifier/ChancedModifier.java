@@ -2,24 +2,20 @@ package me.lauriichan.spigot.justlootit.loot.modifier;
 
 import java.util.Random;
 
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import me.lauriichan.spigot.justlootit.loot.ILootModifierFunc;
+import me.lauriichan.spigot.justlootit.loot.ILootModifier;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.nms.util.Ref;
 
-public record SetEnchantmentFunc(Enchantment enchantment, int level) implements ILootModifierFunc {
+public record ChancedModifier(ILootModifier func, int threshold, int bound) implements ILootModifier {
 
     @Override
     public void modify(VersionHandler versionHandler, Random random, Ref<ItemStack> itemRef, Ref<ItemMeta> metaRef) {
-        if (metaRef.isEmpty()) {
-            return;
+        if (random.nextInt(bound) <= threshold) {
+            func.modify(versionHandler, random, itemRef, metaRef);
         }
-        ItemMeta meta = metaRef.get();
-        meta.removeEnchant(enchantment);
-        meta.addEnchant(enchantment, level, true);
     }
 
 }

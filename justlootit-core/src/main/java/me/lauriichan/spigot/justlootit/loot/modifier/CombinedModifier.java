@@ -2,24 +2,20 @@ package me.lauriichan.spigot.justlootit.loot.modifier;
 
 import java.util.Random;
 
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import me.lauriichan.spigot.justlootit.loot.ILootModifierFunc;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import me.lauriichan.spigot.justlootit.loot.ILootModifier;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.nms.util.Ref;
 
-public record RemoveEnchantmentFunc(Enchantment enchantment) implements ILootModifierFunc {
+public record CombinedModifier(ObjectList<ILootModifier> functions) implements ILootModifier {
 
     @Override
     public void modify(VersionHandler versionHandler, Random random, Ref<ItemStack> itemRef, Ref<ItemMeta> metaRef) {
-        if (metaRef.isEmpty()) {
-            return;
-        }
-        ItemMeta meta = metaRef.get();
-        if (meta.hasEnchant(enchantment)) {
-            meta.removeEnchant(enchantment);
+        for (ILootModifier function : functions) {
+            function.modify(versionHandler, random, itemRef, metaRef);
         }
     }
 

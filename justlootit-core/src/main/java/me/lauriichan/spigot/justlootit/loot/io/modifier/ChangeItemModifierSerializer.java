@@ -7,24 +7,24 @@ import me.lauriichan.minecraft.pluginbase.io.serialization.json.KeyedJsonSeriali
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.config.io.JsonIO;
 import me.lauriichan.spigot.justlootit.loot.ILootItemProvider;
-import me.lauriichan.spigot.justlootit.loot.modifier.ChangeItemFunc;
+import me.lauriichan.spigot.justlootit.loot.modifier.ChangeItemModifier;
 
 @Extension
-@HandlerId("loot/modifier_func/change_item")
-public class ChangeItemFuncSerializer extends KeyedJsonSerializationHandler<JsonObject, ChangeItemFunc> {
+@HandlerId("loot/modifier/change_item")
+public class ChangeItemModifierSerializer extends KeyedJsonSerializationHandler<JsonObject, ChangeItemModifier> {
 
-    public ChangeItemFuncSerializer(JustLootItPlugin plugin) {
-        super(plugin, "item_provider", OBJECT, ChangeItemFunc.class);
+    public ChangeItemModifierSerializer(JustLootItPlugin plugin) {
+        super(plugin, "item_provider", OBJECT, ChangeItemModifier.class);
     }
 
     @Override
-    public JsonObject toJson(ChangeItemFunc value) {
+    public JsonObject toJson(ChangeItemModifier value) {
         return JsonIO.serialize(ioManager, value.provider());
     }
 
     @Override
-    public ChangeItemFunc fromJson(JsonObject json) {
-        return new ChangeItemFunc(JsonIO.deserialize(ioManager, json, ILootItemProvider.class));
+    public ChangeItemModifier fromJson(JsonObject json) {
+        return new ChangeItemModifier(JsonIO.deserialize(ioManager, json, ILootItemProvider.class));
     }
 
 }

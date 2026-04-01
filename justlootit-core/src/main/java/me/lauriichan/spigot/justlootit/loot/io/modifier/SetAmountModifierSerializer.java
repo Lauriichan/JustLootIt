@@ -5,25 +5,25 @@ import me.lauriichan.minecraft.pluginbase.BasePlugin;
 import me.lauriichan.minecraft.pluginbase.extension.Extension;
 import me.lauriichan.minecraft.pluginbase.io.HandlerId;
 import me.lauriichan.minecraft.pluginbase.io.serialization.json.JsonSerializationHandler;
-import me.lauriichan.spigot.justlootit.loot.modifier.SetAmountFunc;
+import me.lauriichan.spigot.justlootit.loot.modifier.SetAmountModifier;
 
 @Extension
-@HandlerId("loot/modifier_func/set_amount")
-public class SetAmountFuncSerializer extends JsonSerializationHandler<SetAmountFunc> {
+@HandlerId("loot/modifier/set_amount")
+public class SetAmountModifierSerializer extends JsonSerializationHandler<SetAmountModifier> {
 
-    public SetAmountFuncSerializer(BasePlugin<?> plugin) {
-        super(plugin, SetAmountFunc.class);
+    public SetAmountModifierSerializer(BasePlugin<?> plugin) {
+        super(plugin, SetAmountModifier.class);
     }
 
     @Override
-    public SetAmountFunc deserialize(JsonObject buffer) {
+    public SetAmountModifier deserialize(JsonObject buffer) {
         int min = buffer.getAsInt("min", 0);
         int max = buffer.getAsInt("max", 64);
-        return new SetAmountFunc(Math.min(min, max), Math.max(min, max));
+        return new SetAmountModifier(Math.min(min, max), Math.max(min, max));
     }
 
     @Override
-    protected void serialize(JsonObject buffer, SetAmountFunc value) {
+    protected void serialize(JsonObject buffer, SetAmountModifier value) {
         buffer.put("min", value.min());
         buffer.put("max", value.max());
     }
