@@ -102,7 +102,7 @@ public class CustomContainer extends Container implements IInventoryContainer {
         event.lootTable().fillInventory(inventory, new Random(event.seed()),
             new LootContext.Builder(location).luck(luck).killer(bktPlayer).build());
 
-        lootModifications.applyModifications(this, player, inventory, lootTableKey, seed);
+        lootModifications.applyModifications(this, player, location, inventory, lootTableKey, seed);
 
         return new VanillaResult(event.lootTable(), event.seed());
     }

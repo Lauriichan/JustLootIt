@@ -131,7 +131,7 @@ public class CompatibilityContainer extends Container implements IInventoryConta
                 compatibilityData.extension().id(), compatibilityData.version());
             return IResult.failed();
         }
-        lootModifications.applyModifications(this, player, inventory, compatibilityData.dataId(), generateSeed(location.getWorld(), player, BlockUtil.getSeed(location)));
+        lootModifications.applyModifications(this, player, location, inventory, compatibilityData.dataId(), generateSeed(location.getWorld(), player, BlockUtil.getSeed(location)));
         return IResult.empty();
     }
 

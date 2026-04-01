@@ -2,6 +2,7 @@ package me.lauriichan.spigot.justlootit.config.data;
 
 import java.util.Random;
 
+import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -16,8 +17,8 @@ import me.lauriichan.spigot.justlootit.nms.util.Ref;
 
 public record LootModification(NamespacedKey id, ILootCondition condition, ILootModifier modifier) {
 
-    public boolean isApplicable(Container container, PlayerAdapter player, NamespacedKey lootTableKey) {
-        return condition == null || condition.includes(container, player, lootTableKey);
+    public boolean isApplicable(Container container, PlayerAdapter player, Location location, NamespacedKey lootTableKey) {
+        return condition == null || condition.includes(container, player, location, lootTableKey);
     }
 
     public void apply(VersionHandler versionHandler, Inventory inventory, long seed) {

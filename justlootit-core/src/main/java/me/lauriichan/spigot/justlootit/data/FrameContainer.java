@@ -73,7 +73,7 @@ public final class FrameContainer extends Container {
     }
 
     public ItemStack generateItem(PlayerAdapter player, Location location) {
-        return lootModifications.applyModifications(this, player, item.clone(), null, generateSeed(location.getWorld(), player, BlockUtil.getSeed(location)));
+        return lootModifications.applyModifications(this, player, location, item.clone(), null, generateSeed(location.getWorld(), player, BlockUtil.getSeed(location)));
     }
 
     @Override

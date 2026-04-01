@@ -1,5 +1,6 @@
 package me.lauriichan.spigot.justlootit.config.loot;
 
+import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -95,17 +96,17 @@ public class LootModificationDirectoryData extends DirectoryDataExtension<IJson<
         object.put("modifier", JsonIO.serialize(ioManager, modification.modifier()));
     }
 
-    public void applyModifications(Container container, PlayerAdapter player, Inventory inventory, NamespacedKey lootTableKey, long seed) {
+    public void applyModifications(Container container, PlayerAdapter player, Location location, Inventory inventory, NamespacedKey lootTableKey, long seed) {
         for (LootModification modification : modifications.values()) {
-            if (modification.isApplicable(container, player, lootTableKey)) {
+            if (modification.isApplicable(container, player, location, lootTableKey)) {
                 modification.apply(player.versionHandler(), inventory, seed);
             }
         }
     }
 
-    public ItemStack applyModifications(Container container, PlayerAdapter player, ItemStack itemStack, NamespacedKey lootTableKey, long seed) {
+    public ItemStack applyModifications(Container container, PlayerAdapter player, Location location, ItemStack itemStack, NamespacedKey lootTableKey, long seed) {
         for (LootModification modification : modifications.values()) {
-            if (modification.isApplicable(container, player, lootTableKey)) {
+            if (modification.isApplicable(container, player, location, lootTableKey)) {
                 itemStack = modification.apply(player.versionHandler(), itemStack, seed);
             }
         }

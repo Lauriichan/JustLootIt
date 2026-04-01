@@ -168,7 +168,7 @@ public final class StaticContainer extends Container implements IInventoryContai
     @Override
     public void fillNoResult(final PlayerAdapter player, final InventoryHolder holder, final Location location, final Inventory inventory) {
         loadTo(inventory);
-        lootModifications.applyModifications(this, player, inventory, null, generateSeed(location.getWorld(), player, BlockUtil.getSeed(location)));
+        lootModifications.applyModifications(this, player, location, inventory, null, generateSeed(location.getWorld(), player, BlockUtil.getSeed(location)));
     }
 
     @Override
