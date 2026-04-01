@@ -110,7 +110,7 @@ public class LootConfig implements IConfigExtension {
     public void onSave(ISimpleLogger logger, Configuration configuration) throws Exception {
         configuration.clear();
         for (CustomLootTable table : tables.values()) {
-            configuration.set(table.id().getKey(), configuration);
+            configuration.set(table.id().getKey(), table.provider());
         }
     }
 
