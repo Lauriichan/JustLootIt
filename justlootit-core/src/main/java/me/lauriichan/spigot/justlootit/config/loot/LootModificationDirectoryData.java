@@ -1,6 +1,7 @@
 package me.lauriichan.spigot.justlootit.config.loot;
 
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -25,6 +26,8 @@ import me.lauriichan.spigot.justlootit.loot.ILootCondition;
 import me.lauriichan.spigot.justlootit.loot.ILootModifier;
 import me.lauriichan.spigot.justlootit.loot.condition.LootTableCondition;
 import me.lauriichan.spigot.justlootit.loot.condition.WorldRegexCondition;
+import me.lauriichan.spigot.justlootit.loot.filter.MaterialFilter;
+import me.lauriichan.spigot.justlootit.loot.modifier.FilteredModifier;
 import me.lauriichan.spigot.justlootit.loot.modifier.SetAmountModifier;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 
@@ -47,12 +50,13 @@ public class LootModificationDirectoryData extends DirectoryDataExtension<IJson<
         conditions.add(new WorldRegexCondition("world", null));
         conditions.add(new LootTableCondition(NamespacedKey.fromString("iris:justlootit/v1")));
         object.put("condition", JsonIO.serialize(ioManager, conditions));
-        object.put("modifier", JsonIO.serialize(ioManager, new SetAmountModifier(2, 10)));
+        object.put("modifier",
+            JsonIO.serialize(ioManager, new FilteredModifier(new MaterialFilter(Material.NETHER_STAR), new SetAmountModifier(1, 10))));
         FileData<IJson<?>> wrapper = new FileData<>(null, null);
         wrapper.value(object);
         wrapper.version(0);
         try {
-            handler().save(wrapper, plugin.resource("data://loot/example_loot_table.json"));
+            handler().save(wrapper, plugin.resource("data://loot/example_loot_modification.json"));
         } catch (Exception e) {
             plugin.logger().warning("Failed to write loot table example", e);
         }
