@@ -64,12 +64,12 @@ public class LootModificationDirectoryData extends DirectoryDataExtension<IJson<
 
     @Override
     public String path() {
-        return "data://loot/tables";
+        return "data://loot/modifications";
     }
 
     @Override
     public IDataHandler<IJson<?>> handler() {
-        return JsonDataHandler.forKey("loot_table");
+        return JsonDataHandler.forKey("loot_modification");
     }
 
     @Override
