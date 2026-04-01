@@ -5,60 +5,55 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
-import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
-import org.bukkit.loot.LootTable;
+import org.bukkit.World;
+import org.bukkit.entity.Entity;
 
 import me.lauriichan.laylib.command.Actor;
 import me.lauriichan.laylib.command.IArgumentMap;
 import me.lauriichan.laylib.command.IArgumentType;
 import me.lauriichan.laylib.command.Suggestions;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
-import me.lauriichan.spigot.justlootit.command.impl.LootItActor;
+import me.lauriichan.spigot.justlootit.config.data.CustomLootTable;
+import me.lauriichan.spigot.justlootit.config.loot.LootMultiConfig;
 import me.lauriichan.spigot.justlootit.util.ImprovedLevenshteinDistance;
 
-public final class LootTableArgument implements IArgumentType<LootTable> {
+public final class CustomLootTableArgument implements IArgumentType<CustomLootTable> {
 
-    public static boolean isLootTable(String input) {
-        return isLootTable(null, input);
-    }
-
-    public static boolean isLootTable(JustLootItPlugin plugin, String input) {
-        NamespacedKey key = NamespacedKey.fromString(input);
+    public static boolean isLootTable(JustLootItPlugin plugin, World world, String input) {
+        NamespacedKey key = NamespacedKey.fromString(input, plugin);
         if (key == null) {
             return false;
         }
-        LootTable table = plugin != null ? plugin.versionHelper().getLootTable(key) : Bukkit.getLootTable(key);
+        CustomLootTable table = plugin.configManager().multiConfigOrCreate(LootMultiConfig.class, world).getTable(key);
         return table != null;
     }
 
-    public static LootTable parseLootTable(String input) throws IllegalArgumentException {
-        return parseLootTable(null, input);
-    }
-
-    public static LootTable parseLootTable(JustLootItPlugin plugin, String input) throws IllegalArgumentException {
-        NamespacedKey key = NamespacedKey.fromString(input);
+    public static CustomLootTable parseLootTable(JustLootItPlugin plugin, World world, String input) throws IllegalArgumentException {
+        NamespacedKey key = NamespacedKey.fromString(input, plugin);
         if (key == null) {
             throw new IllegalArgumentException("Key '" + input + "' is invalid!");
         }
-        LootTable table = plugin != null ? plugin.versionHelper().getLootTable(key) : Bukkit.getLootTable(key);
+        CustomLootTable table = plugin.configManager().multiConfigOrCreate(LootMultiConfig.class, world).getTable(key);
         if (table == null) {
             throw new IllegalArgumentException("Unknown loot table '" + input + "'!");
         }
         return table;
     }
 
+    private final JustLootItPlugin plugin = JustLootItPlugin.get();
+
     @Override
-    public LootTable parse(Actor<?> actor, String input, IArgumentMap map) throws IllegalArgumentException {
-        if (actor instanceof LootItActor<?> lootActor) {
-            return parseLootTable(lootActor.plugin(), input);
+    public CustomLootTable parse(Actor<?> actor, String input, IArgumentMap map) throws IllegalArgumentException {
+        if (!(actor.getHandle() instanceof Entity entity)) {
+            return null;
         }
-        return parseLootTable(null, input);
+        return parseLootTable(plugin, entity.getWorld(), input);
     }
 
     @Override
     public void suggest(Actor<?> actor, String input, Suggestions suggestions, IArgumentMap map) {
-        if (!(actor instanceof LootItActor<?> bukkit)) {
+        if (!(actor.getHandle() instanceof Entity entity)) {
             return;
         }
         String namespace;
@@ -68,16 +63,12 @@ public final class LootTableArgument implements IArgumentType<LootTable> {
             namespace = split[0];
             key = split[1];
         } else {
-            namespace = "minecraft";
+            namespace = "justlootit";
             key = input;
         }
         ArrayList<String> collectionList = new ArrayList<>();
-        bukkit.versionHelper().getLootTables().forEach(namespacedKey -> {
-            if (namespacedKey.getKey().equals("empty")) {
-                return;
-            }
-            collectionList.add(namespacedKey.toString());
-        });
+        plugin.configManager().multiConfigOrCreate(LootMultiConfig.class, entity.getWorld()).getTables()
+            .forEach(table -> collectionList.add(table.id().toString()));
         List<String> prefixList = collectionList.stream().filter(string -> string.startsWith(namespace)).toList();
         if (prefixList.isEmpty()) {
             prefixList = collectionList;

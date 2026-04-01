@@ -256,6 +256,7 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         registry.registerArgumentType(RefreshGroupArgument.class);
         registry.registerArgumentType(OfflinePlayerArgument.class);
         registry.registerArgumentType(NamespacedKeyArgument.class);
+        registry.registerArgumentType(CustomLootTableArgument.class);
 
         // Register providers
         registry.setProvider(new PluginProvider(this));

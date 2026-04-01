@@ -84,6 +84,18 @@ public final class UIInventoryNames implements IMessageExtension {
     })
     public static MessageProvider CONTAINER_MANAGE_PAGE_OVERVIEW_ITEM_CONTAINER_INFO_VANILLA_LORE;
 
+    @Message(id = "inventory.container-manage.page.overview.item.container-info.custom.name", content = "&7Information")
+    public static MessageProvider CONTAINER_MANAGE_PAGE_OVERVIEW_ITEM_CONTAINER_INFO_CUSTOM_NAME;
+    @Message(id = "inventory.container-manage.page.overview.item.container-info.custom.lore", content = {
+        "&r",
+        "&8Seed:",
+        "&8= &7$seed",
+        "&r",
+        "&8LootTable:",
+        "&8= &7$lootTable"
+    })
+    public static MessageProvider CONTAINER_MANAGE_PAGE_OVERVIEW_ITEM_CONTAINER_INFO_CUSTOM_LORE;
+
     @Message(id = "inventory.container-manage.page.overview.item.container-info.compatibility.name", content = "&7Information")
     public static MessageProvider CONTAINER_MANAGE_PAGE_OVERVIEW_ITEM_CONTAINER_INFO_COMPATIBILITY_NAME;
     @Message(id = "inventory.container-manage.page.overview.item.container-info.compatibility.lore.format", content = {

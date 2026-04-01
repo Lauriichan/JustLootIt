@@ -2,11 +2,9 @@ package me.lauriichan.spigot.justlootit.loot;
 
 import me.lauriichan.laylib.json.JsonString;
 import me.lauriichan.minecraft.pluginbase.BasePlugin;
-import me.lauriichan.minecraft.pluginbase.extension.Extension;
 import me.lauriichan.minecraft.pluginbase.io.HandlerId;
 import me.lauriichan.minecraft.pluginbase.io.serialization.json.KeyedJsonSerializationHandler;
 
-@Extension
 @HandlerId("loot/")
 public class _TempKeyedSerializer extends KeyedJsonSerializationHandler<JsonString, Object> {
 
