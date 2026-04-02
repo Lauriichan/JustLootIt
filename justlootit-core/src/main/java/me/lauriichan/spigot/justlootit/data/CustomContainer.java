@@ -6,7 +6,6 @@ import java.util.Random;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
-import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -25,6 +24,7 @@ import me.lauriichan.spigot.justlootit.config.data.CustomLootTable;
 import me.lauriichan.spigot.justlootit.config.world.WorldConfig;
 import me.lauriichan.spigot.justlootit.data.VanillaContainer.VanillaResult;
 import me.lauriichan.spigot.justlootit.data.io.DataIO;
+import me.lauriichan.spigot.justlootit.loot.io.LootRegistry;
 import me.lauriichan.spigot.justlootit.message.Messages;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapter;
@@ -94,7 +94,7 @@ public class CustomContainer extends Container implements IInventoryContainer {
         event.call().join();
 
         Player bktPlayer = player.asBukkit();
-        AttributeInstance luckAttr = bktPlayer.getAttribute(Attribute.LUCK);
+        AttributeInstance luckAttr = bktPlayer.getAttribute(LootRegistry.REGISTRY.attrLuck());
         float luck = 0f;
         if (luckAttr != null) {
             luck = (float) luckAttr.getValue();
@@ -102,7 +102,7 @@ public class CustomContainer extends Container implements IInventoryContainer {
         event.lootTable().fillInventory(inventory, new Random(event.seed()),
             new LootContext.Builder(location).luck(luck).killer(bktPlayer).build());
 
-        lootModifications.applyModifications(this, player, location, inventory, lootTableKey, seed);
+        lootModifications.applyModifications(this, player, location, inventory, lootTableKey, event.seed());
 
         return new VanillaResult(event.lootTable(), event.seed());
     }

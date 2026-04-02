@@ -35,6 +35,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import me.lauriichan.laylib.localization.Key;
 import me.lauriichan.minecraft.pluginbase.extension.Extension;
 import me.lauriichan.minecraft.pluginbase.listener.IListenerExtension;
@@ -273,9 +274,11 @@ public class ItemFrameEventListener implements IListenerExtension {
                         Key.of("time", DataHelper.formTimeString(actor, duration)));
                     return;
                 }
-                final ItemStack itemStack = frame.generateItem(adapter, entity.getLocation());
-                if (!player.getInventory().addItem(itemStack).isEmpty()) {
-                    player.getWorld().dropItemNaturally(entity.getLocation(), itemStack);
+                ObjectList<ItemStack> items = frame.generateItems(adapter, entity.getLocation());
+                for (ItemStack item : items) {
+                    if (!player.getInventory().addItem(item).isEmpty()) {
+                        player.getWorld().dropItemNaturally(entity.getLocation(), item);
+                    }
                 }
                 player.playSound(entity.getLocation(),
                     type == EntityType.GLOW_ITEM_FRAME ? Sound.ENTITY_GLOW_ITEM_FRAME_REMOVE_ITEM : Sound.ENTITY_ITEM_FRAME_REMOVE_ITEM,

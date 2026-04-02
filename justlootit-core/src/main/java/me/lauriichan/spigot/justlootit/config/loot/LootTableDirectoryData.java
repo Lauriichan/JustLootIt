@@ -22,6 +22,7 @@ import me.lauriichan.spigot.justlootit.config.io.JsonIO;
 import me.lauriichan.spigot.justlootit.inventory.Textures;
 import me.lauriichan.spigot.justlootit.loot.ILootModifier;
 import me.lauriichan.spigot.justlootit.loot.ILootPoolProvider;
+import me.lauriichan.spigot.justlootit.loot.io.LootRegistry;
 import me.lauriichan.spigot.justlootit.loot.modifier.InsertionMode;
 import me.lauriichan.spigot.justlootit.loot.modifier.SetAmountModifier;
 import me.lauriichan.spigot.justlootit.loot.modifier.SetEnchantmentModifier;
@@ -53,7 +54,7 @@ public class LootTableDirectoryData extends DirectoryDataExtension<IJson<?>> {
         ObjectArrayList<ILootModifier> modifiers = new ObjectArrayList<>();
         modifiers.add(new UpdateNameModifier("&cItem Name!", InsertionMode.SET));
         modifiers.add(new SetAmountModifier(3, 23));
-        modifiers.add(new SetEnchantmentModifier(Enchantment.UNBREAKING, 5));
+        modifiers.add(new SetEnchantmentModifier(LootRegistry.REGISTRY.enchUnbreaking(), 5));
         poolProviders.add(3, new ModifiedItemProvider(new SimpleItemProvider(Material.AMETHYST_SHARD, 1), modifiers));
         poolProviders.add(5,
             new NbtItemProvider(ItemEditor.ofHead(Textures.GEODE_BLANK).setName("&5Blank Geode Head")

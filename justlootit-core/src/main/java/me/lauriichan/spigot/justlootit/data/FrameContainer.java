@@ -6,6 +6,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
 
 import io.netty.buffer.ByteBuf;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import me.lauriichan.minecraft.pluginbase.inventory.item.ItemEditor;
 import me.lauriichan.spigot.justlootit.JustLootItConstant;
 import me.lauriichan.spigot.justlootit.config.world.WorldConfig;
@@ -72,7 +73,7 @@ public final class FrameContainer extends Container {
         return item;
     }
 
-    public ItemStack generateItem(PlayerAdapter player, Location location) {
+    public ObjectList<ItemStack> generateItems(PlayerAdapter player, Location location) {
         return lootModifications.applyModifications(this, player, location, item.clone(), null, generateSeed(location.getWorld(), player, BlockUtil.getSeed(location)));
     }
 

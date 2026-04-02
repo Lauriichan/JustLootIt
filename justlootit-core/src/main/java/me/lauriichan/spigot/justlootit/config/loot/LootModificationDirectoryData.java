@@ -8,6 +8,7 @@ import org.bukkit.inventory.ItemStack;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import me.lauriichan.laylib.json.IJson;
 import me.lauriichan.laylib.json.JsonObject;
 import me.lauriichan.laylib.json.JsonType;
@@ -24,11 +25,14 @@ import me.lauriichan.spigot.justlootit.config.io.JsonIO;
 import me.lauriichan.spigot.justlootit.data.Container;
 import me.lauriichan.spigot.justlootit.loot.ILootCondition;
 import me.lauriichan.spigot.justlootit.loot.ILootModifier;
+import me.lauriichan.spigot.justlootit.loot.ILootPoolProvider;
+import me.lauriichan.spigot.justlootit.loot.condition.AndCondition;
 import me.lauriichan.spigot.justlootit.loot.condition.LootTableCondition;
 import me.lauriichan.spigot.justlootit.loot.condition.WorldRegexCondition;
 import me.lauriichan.spigot.justlootit.loot.filter.MaterialFilter;
 import me.lauriichan.spigot.justlootit.loot.modifier.FilteredModifier;
 import me.lauriichan.spigot.justlootit.loot.modifier.SetAmountModifier;
+import me.lauriichan.spigot.justlootit.loot.provider.SimpleItemProvider;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 
 @Extension
@@ -49,16 +53,17 @@ public class LootModificationDirectoryData extends DirectoryDataExtension<IJson<
         // This condition is invalid as the predicate is not set but for serialization it is enough
         conditions.add(new WorldRegexCondition("world", null));
         conditions.add(new LootTableCondition(NamespacedKey.fromString("iris:justlootit/v1")));
-        object.put("condition", JsonIO.serialize(ioManager, conditions));
+        object.put("condition", JsonIO.serialize(ioManager, new AndCondition(conditions)));
         object.put("modifier",
             JsonIO.serialize(ioManager, new FilteredModifier(new MaterialFilter(Material.NETHER_STAR), new SetAmountModifier(1, 10))));
+        object.put("pool_provider", JsonIO.serialize(ioManager, new SimpleItemProvider(Material.ACACIA_BOAT, 1)));
         FileData<IJson<?>> wrapper = new FileData<>(null, null);
         wrapper.value(object);
         wrapper.version(0);
         try {
             handler().save(wrapper, plugin.resource("data://loot/example_loot_modification.json"));
         } catch (Exception e) {
-            plugin.logger().warning("Failed to write loot table example", e);
+            plugin.logger().error("Failed to write loot table example", e);
         }
     }
 
@@ -87,13 +92,18 @@ public class LootModificationDirectoryData extends DirectoryDataExtension<IJson<
         ILootCondition condition = object.has("condition", JsonType.OBJECT)
             ? JsonIO.deserialize(ioManager, object.getAsObject("condition"), ILootCondition.class)
             : null;
-        ILootModifier modifier = JsonIO.deserialize(ioManager, object.getAsObject("modifier"), ILootModifier.class);
-        if (modifier == null) {
+        ILootModifier modifier = object.has("modifier", JsonType.OBJECT)
+            ? JsonIO.deserialize(ioManager, object.getAsObject("modifier"), ILootModifier.class)
+            : null;
+        ILootPoolProvider provider = object.has("pool_provider", JsonType.OBJECT)
+            ? JsonIO.deserialize(ioManager, object.getAsObject("pool_provider"), ILootPoolProvider.class)
+            : null;
+        if (provider == null && modifier == null) {
             modifications.remove(id);
-            logger.warning("No loot modifier set for loot modification '{0}'", id);
+            logger.warning("No loot modifier or loot pool provider set for loot modification '{0}'", id);
             return;
         }
-        modifications.put(id, new LootModification(id, condition, modifier));
+        modifications.put(id, new LootModification(id, condition, modifier, provider));
     }
 
     @Override
@@ -121,6 +131,7 @@ public class LootModificationDirectoryData extends DirectoryDataExtension<IJson<
             object.put("condition", JsonIO.serialize(ioManager, modification.condition()));
         }
         object.put("modifier", JsonIO.serialize(ioManager, modification.modifier()));
+        object.put("pool_provider", JsonIO.serialize(ioManager, modification.provider()));
     }
 
     public void applyModifications(Container container, PlayerAdapter player, Location location, Inventory inventory,
@@ -132,14 +143,16 @@ public class LootModificationDirectoryData extends DirectoryDataExtension<IJson<
         }
     }
 
-    public ItemStack applyModifications(Container container, PlayerAdapter player, Location location, ItemStack itemStack,
+    public ObjectList<ItemStack> applyModifications(Container container, PlayerAdapter player, Location location, ItemStack itemStack,
         NamespacedKey lootTableKey, long seed) {
+        ObjectArrayList<ItemStack> list = new ObjectArrayList<>();
+        list.add(itemStack);
         for (LootModification modification : modifications.values()) {
             if (modification.isApplicable(container, player, location, lootTableKey)) {
-                itemStack = modification.apply(player.versionHandler(), itemStack, seed);
+                modification.apply(player.versionHandler(), list, seed);
             }
         }
-        return itemStack;
+        return list;
     }
 
 }

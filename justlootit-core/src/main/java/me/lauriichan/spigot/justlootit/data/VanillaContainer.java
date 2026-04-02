@@ -115,7 +115,7 @@ public final class VanillaContainer extends Container implements IInventoryConta
 
         player.versionHandler().versionHelper().fill(inventory, player.asBukkit(), location, event.lootTable(), event.seed());
 
-        lootModifications.applyModifications(this, player, location, inventory, RegistryUtil.getKey(event.lootTable()), seed);
+        lootModifications.applyModifications(this, player, location, inventory, RegistryUtil.getKey(event.lootTable()), event.seed());
 
         return new VanillaResult(event.lootTable(), event.seed());
     }
