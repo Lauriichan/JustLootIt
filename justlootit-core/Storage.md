@@ -8,6 +8,7 @@
 | 15   | StaticContainer        | Level Container |
 | 16   | VanillaContainer       | Level Container |
 | 17   | CompatibilityContainer | Level Container |
+| 18   | CustomContainer        | Level Container |
 
 # Player Storage
 
