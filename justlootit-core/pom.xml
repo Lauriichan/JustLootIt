@@ -201,11 +201,6 @@
             <artifactId>justlootit-nms-26_1</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
-        <dependency>
-        	<groupId>me.lauriichan.spigot.justlootit</groupId>
-        	<artifactId>justlootit-nms-1_21_R4</artifactId>
-        	<version>2.18.0</version>
-        </dependency>
     </dependencies>
 
     <build>
