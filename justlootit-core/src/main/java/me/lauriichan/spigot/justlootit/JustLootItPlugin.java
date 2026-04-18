@@ -174,11 +174,11 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
             versionHandler = initVersionHandler();
             versionHelper = versionHandler.versionHelper();
             packetManager = versionHandler.packetManager();
-            logger().info("Initialized version support for " + platform.version().coreVersion());
+            logger().info("Initialized version support for %s (%s)".formatted(platform.version().coreVersion(), platform.type()));
             return true;
         } catch (final JLIInitializationException exp) {
-            logger().error("Failed to initialize version support for " + platform.version().coreVersion());
-            logger().error("Reason: '" + exp.getMessage() + "'");
+            logger().error("Failed to initialize version support for %s (%s)".formatted(platform.version().coreVersion(), platform.type()));
+            logger().error("Reason: '%s'".formatted(exp.getMessage()));
             logger().error("");
             logger().error("Can't work like this, disabling...");
             if (exp.getCause() != null) {
@@ -572,12 +572,13 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
      */
 
     private JustLootItPlatform initPlatform() {
-        if (ClassUtil.findClass("io.papermc.paper.threadedregions.RegionizedServer") != null
-            || ClassUtil.findClass("io.papermc.paper.threadedregions.RegionizedServerInitEvent") != null) {
-            return new FoliaPlatform(this, logger());
-        }
         if (ClassUtil.findClass("com.destroystokyo.paper.PaperConfig") != null
-            || ClassUtil.findClass("io.papermc.paper.configuration.Configuration") != null) {
+            || ClassUtil.findClass("io.papermc.paper.configuration.Configuration") != null
+            || ClassUtil.findClass("io.papermc.paper.PaperBootstrap") != null) {
+            Class<?> pluginMetaClass = ClassUtil.findClass("io.papermc.paper.plugin.configuration.PluginMeta");
+            if (pluginMetaClass != null && ClassUtil.getMethod(pluginMetaClass, "isFoliaSupported") != null) {
+                return new FoliaPlatform(this, logger());
+            }
             return new PaperPlatform(this, logger());
         }
         return new SpigotPlatform(this, logger());

@@ -5,6 +5,7 @@ import org.bukkit.plugin.Plugin;
 import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.spigot.justlootit.platform.IVersion;
 import me.lauriichan.spigot.justlootit.platform.JustLootItPlatform;
+import me.lauriichan.spigot.justlootit.platform.PlatformType;
 
 public final class FoliaPlatform extends JustLootItPlatform {
 
@@ -23,6 +24,11 @@ public final class FoliaPlatform extends JustLootItPlatform {
     @Override
     public FoliaScheduler scheduler() {
         return scheduler;
+    }
+    
+    @Override
+    public PlatformType type() {
+        return PlatformType.FOLIA;
     }
 
 }

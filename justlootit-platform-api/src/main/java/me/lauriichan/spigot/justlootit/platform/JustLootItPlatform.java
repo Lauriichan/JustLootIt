@@ -23,9 +23,7 @@ public abstract class JustLootItPlatform {
         return logger;
     }
     
-    public boolean isPaper() {
-        return true;
-    }
+    public abstract PlatformType type();
     
     public abstract IVersion version();
     

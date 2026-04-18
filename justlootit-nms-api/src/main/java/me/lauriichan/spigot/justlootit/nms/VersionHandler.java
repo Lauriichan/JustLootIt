@@ -50,7 +50,7 @@ public abstract class VersionHandler {
     }
 
     public VersionHandler(final IServiceProvider serviceProvider, final IDebugHelper debugHelper) {
-        IS_PAPER = serviceProvider.platform().isPaper();
+        IS_PAPER = serviceProvider.platform().type().isPaper();
         this.serviceProvider = serviceProvider;
         this.debugHelper = new DebugHelper(debugHelper);
     }

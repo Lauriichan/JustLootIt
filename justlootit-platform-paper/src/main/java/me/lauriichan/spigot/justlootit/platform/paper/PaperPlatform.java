@@ -5,6 +5,7 @@ import org.bukkit.plugin.Plugin;
 import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.spigot.justlootit.platform.IVersion;
 import me.lauriichan.spigot.justlootit.platform.JustLootItPlatform;
+import me.lauriichan.spigot.justlootit.platform.PlatformType;
 import me.lauriichan.spigot.justlootit.platform.spigot.SpigotScheduler;
 
 public final class PaperPlatform extends JustLootItPlatform {
@@ -24,6 +25,11 @@ public final class PaperPlatform extends JustLootItPlatform {
     @Override
     public SpigotScheduler scheduler() {
         return scheduler;
+    }
+    
+    @Override
+    public PlatformType type() {
+        return PlatformType.PAPER;
     }
 
 }

@@ -5,6 +5,7 @@ import org.bukkit.plugin.Plugin;
 import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.spigot.justlootit.platform.IVersion;
 import me.lauriichan.spigot.justlootit.platform.JustLootItPlatform;
+import me.lauriichan.spigot.justlootit.platform.PlatformType;
 
 public final class SpigotPlatform extends JustLootItPlatform {
 
@@ -26,8 +27,8 @@ public final class SpigotPlatform extends JustLootItPlatform {
     }
     
     @Override
-    public boolean isPaper() {
-        return false;
+    public PlatformType type() {
+        return PlatformType.SPIGOT;
     }
 
 }
