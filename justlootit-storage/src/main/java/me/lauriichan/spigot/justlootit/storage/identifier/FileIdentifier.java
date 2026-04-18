@@ -7,9 +7,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 
 import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongList;
+import it.unimi.dsi.fastutil.longs.LongLists;
 import me.lauriichan.laylib.logger.ISimpleLogger;
 
 public final class FileIdentifier implements IIdentifier {
@@ -19,9 +22,9 @@ public final class FileIdentifier implements IIdentifier {
     private final File file;
     private final ReentrantLock lock = new ReentrantLock();
 
-    private final LongArrayList list = new LongArrayList();
-    
-    private long nextId = 0L;
+    private final LongList list = LongLists.synchronize(new LongArrayList());
+
+    private final AtomicLong nextId = new AtomicLong(0L);
     private long lastSaved = 0L;
 
     public FileIdentifier(ISimpleLogger logger, File file) {
@@ -47,7 +50,7 @@ public final class FileIdentifier implements IIdentifier {
             if (!list.isEmpty()) {
                 return list.removeLong(0);
             }
-            return nextId++;
+            return nextId.getAndIncrement();
         } finally {
             lock.unlock();
         }
@@ -57,7 +60,7 @@ public final class FileIdentifier implements IIdentifier {
     public void reset() {
         lock.lock();
         try {
-            nextId = 0L;
+            nextId.set(0);
             list.clear();
         } finally {
             lock.unlock();
@@ -68,14 +71,15 @@ public final class FileIdentifier implements IIdentifier {
     public void delete(long id) {
         lock.lock();
         try {
-            if (id > nextId) {
+            long current = nextId.get();
+            if (id > current) {
                 return;
-            } else if (id == nextId) {
-                nextId--;
+            } else if (id == current) {
+                nextId.decrementAndGet();
                 int idx;
-                while((idx = list.indexOf(nextId)) != -1) {
+                while ((idx = list.indexOf(nextId.get())) != -1) {
                     list.removeLong(idx);
-                    nextId--;
+                    nextId.decrementAndGet();
                 }
                 return;
             }
@@ -96,15 +100,16 @@ public final class FileIdentifier implements IIdentifier {
         try {
             list.clear();
             if (!file.exists()) {
-                nextId = 0L;
+                nextId.set(0);
+                ;
                 return;
             }
             try (DataInputStream data = new DataInputStream(new FileInputStream(file))) {
-                nextId = data.readLong();
+                nextId.set(data.readLong());
                 int size;
                 try {
                     size = data.readInt();
-                } catch(EOFException eof) {
+                } catch (EOFException eof) {
                     return;
                 }
                 for (int i = 0; i < size; i++) {
@@ -129,7 +134,7 @@ public final class FileIdentifier implements IIdentifier {
                 file.createNewFile();
             }
             try (DataOutputStream data = new DataOutputStream(new FileOutputStream(file))) {
-                data.writeLong(nextId);
+                data.writeLong(nextId.get());
                 data.writeInt(list.size());
                 if (!list.isEmpty()) {
                     for (long value : list) {
