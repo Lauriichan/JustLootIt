@@ -112,7 +112,7 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
 
     private CommandManager commandManager;
     private BukkitCommandInjectableBridge<?> commandBridge;
-    
+
     private ProtoExecutor<Thread> executor;
 
     private volatile InputProvider inputProvider = SimpleChatInputProvider.CHAT;
@@ -458,11 +458,11 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         playerTickTimer.stop();
         playerTickTimer.clear();
     }
-    
+
     /*
      * Player listeners
      */
-    
+
     @Override
     public void onPlayerJoin(PlayerAdapter adapter) {
         if (updater != null && updater.hasLatestInfo()) {

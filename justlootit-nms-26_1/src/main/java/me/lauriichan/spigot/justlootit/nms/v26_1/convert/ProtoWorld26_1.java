@@ -26,9 +26,9 @@ import me.lauriichan.spigot.justlootit.storage.util.counter.Counter;
 import me.lauriichan.spigot.justlootit.storage.util.counter.CounterProgress;
 import me.lauriichan.spigot.justlootit.storage.util.counter.SimpleCounter;
 import me.lauriichan.spigot.justlootit.nms.v26_1.util.NmsHelper26_1;
-import me.lauriichan.spigot.justlootit.nms.v26_1.util.PlatformHelper26_1;
 import net.minecraft.world.level.storage.LevelStorageSource.LevelStorageAccess;
 import net.minecraft.world.level.storage.LevelDataAndDimensions;
+import net.minecraft.SharedConstants;
 import net.minecraft.core.RegistryAccess.Frozen;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
@@ -73,7 +73,7 @@ public class ProtoWorld26_1 extends ProtoWorld implements LevelHeightAccessor {
     private final ResourceKey<LevelStem> dimensionKey;
     private final ChunkGenerator chunkGenerator;
     private final DimensionType dimensionType;
-    
+
     private final PalettedContainerFactory containerFactory;
 
     private final LevelDataAndDimensions.WorldDataAndGenSettings worldData;
@@ -90,8 +90,8 @@ public class ProtoWorld26_1 extends ProtoWorld implements LevelHeightAccessor {
 
     private final Frozen registry;
 
-    public ProtoWorld26_1(final Executor executor, final ISimpleLogger logger, final LevelStorageAccess session,
-        final boolean closeSession, final ResourceKey<LevelStem> dimensionKey, LevelDataAndDimensions.WorldDataAndGenSettings worldData) {
+    public ProtoWorld26_1(final Executor executor, final ISimpleLogger logger, final LevelStorageAccess session, final boolean closeSession,
+        final ResourceKey<LevelStem> dimensionKey, LevelDataAndDimensions.WorldDataAndGenSettings worldData) {
         super(executor);
         this.registry = NmsHelper26_1.getServer().registryAccess();
         this.logger = logger;
@@ -109,7 +109,8 @@ public class ProtoWorld26_1 extends ProtoWorld implements LevelHeightAccessor {
         this.closeSession = closeSession;
         this.regionInfo = new RegionStorageInfo(session.getLevelId(), worldKey, "region");
         this.entityInfo = new RegionStorageInfo(session.getLevelId(), worldKey, "entities");
-        this.chunkStorage = new SimpleRegionStorage(regionInfo, PAPER_CHUNK_STORAGE_PATH_FIX, DataFixers.getDataFixer(), false, DataFixTypes.CHUNK);
+        this.chunkStorage = new SimpleRegionStorage(regionInfo, PAPER_CHUNK_STORAGE_PATH_FIX, DataFixers.getDataFixer(), false,
+            DataFixTypes.CHUNK);
         this.containerFactory = PalettedContainerFactory.create(registry);
 
         // Try to load various registries
@@ -218,8 +219,7 @@ public class ProtoWorld26_1 extends ProtoWorld implements LevelHeightAccessor {
                                     if (sections[i] != null) {
                                         continue;
                                     }
-                                    sections[i] = new LevelChunkSection(
-                                        containerFactory.createForBlockStates(),
+                                    sections[i] = new LevelChunkSection(containerFactory.createForBlockStates(),
                                         containerFactory.createForBiomes());
                                 }
                             }
@@ -233,8 +233,8 @@ public class ProtoWorld26_1 extends ProtoWorld implements LevelHeightAccessor {
                             thread.setTask("Reading entities");
                             Pair<CompoundTag, String> entityTag = readEntityTag(chunkTag, entityRegion, posInRegion);
                             if (entityTag != null) {
-                                ListTag entityListTag = entityTag.getFirst().getList(entityTag.getSecond()).filter(list -> list.identifyRawElementType() == 10)
-                                    .orElseGet(ListTag::new);
+                                ListTag entityListTag = entityTag.getFirst().getList(entityTag.getSecond())
+                                    .filter(list -> list.identifyRawElementType() == 10).orElseGet(ListTag::new);
                                 for (int i = 0; i < entityListTag.size(); i++) {
                                     chunk.addEntity(entityListTag.getCompoundOrEmpty(i));
                                 }
@@ -305,7 +305,9 @@ public class ProtoWorld26_1 extends ProtoWorld implements LevelHeightAccessor {
         if (tag == null || tag.getString("Status").isEmpty()) {
             return null;
         }
-        return PlatformHelper26_1.upgradeChunkTag(chunkStorage, tag, -1, ChunkMap.getChunkDataFixContextTag(dimensionKey, chunkGenerator.getTypeNameForDataFixer()), pos);
+        return chunkStorage.upgradeChunkTag(tag, -1,
+            ChunkMap.getChunkDataFixContextTag(dimensionKey, chunkGenerator.getTypeNameForDataFixer()),
+            SharedConstants.getCurrentVersion().dataVersion().version(), pos, null);
     }
 
     private Pair<CompoundTag, String> readEntityTag(CompoundTag chunkTag, RegionFile file, ChunkPos pos) throws IOException {

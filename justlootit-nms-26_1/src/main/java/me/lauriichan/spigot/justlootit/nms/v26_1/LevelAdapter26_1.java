@@ -1,12 +1,12 @@
 package me.lauriichan.spigot.justlootit.nms.v26_1;
 
 import org.bukkit.Location;
+import org.bukkit.craftbukkit.CraftRegistry;
 import org.bukkit.craftbukkit.CraftWorld;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 
 import me.lauriichan.spigot.justlootit.nms.LevelAdapter;
-import me.lauriichan.spigot.justlootit.nms.v26_1.util.PlatformHelper26_1;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerLevel;
@@ -14,7 +14,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.entity.LevelEntityGetter;
 
 public class LevelAdapter26_1 extends LevelAdapter {
-    
+
     private final VersionHandler26_1 versionHandler;
 
     private final ServerLevel level;
@@ -23,7 +23,7 @@ public class LevelAdapter26_1 extends LevelAdapter {
     public LevelAdapter26_1(final VersionHandler26_1 versionHandler, final ServerLevel level) {
         this.versionHandler = versionHandler;
         this.level = level;
-        this.entityGetter = PlatformHelper26_1.getEntityGetter(level);
+        this.entityGetter = level.entityManager.getEntityGetter();
     }
 
     @Override
@@ -47,7 +47,7 @@ public class LevelAdapter26_1 extends LevelAdapter {
 
     @Override
     public void triggerGameEvent(Player player, org.bukkit.GameEvent event, Location location) {
-        level.gameEvent(((CraftPlayer) player).getHandle(), PlatformHelper26_1.bukkitToMinecraftHolder(event, Registries.GAME_EVENT),
+        level.gameEvent(((CraftPlayer) player).getHandle(), CraftRegistry.bukkitToMinecraftHolder(event, Registries.GAME_EVENT),
             new BlockPos(location.getBlockX(), location.getBlockY(), location.getBlockZ()));
     }
 
