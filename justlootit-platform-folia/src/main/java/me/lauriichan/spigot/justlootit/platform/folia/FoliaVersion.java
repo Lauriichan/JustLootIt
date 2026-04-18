@@ -16,7 +16,7 @@ public final class FoliaVersion implements IVersion {
 
     private FoliaVersion() {
         String pkgVer = MinecraftToPackageVersion.getPackageVersion(minecraftVersion);
-        String coreVer = pkgVer;
+        String coreVer = pkgVer != null ? pkgVer.substring(1) : null;
         if (pkgVer == null && minecraftVersion.major() >= 26) {
             pkgVer = "paper.v26_1";
             coreVer = "26_1";
