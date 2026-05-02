@@ -250,6 +250,7 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     @Override
     protected void onArgumentSetup(ArgumentRegistry registry) {
         // Register argument types
+        registry.registerArgumentType(DataArgument.class);
         registry.registerArgumentType(WorldArgument.class);
         registry.registerArgumentType(ConfigArgument.class);
         registry.registerArgumentType(LootTableArgument.class);
