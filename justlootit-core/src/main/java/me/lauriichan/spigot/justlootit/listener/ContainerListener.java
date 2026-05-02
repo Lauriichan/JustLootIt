@@ -27,7 +27,6 @@ import org.bukkit.event.block.BlockExplodeEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
-import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.inventory.InventoryMoveItemEvent;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
@@ -36,15 +35,12 @@ import org.bukkit.event.vehicle.VehicleDamageEvent;
 import org.bukkit.event.world.StructureGrowEvent;
 import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.EquipmentSlot;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.persistence.PersistentDataContainer;
 
 import me.lauriichan.laylib.localization.Key;
 import me.lauriichan.minecraft.pluginbase.extension.Extension;
-import me.lauriichan.minecraft.pluginbase.inventory.ChestSize;
 import me.lauriichan.minecraft.pluginbase.inventory.IGuiInventory;
-import me.lauriichan.minecraft.pluginbase.inventory.IGuiInventoryUpdater;
 import me.lauriichan.minecraft.pluginbase.listener.IListenerExtension;
 import me.lauriichan.spigot.justlootit.JustLootItAccess;
 import me.lauriichan.spigot.justlootit.JustLootItConstant;
@@ -61,11 +57,11 @@ import me.lauriichan.spigot.justlootit.data.CacheLookupTable;
 import me.lauriichan.spigot.justlootit.data.CachedInventory;
 import me.lauriichan.spigot.justlootit.data.Container;
 import me.lauriichan.spigot.justlootit.data.IInventoryContainer;
-import me.lauriichan.spigot.justlootit.data.IInventoryContainer.IResult;
 import me.lauriichan.spigot.justlootit.data.CacheLookupTable.WorldEntry;
-import me.lauriichan.spigot.justlootit.inventory.handler.loot.LootUIHandler;
+import me.lauriichan.spigot.justlootit.inventory.handler.loot.BaseLootUIHandler;
+import me.lauriichan.spigot.justlootit.inventory.handler.loot.CachedLootUIHandler;
+import me.lauriichan.spigot.justlootit.inventory.handler.loot.GeneratedLootUIHandler;
 import me.lauriichan.spigot.justlootit.message.Messages;
-import me.lauriichan.spigot.justlootit.message.UIInventoryNames;
 import me.lauriichan.spigot.justlootit.nms.LevelAdapter;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.nms.VersionHelper;
@@ -80,8 +76,6 @@ import me.lauriichan.spigot.justlootit.util.InventoryUtil;
 @Extension
 public class ContainerListener implements IListenerExtension {
 
-    private static final ChestSize[] CHEST_VALUES = ChestSize.values();
-
     private final JustLootItPlugin plugin;
     private final MainConfig config;
 
@@ -94,7 +88,7 @@ public class ContainerListener implements IListenerExtension {
     public void onBlockPlaceEvent(final BlockPlaceEvent event) {
         Block block = event.getBlock();
         if (!(block.getState() instanceof org.bukkit.block.Container container) || !(container.getBlockData() instanceof Chest chest)
-            || chest.getType() == Type.SINGLE) {
+            || JustLootItAccess.hasAnyOffset(container.getPersistentDataContainer()) || chest.getType() == Type.SINGLE) {
             return;
         }
         org.bukkit.block.Container otherContainer = BlockUtil.findChestAround(block.getWorld(), block.getLocation(), chest.getType(),
@@ -436,17 +430,17 @@ public class ContainerListener implements IListenerExtension {
         final Cancellable event, final Player bukkitPlayer, final long id) {
         final PlayerAdapter player = plugin.versionHandler().getPlayer(bukkitPlayer);
         final LootItActor<?> actor = ActorCapability.actor(player);
-        if (player.hasData(LootUIHandler.PLAYER_DATA_LOOTING)) {
-            int value = player.getData(LootUIHandler.PLAYER_DATA_LOOTING, Number.class).intValue();
+        if (player.hasData(BaseLootUIHandler.PLAYER_DATA_LOOTING)) {
+            int value = player.getData(BaseLootUIHandler.PLAYER_DATA_LOOTING, Number.class).intValue();
             if (value != 0) {
                 event.setCancelled(true);
-                player.setData(LootUIHandler.PLAYER_DATA_LOOTING, value - 1);
+                player.setData(BaseLootUIHandler.PLAYER_DATA_LOOTING, value - 1);
                 actor.sendTranslatedMessage(Messages.CONTAINER_ACCESS_WAIT_FOR_ACCESS);
                 return;
             }
             // Force close loot ui handler if open after second access
             player.getCapability(PlayerGUICapability.class).ifPresent(guiCapability -> {
-                if (guiCapability.gui().getHandler() instanceof LootUIHandler handler) {
+                if (guiCapability.gui().getHandler() instanceof BaseLootUIHandler handler) {
                     handler.onEventClose(bukkitPlayer, guiCapability.gui());
                 }
             });
@@ -480,21 +474,13 @@ public class ContainerListener implements IListenerExtension {
                                 if (((columnAmount != 9) || ((rowAmount <= 6) && (rowAmount >= 1)))) {
                                     player.getCapability(PlayerGUICapability.class).ifPresent(guiCapability -> {
                                         final IGuiInventory inventory = guiCapability.gui();
-                                        IGuiInventoryUpdater updater = inventory.updater()
-                                            .title(actor.getTranslatedMessageAsString(UIInventoryNames.LOOT_UI_NAME));
-                                        if (columnAmount == 9) {
-                                            updater.chestSize(CHEST_VALUES[rowAmount - 1]);
-                                        } else {
-                                            updater.type(cachedInventory.getType());
-                                        }
-                                        updater.apply();
-                                        player.setData(LootUIHandler.PLAYER_DATA_LOOTING, LootUIHandler.PLAYER_DATA_LOOTING_VALUE);
-                                        inventory.attrSet(LootUIHandler.ATTR_ID, storedCachedInventory.id());
-                                        inventory.setHandler(LootUIHandler.LOOT_HANDLER);
-                                        inventory.getInventory().setContents(cachedInventory.getItems());
+                                        player.setData(BaseLootUIHandler.PLAYER_DATA_LOOTING, BaseLootUIHandler.PLAYER_DATA_LOOTING_VALUE);
+                                        inventory.attrSet(BaseLootUIHandler.ATTR_ID, storedCachedInventory.id());
+                                        inventory.attrSet(CachedLootUIHandler.ATTR_CACHED_INVENTORY, cachedInventory);
+                                        inventory.setHandler(CachedLootUIHandler.LOOT_HANDLER);
                                         inventory.open(bukkitPlayer);
                                         if (inventoryHolder instanceof DoubleChest || inventoryHolder instanceof Lidded) {
-                                            inventory.attrSet(LootUIHandler.ATTR_LIDDED_LOCATION, location);
+                                            inventory.attrSet(BaseLootUIHandler.ATTR_LIDDED_LOCATION, location);
                                             BlockUtil.sendBlockOpen(level, bukkitPlayer, location);
                                         }
                                     });
@@ -515,34 +501,19 @@ public class ContainerListener implements IListenerExtension {
                 }
                 player.getCapability(PlayerGUICapability.class).ifPresent(guiCapability -> {
                     final IGuiInventory inventory = guiCapability.gui();
-                    if (!(dataContainer.value() instanceof final IInventoryContainer container)) {
+                    if (!(dataContainer.value() instanceof IInventoryContainer)) {
                         // Do nothing, no need to allocate anything if we have no inventory
                         return;
                     }
-                    final Inventory holderInventory = inventoryHolder.getInventory();
-                    final InventoryType type = holderInventory.getType();
-                    int columnAmount = IGuiInventory.getColumnAmount(type);
-                    IGuiInventoryUpdater updater = inventory.updater()
-                        .title(actor.getTranslatedMessageAsString(UIInventoryNames.LOOT_UI_NAME));
-                    if (columnAmount == 9) {
-                        updater.chestSize(CHEST_VALUES[(InventoryUtil.getSize(holderInventory) / columnAmount) - 1]);
-                    } else {
-                        updater.type(type);
-                    }
-                    player.setData(LootUIHandler.PLAYER_DATA_LOOTING, LootUIHandler.PLAYER_DATA_LOOTING_VALUE);
-                    inventory.attrSet(LootUIHandler.ATTR_ID, lookupTable.acquire(entryId));
-                    inventory.setHandler(LootUIHandler.LOOT_HANDLER);
-                    updater.apply();
-                    IResult result = container.fill(player, inventoryHolder, location, inventory.getInventory());
-                    if (result.isFailed()) {
-                        // Reset access, we failed to fill
-                        dataContainer.value().decreaseAccessCount(player.getUniqueId());
-                        return;
-                    }
-                    container.awaitProvidedEvent(player, inventory, inventoryHolder, location, result);
+                    inventory.setHandler(GeneratedLootUIHandler.LOOT_HANDLER);
+                    player.setData(BaseLootUIHandler.PLAYER_DATA_LOOTING, CachedLootUIHandler.PLAYER_DATA_LOOTING_VALUE);
+                    inventory.attrSet(BaseLootUIHandler.ATTR_ID, lookupTable.acquire(entryId));
+                    inventory.attrSet(GeneratedLootUIHandler.ATTR_CONTAINER, dataContainer.value());
+                    inventory.attrSet(GeneratedLootUIHandler.ATTR_INVENTORY_HOLDER, inventoryHolder);
+                    inventory.attrSet(GeneratedLootUIHandler.ATTR_LOCATION, location);
                     inventory.open(bukkitPlayer);
                     if (inventoryHolder instanceof DoubleChest || inventoryHolder instanceof Lidded) {
-                        inventory.attrSet(LootUIHandler.ATTR_LIDDED_LOCATION, location);
+                        inventory.attrSet(CachedLootUIHandler.ATTR_LIDDED_LOCATION, location);
                         BlockUtil.sendBlockOpen(level, bukkitPlayer, location);
                     }
                 });

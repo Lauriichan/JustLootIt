@@ -13,6 +13,10 @@ public final class JustLootItKey {
     private static NamespacedKey chestOffsetV1;
     private static NamespacedKey chestOffset;
     private static NamespacedKey breakData;
+    
+    private static NamespacedKey tableType;
+    private static NamespacedKey tableNamespace;
+    private static NamespacedKey tableKey;
 
     public static void setup(final JustLootItPlugin plugin) {
         identity = plugin.key("id");
@@ -20,6 +24,9 @@ public final class JustLootItKey {
         chestOffsetV1 = plugin.key("chest_offset");
         chestOffset = plugin.key("chest_offset_v2");
         breakData = plugin.key("break");
+        tableType = plugin.key("table/type");
+        tableNamespace = plugin.key("table/namespace");
+        tableKey = plugin.key("table/key");
     }
 
     public final static NamespacedKey identity() {
@@ -40,6 +47,18 @@ public final class JustLootItKey {
 
     public final static NamespacedKey breakData() {
         return breakData;
+    }
+
+    public final static NamespacedKey tableType() {
+        return tableType;
+    }
+
+    public final static NamespacedKey tableNamespace() {
+        return tableNamespace;
+    }
+
+    public final static NamespacedKey tableKey() {
+        return tableKey;
     }
 
 }

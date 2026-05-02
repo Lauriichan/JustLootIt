@@ -23,6 +23,7 @@ public enum CommandDescription implements IMessageDefinition, IMessageExtension 
     JUSTLOOTIT_CONTAINER_GROUP_REMOVE("Removes the refresh group of a container linked to a block or entity"),
     JUSTLOOTIT_CONTAINER_CREATE_ANY("Creates a new container and links it to a block or entity"),
     JUSTLOOTIT_CONTAINER_CREATE_ENTITY("Creates a new container and links it to a block or entity while prioritizing entities over blocks"),
+    JUSTLOOTIT_CONTAINER_TABLES("Browse all available loot tables and get a container item which can be placed"),
     JUSTLOOTIT_CONTAINER_MANAGE_ID("Manages a container by id"),
     JUSTLOOTIT_CONTAINER_MANAGE_LOCATION("Manages a container linked to a block or entity"),
     JUSTLOOTIT_CONTAINER_BULK_REPLACE_LOOTTABLE("Bulk replaces a loottable with a different one for each container"),
@@ -38,6 +39,9 @@ public enum CommandDescription implements IMessageDefinition, IMessageExtension 
     
     JUSTLOOTIT_CONFIG_SAVE("Saves all or just the specified config(s)"),
     JUSTLOOTIT_CONFIG_RELOAD("Reloads all or just the specified config(s)"),
+    
+    JUSTLOOTIT_DATA_SAVE("Saves all or just the specified data instance(s)"),
+    JUSTLOOTIT_DATA_RELOAD("Reloads all or just the specified data instance(s)"),
 
     JUSTLOOTIT_CONVERT_RESTORE("Triggers a world restoration process"),
     JUSTLOOTIT_CONVERT_CONVERSION("Triggers a world conversion process")

@@ -2,11 +2,16 @@ package me.lauriichan.spigot.justlootit.compatibility.data.betterstructures;
 
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.World;
 
 import io.netty.buffer.ByteBuf;
 import me.lauriichan.minecraft.pluginbase.extension.Extension;
 import me.lauriichan.spigot.justlootit.compatibility.data.CompatibilityDataExtension;
+import me.lauriichan.spigot.justlootit.compatibility.data.ICompatibilityData;
+import me.lauriichan.spigot.justlootit.compatibility.provider.CompatDependency;
+import me.lauriichan.spigot.justlootit.compatibility.provider.betterstructures.IBetterStructuresProvider;
 import me.lauriichan.spigot.justlootit.data.io.BufIO;
+import me.lauriichan.spigot.justlootit.util.CategorizedKeyMap;
 
 @Extension
 public class BetterStructuresDataExtension extends CompatibilityDataExtension<IBetterStructuresData> {
@@ -15,6 +20,18 @@ public class BetterStructuresDataExtension extends CompatibilityDataExtension<IB
 
     public BetterStructuresDataExtension() {
         super("BetterStructures", IBetterStructuresData.class);
+    }
+
+    public IBetterStructuresData create(String fileName) {
+        return new BetterStructuresDataV1(this, createDataId(fileName), fileName);
+    }
+
+    private NamespacedKey createDataId(String name) {
+        try {
+            return NamespacedKey.fromString("betterstructures:" + name);
+        } catch (IllegalArgumentException iae) {
+            return GENERIC;
+        }
     }
 
     @Override
@@ -42,16 +59,19 @@ public class BetterStructuresDataExtension extends CompatibilityDataExtension<IB
         return null;
     }
 
-    public IBetterStructuresData create(String fileName) {
-        return new BetterStructuresDataV1(this, createDataId(fileName), fileName);
+    @Override
+    public boolean provideLootTableKeys(World world, CategorizedKeyMap keyMap) {
+        IBetterStructuresProvider provider = CompatDependency.getActiveProvider(id(), IBetterStructuresProvider.class);
+        if (provider == null) {
+            return false;
+        }
+        provider.access().provideLootTableKeys(keyMap);
+        return true;
     }
 
-    private NamespacedKey createDataId(String name) {
-        try {
-            return NamespacedKey.fromString("betterstructures:" + name);
-        } catch (IllegalArgumentException iae) {
-            return GENERIC;
-        }
+    @Override
+    public ICompatibilityData createData(String key, long seed) {
+        return create(key);
     }
 
 }

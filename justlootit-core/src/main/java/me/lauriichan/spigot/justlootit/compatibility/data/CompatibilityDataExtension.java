@@ -1,18 +1,26 @@
 package me.lauriichan.spigot.justlootit.compatibility.data;
 
 import org.bukkit.Material;
+import org.bukkit.World;
 
 import io.netty.buffer.ByteBuf;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
+import it.unimi.dsi.fastutil.objects.ObjectCollection;
+import it.unimi.dsi.fastutil.objects.ObjectCollections;
 import me.lauriichan.minecraft.pluginbase.extension.ExtensionPoint;
 import me.lauriichan.minecraft.pluginbase.extension.IExtension;
 import me.lauriichan.minecraft.pluginbase.inventory.item.ItemEditor;
 import me.lauriichan.spigot.justlootit.compatibility.provider.CompatDependency;
+import me.lauriichan.spigot.justlootit.util.CategorizedKeyMap;
 
 @ExtensionPoint
 public abstract class CompatibilityDataExtension<I extends ICompatibilityData> implements IExtension {
 
     private static final Object2ObjectArrayMap<String, CompatibilityDataExtension<?>> EXTENSIONS = new Object2ObjectArrayMap<>();
+
+    public static ObjectCollection<CompatibilityDataExtension<?>> extensions() {
+        return ObjectCollections.unmodifiable(EXTENSIONS.values());
+    }
 
     public static CompatibilityDataExtension<?> get(String id) {
         return EXTENSIONS.get(id);
@@ -25,7 +33,7 @@ public abstract class CompatibilityDataExtension<I extends ICompatibilityData> i
         }
         return type.cast(extension);
     }
-    
+
     private final String id;
     private final Class<I> type;
 
@@ -45,7 +53,7 @@ public abstract class CompatibilityDataExtension<I extends ICompatibilityData> i
     public final Class<I> type() {
         return type;
     }
-    
+
     public final boolean isActive() {
         return CompatDependency.isActive(id());
     }
@@ -84,6 +92,14 @@ public abstract class CompatibilityDataExtension<I extends ICompatibilityData> i
 
     protected I upgradeImpl(I data) {
         return data;
+    }
+
+    public boolean provideLootTableKeys(World world, CategorizedKeyMap keyMap) {
+        return false;
+    }
+
+    public ICompatibilityData createData(String key, long seed) {
+        throw new UnsupportedOperationException();
     }
 
 }

@@ -14,12 +14,14 @@ permissions:
         children:
             justlootit.command.*: true
             justlootit.remove.container.*: true
+            justlootit.place.container.*: true
     justlootit.command.*:
         description: Gives access to all JustLootIt commands
         default: false
         children:
             justlootit.command.convert: true
             justlootit.command.config: true
+            justlootit.command.data: true
             justlootit.command.container: true
             justlootit.command.group: true
             justlootit.command.debug: true
@@ -35,6 +37,14 @@ permissions:
         default: false
     justlootit.remove.container.entity:
         description: Gives access to remove JustLootIt Entity containers
+        default: false
+    justlootit.place.container.*:
+        description: Gives access to place all types of JustLootIt containers
+        default: false
+        children:
+            justlootit.place.container.block: true
+    justlootit.place.container.block:
+        description: Gives access to remove JustLootIt Block containers
         default: false
     justlootit.admin.version:
         description: Informs the player of updates of JustLootIt

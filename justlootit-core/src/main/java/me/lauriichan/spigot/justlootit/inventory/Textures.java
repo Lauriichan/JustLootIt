@@ -9,6 +9,7 @@ public final class Textures {
     public static final String GEODE_EXLAMATION_MARK = "2241cc3cc835b734ce2c1487aa565a776b7b5027d32a27a013c0eb6502162405";
     public static final String GEODE_SETTINGS = "95d2cb38458da17fb6cdacf787161602a2493cbf93233636253cff07cd88a9c0";
     public static final String GEODE_ARROW_LEFT = "39617022cf9a1d5a8606c06e3894c310874dfad27690793d6756901658c6e064";
+    public static final String GEODE_ARROW_LEFT_UP = "4693da1223fb4455846fd147ca9617cea651efee07280aa79d456411cc2c127e";
     public static final String GEODE_ARROW_RIGHT = "d15ce8448acbd8e60c9b6e93f4062a203c434aec50680d9f0d028b7c09125738";
     public static final String GEODE_ARROW_DOWN = "cff506126ae98c76155d5d6daa786d7695f68d0403ba47afa0f20f938997760c";
     public static final String GEODE_ARROW_BACKWARD_SINGLE = "5c491dbfa372df7999262cbfa8916518ab3e3595bd6bddf9f7d195df3f7885bd";

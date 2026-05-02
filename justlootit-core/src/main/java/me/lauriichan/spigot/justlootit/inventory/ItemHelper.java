@@ -47,6 +47,11 @@ public final class ItemHelper {
             .apply();
     }
 
+    public static ItemEditor goBack(Actor<Player> actor) {
+        return ItemEditor.ofHead(Textures.GEODE_ARROW_LEFT_UP)
+            .setName(actor.getTranslatedMessageAsString(UIInventoryNames.GENERAL_PAGE_BACK)).apply();
+    }
+
     public static ItemEditor pageCount(ItemEditor editor, int current, int max, PageType type) {
         int amount = select(current, max, type);
         if (amount > 64 || amount < 1) {
@@ -54,9 +59,9 @@ public final class ItemHelper {
         }
         return editor.setAmount(amount, true);
     }
-    
+
     private static int select(int current, int max, PageType type) {
-        switch(type) {
+        switch (type) {
         case NEXT:
             return current + 1;
         case PREVIOUS:

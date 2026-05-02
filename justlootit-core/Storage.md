@@ -15,6 +15,7 @@
 | Id       | Name             |
 |----------|------------------|
 | 0 - 14   |                  |
+| 14       | PersistentData   |
 | 15       | CacheLookupTable |
 | 16 - 255 | CachedInventory  |
 

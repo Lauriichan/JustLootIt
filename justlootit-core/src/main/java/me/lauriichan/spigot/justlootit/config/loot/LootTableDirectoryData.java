@@ -16,6 +16,7 @@ import me.lauriichan.minecraft.pluginbase.data.handler.JsonDataHandler;
 import me.lauriichan.minecraft.pluginbase.extension.Extension;
 import me.lauriichan.minecraft.pluginbase.inventory.item.ItemEditor;
 import me.lauriichan.minecraft.pluginbase.io.IOManager;
+import me.lauriichan.minecraft.pluginbase.io.serialization.SerializationException;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.config.data.CustomLootTable;
 import me.lauriichan.spigot.justlootit.config.io.JsonIO;
@@ -71,6 +72,11 @@ public class LootTableDirectoryData extends DirectoryDataExtension<IJson<?>> {
         }
     }
 
+    @Override
+    public boolean searchSupportedDirectories() {
+        return true;
+    }
+
     public CustomLootTable get(NamespacedKey key) {
         return tables.get(key);
     }
@@ -100,7 +106,21 @@ public class LootTableDirectoryData extends DirectoryDataExtension<IJson<?>> {
             return;
         }
         NamespacedKey id = value.key().location();
-        ILootPoolProvider lootProvider = JsonIO.deserialize(ioManager, json.asJsonObject(), ILootPoolProvider.class);
+        ILootPoolProvider lootProvider;
+        try {
+            lootProvider = JsonIO.deserialize(ioManager, json.asJsonObject(), ILootPoolProvider.class);
+        } catch (IllegalStateException ise) {
+            if (ise.getCause() instanceof SerializationException err) {
+                if (err.getCause() != null) {
+                    logger.error("Invalid loot pool provider set for loot table '{0}': {1}", err.getCause(), id, err.getMessage());
+                    return;
+                }
+                logger.warning("Invalid loot pool provider set for loot table '{0}': {1}", id, err.getMessage());
+                return;
+            }
+            logger.error(ise);
+            return;
+        }
         if (lootProvider == null) {
             tables.remove(id);
             logger.warning("No loot pool provider set for loot table '{0}'", id);

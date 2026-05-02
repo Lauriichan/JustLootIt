@@ -26,6 +26,8 @@ public final class UIInventoryNames implements IMessageExtension {
     public static MessageProvider GENERAL_PAGE_FIRST;
     @Message(id = "inventory.general.page.current", content = "&7Page: &c$current &8/ &7$max")
     public static MessageProvider GENERAL_PAGE_CURRENT;
+    @Message(id = "inventory.general.page.back", content = "&7<= Back")
+    public static MessageProvider GENERAL_PAGE_BACK;
 
     @Message(id = "inventory.general.format.date", content = "&7HH&8:&7mm&8:&7ss &8- &7dd&8/&7MM&8/&7y")
     public static MessageProvider GENERAL_DATE_FORMAT;
@@ -142,5 +144,65 @@ public final class UIInventoryNames implements IMessageExtension {
         "&7Shift click to reset access"
     })
     public static MessageProvider CONTAINER_MANAGE_PAGE_ACCESSES_ITEM_PLAYER_LORE;
+
+    /*
+     * Loot Table Viewer UI
+     */
+    @Message(id = "inventory.loottable-viewer.page.chooser.name", content = "&cChoose container item")
+    public static MessageProvider LOOTTABLE_VIEWER_PAGE_CHOOSER_NAME;
+    @Message(id = "inventory.loottable-viewer.page.chooser.back.lore", content = {
+        "&7Click to go back to path:",
+        "&c$path"
+    })
+    public static MessageProvider LOOTTABLE_VIEWER_PAGE_CHOOSER_BACK_LORE;
+
+    @Message(id = "inventory.loottable-viewer.page.chooser.container-item.name", content = "$#plugin.name &d$container.type &7container")
+    public static MessageProvider LOOTTABLE_VIEWER_PAGE_CHOOSER_CONTAINER_ITEM_NAME;
+    @Message(id = "inventory.loottable-viewer.page.chooser.container-item.lore", content = {
+        "",
+        "&8Container Type: &7$container.type",
+        "&8Loot Table Key: &7$key"
+    })
+    public static MessageProvider LOOTTABLE_VIEWER_PAGE_CHOOSER_CONTAINER_ITEM_LORE;
+
+    @Message(id = "inventory.loottable-viewer.page.browser.name", content = "&7Loot Table Browser (&c$type&7)")
+    public static MessageProvider LOOTTABLE_VIEWER_PAGE_BROWSER_NAME;
+
+    @Message(id = "inventory.loottable-viewer.page.browser.back.lore", content = {
+        "&7Click to go back to '&c$name&7'",
+        "",
+        "&8Current path:",
+        "&8$path"
+    })
+    public static MessageProvider LOOTTABLE_VIEWER_PAGE_BROWSER_BACK_LORE;
+
+    @Message(id = "inventory.loottable-viewer.page.browser.tab.unselected.name", content = "&7$name")
+    public static MessageProvider LOOTTABLE_VIEWER_PAGE_BROWSER_TAB_UNSELECTED_NAME;
+    @Message(id = "inventory.loottable-viewer.page.browser.tab.unselected.lore", content = "")
+    public static MessageProvider LOOTTABLE_VIEWER_PAGE_BROWSER_TAB_UNSELECTED_LORE;
+    @Message(id = "inventory.loottable-viewer.page.browser.tab.selected.name", content = "&d$name")
+    public static MessageProvider LOOTTABLE_VIEWER_PAGE_BROWSER_TAB_SELECTED_NAME;
+    @Message(id = "inventory.loottable-viewer.page.browser.tab.selected.lore", content = {
+        "&5Selected"
+    })
+    public static MessageProvider LOOTTABLE_VIEWER_PAGE_BROWSER_TAB_SELECTED_LORE;
+
+    @Message(id = "inventory.loottable-viewer.page.browser.entry.category.name", content = "&7$name")
+    public static MessageProvider LOOTTABLE_VIEWER_PAGE_BROWSER_ENTRY_CATEGORY_NAME;
+    @Message(id = "inventory.loottable-viewer.page.browser.entry.category.lore", content = {
+        "&7Click to open category",
+        "",
+        "&8$path"
+    })
+    public static MessageProvider LOOTTABLE_VIEWER_PAGE_BROWSER_ENTRY_CATEGORY_LORE;
+
+    @Message(id = "inventory.loottable-viewer.page.browser.entry.table.name", content = "&e$name")
+    public static MessageProvider LOOTTABLE_VIEWER_PAGE_BROWSER_ENTRY_TABLE_NAME;
+    @Message(id = "inventory.loottable-viewer.page.browser.entry.table.lore", content = {
+        "&7Click to get placeable container",
+        "",
+        "&8$path"
+    })
+    public static MessageProvider LOOTTABLE_VIEWER_PAGE_BROWSER_ENTRY_TABLE_LORE;
 
 }

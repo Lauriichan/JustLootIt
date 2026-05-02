@@ -14,17 +14,17 @@ import me.lauriichan.spigot.justlootit.compatibility.provider.customstructures.I
 import me.lauriichan.spigot.justlootit.data.CompatibilityContainer;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 
-public record CustomStructuresDataV1(CompatibilityDataExtension<?> extension, NamespacedKey dataId, String structureName, long seed) implements ICustomStructuresData {
+public record CustomStructuresDataV2(CompatibilityDataExtension<?> extension, NamespacedKey dataId, String tableName, long seed) implements ICustomStructuresData {
 
     @Override
     public int version() {
-        return 0;
+        return 1;
     }
 
     @Override
     public boolean canFill(BlockState state, Location location) {
         ICustomStructuresProvider provider = CompatDependency.getActiveProvider(extension().id(), ICustomStructuresProvider.class);
-        return provider != null && provider.access().hasStructureLootTable(structureName(), state.getType());
+        return provider != null && provider.access().hasLootTable(tableName);
     }
     
     @Override
@@ -33,17 +33,17 @@ public record CustomStructuresDataV1(CompatibilityDataExtension<?> extension, Na
         if (provider == null) {
             return false;
         }
-        return provider.access().fillWithStructureLootTable(inventory, state.getType(), location, structureName(), container.generateSeed(location.getWorld(), player, seed()));
+        return provider.access().fillWithLootTable(inventory, location, tableName, container.generateSeed(location.getWorld(), player, seed()));
     }
 
     @Override
     public String refreshContainerId() {
-        return structureName;
+        return tableName;
     }
     
     @Override
     public void addInfoData(Consumer<Key> add) {
-        add.accept(Key.of("Structure", structureName));
+        add.accept(Key.of("Loot Table", tableName));
         add.accept(Key.of("Seed", seed));
     }
 

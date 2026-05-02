@@ -18,7 +18,7 @@ public class BetterStructuresCompatProvider implements IBetterStructuresProvider
     @Override
     public void onEnable(JustLootItPlugin jli, Plugin plugin) {
         pluginManager().registerEvents(listener = new BetterStructuresSchematicListener(plugin.getName(), jli.versionHandler(), jli.configManager()), jli);
-        access = new BetterStructuresAccess();
+        access = new BetterStructuresAccess(plugin.getName());
     }
 
     @Override

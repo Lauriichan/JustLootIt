@@ -18,7 +18,7 @@ public class IrisCompatProvider implements IIrisProvider {
     @Override
     public void onEnable(JustLootItPlugin jli, Plugin plugin) {
         pluginManager().registerEvents(listener = new IrisListener(plugin.getName(), jli.versionHandler(), jli.configManager()), plugin);
-        access = new IrisAccess();
+        access = new IrisAccess(plugin.getName());
     }
 
     @Override

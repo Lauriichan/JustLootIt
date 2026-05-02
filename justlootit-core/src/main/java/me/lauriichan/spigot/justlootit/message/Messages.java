@@ -7,7 +7,7 @@ import me.lauriichan.minecraft.pluginbase.message.IMessageExtension;
 
 @Extension
 public final class Messages implements IMessageExtension {
-    
+
     private Messages() {
         throw new UnsupportedOperationException();
     }
@@ -20,7 +20,7 @@ public final class Messages implements IMessageExtension {
     public static MessageProvider NAME;
     @Message(id = "plugin.prefix", content = "$#plugin.name &8|&7")
     public static MessageProvider PREFIX;
-    
+
     /*
      * Warnings
      */
@@ -40,7 +40,7 @@ public final class Messages implements IMessageExtension {
         "$#plugin.prefix &cThis feature is currently disabled as its work in progress."
     })
     public static MessageProvider WARNING_WIP;
-    
+
     /*
      * Updater
      */
@@ -49,13 +49,14 @@ public final class Messages implements IMessageExtension {
     public static MessageProvider UPDATER_UPDATE_LATEST;
     @Message(id = "updater.update.available", content = "$#plugin.prefix You are currently running &8<&c$version.current&8> &7which is an oudated version of $#plugin.name&7, please update to &8<&c$version.latest&8>&7.")
     public static MessageProvider UPDATER_UPDATE_AVAILABLE;
-    
+
     /*
      * Input
      */
+
     @Message(id = "input.manual.cancel", content = "$#plugin.prefix &7Successfully cancelled input.")
     public static MessageProvider INPUT_MANUAL_CANCEL;
-    
+
     @Message(id = "input.betterinputs.cancelled", content = "$#plugin.prefix &7Input inquiry cancelled: &c$reason")
     public static MessageProvider INPUT_BETTERINPUTS_CANCELLED;
     @Message(id = "input.betterinputs.failed", content = "$#plugin.prefix &7Input inquiry failed: &c$message")
@@ -67,7 +68,7 @@ public final class Messages implements IMessageExtension {
     public static MessageProvider INPUT_SIMPLE_FAILED;
     @Message(id = "input.simple.prompt", content = "$#plugin.prefix &7$prompt")
     public static MessageProvider INPUT_SIMPLE_PROMPT;
-    
+
     // Retries
     @Message(id = "input.retry.loottable.seed", content = "$#plugin.prefix Invalid seed, please try again.")
     public static MessageProvider INPUT_RETRY_LOOTTABLE_SEED;
@@ -85,7 +86,7 @@ public final class Messages implements IMessageExtension {
     public static MessageProvider INPUT_PROMPT_LOOTTABLE_SEED;
     @Message(id = "input.prompt.loottable.key", content = "&7Enter loot table key")
     public static MessageProvider INPUT_PROMPT_LOOTTABLE_KEY;
-    
+
     // Prompts (Conversion)
     @Message(id = "input.prompt.convert.do-lootin", content = "&7Do you want to convert Lootin containers?")
     public static MessageProvider INPUT_PROMPT_CONVERT_DO_LOOTIN;
@@ -143,30 +144,38 @@ public final class Messages implements IMessageExtension {
         "&7Note: A fully restored world can be converted back to JLI using &c/jli convert&7."
     })
     public static MessageProvider INPUT_PROMPT_CONVERT_RESTORATION_ARE_YOU_SURE;
-    
-    
-    
+
     /*
      * Container
      */
+
     @Message(id = "container.compatibility.not-active", content = "$#plugin.prefix This loot container can not be accessed because the plugin '&c$plugin&7' is not active to fill it.")
     public static MessageProvider CONTAINER_COMPATIBILITY_NOT_ACTIVE;
     @Message(id = "container.compatibility.fill-not-available", content = "$#plugin.prefix This loot container can not be accessed because the data provided by plugin '&c$plugin&7' related to the container is probably no longer available.")
     public static MessageProvider CONTAINER_COMPATIBILITY_FILL_NOT_AVAILABLE;
     @Message(id = "container.compatibility.fill-failed", content = "$#plugin.prefix This loot container can not be accessed because the compatibility for plugin '&c$plugin&7' failed to fill it.")
     public static MessageProvider CONTAINER_COMPATIBILITY_FILL_FAILED;
-    
+
     @Message(id = "container.vanilla.loottable-not-available", content = "$#plugin.prefix This loot container can not be accessed because the loot table '&c$lootTable&7' is not available to fill it.")
     public static MessageProvider CONTAINER_VANILLA_LOOTTABLE_NOT_AVAILABLE;
     @Message(id = "container.custom.loottable-not-available", content = "$#plugin.prefix This loot container can not be accessed because the loot table '&c$lootTable&7' is not available to fill it.")
     public static MessageProvider CONTAINER_CUSTOM_LOOTTABLE_NOT_AVAILABLE;
-    
+
     @Message(id = "container.access.not-repeatable", content = "&7Can &cnever &7be accessed again.")
     public static MessageProvider CONTAINER_ACCESS_NOT_REPEATABLE;
     @Message(id = "container.access.not-accessible", content = "&7Not accessible for $time&7.")
     public static MessageProvider CONTAINER_ACCESS_NOT_ACCESSIBLE;
     @Message(id = "container.access.wait-for-access", content = "$#plugin.prefix Please wait a moment for JLI to process your last container access.")
     public static MessageProvider CONTAINER_ACCESS_WAIT_FOR_ACCESS;
+
+    @Message(id = "container.place.unpermitted.block", content = "$#plugin.prefix You are not allowed to place loot container blocks.")
+    public static MessageProvider CONTAINER_PLACE_UNPERMITTED_BLOCK;
+    
+    @Message(id = "container.place.failure.block", content = "$#plugin.prefix Couldn't place a loot container block.")
+    public static MessageProvider CONTAINER_PLACE_FAILURE_BLOCK;
+    
+    @Message(id = "container.place.created.block", content = "$#plugin.prefix You successfully created a new loot container (&c$id&7) with seed &c$seed&7 and linked it to the placed block.")
+    public static MessageProvider CONTAINER_PLACE_CREATED_BLOCK;
 
     @Message(id = "container.break.unpermitted.block", content = "$#plugin.prefix This entity is a loot container can not be removed.")
     public static MessageProvider CONTAINER_BREAK_UNPERMITTED_BLOCK;
@@ -177,23 +186,23 @@ public final class Messages implements IMessageExtension {
     public static MessageProvider CONTAINER_BREAK_PERMITTED_BLOCK;
     @Message(id = "container.break.permitted.entity", content = "$#plugin.prefix This block is a loot container, you have to sneak in order to remove it.")
     public static MessageProvider CONTAINER_BREAK_PERMITTED_ENTITY;
-    
+
     @Message(id = "container.break.confirmation.block", content = "$#plugin.prefix Please break the container block again in the next &c2 minutes &7in order to remove it.")
     public static MessageProvider CONTAINER_BREAK_CONFIRMATION_BLOCK;
     @Message(id = "container.break.confirmation.entity", content = "$#plugin.prefix Please hit the container entity again in the next &c2 minutes &7in order to remove it.")
     public static MessageProvider CONTAINER_BREAK_CONFIRMATION_ENTITY;
-    
+
     @Message(id = "container.break.no-container", content = "$#plugin.prefix Container &8(&c$id&8) &7is already deleted.")
     public static MessageProvider CONTAINER_BREAK_NO_CONTAINER;
-    
+
     @Message(id = "container.break.double-chest", content = "$#plugin.prefix Successfully removed chest half.")
     public static MessageProvider CONTAINER_BREAK_DOUBLE_CHEST;
-    
+
     @Message(id = "container.break.removed.block", content = "$#plugin.prefix Succesfully removed container &8(&c$id&8) &7from block.")
     public static MessageProvider CONTAINER_BREAK_REMOVED_BLOCK;
     @Message(id = "container.break.removed.entity", content = "$#plugin.prefix Succesfully removed container &8(&c$id&8) &7from entity.")
     public static MessageProvider CONTAINER_BREAK_REMOVED_ENTITY;
-    
+
     @Message(id = "container.time.unit.millisecond", content = "$value millisecond(s)")
     public static MessageProvider CONTAINER_TIME_UNIT_MILLISECOND;
     @Message(id = "container.time.unit.second", content = "$value second(s)")
@@ -240,7 +249,7 @@ public final class Messages implements IMessageExtension {
     public static MessageProvider COMMAND_SYSTEM_PAGE_PREVIOUS;
     @Message(id = "command.system.page.next", content = "&cNext page")
     public static MessageProvider COMMAND_SYSTEM_PAGE_NEXT;
-    
+
     @Message(id = "command.system.error.storage-access.level", content = "$#plugin.prefix Failed to access storage of level '&c$level&7', please try again later.")
     public static MessageProvider COMMAND_SYSTEM_ERROR_STORAGE_ACCESS_LEVEL;
     @Message(id = "command.system.error.storage-access.player", content = "$#plugin.prefix Failed to access storage of player '&c$player&7', please try again later.")
@@ -270,7 +279,7 @@ public final class Messages implements IMessageExtension {
     public static MessageProvider COMMAND_HELP_COMMAND_FORMAT_NOARGS;
     @Message(id = "command.help.command.format.withargs", content = "&7$prefix &c$name $arguments &8- &7$description")
     public static MessageProvider COMMAND_HELP_COMMAND_FORMAT_WITHARGS;
-    
+
     // Debug
 
     @Message(id = "command.debug.pdc.data.empty.block", content = "$#plugin.prefix Block at &c$x $y $z &7in &c$world&7 doesn't have any data.")
@@ -317,9 +326,9 @@ public final class Messages implements IMessageExtension {
         "&8| &8Break: &a$break"
     })
     public static MessageProvider COMMAND_DEBUG_JLIDATA_FORMAT_ENTITY;
-    
+
     // Group
-    
+
     @Message(id = "command.group.all.unsupported", content = "$#plugin.prefix The time unit '&c$unit&7' is not supported by JustLootIt!")
     public static MessageProvider COMMAND_GROUP_ALL_UNSUPPORTED;
     @Message(id = "command.group.all.never-interval", content = "never")
@@ -347,7 +356,7 @@ public final class Messages implements IMessageExtension {
     public static MessageProvider COMMAND_GROUP_LIST_FORMAT_ENTRY_TEXT;
     @Message(id = "command.group.list.format.entry.hover", content = "&7Click to get edit command")
     public static MessageProvider COMMAND_GROUP_LIST_FORMAT_ENTRY_HOVER;
-    
+
     // Container
 
     @Message(id = "command.container.all.no-container.block", content = "$#plugin.prefix Block at &c$x $y $z &7in &c$world&7 is not a JustLootIt container!")
@@ -356,7 +365,7 @@ public final class Messages implements IMessageExtension {
     public static MessageProvider COMMAND_CONTAINER_ALL_NO_CONTAINER_ENTITY;
     @Message(id = "command.container.all.no-container.id", content = "$#plugin.prefix Couldn't find JustLootIt container with id &c$id&7!")
     public static MessageProvider COMMAND_CONTAINER_ALL_NO_CONTAINER_ID;
-    
+
     @Message(id = "command.container.info.container.any.block", content = {
         "&8| $#plugin.name",
         "&8|",
@@ -427,7 +436,7 @@ public final class Messages implements IMessageExtension {
     public static MessageProvider COMMAND_CONTAINER_LINK_NOT_FOUND_ENTITY;
     @Message(id = "command.container.link.not-linkable", content = "$#plugin.prefix The &c$type container &7can not be linked manually.")
     public static MessageProvider COMMAND_CONTAINER_LINK_NOT_LINKABLE;
-    
+
     @Message(id = "command.container.create.already-container.entity", content = "$#plugin.prefix Entity at &c$x $y $z &7in &c$world &7is already linked to a JustLootIt Container.")
     public static MessageProvider COMMAND_CONTAINER_CREATE_ALREADY_CONTAINER_ENTITY;
     @Message(id = "command.container.create.already-container.block", content = "$#plugin.prefix Block at &c$x $y $z &7in &c$world &7is already linked to a JustLootIt Container.")
@@ -452,7 +461,7 @@ public final class Messages implements IMessageExtension {
     public static MessageProvider COMMAND_CONTAINER_CREATE_NOT_CREATABLE;
     @Message(id = "command.container.create.frame.item-required", content = "$#plugin.prefix The item frame at &c$x $y $z &7in &c$world &7has to contain a valid item!")
     public static MessageProvider COMMAND_CONTAINER_CREATE_FRAME_ITEM_REQUIRED;
-    
+
     @Message(id = "command.container.group.set.block", content = "$#plugin.prefix Successfully set the refresh group of the container linked to the block at &c$x $y $z &7in &c$world &7to &c$group&7.")
     public static MessageProvider COMMAND_CONTAINER_GROUP_SET_BLOCK;
     @Message(id = "command.container.group.set.entity", content = "$#plugin.prefix Successfully set the refresh group of the container linked to the entity at &c$x $y $z &7in &c$world &7to &c$group&7.")
@@ -461,7 +470,7 @@ public final class Messages implements IMessageExtension {
     public static MessageProvider COMMAND_CONTAINER_GROUP_REMOVED_BLOCK;
     @Message(id = "command.container.group.removed.entity", content = "$#plugin.prefix Successfully removed the refresh group from the container linked to the entity at &c$x $y $z &7in &c$world&7.")
     public static MessageProvider COMMAND_CONTAINER_GROUP_REMOVED_ENTITY;
-    
+
     @Message(id = "command.container.bulk.replace.loottable.progress", content = "&7Replacing loot table '&5$loottableFrom&7' with '&5$loottableTo&7' in '&d$world&7' ($progress / $current scanned)")
     public static MessageProvider COMMAND_CONTAINER_BULK_REPLACE_LOOTTABLE_PROGRESS;
     @Message(id = "command.container.bulk.replace.loottable.done", content = "$#plugin.prefix Successfully scanned through all &d$amount containers &7and replaced the loot table '&5$loottableFrom&7' with '&5$loottableTo&7' in '&d$world&7'")
@@ -502,7 +511,39 @@ public final class Messages implements IMessageExtension {
     public static MessageProvider COMMAND_CONFIG_RELOAD_RESULT_SUCCESS;
     @Message(id = "command.config.reload.result.failed", content = "$#plugin.prefix Failed to reload config '&c$config&7', check the Server console for more info!")
     public static MessageProvider COMMAND_CONFIG_RELOAD_RESULT_FAILED;
-    
+
+    // Data
+
+    @Message(id = "command.config.save.chosen.start", content = "$#plugin.prefix Saving data instances of type '&c$data&7'...")
+    public static MessageProvider COMMAND_DATA_SAVE_CHOSEN_START;
+    @Message(id = "command.config.save.chosen.end", content = "$#plugin.prefix Tried to save &c$total &7data instances of type &7'&c$data&7': &c$success &7successful, &c$skipped &7skipped, &c$failed &7failed.")
+    public static MessageProvider COMMAND_DATA_SAVE_CHOSEN_END;
+    @Message(id = "command.config.save.all.start", content = "$#plugin.prefix Saving configs...")
+    public static MessageProvider COMMAND_DATA_SAVE_ALL_START;
+    @Message(id = "command.config.save.all.end", content = "$#plugin.prefix Tried to save &c$total &7data instances: &c$success &7successful, &c$skipped &7skipped, &c$failed &7failed.")
+    public static MessageProvider COMMAND_DATA_SAVE_ALL_END;
+    @Message(id = "command.config.save.result.skipped", content = "$#plugin.prefix Skipped saving data '&c$config&7'.")
+    public static MessageProvider COMMAND_DATA_SAVE_RESULT_SKIPPED;
+    @Message(id = "command.config.save.result.success", content = "$#plugin.prefix Successfully saved data '&c$config&7'.")
+    public static MessageProvider COMMAND_DATA_SAVE_RESULT_SUCCESS;
+    @Message(id = "command.config.save.result.failed", content = "$#plugin.prefix Failed to save data '&c$config&7', check the Server console for more info!")
+    public static MessageProvider COMMAND_DATA_SAVE_RESULT_FAILED;
+
+    @Message(id = "command.config.reload.chosen.start", content = "$#plugin.prefix Reloading data instances of type '&c$data&7'...")
+    public static MessageProvider COMMAND_DATA_RELOAD_CHOSEN_START;
+    @Message(id = "command.config.reload.chosen.end", content = "$#plugin.prefix Tried to reload &c$total &7data instances of type &7'&c$data&7': &c$success &7successful, &c$skipped &7skipped, &c$failed &7failed.")
+    public static MessageProvider COMMAND_DATA_RELOAD_CHOSEN_END;
+    @Message(id = "command.config.reload.all.start", content = "$#plugin.prefix Reloading data...")
+    public static MessageProvider COMMAND_DATA_RELOAD_ALL_START;
+    @Message(id = "command.config.reload.all.end", content = "$#plugin.prefix Tried to reload &c$total &7data instances: &c$success &7successful, &c$skipped &7skipped, &c$failed &7failed.")
+    public static MessageProvider COMMAND_DATA_RELOAD_ALL_END;
+    @Message(id = "command.config.reload.result.skipped", content = "$#plugin.prefix Skipped reloading data '&c$data&7'.")
+    public static MessageProvider COMMAND_DATA_RELOAD_RESULT_SKIPPED;
+    @Message(id = "command.config.reload.result.success", content = "$#plugin.prefix Successfully reloaded data '&c$data&7'.")
+    public static MessageProvider COMMAND_DATA_RELOAD_RESULT_SUCCESS;
+    @Message(id = "command.config.reload.result.failed", content = "$#plugin.prefix Failed to reload data '&c$data&7', check the Server console for more info!")
+    public static MessageProvider COMMAND_DATA_RELOAD_RESULT_FAILED;
+
     // Convert
 
     @Message(id = "command.convert.proccess.user.request", content = {
@@ -520,5 +561,5 @@ public final class Messages implements IMessageExtension {
     public static MessageProvider COMMAND_CONVERT_PROCESS_ONGOING;
     @Message(id = "command.convert.process-done", content = "$#plugin.prefix &7Successfully set up conversion process, restarting server in 5 seconds (might require manual start)")
     public static MessageProvider COMMAND_CONVERT_PROCESS_DONE;
-    
+
 }

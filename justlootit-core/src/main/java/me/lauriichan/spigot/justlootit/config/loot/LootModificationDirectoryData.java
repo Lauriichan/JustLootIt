@@ -66,6 +66,11 @@ public class LootModificationDirectoryData extends DirectoryDataExtension<IJson<
             plugin.logger().error("Failed to write loot table example", e);
         }
     }
+    
+    @Override
+    public boolean searchSupportedDirectories() {
+        return true;
+    }
 
     @Override
     public String path() {

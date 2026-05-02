@@ -50,7 +50,8 @@ public class CustomStructuresListener implements Listener {
             return;
         }
         if (config.isCompatibilityContainerBlacklisted(pluginId)
-            || config.isStructureBlacklisted(pluginId, event.getStructure().getName())) {
+            || config.isStructureBlacklisted(pluginId, event.getStructure().getName())
+            || config.isLootTableBlacklisted(pluginId, event.getLootTable().getName())) {
             return;
         }
         BlockState state = event.getLocation().getBlock().getState();
@@ -69,7 +70,7 @@ public class CustomStructuresListener implements Listener {
             IStorage storage = capability.storage();
             Stored<?> stored;
             storage.write(stored = storage.registry().create(
-                new CompatibilityContainer(dataExtension.create(event.getStructure().getName(), BlockUtil.getSeed(event.getLocation())))));
+                new CompatibilityContainer(dataExtension.create(event.getLootTable().getName(), BlockUtil.getSeed(event.getLocation())))));
             JustLootItAccess.setIdentity(container.getPersistentDataContainer(), stored.id());
             container.update();
         });

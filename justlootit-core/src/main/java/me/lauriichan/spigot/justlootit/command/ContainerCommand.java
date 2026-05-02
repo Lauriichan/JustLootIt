@@ -49,6 +49,7 @@ import me.lauriichan.spigot.justlootit.data.alternation.AlternationAction;
 import me.lauriichan.spigot.justlootit.data.alternation.container.ResetAccessAction;
 import me.lauriichan.spigot.justlootit.data.alternation.container.vanilla.UpdateLootTableAction;
 import me.lauriichan.spigot.justlootit.inventory.handler.manage.ContainerPageHandler;
+import me.lauriichan.spigot.justlootit.inventory.handler.tables.LootTableViewerHandler;
 import me.lauriichan.spigot.justlootit.message.Messages;
 import me.lauriichan.spigot.justlootit.storage.IStorage;
 import me.lauriichan.spigot.justlootit.storage.Stored;
@@ -72,7 +73,7 @@ public class ContainerCommand implements ICommandExtension {
         @Argument(name = "loottable to set", index = 3) final LootTable replace) {
         actor.sendTranslatedMessage(Messages.WARNING_WIP);
     }
-    
+
     public void bulkReplaceLootTable(final JustLootItPlugin plugin, final LootItActor<?> actor,
         @Argument(name = "world", index = 1) final World world,
         @Argument(name = "loottable to replace", index = 2) final NamespacedKey find,
@@ -124,6 +125,23 @@ public class ContainerCommand implements ICommandExtension {
                 if (actor.hasBossBar()) {
                     actor.bossBar().setVisible(false);
                 }
+            });
+        });
+    }
+
+    @Action("tables")
+    @Description("$#command.description.justlootit.container.tables")
+    public void item(final JustLootItPlugin plugin, final Actor<?> rawActor) {
+        Actor<Player> actor = rawActor.as(Player.class);
+        if (!actor.isValid()) {
+            actor.sendTranslatedMessage(Messages.COMMAND_SYSTEM_ACTOR_NOT_SUPPORTED, Key.of("actorType", "Player"));
+            return;
+        }
+        plugin.scheduler().sync(() -> {
+            plugin.versionHandler().getPlayer(actor.getHandle()).getCapability(PlayerGUICapability.class).ifPresent(guiCapability -> {
+                final IGuiInventory inventory = guiCapability.gui();
+                inventory.setHandler(plugin.pagedInventoryRegistry().get(LootTableViewerHandler.class));
+                inventory.open(actor.getHandle());
             });
         });
     }

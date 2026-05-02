@@ -6,9 +6,9 @@ public final class JustLootItPermission {
         throw new UnsupportedOperationException();
     }
 
-    public static final String COMMAND_UNINSTALL = "justlootit.command.uninstall";
     public static final String COMMAND_CONVERT = "justlootit.command.convert";
     public static final String COMMAND_CONFIG = "justlootit.command.config";
+    public static final String COMMAND_DATA = "justlootit.command.data";
     public static final String COMMAND_CONTAINER = "justlootit.command.container";
     public static final String COMMAND_GROUP = "justlootit.command.group";
     public static final String COMMAND_DEBUG = "justlootit.command.debug";
@@ -19,5 +19,6 @@ public final class JustLootItPermission {
 
     public static final String ACTION_REMOVE_CONTAINER_ENTITY = "justlootit.remove.container.entity";
     public static final String ACTION_REMOVE_CONTAINER_BLOCK = "justlootit.remove.container.block";
+    public static final String ACTION_PLACE_CONTAINER_BLOCK = "justlootit.place.container.block";
 
 }

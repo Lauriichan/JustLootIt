@@ -2,17 +2,26 @@ package me.lauriichan.spigot.justlootit.compatibility.data.iris;
 
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.World;
 
 import io.netty.buffer.ByteBuf;
 import me.lauriichan.minecraft.pluginbase.extension.Extension;
 import me.lauriichan.spigot.justlootit.compatibility.data.CompatibilityDataExtension;
+import me.lauriichan.spigot.justlootit.compatibility.data.ICompatibilityData;
+import me.lauriichan.spigot.justlootit.compatibility.provider.CompatDependency;
+import me.lauriichan.spigot.justlootit.compatibility.provider.iris.IIrisProvider;
 import me.lauriichan.spigot.justlootit.data.io.BufIO;
+import me.lauriichan.spigot.justlootit.util.CategorizedKeyMap;
 
 @Extension
 public class IrisDataExtension extends CompatibilityDataExtension<IIrisData> {
 
     public IrisDataExtension() {
         super("Iris", IIrisData.class);
+    }
+
+    public IIrisData create(IIrisTableKey[] keys, long seed) {
+        return new IrisDataV1(this, keys, seed);
     }
 
     @Override
@@ -63,8 +72,20 @@ public class IrisDataExtension extends CompatibilityDataExtension<IIrisData> {
         return null;
     }
 
-    public IIrisData create(IIrisTableKey[] keys, long seed) {
-        return new IrisDataV1(this, keys, seed);
+    @Override
+    public boolean provideLootTableKeys(World world, CategorizedKeyMap keyMap) {
+        IIrisProvider provider = CompatDependency.getActiveProvider(id(), IIrisProvider.class);
+        if (provider == null) {
+            return false;
+        }
+        return provider.access().provideLootTableKeys(world, keyMap);
+    }
+
+    @Override
+    public ICompatibilityData createData(String key, long seed) {
+        return new IrisDataV1(this, new IIrisTableKey[] {
+            new IIrisTableKey.IrisTableKey(key)
+        }, seed);
     }
 
 }
