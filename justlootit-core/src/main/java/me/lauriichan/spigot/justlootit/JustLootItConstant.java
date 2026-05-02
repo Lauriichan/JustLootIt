@@ -1,6 +1,7 @@
 package me.lauriichan.spigot.justlootit;
 
 import java.lang.invoke.MethodHandle;
+import java.lang.reflect.Field;
 import java.util.Map;
 
 import org.bukkit.Bukkit;
@@ -38,8 +39,11 @@ public final class JustLootItConstant {
             .findClass(JustLootItPlugin.get().platform().version().craftClassPath("inventory.util.CraftInventoryCreator"));
         MethodHandle CraftInventoryCreator_INSTANCE = JavaLookup.PLATFORM
             .unreflectGetter(ClassUtil.getField(CraftInventoryCreator_class, "INSTANCE"));
-        MethodHandle CraftInventoryCreator_DEFAULT_CONVERTER = JavaLookup.PLATFORM
-            .unreflectGetter(ClassUtil.getField(CraftInventoryCreator_class, "DEFAULT_CONVERTER"));
+        Field defaultConverterField = ClassUtil.getField(CraftInventoryCreator_class, "DEFAULT_CONVERTER");
+        if (defaultConverterField == null) {
+            defaultConverterField = ClassUtil.getField(CraftInventoryCreator_class, "defaultConverter");
+        }
+        MethodHandle CraftInventoryCreator_DEFAULT_CONVERTER = JavaLookup.PLATFORM.unreflectGetter(defaultConverterField);
         MethodHandle CraftInventoryCreator_converterMap = JavaLookup.PLATFORM
             .unreflectGetter(ClassUtil.getField(CraftInventoryCreator_class, "converterMap"));
 
