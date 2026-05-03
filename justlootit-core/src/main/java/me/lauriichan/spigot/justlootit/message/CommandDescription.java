@@ -42,6 +42,7 @@ public enum CommandDescription implements IMessageDefinition, IMessageExtension 
     
     JUSTLOOTIT_DATA_SAVE("Saves all or just the specified data instance(s)"),
     JUSTLOOTIT_DATA_RELOAD("Reloads all or just the specified data instance(s)"),
+    JUSTLOOTIT_DATA_HAND_ITEM("Gets the nbt item tag as json for use in JLI configs"),
 
     JUSTLOOTIT_CONVERT_RESTORE("Triggers a world restoration process"),
     JUSTLOOTIT_CONVERT_CONVERSION("Triggers a world conversion process")

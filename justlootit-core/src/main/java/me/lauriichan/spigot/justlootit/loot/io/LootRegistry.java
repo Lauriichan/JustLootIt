@@ -5,6 +5,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.Registry;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.potion.PotionEffectType;
 
 public final class LootRegistry {
 
@@ -43,6 +44,10 @@ public final class LootRegistry {
 
     public Registry<Enchantment> enchantment() {
         return Registry.ENCHANTMENT;
+    }
+
+    public Registry<PotionEffectType> effect() {
+        return Registry.EFFECT;
     }
 
 }

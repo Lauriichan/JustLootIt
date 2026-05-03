@@ -5,6 +5,8 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -30,10 +32,17 @@ import me.lauriichan.spigot.justlootit.loot.condition.AndCondition;
 import me.lauriichan.spigot.justlootit.loot.condition.LootTableCondition;
 import me.lauriichan.spigot.justlootit.loot.condition.WorldRegexCondition;
 import me.lauriichan.spigot.justlootit.loot.filter.MaterialFilter;
+import me.lauriichan.spigot.justlootit.loot.modifier.AddPotionEffectModifier;
+import me.lauriichan.spigot.justlootit.loot.modifier.ClearEnchantmentsModifier;
+import me.lauriichan.spigot.justlootit.loot.modifier.ClearPotionEffectsModifier;
+import me.lauriichan.spigot.justlootit.loot.modifier.CombinedModifier;
 import me.lauriichan.spigot.justlootit.loot.modifier.FilteredModifier;
+import me.lauriichan.spigot.justlootit.loot.modifier.RemovePotionEffectModifier;
+import me.lauriichan.spigot.justlootit.loot.modifier.SelectorModifier;
 import me.lauriichan.spigot.justlootit.loot.modifier.SetAmountModifier;
 import me.lauriichan.spigot.justlootit.loot.provider.SimpleItemProvider;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
+import me.lauriichan.spigot.justlootit.util.WeightedList;
 
 @Extension
 public class LootModificationDirectoryData extends DirectoryDataExtension<IJson<?>> {
@@ -49,13 +58,27 @@ public class LootModificationDirectoryData extends DirectoryDataExtension<IJson<
 
     private void populateExample(JustLootItPlugin plugin) {
         JsonObject object = new JsonObject();
-        ObjectArrayList<ILootCondition> conditions = new ObjectArrayList<>();
-        // This condition is invalid as the predicate is not set but for serialization it is enough
-        conditions.add(new WorldRegexCondition("world", null));
-        conditions.add(new LootTableCondition(NamespacedKey.fromString("iris:justlootit/v1")));
-        object.put("condition", JsonIO.serialize(ioManager, new AndCondition(conditions)));
-        object.put("modifier",
-            JsonIO.serialize(ioManager, new FilteredModifier(new MaterialFilter(Material.NETHER_STAR), new SetAmountModifier(1, 10))));
+        object.put("condition", JsonIO.serialize(ioManager, new AndCondition(ObjectList.of(new ILootCondition[] {
+            // This condition is invalid as the predicate is not set but for serialization it is enough
+            new WorldRegexCondition("world", null),
+            new LootTableCondition(NamespacedKey.fromString("iris:justlootit/v1"))
+        }))));
+        object.put("modifier", JsonIO.serialize(ioManager, new CombinedModifier(ObjectList.of(new ILootModifier[] {
+            new FilteredModifier(new MaterialFilter(Material.NETHER_STAR), new SetAmountModifier(1, 10)),
+            new FilteredModifier(new MaterialFilter(Material.DIAMOND_SWORD), new ClearEnchantmentsModifier()),
+            new FilteredModifier(new MaterialFilter(Material.POTION), new CombinedModifier(ObjectList.of(new ILootModifier[] {
+                new SelectorModifier(WeightedList.<ILootModifier>builder().add(5, new ClearPotionEffectsModifier())
+                    .add(1, new CombinedModifier(ObjectList.of(new ILootModifier[] {
+                        new RemovePotionEffectModifier(PotionEffectType.ABSORPTION),
+                        new RemovePotionEffectModifier(PotionEffectType.INSTANT_HEALTH),
+                        new RemovePotionEffectModifier(PotionEffectType.BAD_OMEN)
+                    }))).build()),
+                new SelectorModifier(WeightedList.<ILootModifier>builder()
+                    .add(2, new AddPotionEffectModifier(new PotionEffect(PotionEffectType.REGENERATION, 200, 2, true), false))
+                    .add(0.75, new AddPotionEffectModifier(new PotionEffect(PotionEffectType.REGENERATION, 400, 3, true), false))
+                    .add(0.05, new AddPotionEffectModifier(new PotionEffect(PotionEffectType.REGENERATION, 600, 4, true), false)).build())
+            })))
+        }))));
         object.put("pool_provider", JsonIO.serialize(ioManager, new SimpleItemProvider(Material.ACACIA_BOAT, 1)));
         FileData<IJson<?>> wrapper = new FileData<>(null, null);
         wrapper.value(object);
@@ -66,7 +89,7 @@ public class LootModificationDirectoryData extends DirectoryDataExtension<IJson<
             plugin.logger().error("Failed to write loot table example", e);
         }
     }
-    
+
     @Override
     public boolean searchSupportedDirectories() {
         return true;

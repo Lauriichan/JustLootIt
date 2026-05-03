@@ -10,6 +10,25 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 public class WeightedList<E> implements Iterable<WeightedList.Entry<E>> {
 
+    public static class Builder<E> {
+
+        private final WeightedList<E> list = new WeightedList<>();
+
+        public Builder<E> add(double weight, E element) {
+            list.add(weight, element);
+            return this;
+        }
+
+        public WeightedList<E> build() {
+            return list;
+        }
+
+    }
+
+    public static <E> Builder<E> builder() {
+        return new Builder<>();
+    }
+
     public static record Entry<E>(double position, double weight, E element) {}
 
     private final Double2ObjectRBTreeMap<Entry<E>> sortedElements = new Double2ObjectRBTreeMap<>();

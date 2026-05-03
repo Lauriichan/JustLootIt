@@ -7,10 +7,23 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Iterator;
 
+import me.lauriichan.laylib.json.IJson;
+import me.lauriichan.laylib.json.io.JsonWriter;
+
 public final class IOUtil {
-    
+
+    public static final JsonWriter TECHNICAL_JSON = new JsonWriter().setPretty(false);
+
     private IOUtil() {
         throw new UnsupportedOperationException();
+    }
+
+    public static String toString(IJson<?> json) {
+        try {
+            return TECHNICAL_JSON.toString(json);
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to write json", e);
+        }
     }
 
     public static void delete(Path path) throws IOException {

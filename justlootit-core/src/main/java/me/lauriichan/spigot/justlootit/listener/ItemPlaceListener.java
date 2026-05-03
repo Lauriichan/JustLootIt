@@ -59,7 +59,7 @@ public class ItemPlaceListener implements IListenerExtension {
             return;
         }
         ItemStack itemStack = event.getItem();
-        if (!itemStack.hasItemMeta()) {
+        if (itemStack == null || !itemStack.hasItemMeta()) {
             return;
         }
         PersistentDataContainer itemContainer = itemStack.getItemMeta().getPersistentDataContainer();

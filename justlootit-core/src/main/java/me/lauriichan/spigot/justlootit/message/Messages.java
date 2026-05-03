@@ -520,35 +520,42 @@ public final class Messages implements IMessageExtension {
 
     // Data
 
-    @Message(id = "command.config.save.chosen.start", content = "$#plugin.prefix Saving data instances of type '&c$data&7'...")
+    @Message(id = "command.data.save.chosen.start", content = "$#plugin.prefix Saving data instances of type '&c$data&7'...")
     public static MessageProvider COMMAND_DATA_SAVE_CHOSEN_START;
-    @Message(id = "command.config.save.chosen.end", content = "$#plugin.prefix Tried to save &c$total &7data instances of type &7'&c$data&7': &c$success &7successful, &c$skipped &7skipped, &c$failed &7failed.")
+    @Message(id = "command.data.save.chosen.end", content = "$#plugin.prefix Tried to save &c$total &7data instances of type &7'&c$data&7': &c$success &7successful, &c$skipped &7skipped, &c$failed &7failed.")
     public static MessageProvider COMMAND_DATA_SAVE_CHOSEN_END;
-    @Message(id = "command.config.save.all.start", content = "$#plugin.prefix Saving configs...")
+    @Message(id = "command.data.save.all.start", content = "$#plugin.prefix Saving configs...")
     public static MessageProvider COMMAND_DATA_SAVE_ALL_START;
-    @Message(id = "command.config.save.all.end", content = "$#plugin.prefix Tried to save &c$total &7data instances: &c$success &7successful, &c$skipped &7skipped, &c$failed &7failed.")
+    @Message(id = "command.data.save.all.end", content = "$#plugin.prefix Tried to save &c$total &7data instances: &c$success &7successful, &c$skipped &7skipped, &c$failed &7failed.")
     public static MessageProvider COMMAND_DATA_SAVE_ALL_END;
-    @Message(id = "command.config.save.result.skipped", content = "$#plugin.prefix Skipped saving data '&c$config&7'.")
+    @Message(id = "command.data.save.result.skipped", content = "$#plugin.prefix Skipped saving data '&c$config&7'.")
     public static MessageProvider COMMAND_DATA_SAVE_RESULT_SKIPPED;
-    @Message(id = "command.config.save.result.success", content = "$#plugin.prefix Successfully saved data '&c$config&7'.")
+    @Message(id = "command.data.save.result.success", content = "$#plugin.prefix Successfully saved data '&c$config&7'.")
     public static MessageProvider COMMAND_DATA_SAVE_RESULT_SUCCESS;
-    @Message(id = "command.config.save.result.failed", content = "$#plugin.prefix Failed to save data '&c$config&7', check the Server console for more info!")
+    @Message(id = "command.data.save.result.failed", content = "$#plugin.prefix Failed to save data '&c$config&7', check the Server console for more info!")
     public static MessageProvider COMMAND_DATA_SAVE_RESULT_FAILED;
 
-    @Message(id = "command.config.reload.chosen.start", content = "$#plugin.prefix Reloading data instances of type '&c$data&7'...")
+    @Message(id = "command.data.reload.chosen.start", content = "$#plugin.prefix Reloading data instances of type '&c$data&7'...")
     public static MessageProvider COMMAND_DATA_RELOAD_CHOSEN_START;
-    @Message(id = "command.config.reload.chosen.end", content = "$#plugin.prefix Tried to reload &c$total &7data instances of type &7'&c$data&7': &c$success &7successful, &c$skipped &7skipped, &c$failed &7failed.")
+    @Message(id = "command.data.reload.chosen.end", content = "$#plugin.prefix Tried to reload &c$total &7data instances of type &7'&c$data&7': &c$success &7successful, &c$skipped &7skipped, &c$failed &7failed.")
     public static MessageProvider COMMAND_DATA_RELOAD_CHOSEN_END;
-    @Message(id = "command.config.reload.all.start", content = "$#plugin.prefix Reloading data...")
+    @Message(id = "command.data.reload.all.start", content = "$#plugin.prefix Reloading data...")
     public static MessageProvider COMMAND_DATA_RELOAD_ALL_START;
-    @Message(id = "command.config.reload.all.end", content = "$#plugin.prefix Tried to reload &c$total &7data instances: &c$success &7successful, &c$skipped &7skipped, &c$failed &7failed.")
+    @Message(id = "command.data.reload.all.end", content = "$#plugin.prefix Tried to reload &c$total &7data instances: &c$success &7successful, &c$skipped &7skipped, &c$failed &7failed.")
     public static MessageProvider COMMAND_DATA_RELOAD_ALL_END;
-    @Message(id = "command.config.reload.result.skipped", content = "$#plugin.prefix Skipped reloading data '&c$data&7'.")
+    @Message(id = "command.data.reload.result.skipped", content = "$#plugin.prefix Skipped reloading data '&c$data&7'.")
     public static MessageProvider COMMAND_DATA_RELOAD_RESULT_SKIPPED;
-    @Message(id = "command.config.reload.result.success", content = "$#plugin.prefix Successfully reloaded data '&c$data&7'.")
+    @Message(id = "command.data.reload.result.success", content = "$#plugin.prefix Successfully reloaded data '&c$data&7'.")
     public static MessageProvider COMMAND_DATA_RELOAD_RESULT_SUCCESS;
-    @Message(id = "command.config.reload.result.failed", content = "$#plugin.prefix Failed to reload data '&c$data&7', check the Server console for more info!")
+    @Message(id = "command.data.reload.result.failed", content = "$#plugin.prefix Failed to reload data '&c$data&7', check the Server console for more info!")
     public static MessageProvider COMMAND_DATA_RELOAD_RESULT_FAILED;
+
+    @Message(id = "command.data.hand.nbt.no-hand", content = "$#plugin.prefix Please hold an item in any of your hands!")
+    public static MessageProvider COMMAND_DATA_HAND_NBT_NO_HAND;
+    @Message(id = "command.data.hand.nbt.main-hand", content = "$#plugin.prefix Click to copy the json NBT of the item in your &cmain hand")
+    public static MessageProvider COMMAND_DATA_HAND_NBT_MAIN_HAND;
+    @Message(id = "command.data.hand.nbt.off-hand", content = "$#plugin.prefix Click to copy the json NBT of the item in your &coff hand")
+    public static MessageProvider COMMAND_DATA_HAND_NBT_OFF_HAND;
 
     // Convert
 

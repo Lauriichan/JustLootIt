@@ -80,12 +80,6 @@ import me.lauriichan.spigot.justlootit.util.PluginVersion;
 
 public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> implements IServiceProvider {
 
-    /*
-     *  TODO: [AFTER RELEASE] Add support for third-party plugins (add an api or smth)
-     *  
-     *  TODO: [AFTER RELEASE] Possibly add items that create containers
-     */
-
     public static JustLootItPlugin get() {
         return getPlugin(JustLootItPlugin.class);
     }

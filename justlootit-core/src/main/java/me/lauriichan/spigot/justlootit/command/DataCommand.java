@@ -1,5 +1,9 @@
 package me.lauriichan.spigot.justlootit.command;
 
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.ItemStack;
+
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap.Entry;
 import me.lauriichan.laylib.command.Actor;
 import me.lauriichan.laylib.command.annotation.Action;
@@ -15,6 +19,8 @@ import me.lauriichan.minecraft.pluginbase.extension.Extension;
 import me.lauriichan.spigot.justlootit.JustLootItPermission;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.message.Messages;
+import me.lauriichan.spigot.justlootit.nms.nbt.NbtHelper;
+import me.lauriichan.spigot.justlootit.util.IOUtil;
 import me.lauriichan.spigot.justlootit.util.TypeName;
 
 @Extension
@@ -130,6 +136,39 @@ public class DataCommand implements ICommandExtension {
         }
         actor.sendTranslatedMessage(Messages.COMMAND_DATA_RELOAD_RESULT_SUCCESS, Key.of("config", name));
         return 1;
+    }
+
+    @Action("hand nbt")
+    @Description("$#command.description.justlootit.data.hand.nbt")
+    public void handNbt(final JustLootItPlugin plugin, final Actor<?> rawActor) {
+        Actor<Player> actor = rawActor.as(Player.class);
+        if (!actor.isValid()) {
+            actor.sendTranslatedMessage(Messages.COMMAND_SYSTEM_ACTOR_NOT_SUPPORTED, Key.of("actorType", "Player"));
+            return;
+        }
+        Player player = actor.getHandle();
+        ItemStack offHand = player.getInventory().getItem(EquipmentSlot.OFF_HAND);
+        ItemStack hand = player.getInventory().getItem(EquipmentSlot.HAND);
+
+        NbtHelper nbtHelper = plugin.versionHandler().nbtHelper();
+
+        boolean anySend = false;
+        if (hand != null && !hand.getType().isAir()) {
+            actor.actionMessageBuilder()
+                .action(me.lauriichan.laylib.command.Action.copy(IOUtil.toString(nbtHelper.asJson(nbtHelper.asTag(hand)))))
+                .message(Messages.COMMAND_DATA_HAND_NBT_MAIN_HAND).send(actor);
+            anySend = true;
+        }
+        if (offHand != null && !offHand.getType().isAir()) {
+            actor.actionMessageBuilder()
+                .action(me.lauriichan.laylib.command.Action.copy(IOUtil.toString(nbtHelper.asJson(nbtHelper.asTag(offHand)))))
+                .message(Messages.COMMAND_DATA_HAND_NBT_MAIN_HAND).send(actor);
+            anySend = true;
+        }
+        if (anySend) {
+            return;
+        }
+        actor.sendTranslatedMessage(Messages.COMMAND_DATA_HAND_NBT_NO_HAND);
     }
 
 }
