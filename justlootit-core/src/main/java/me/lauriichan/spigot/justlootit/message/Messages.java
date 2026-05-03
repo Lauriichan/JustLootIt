@@ -170,12 +170,18 @@ public final class Messages implements IMessageExtension {
 
     @Message(id = "container.place.unpermitted.block", content = "$#plugin.prefix You are not allowed to place loot container blocks.")
     public static MessageProvider CONTAINER_PLACE_UNPERMITTED_BLOCK;
+    @Message(id = "container.place.unpermitted.entity", content = "$#plugin.prefix You are not allowed to place loot container entities.")
+    public static MessageProvider CONTAINER_PLACE_UNPERMITTED_ENTITY;
     
     @Message(id = "container.place.failure.block", content = "$#plugin.prefix Couldn't place a loot container block.")
     public static MessageProvider CONTAINER_PLACE_FAILURE_BLOCK;
+    @Message(id = "container.place.failure.entity", content = "$#plugin.prefix Couldn't place a loot container entity.")
+    public static MessageProvider CONTAINER_PLACE_FAILURE_ENTITY;
     
     @Message(id = "container.place.created.block", content = "$#plugin.prefix You successfully created a new loot container (&c$id&7) with seed &c$seed&7 and linked it to the placed block.")
     public static MessageProvider CONTAINER_PLACE_CREATED_BLOCK;
+    @Message(id = "container.place.created.entity", content = "$#plugin.prefix You successfully created a new loot container (&c$id&7) with seed &c$seed&7 and linked it to the placed entity.")
+    public static MessageProvider CONTAINER_PLACE_CREATED_ENTITY;
 
     @Message(id = "container.break.unpermitted.block", content = "$#plugin.prefix This entity is a loot container can not be removed.")
     public static MessageProvider CONTAINER_BREAK_UNPERMITTED_BLOCK;

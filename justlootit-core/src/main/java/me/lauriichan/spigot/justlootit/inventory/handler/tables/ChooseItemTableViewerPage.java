@@ -1,9 +1,12 @@
 package me.lauriichan.spigot.justlootit.inventory.handler.tables;
 
 import org.bukkit.Material;
+import org.bukkit.Registry;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import me.lauriichan.laylib.command.Actor;
 import me.lauriichan.laylib.localization.Key;
@@ -15,14 +18,17 @@ import me.lauriichan.minecraft.pluginbase.inventory.item.ItemEditor;
 import me.lauriichan.minecraft.pluginbase.inventory.paged.PageContext;
 import me.lauriichan.minecraft.pluginbase.util.StringUtil;
 import me.lauriichan.spigot.justlootit.JustLootItConstant;
+import me.lauriichan.spigot.justlootit.JustLootItFlag;
 import me.lauriichan.spigot.justlootit.JustLootItKey;
 import me.lauriichan.spigot.justlootit.JustLootItConstant.MaterialInventory;
 import me.lauriichan.spigot.justlootit.capability.ActorCapability;
 import me.lauriichan.spigot.justlootit.inventory.ItemHelper;
 import me.lauriichan.spigot.justlootit.message.UIInventoryNames;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
+import me.lauriichan.spigot.justlootit.nms.util.RegistryUtil;
 import me.lauriichan.spigot.justlootit.util.SoundUtil;
 import me.lauriichan.spigot.justlootit.util.persistence.TableKey;
+import me.lauriichan.spigot.justlootit.util.registry.EntityRegistry;
 
 @Extension
 public class ChooseItemTableViewerPage extends LootTableViewerPage {
@@ -55,10 +61,27 @@ public class ChooseItemTableViewerPage extends LootTableViewerPage {
                 .apply());
 
         ObjectList<MaterialInventory> items = JustLootItConstant.SUPPORTED_CONTAINER_ITEMS;
-        for (int i = 1; i <= items.size(); i++) {
+        int i = 1;
+        for (; i <= items.size(); i++) {
             int row = 1 + Math.floorDiv(i, 7), column = 1 + i % 7;
             MaterialInventory item = items.get(i - 1);
             inventory.set(row, column, ItemEditor.of(item.material()));
+        }
+        int offset = i;
+        ObjectArrayList<EntityType> entityTypes = new ObjectArrayList<>();
+        entityTypes.addAll(EntityRegistry.CHEST_BOAT.values());
+        entityTypes.addAll(EntityRegistry.MINECART_CHEST.values());
+        if (JustLootItFlag.TILE_ENTITY_CONTAINERS.isSet()) {
+            entityTypes.addAll(EntityRegistry.MINECART_HOPPER.values());
+        }
+        for (i = 0; i < entityTypes.size(); i++) {
+            int row = 1 + Math.floorDiv(i + offset, 7), column = 1 + (i + offset) % 7;
+            Material material = Registry.MATERIAL.get(RegistryUtil.getKey(entityTypes.get(i)));
+            if (material == null) {
+                entityTypes.remove(i--);
+                continue;
+            }
+            inventory.set(row, column, ItemEditor.of(material));
         }
     }
 

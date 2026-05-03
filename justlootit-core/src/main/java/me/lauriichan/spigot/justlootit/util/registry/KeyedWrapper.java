@@ -52,6 +52,10 @@ public class KeyedWrapper<T extends Keyed> {
     public final int count() {
         return valid.size();
     }
+    
+    public final ObjectList<T> values() {
+        return valid;
+    }
 
     public final T get(int index) {
         if (valid.size() >= index || index < 0) {

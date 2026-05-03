@@ -21,6 +21,15 @@ public final class EntityUtil {
             || JustLootItFlag.TILE_ENTITY_CONTAINERS.isSet() && EntityRegistry.MINECART_HOPPER.isValue(type);
     }
 
+    public static boolean isChestBoat(EntityType type) {
+        return EntityRegistry.CHEST_BOAT.isValue(type);
+    }
+
+    public static boolean isMinecart(EntityType type) {
+        return EntityRegistry.MINECART_CHEST.isValue(type)
+            || JustLootItFlag.TILE_ENTITY_CONTAINERS.isSet() && EntityRegistry.MINECART_HOPPER.isValue(type);
+    }
+
     public static boolean isItemFrame(Entity entity) {
         return isItemFrame(entity.getType());
     }

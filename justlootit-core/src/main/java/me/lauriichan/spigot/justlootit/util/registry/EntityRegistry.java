@@ -13,7 +13,7 @@ public final class EntityRegistry {
     public static final KeyedWrapper<EntityType> MINECART_CHEST;
     public static final KeyedWrapper<EntityType> MINECART_HOPPER;
     public static final KeyedWrapper<EntityType> ITEM_FRAME;
-    
+
     public static final KeyedWrapper<EntityType> CREEPER;
     public static final KeyedWrapper<EntityType> TNT;
     public static final KeyedWrapper<EntityType> END_CRYSTAL;

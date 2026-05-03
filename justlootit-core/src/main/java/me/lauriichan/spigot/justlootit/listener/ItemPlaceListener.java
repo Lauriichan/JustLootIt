@@ -2,16 +2,25 @@ package me.lauriichan.spigot.justlootit.listener;
 
 import java.util.Random;
 
+import org.bukkit.FluidCollisionMode;
+import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.type.Chest;
 import org.bukkit.block.data.type.Chest.Type;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.material.Directional;
 import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.util.RayTraceResult;
 
 import me.lauriichan.laylib.command.Actor;
 import me.lauriichan.laylib.localization.Key;
@@ -31,6 +40,7 @@ import me.lauriichan.spigot.justlootit.message.Messages;
 import me.lauriichan.spigot.justlootit.storage.IStorage;
 import me.lauriichan.spigot.justlootit.storage.Stored;
 import me.lauriichan.spigot.justlootit.util.BlockUtil;
+import me.lauriichan.spigot.justlootit.util.EntityUtil;
 import me.lauriichan.spigot.justlootit.util.persistence.TableKey;
 
 @Extension
@@ -41,6 +51,96 @@ public class ItemPlaceListener implements IListenerExtension {
 
     public ItemPlaceListener(final JustLootItPlugin plugin) {
         this.plugin = plugin;
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
+    public void onEntityPlace(PlayerInteractEvent event) {
+        if (event.getAction() != Action.RIGHT_CLICK_BLOCK) {
+            return;
+        }
+        ItemStack itemStack = event.getItem();
+        if (!itemStack.hasItemMeta()) {
+            return;
+        }
+        PersistentDataContainer itemContainer = itemStack.getItemMeta().getPersistentDataContainer();
+        if (!itemContainer.has(JustLootItKey.identity(), TableKey.KEY_TYPE)) {
+            return;
+        }
+        EntityType type;
+        try {
+            type = EntityType.valueOf(itemStack.getType().name());
+        } catch (IllegalArgumentException iae) {
+            return;
+        }
+        if (!EntityUtil.isSupportedEntity(type) && !EntityUtil.isItemFrame(type)) {
+            return;
+        }
+        event.setCancelled(true);
+        Actor<Player> actor = plugin.actor(event.getPlayer());
+        if (!actor.hasPermission(JustLootItPermission.ACTION_PLACE_CONTAINER_ENTITY)) {
+            actor.sendTranslatedMessage(Messages.CONTAINER_PLACE_UNPERMITTED_ENTITY);
+            return;
+        }
+        TableKey key = itemContainer.get(JustLootItKey.identity(), TableKey.KEY_TYPE);
+        Block targetBlock = event.getClickedBlock();
+        BlockFace targetFace = event.getBlockFace();
+        Material blockType = targetBlock.getType();
+        if (EntityUtil.isChestBoat(type)) {
+            if (blockType != Material.WATER) {
+                RayTraceResult result = event.getPlayer().rayTraceBlocks(5, FluidCollisionMode.ALWAYS);
+                if (result != null) {
+                    Block hit = result.getHitBlock();
+                    if (hit != null && hit.getType() == Material.WATER) {
+                        targetBlock = hit;
+                        targetFace = result.getHitBlockFace();
+                    }
+                }
+            }
+        } else if (EntityUtil.isMinecart(type)) {
+            if (blockType != Material.RAIL && !blockType.name().endsWith("_RAIL")) {
+                return;
+            }
+        }
+        int inventorySize = EntityUtil.getInventorySize(type);
+        if (inventorySize == 0) {
+            // This is an item frame
+            actor.sendTranslatedMessage(Messages.CONTAINER_PLACE_FAILURE_ENTITY);
+            return;
+        }
+        Entity entity = targetBlock.getWorld().spawnEntity(targetBlock.getLocation().add(0.5, 0, 0.5), type);
+        if (entity instanceof Directional directional) {
+            directional.setFacingDirection(targetFace.getOppositeFace());
+        }
+        entity.setPersistent(true);
+        plugin.versionHandler().getLevel(entity.getWorld()).getCapability(StorageCapability.class).ifPresentOrElse(capability -> {
+            IStorage storage = capability.storage();
+            PersistentDataContainer data = entity.getPersistentDataContainer();
+            Container jliContainer = null;
+            long seed = seedRandom.nextLong();
+            switch (key.type()) {
+            case COMPATIBILITY:
+                jliContainer = new CompatibilityContainer(CompatibilityDataExtension.get(key.namespace()).createData(key.key(), seed));
+                break;
+            case CUSTOM:
+                jliContainer = new CustomContainer(NamespacedKey.fromString(key.namespace() + ':' + key.key()), seed);
+                break;
+            case VANILLA:
+                jliContainer = new VanillaContainer(NamespacedKey.fromString(key.namespace() + ':' + key.key()), seed);
+                break;
+            }
+            if (jliContainer == null) {
+                event.setCancelled(true);
+                actor.sendTranslatedMessage(Messages.CONTAINER_PLACE_FAILURE_ENTITY);
+                return;
+            }
+            Stored<?> stored;
+            storage.write(stored = storage.registry().create(jliContainer));
+            JustLootItAccess.setIdentity(data, stored.id());
+            actor.sendTranslatedMessage(Messages.CONTAINER_PLACE_CREATED_ENTITY, Key.of("id", stored.id()), Key.of("seed", seed));
+        }, () -> {
+            event.setCancelled(true);
+            actor.sendTranslatedMessage(Messages.CONTAINER_PLACE_FAILURE_ENTITY);
+        });
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)

@@ -43,8 +43,12 @@ permissions:
         default: false
         children:
             justlootit.place.container.block: true
+            justlootit.place.container.entity: true
     justlootit.place.container.block:
-        description: Gives access to remove JustLootIt Block containers
+        description: Gives access to place JustLootIt block containers
+        default: false
+    justlootit.place.container.entity:
+        description: Gives access to place JustLootIt entity containers
         default: false
     justlootit.admin.version:
         description: Informs the player of updates of JustLootIt

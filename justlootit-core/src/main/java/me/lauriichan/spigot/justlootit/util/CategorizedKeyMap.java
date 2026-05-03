@@ -106,7 +106,7 @@ public class CategorizedKeyMap implements Comparable<CategorizedKeyMap> {
 
     @Override
     public int compareTo(CategorizedKeyMap o) {
-        int tmp = Boolean.compare(o.isKey(), isKey());
+        int tmp = Boolean.compare(isKey(), o.isKey());
         if (tmp != 0) {
             return tmp;
         }

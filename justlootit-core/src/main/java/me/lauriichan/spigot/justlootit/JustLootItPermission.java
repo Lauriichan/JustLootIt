@@ -20,5 +20,6 @@ public final class JustLootItPermission {
     public static final String ACTION_REMOVE_CONTAINER_ENTITY = "justlootit.remove.container.entity";
     public static final String ACTION_REMOVE_CONTAINER_BLOCK = "justlootit.remove.container.block";
     public static final String ACTION_PLACE_CONTAINER_BLOCK = "justlootit.place.container.block";
+    public static final String ACTION_PLACE_CONTAINER_ENTITY = "justlootit.place.container.entity";
 
 }
