@@ -5,8 +5,8 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.enchantments.Enchantment;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectCollection;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import me.lauriichan.laylib.json.IJson;
 import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.minecraft.pluginbase.data.DirectoryDataExtension;
@@ -28,6 +28,8 @@ import me.lauriichan.spigot.justlootit.loot.modifier.InsertionMode;
 import me.lauriichan.spigot.justlootit.loot.modifier.SetAmountModifier;
 import me.lauriichan.spigot.justlootit.loot.modifier.SetEnchantmentModifier;
 import me.lauriichan.spigot.justlootit.loot.modifier.UpdateNameModifier;
+import me.lauriichan.spigot.justlootit.loot.provider.ChancedPoolProvider;
+import me.lauriichan.spigot.justlootit.loot.provider.CombinedPoolProvider;
 import me.lauriichan.spigot.justlootit.loot.provider.ModifiedItemProvider;
 import me.lauriichan.spigot.justlootit.loot.provider.NbtItemProvider;
 import me.lauriichan.spigot.justlootit.loot.provider.SelectorPoolProvider;
@@ -50,20 +52,24 @@ public class LootTableDirectoryData extends DirectoryDataExtension<IJson<?>> {
     }
 
     private void populateExample(JustLootItPlugin plugin) {
-        WeightedList<ILootPoolProvider> poolProviders = new WeightedList<>();
-        poolProviders.add(12, new SimpleItemProvider(Material.STONE, 3));
-        ObjectArrayList<ILootModifier> modifiers = new ObjectArrayList<>();
-        modifiers.add(new UpdateNameModifier("&cItem Name!", InsertionMode.SET));
-        modifiers.add(new SetAmountModifier(3, 23));
-        modifiers.add(new SetEnchantmentModifier(LootRegistry.REGISTRY.enchUnbreaking(), 5));
-        poolProviders.add(3, new ModifiedItemProvider(new SimpleItemProvider(Material.AMETHYST_SHARD, 1), modifiers));
-        poolProviders.add(5,
-            new NbtItemProvider(ItemEditor.ofHead(Textures.GEODE_BLANK).setName("&5Blank Geode Head")
-                .setEnchantment(Enchantment.BINDING_CURSE, 1, true).lore().add(new String[] {
-                    "&cThis item is cursed"
-                }).apply().asItemStack()));
         FileData<IJson<?>> wrapper = new FileData<>(null, null);
-        wrapper.value(JsonIO.serialize(ioManager, new SelectorPoolProvider(poolProviders, 1, 5)));
+        wrapper.value(JsonIO.serialize(ioManager, new CombinedPoolProvider(ObjectList.of(new ILootPoolProvider[] {
+            new ChancedPoolProvider(new SelectorPoolProvider(
+                WeightedList.<ILootPoolProvider>builder().add(5.0, new SimpleItemProvider(Material.DIAMOND, 2))
+                    .add(0.1, new SimpleItemProvider(Material.NETHER_STAR, 1)).add(7, new SimpleItemProvider(Material.EMERALD, 1)).build(),
+                2, 3), 30, 100),
+            new SelectorPoolProvider(WeightedList.<ILootPoolProvider>builder().add(12, new SimpleItemProvider(Material.STONE, 3))
+                .add(3, new ModifiedItemProvider(new SimpleItemProvider(Material.AMETHYST_SHARD, 1), ObjectList.of(new ILootModifier[] {
+                    new UpdateNameModifier("&cItem Name!", InsertionMode.SET),
+                    new SetAmountModifier(3, 23),
+                    new SetEnchantmentModifier(LootRegistry.REGISTRY.enchUnbreaking(), 5)
+                })))
+                .add(5,
+                    new NbtItemProvider(ItemEditor.ofHead(Textures.GEODE_BLANK).setName("&5Blank Geode Head")
+                        .setEnchantment(Enchantment.BINDING_CURSE, 1, true).lore().add(new String[] {
+                            "&cThis item is cursed"
+                        }).apply().asItemStack())).build(), 1, 5)
+        }))));
         wrapper.version(0);
         try {
             handler().save(wrapper, plugin.resource("data://loot/example_loot_table.json"));

@@ -396,6 +396,12 @@ public final class Messages implements IMessageExtension {
         "&8| &7Loot Table: &c$lootTable",
     })
     public static MessageProvider COMMAND_CONTAINER_INFO_CONTAINER_VANILLA;
+    @Message(id = "command.container.info.container.custom", content = {
+        "&8|",
+        "&8| &7Seed: &c$seed",
+        "&8| &7Loot Table: &c$lootTable",
+    })
+    public static MessageProvider COMMAND_CONTAINER_INFO_CONTAINER_CUSTOM;
     @Message(id = "command.container.info.container.frame", content = {
         "&8|",
         "&8| &7Item: &f$itemName&r &8(&7Hover for more info&8)"

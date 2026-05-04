@@ -43,6 +43,7 @@ import me.lauriichan.spigot.justlootit.config.data.RefreshGroup;
 import me.lauriichan.spigot.justlootit.data.CompatibilityContainer;
 import me.lauriichan.spigot.justlootit.data.Container;
 import me.lauriichan.spigot.justlootit.data.ContainerType;
+import me.lauriichan.spigot.justlootit.data.CustomContainer;
 import me.lauriichan.spigot.justlootit.data.FrameContainer;
 import me.lauriichan.spigot.justlootit.data.VanillaContainer;
 import me.lauriichan.spigot.justlootit.data.alternation.AlternationAction;
@@ -829,6 +830,10 @@ public class ContainerCommand implements ICommandExtension {
         if (container instanceof VanillaContainer vanilla) {
             actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_INFO_CONTAINER_VANILLA, Key.of("seed", vanilla.getSeed()),
                 Key.of("lootTable", vanilla.getLootTableKey()));
+
+        } else if (container instanceof CustomContainer custom) {
+            actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_INFO_CONTAINER_CUSTOM, Key.of("seed", custom.getSeed()),
+                Key.of("lootTable", custom.getLootTableKey()));
         } else if (container instanceof FrameContainer frame) {
             ComponentBuilder.create()
                 .appendContent(actor.getTranslatedMessageAsString(Messages.COMMAND_CONTAINER_INFO_CONTAINER_FRAME,

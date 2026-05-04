@@ -44,7 +44,7 @@ public class CustomContainer extends Container implements IInventoryContainer {
         protected CustomContainer deserializeSpecial(StorageAdapterRegistry registry, ContainerData data, ByteBuf buffer) {
             final NamespacedKey key = DataIO.NAMESPACED_KEY.deserialize(buffer).value();
             final long seed = buffer.readLong();
-            return new CustomContainer(key, seed);
+            return new CustomContainer(data, key, seed);
         }
 
     };
@@ -53,6 +53,12 @@ public class CustomContainer extends Container implements IInventoryContainer {
     private long seed;
 
     public CustomContainer(final NamespacedKey lootTableKey, final long seed) {
+        this.lootTableKey = lootTableKey;
+        this.seed = seed;
+    }
+
+    private CustomContainer(final ContainerData data, final NamespacedKey lootTableKey, final long seed) {
+        super(data);
         this.lootTableKey = lootTableKey;
         this.seed = seed;
     }
