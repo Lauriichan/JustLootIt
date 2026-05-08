@@ -72,6 +72,7 @@ public final class JsonNbtHelper {
         }
         JsonObject valueObj = value.asJsonObject();
         if (!valueObj.has("type", JsonType.STRING)) {
+            tag.set(key, asCompoundTag(nbt, valueObj));
             return;
         }
         TagType<?> type = TagType.getType(valueObj.getAsString("type"));

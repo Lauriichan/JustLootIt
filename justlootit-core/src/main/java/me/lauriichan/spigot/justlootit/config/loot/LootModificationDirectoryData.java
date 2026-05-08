@@ -40,6 +40,7 @@ import me.lauriichan.spigot.justlootit.loot.modifier.FilteredModifier;
 import me.lauriichan.spigot.justlootit.loot.modifier.RemovePotionEffectModifier;
 import me.lauriichan.spigot.justlootit.loot.modifier.SelectorModifier;
 import me.lauriichan.spigot.justlootit.loot.modifier.SetAmountModifier;
+import me.lauriichan.spigot.justlootit.loot.modifier.SetPotionColorModifier;
 import me.lauriichan.spigot.justlootit.loot.provider.SimpleItemProvider;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.util.WeightedList;
@@ -76,7 +77,8 @@ public class LootModificationDirectoryData extends DirectoryDataExtension<IJson<
                 new SelectorModifier(WeightedList.<ILootModifier>builder()
                     .add(2, new AddPotionEffectModifier(new PotionEffect(PotionEffectType.REGENERATION, 200, 2, true), false))
                     .add(0.75, new AddPotionEffectModifier(new PotionEffect(PotionEffectType.REGENERATION, 400, 3, true), false))
-                    .add(0.05, new AddPotionEffectModifier(new PotionEffect(PotionEffectType.REGENERATION, 600, 4, true), false)).build())
+                    .add(0.05, new AddPotionEffectModifier(new PotionEffect(PotionEffectType.REGENERATION, 600, 4, true), false)).build()),
+                new SetPotionColorModifier("#2f00e0")
             })))
         }))));
         object.put("pool_provider", JsonIO.serialize(ioManager, new SimpleItemProvider(Material.ACACIA_BOAT, 1)));
