@@ -45,7 +45,7 @@ public final class JustLootItCapabilityProvider implements ICapabilityProvider {
 
     private void providePlayer(final VersionHandler handler, final PlayerAdapter adapter, final List<ICapability> capabilities) {
         capabilities.add(new StorageCapability.PlayerImpl(handler, adapter));
-        capabilities.add(new PlayerGUICapability());
+        capabilities.add(new PlayerGUICapability(adapter.isBedrock()));
         capabilities.add(new ActorCapability(adapter));
     }
 

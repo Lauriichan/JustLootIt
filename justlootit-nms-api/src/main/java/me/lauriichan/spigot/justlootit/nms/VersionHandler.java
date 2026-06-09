@@ -140,8 +140,9 @@ public abstract class VersionHandler {
         if (players.containsKey(player.getUniqueId())) {
             return;
         }
-        PlayerAdapter adapter = applyCapabilities(createAdapter(player));
-        players.put(player.getUniqueId(), adapter);
+        PlayerAdapter adapter = createAdapter(player);
+        serviceProvider.onPlayerSetup(adapter);
+        players.put(player.getUniqueId(), applyCapabilities(adapter));
         serviceProvider.onPlayerJoin(adapter);
     }
 

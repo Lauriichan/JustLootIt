@@ -14,7 +14,7 @@ public abstract class PlayerAdapter extends Capable<PlayerAdapter> {
 
     protected final ConcurrentHashMap<String, Object> data = new ConcurrentHashMap<>();
     protected final UUID uniqueId;
-    
+
     protected final long uniqueSeed;
 
     public PlayerAdapter(final UUID uniqueId) {
@@ -33,9 +33,17 @@ public abstract class PlayerAdapter extends Capable<PlayerAdapter> {
     public final UUID getUniqueId() {
         return uniqueId;
     }
-    
+
     public final long getUniqueSeed() {
         return uniqueSeed;
+    }
+
+    public final boolean isBedrock() {
+        return getDataOrFallback("BedrockPlayer", false, Boolean.class);
+    }
+
+    public final void setBedrock(final boolean bedrock) {
+        setData("BedrockPlayer", bedrock);
     }
 
     public final void removeData(final String key) {

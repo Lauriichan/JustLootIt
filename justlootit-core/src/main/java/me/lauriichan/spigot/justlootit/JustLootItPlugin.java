@@ -44,6 +44,7 @@ import me.lauriichan.spigot.justlootit.compatibility.data.CompatibilityDataExten
 import me.lauriichan.spigot.justlootit.compatibility.provider.CompatDependency;
 import me.lauriichan.spigot.justlootit.compatibility.provider.Compatibility;
 import me.lauriichan.spigot.justlootit.compatibility.provider.ICompatProvider;
+import me.lauriichan.spigot.justlootit.compatibility.provider.floodgate.FloodGateHelper;
 import me.lauriichan.spigot.justlootit.convert.ConversionProperties;
 import me.lauriichan.spigot.justlootit.convert.JustLootItConverter;
 import me.lauriichan.spigot.justlootit.data.CacheLookupTable;
@@ -457,6 +458,11 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     /*
      * Player listeners
      */
+    
+    @Override
+    public void onPlayerSetup(PlayerAdapter adapter) {
+        adapter.setBedrock(FloodGateHelper.isBedrockPlayer(adapter.getUniqueId()));
+    }
 
     @Override
     public void onPlayerJoin(PlayerAdapter adapter) {
