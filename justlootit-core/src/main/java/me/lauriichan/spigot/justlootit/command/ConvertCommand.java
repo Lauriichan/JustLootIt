@@ -76,7 +76,9 @@ public class ConvertCommand implements ICommandExtension {
 
     private boolean setup(final JustLootItPlugin plugin, LootItActor<?> actor) {
         if (plugin.platform().type() != PlatformType.SPIGOT && plugin.platform().version().minecraftVersion().major() >= 26) {
-            actor.sendTranslatedMessage(Messages.COMMAND_CONVERT_PROCESS_UNSUPPORTED);
+            actor.sendTranslatedMessage(Messages.COMMAND_CONVERT_PROCESS_UNSUPPORTED,
+                Key.of("platform.type", plugin.platform().type().name().toLowerCase()),
+                Key.of("platform.version", plugin.platform().version().minecraftVersion()));
             return false;
         }
         if (conversionSetup != null) {
