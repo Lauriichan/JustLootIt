@@ -207,7 +207,7 @@
             <artifactId>justlootit-nms-1_21_R7</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
-		<!-- 26.1 -->
+		<!-- 26.1 / 26.1.1 / 26.1.2 -->
         <dependency>
             <groupId>${project.parent.groupId}</groupId>
             <artifactId>justlootit-nms-26_1</artifactId>
@@ -216,6 +216,17 @@
         <dependency>
             <groupId>${project.parent.groupId}</groupId>
             <artifactId>justlootit-nms-paper-26_1</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+		<!-- 26.2 -->
+        <dependency>
+            <groupId>${project.parent.groupId}</groupId>
+            <artifactId>justlootit-nms-26_2</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.parent.groupId}</groupId>
+            <artifactId>justlootit-nms-paper-26_2</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
     </dependencies>
