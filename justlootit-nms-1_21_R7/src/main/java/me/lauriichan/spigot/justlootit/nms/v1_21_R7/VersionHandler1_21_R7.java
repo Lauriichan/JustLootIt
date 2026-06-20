@@ -16,15 +16,19 @@ import me.lauriichan.spigot.justlootit.nms.v1_21_R7.io.ItemStackIO1_21_R7;
 import me.lauriichan.spigot.justlootit.nms.v1_21_R7.nbt.NbtHelper1_21_R7;
 import me.lauriichan.spigot.justlootit.nms.v1_21_R7.network.PacketManager1_21_R7;
 import me.lauriichan.spigot.justlootit.nms.v1_21_R7.packet.*;
+import me.lauriichan.spigot.justlootit.nms.version.VersionImpl;
 import net.minecraft.network.protocol.game.*;
 
+@VersionImpl(name = "any-1.21.11", versions = {
+    "1.21.11"
+})
 public final class VersionHandler1_21_R7 extends VersionHandler {
-    
+
     private final NbtHelper1_21_R7 nbtHelper = new NbtHelper1_21_R7();
 
     private final PacketManager1_21_R7 packetManager;
     private final VersionHelper1_21_R7 versionHelper;
-    
+
     private final ConversionAdapter1_21_R7 conversionAdapter;
 
     public VersionHandler1_21_R7(final IServiceProvider provider) {
@@ -53,7 +57,7 @@ public final class VersionHandler1_21_R7 extends VersionHandler {
     private void registerIO() {
         io.register(ItemStackIO1_21_R7.ITEM_STACK);
     }
-    
+
     @Override
     public NbtHelper1_21_R7 nbtHelper() {
         return nbtHelper;
@@ -63,7 +67,7 @@ public final class VersionHandler1_21_R7 extends VersionHandler {
     public ConversionAdapter1_21_R7 conversionAdapter() {
         return conversionAdapter;
     }
-    
+
     @Override
     public PacketManager1_21_R7 packetManager() {
         return packetManager;

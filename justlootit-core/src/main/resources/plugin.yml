@@ -4,7 +4,8 @@ author: Lauriichan
 version: ${project.version}
 api-version: 1.20
 load: startup
-loadbefore: [BetterInputs, FloodGate, Iris, BetterStructures, CustomStructures]
+softdepend: [BetterInputs, Iris, BetterStructures, CustomStructures, floodgate]
+loadbefore: [BetterInputs, Iris, BetterStructures, CustomStructures, floodgate]
 
 folia-supported: true
 

@@ -1,7 +1,7 @@
 package me.lauriichan.spigot.justlootit.platform;
 
 public enum PlatformType {
-    
+
     SPIGOT,
     PAPER,
     FOLIA;

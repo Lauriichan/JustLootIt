@@ -5,7 +5,7 @@
     <parent>
         <groupId>me.lauriichan.spigot.justlootit</groupId>
         <artifactId>justlootit-parent</artifactId>
-        <version>2.19.5</version>
+        <version>2.20.0</version>
     </parent>
     <artifactId>justlootit-core</artifactId>
 
@@ -382,13 +382,17 @@
                             implementation="me.lauriichan.maven.shade.transformers.AppendingTransformer">
                             <pattern>META-INF/extension/*.*</pattern>
                         </transformer>
+                        <transformer
+                            implementation="me.lauriichan.maven.shade.transformers.JsonTransformer">
+                            <pattern>META-INF/platform_version.json</pattern>
+                        </transformer>
                     </transformers>
                 </configuration>
                 <dependencies>
                     <dependency>
                         <groupId>me.lauriichan.maven</groupId>
                         <artifactId>shade-transformers</artifactId>
-                        <version>1.0.0</version>
+                        <version>1.2.0</version>
                     </dependency>
                 </dependencies>
             </plugin>

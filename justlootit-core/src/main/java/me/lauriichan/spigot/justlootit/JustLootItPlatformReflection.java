@@ -1,13 +1,13 @@
 package me.lauriichan.spigot.justlootit;
 
 import me.lauriichan.minecraft.pluginbase.IBukkitReflection;
-import me.lauriichan.spigot.justlootit.platform.IVersion;
 import me.lauriichan.spigot.justlootit.platform.JustLootItPlatform;
+import me.lauriichan.spigot.justlootit.platform.version.ServerVersion;
 
 class JustLootItPlatformReflection implements IBukkitReflection {
-    
-    private final IVersion version;
-    
+
+    private final ServerVersion version;
+
     public JustLootItPlatformReflection(final JustLootItPlatform platform) {
         this.version = platform.version();
     }

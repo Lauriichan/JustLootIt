@@ -16,8 +16,13 @@ import me.lauriichan.spigot.justlootit.nms.v1_20_R4.io.ItemStackIO1_20_R4;
 import me.lauriichan.spigot.justlootit.nms.v1_20_R4.nbt.NbtHelper1_20_R4;
 import me.lauriichan.spigot.justlootit.nms.v1_20_R4.network.PacketManager1_20_R4;
 import me.lauriichan.spigot.justlootit.nms.v1_20_R4.packet.*;
+import me.lauriichan.spigot.justlootit.nms.version.VersionImpl;
 import net.minecraft.network.protocol.game.*;
 
+@VersionImpl(name = "any_1.20.5", versions = {
+    "1.20.5",
+    "1.20.6"
+})
 public final class VersionHandler1_20_R4 extends VersionHandler {
     
     private final NbtHelper1_20_R4 nbtHelper = new NbtHelper1_20_R4();

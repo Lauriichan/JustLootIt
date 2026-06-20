@@ -16,15 +16,25 @@ import me.lauriichan.spigot.justlootit.nms.paper.v26_1.io.ItemStackIO26_1;
 import me.lauriichan.spigot.justlootit.nms.paper.v26_1.nbt.NbtHelper26_1;
 import me.lauriichan.spigot.justlootit.nms.paper.v26_1.network.PacketManager26_1;
 import me.lauriichan.spigot.justlootit.nms.paper.v26_1.packet.*;
+import me.lauriichan.spigot.justlootit.nms.version.VersionImpl;
+import me.lauriichan.spigot.justlootit.platform.PlatformType;
 import net.minecraft.network.protocol.game.*;
 
+@VersionImpl(name = "paper_26.1", versions = {
+    "26.1",
+    "26.1.1",
+    "26.1.2"
+}, platforms = {
+    PlatformType.PAPER,
+    PlatformType.FOLIA
+})
 public final class VersionHandler26_1 extends VersionHandler {
-    
+
     private final NbtHelper26_1 nbtHelper = new NbtHelper26_1();
 
     private final PacketManager26_1 packetManager;
     private final VersionHelper26_1 versionHelper;
-    
+
     private final ConversionAdapter26_1 conversionAdapter;
 
     public VersionHandler26_1(final IServiceProvider provider) {
@@ -53,7 +63,7 @@ public final class VersionHandler26_1 extends VersionHandler {
     private void registerIO() {
         io.register(ItemStackIO26_1.ITEM_STACK);
     }
-    
+
     @Override
     public NbtHelper26_1 nbtHelper() {
         return nbtHelper;
@@ -63,7 +73,7 @@ public final class VersionHandler26_1 extends VersionHandler {
     public ConversionAdapter26_1 conversionAdapter() {
         return conversionAdapter;
     }
-    
+
     @Override
     public PacketManager26_1 packetManager() {
         return packetManager;

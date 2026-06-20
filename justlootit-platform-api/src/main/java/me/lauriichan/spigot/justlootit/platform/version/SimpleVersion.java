@@ -1,4 +1,6 @@
-package me.lauriichan.spigot.justlootit.platform.util;
+package me.lauriichan.spigot.justlootit.platform.version;
+
+import com.google.common.base.Objects;
 
 public class SimpleVersion implements Comparable<SimpleVersion> {
 
@@ -15,7 +17,7 @@ public class SimpleVersion implements Comparable<SimpleVersion> {
                 return new SimpleVersion(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]), 0);
             }
             return new SimpleVersion(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]), Integer.parseInt(parts[2]));
-        } catch(NumberFormatException nfe) {
+        } catch (NumberFormatException nfe) {
             return null;
         }
     }
@@ -35,23 +37,23 @@ public class SimpleVersion implements Comparable<SimpleVersion> {
         this.minor = Math.max(minor, 0);
         this.patch = Math.max(patch, 0);
     }
-    
+
     public final int major() {
         return major;
     }
-    
+
     public final int minor() {
         return minor;
     }
-    
+
     public final int patch() {
         return patch;
     }
-    
+
     public boolean isSame(SimpleVersion other) {
         return compareTo(other) == 0;
     }
-    
+
     public boolean isBetween(SimpleVersion min, SimpleVersion max) {
         return !(compareTo(min) < 0 || compareTo(max) > 0);
     }
@@ -68,7 +70,26 @@ public class SimpleVersion implements Comparable<SimpleVersion> {
         }
         return Integer.compare(patch, o.patch);
     }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(major, minor, patch);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || !(obj instanceof SimpleVersion ver)) {
+            return false;
+        }
+        return isSame(ver);
+    }
     
-    
+    @Override
+    public String toString() {
+        return "%s.%s.%s".formatted(major, minor, patch);
+    }
 
 }

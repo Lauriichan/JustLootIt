@@ -1,8 +1,10 @@
 package me.lauriichan.spigot.justlootit;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
+import java.util.Comparator;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
@@ -12,12 +14,16 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.lauriichan.laylib.command.Actor;
 import me.lauriichan.laylib.command.ArgumentRegistry;
 import me.lauriichan.laylib.command.CommandManager;
+import me.lauriichan.laylib.json.IJson;
+import me.lauriichan.laylib.json.JsonArray;
 import me.lauriichan.laylib.json.JsonObject;
 import me.lauriichan.laylib.json.io.JsonParser;
+import me.lauriichan.laylib.json.io.JsonSyntaxException;
 import me.lauriichan.laylib.localization.Key;
 import me.lauriichan.laylib.reflection.AccessFailedException;
 import me.lauriichan.laylib.reflection.ClassUtil;
@@ -68,15 +74,19 @@ import me.lauriichan.spigot.justlootit.nms.capability.CapabilityManager;
 import me.lauriichan.spigot.justlootit.nms.packet.listener.PacketContainer;
 import me.lauriichan.spigot.justlootit.nms.packet.listener.PacketManager;
 import me.lauriichan.spigot.justlootit.platform.JustLootItPlatform;
+import me.lauriichan.spigot.justlootit.platform.PlatformType;
 import me.lauriichan.spigot.justlootit.platform.folia.FoliaPlatform;
 import me.lauriichan.spigot.justlootit.platform.paper.PaperPlatform;
 import me.lauriichan.spigot.justlootit.platform.scheduler.Task;
 import me.lauriichan.spigot.justlootit.platform.spigot.SpigotPlatform;
+import me.lauriichan.spigot.justlootit.platform.version.ServerVersion;
+import me.lauriichan.spigot.justlootit.platform.version.SimpleVersion;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapterRegistry;
 import me.lauriichan.spigot.justlootit.storage.StorageMigrator;
 import me.lauriichan.spigot.justlootit.storage.util.cache.CacheTickTimer;
 import me.lauriichan.spigot.justlootit.storage.util.executor.ProtoExecutor;
 import me.lauriichan.spigot.justlootit.util.JLIInitializationException;
+import me.lauriichan.spigot.justlootit.util.JLIInitializationException.ErrorType;
 import me.lauriichan.spigot.justlootit.util.PluginVersion;
 
 public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> implements IServiceProvider {
@@ -84,8 +94,6 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     public static JustLootItPlugin get() {
         return getPlugin(JustLootItPlugin.class);
     }
-
-    private static final String VERSION_PATH = JustLootItPlugin.class.getPackageName() + ".nms.%s.VersionHandler%s";
 
     private final CacheTickTimer levelTickTimer = new CacheTickTimer();
     private final CacheTickTimer playerTickTimer = new CacheTickTimer();
@@ -147,15 +155,8 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     @Override
     protected void onPluginLoad() throws Throwable {
         platform = initPlatform();
-        if (platform.version().packageVersion() == null) {
-            logger().error(
-                "It seems like you are using paper or a fork of it and the minecraft version you are using is not yet known to JLI, please update your plugin or wait for an update.");
-            logger()
-                .error("You could also try to run the plugin on spigot, if its just a minor minecraft version update it could still work.");
-            actDisabled(true);
-            return;
-        }
         if (!setupVersionHandler()) {
+            actDisabled(true);
             return;
         }
         setupUpdater();
@@ -169,17 +170,40 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
             versionHandler = initVersionHandler();
             versionHelper = versionHandler.versionHelper();
             packetManager = versionHandler.packetManager();
-            logger().info("Initialized version support for %s (%s)".formatted(platform.version().coreVersion(), platform.type()));
             return true;
         } catch (final JLIInitializationException exp) {
-            logger().error("Failed to initialize version support for %s (%s)".formatted(platform.version().coreVersion(), platform.type()));
-            logger().error("Reason: '%s'".formatted(exp.getMessage()));
-            logger().error("");
-            logger().error("Can't work like this, disabling...");
-            if (exp.getCause() != null) {
-                logger().error(exp.getCause());
+            if (exp.errorType() != null) {
+                switch (exp.errorType()) {
+                case TOO_OLD_SERVER_VERSION:
+                    logger().error("You are using minecraft version %s which is too old for JLI to work here."
+                        .formatted(platform.version().minecraftVersion()));
+                    logger().error(
+                        "Please update your server to at least minecraft version 1.20.2.".formatted(platform.version().minecraftVersion()));
+                    logger().error("");
+                    logger().error("Can't work like this, disabling...");
+                    break;
+                case INVALID_PLATFORM_VERSION_COMBINATION:
+                    logger().error(
+                        "It seems like your platform %s is not yet supported on this version (%s), please update your plugin or wait for an update to be released."
+                            .formatted(platform.type(), platform.version().minecraftVersion()));
+                    logger().error(
+                        "You could also try to run the plugin on spigot, if its just a minecraft version update it could still work.");
+                    break;
+                case UNDETECTABLE_SERVER_VERSION:
+                    logger()
+                        .error("JLI was unable to detect the minecraft version this server is using, please use spigot or a fork of it.");
+                    break;
+                }
+            } else {
+                logger().error(
+                    "Failed to initialize version support for %s (%s)".formatted(platform.version().minecraftVersion(), platform.type()));
+                logger().error("Reason: '%s'".formatted(exp.getMessage()));
+                logger().error("");
+                logger().error("Can't work like this, disabling...");
+                if (exp.getCause() != null) {
+                    logger().error(exp.getCause());
+                }
             }
-            actDisabled(true);
             return false;
         }
     }
@@ -458,7 +482,7 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     /*
      * Player listeners
      */
-    
+
     @Override
     public void onPlayerSetup(PlayerAdapter adapter) {
         adapter.setBedrock(FloodGateHelper.isBedrockPlayer(adapter.getUniqueId()));
@@ -590,20 +614,90 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
      */
 
     private VersionHandler initVersionHandler() throws JLIInitializationException {
-        final String path = String.format(VERSION_PATH, platform.version().packageVersion(), platform.version().coreVersion());
-        final Class<?> clazz = ClassUtil.findClass(path);
-        if (clazz == null || !VersionHandler.class.isAssignableFrom(clazz)) {
-            throw new JLIInitializationException("Couldn't find class '" + path + "'!");
+        ServerVersion serverVersion = platform.version();
+        if (serverVersion == null) {
+            throw new JLIInitializationException(ErrorType.UNDETECTABLE_SERVER_VERSION);
         }
-        final Constructor<?> constructor = ClassUtil.getConstructor(clazz, IServiceProvider.class);
-        if (constructor == null) {
-            throw new JLIInitializationException("Couldn't find valid constructor for class '" + path + "'!");
-        }
+        JsonObject root;
         try {
-            return JavaAccess.PLATFORM.invoke(constructor, this);
-        } catch (AccessFailedException exception) {
-            throw new JLIInitializationException("Failed to initialize VersionHandler!", exception.getCause());
+            root = JsonParser.fromReader(resource("jar://META-INF/platform_version.json").openReader()).asJsonObject();
+        } catch (IllegalStateException | IOException | JsonSyntaxException e) {
+            throw new JLIInitializationException("Failed to read platform version information from jar", e);
         }
+        Object2ObjectOpenHashMap<SimpleVersion, ObjectArrayList<String>> versionMap = new Object2ObjectOpenHashMap<>();
+        ObjectArrayList<SimpleVersion> versions = new ObjectArrayList<>();
+        for (String key : root.keySet()) {
+            JsonObject obj = root.getAsObject(key);
+            JsonArray versionArray = obj.getAsArray("versions");
+            for (IJson<?> versionJson : versionArray) {
+                SimpleVersion version = SimpleVersion.of(versionJson.asString());
+                if (!versions.contains(version)) {
+                    versions.add(version);
+                }
+                ObjectArrayList<String> list = versionMap.get(version);
+                if (list == null) {
+                    list = new ObjectArrayList<>();
+                    versionMap.put(version, list);
+                }
+                list.add(key);
+            }
+        }
+        ObjectArrayList<String> keys = versionMap.get(serverVersion.minecraftVersion());
+        if (keys == null) {
+            // Now we have to find one
+            versions.sort(Comparator.naturalOrder());
+            int targetIdx = -2;
+            for (int i = 0; i < versions.size(); i++) {
+                SimpleVersion version = versions.get(i);
+                if (serverVersion.minecraftVersion().compareTo(version) < 0) {
+                    targetIdx = i - 1;
+                    break;
+                }
+            }
+            if (targetIdx == -1) {
+                throw new JLIInitializationException(ErrorType.TOO_OLD_SERVER_VERSION);
+            } else if (targetIdx == -2) {
+                targetIdx = versions.size() - 1;
+                logger().warning("JLI has no official support yet for the version %s.".formatted(serverVersion.minecraftVersion()));
+                logger().warning(
+                    "There is no guarantee that JLI will be able to run correctly on this version, JLI will try to initialize anyway with the latest version support it has.");
+            } else {
+                logger().warning(
+                    "The version %s is not known to JLI, it is considered unsupported, JLI will try to initialize anyway with the closest version possible."
+                        .formatted(serverVersion.minecraftVersion()));
+            }
+            keys = versionMap.get(versions.get(targetIdx));
+        }
+        PlatformType type = platform.type();
+        for (String key : keys) {
+            JsonObject obj = root.getAsObject(key);
+            JsonArray array = obj.getAsArray("platforms");
+            for (IJson<?> entry : array) {
+                if (type == PlatformType.valueOf(entry.asString())) {
+                    String classPath = obj.getAsString("class");
+                    final Class<?> clazz = ClassUtil.findClass(classPath);
+                    if (clazz == null) {
+                        throw new JLIInitializationException("Couldn't find class '" + classPath + "'!");
+                    }
+                    final Constructor<?> constructor = ClassUtil.getConstructor(clazz, IServiceProvider.class);
+                    if (constructor == null) {
+                        throw new JLIInitializationException("Couldn't find valid constructor for class '" + classPath + "'!");
+                    }
+                    try {
+                        VersionHandler handler = JavaAccess.PLATFORM.invoke(constructor, this);
+                        if (handler == null) {
+                            return null;
+                        }
+                        logger().info("Initialized version support for %s %s (%s)".formatted(platform.type(),
+                            platform.version().minecraftVersion(), key));
+                        return handler;
+                    } catch (AccessFailedException exception) {
+                        throw new JLIInitializationException("Failed to initialize VersionHandler!", exception.getCause());
+                    }
+                }
+            }
+        }
+        throw new JLIInitializationException(ErrorType.INVALID_PLATFORM_VERSION_COMBINATION);
     }
 
 }

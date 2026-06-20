@@ -1,6 +1,6 @@
 package me.lauriichan.spigot.justlootit.util;
 
-import me.lauriichan.spigot.justlootit.platform.util.SimpleVersion;
+import me.lauriichan.spigot.justlootit.platform.version.SimpleVersion;
 
 public final class PluginVersion implements Comparable<PluginVersion> {
 
