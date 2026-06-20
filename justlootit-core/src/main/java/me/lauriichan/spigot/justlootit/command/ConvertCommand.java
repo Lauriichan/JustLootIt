@@ -22,6 +22,7 @@ import me.lauriichan.spigot.justlootit.convert.ConversionProperties;
 import me.lauriichan.spigot.justlootit.input.SimpleChatInputProvider;
 import me.lauriichan.spigot.justlootit.message.Messages;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
+import me.lauriichan.spigot.justlootit.platform.PlatformType;
 
 @Extension
 @Command(name = "convert")
@@ -59,7 +60,7 @@ public class ConvertCommand implements ICommandExtension {
         inputProvider.getBooleanInput(actor, actor.getTranslatedMessageAsString(Messages.INPUT_PROMPT_CONVERT_DO_LOOTIN),
             actor.getTranslatedMessageAsString(Messages.INPUT_RETRY_BOOLEAN), this::propertyDoLootin);
     }
-    
+
     private LootItActor<?> correctActor(final JustLootItPlugin plugin, LootItActor<?> actor) {
         if (actor.getId().equals(conversionSetup)) {
             return actor;
@@ -74,6 +75,10 @@ public class ConvertCommand implements ICommandExtension {
     }
 
     private boolean setup(final JustLootItPlugin plugin, LootItActor<?> actor) {
+        if (plugin.platform().type() != PlatformType.SPIGOT && plugin.platform().version().minecraftVersion().major() >= 26) {
+            actor.sendTranslatedMessage(Messages.COMMAND_CONVERT_PROCESS_UNSUPPORTED);
+            return false;
+        }
         if (conversionSetup != null) {
             actor.sendTranslatedMessage(Messages.COMMAND_CONVERT_PROCESS_ONGOING, Key.of("name", actorName(conversionSetup, plugin)));
             return false;

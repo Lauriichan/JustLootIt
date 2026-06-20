@@ -580,5 +580,10 @@ public final class Messages implements IMessageExtension {
     public static MessageProvider COMMAND_CONVERT_PROCESS_ONGOING;
     @Message(id = "command.convert.process-done", content = "$#plugin.prefix &7Successfully set up conversion process, restarting server in 5 seconds (might require manual start)")
     public static MessageProvider COMMAND_CONVERT_PROCESS_DONE;
+    @Message(id = "command.convert.process-unsupported", content = {
+        "$#plugin.prefix &7Conversion does not work on the $platform.type;-based server software with the minecraft version $platform.version;.",
+        "$#plugin.prefix &7You can do the conversion on Spigot if you need to and then switch back to the software you are using."
+    })
+    public static MessageProvider COMMAND_CONVERT_PROCESS_UNSUPPORTED;
 
 }
