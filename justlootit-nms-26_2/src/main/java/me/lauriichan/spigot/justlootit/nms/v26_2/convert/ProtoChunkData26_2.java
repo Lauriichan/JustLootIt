@@ -153,8 +153,8 @@ public record ProtoChunkData26_2(PalettedContainerFactory containerFactory, Chun
                 }
             }
 
-            List<CompoundTag> list2 = chunkData.getList("entities").stream().flatMap(ListTag::compoundStream).toList();
-            List<CompoundTag> list3 = chunkData.getList("block_entities").stream().flatMap(ListTag::compoundStream).toList();
+            List<CompoundTag> list2 = chunkData.getList("entities").stream().flatMap(ListTag::compoundStream).collect(ObjectArrayList.toList());
+            List<CompoundTag> list3 = chunkData.getList("block_entities").stream().flatMap(ListTag::compoundStream).collect(ObjectArrayList.toList());
             CompoundTag compoundtag1 = chunkData.getCompoundOrEmpty("structures");
             ListTag listtag2 = chunkData.getListOrEmpty("sections");
             List<ProtoChunkData26_2.SectionData> list4 = new ArrayList(listtag2.size());
@@ -343,7 +343,7 @@ public record ProtoChunkData26_2(PalettedContainerFactory containerFactory, Chun
                 }
             }
 
-            List<CompoundTag> list1 = new ArrayList(chunk.getBlockEntitiesPos().size());
+            List<CompoundTag> list1 = new ObjectArrayList(chunk.getBlockEntitiesPos().size());
 
             for (BlockPos blockpos : chunk.getBlockEntitiesPos()) {
                 CompoundTag compoundtag = chunk.getBlockEntityNbtForSaving(blockpos, level.registryAccess());
