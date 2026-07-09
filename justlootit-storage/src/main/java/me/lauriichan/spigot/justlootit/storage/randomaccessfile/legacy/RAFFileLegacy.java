@@ -5,9 +5,6 @@ import static me.lauriichan.spigot.justlootit.storage.randomaccessfile.legacy.RA
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -22,6 +19,7 @@ import me.lauriichan.spigot.justlootit.storage.StorageException;
 import me.lauriichan.spigot.justlootit.storage.randomaccessfile.IRAFEntry;
 import me.lauriichan.spigot.justlootit.storage.randomaccessfile.IRAFFile;
 import me.lauriichan.spigot.justlootit.storage.randomaccessfile.IRAFSettings;
+import me.lauriichan.spigot.justlootit.storage.util.Tuple;
 import me.lauriichan.spigot.justlootit.storage.util.counter.Counter;
 import me.lauriichan.spigot.justlootit.storage.util.counter.ScaledCounter;
 import me.lauriichan.spigot.justlootit.storage.util.counter.SimpleCounter;
@@ -120,7 +118,7 @@ public final class RAFFileLegacy implements IRAFFile {
     public boolean isOpen() {
         return fileAccess != null;
     }
-    
+
     @Override
     public IRAFEntry newEntry(long id, int typeId, int version, ByteBuf buffer) {
         return new RAFEntry(id, typeId, buffer);
@@ -334,9 +332,9 @@ public final class RAFFileLegacy implements IRAFFile {
      */
 
     @Override
-    public Map.Entry<Counter, CompletableFuture<Void>> forEach(Consumer<IRAFEntry> consumer, Executor executor) {
+    public Tuple<Counter, Runnable> forEach(Consumer<IRAFEntry> consumer) {
         SimpleCounter counter = new SimpleCounter(settings.valueIdAmount);
-        return Map.entry(counter, CompletableFuture.runAsync(() -> {
+        return new Tuple<>(counter, () -> {
             if (!isOpen()) {
                 counter.finish();
                 throw new StorageException("File is not open");
@@ -373,7 +371,7 @@ public final class RAFFileLegacy implements IRAFFile {
                 lock.unlock();
                 counter.finish();
             }
-        }, executor));
+        });
     }
 
     /*
@@ -381,15 +379,15 @@ public final class RAFFileLegacy implements IRAFFile {
      */
 
     @Override
-    public Map.Entry<Counter, CompletableFuture<Void>> modifyEach(Function<IRAFEntry, IRAFEntry> func, Executor executor) {
+    public Tuple<Counter, Runnable> modifyEach(Function<IRAFEntry, IRAFEntry> func) {
         SimpleCounter counter = new SimpleCounter(settings.valueIdAmount);
-        return Map.entry(counter, CompletableFuture.runAsync(() -> {
-            if (!isOpen()) {
-                counter.finish();
-                throw new StorageException("File is not open");
-            }
+        return new Tuple<>(counter, () -> {
             lock.lock();
             try {
+                if (!isOpen()) {
+                    counter.finish();
+                    throw new StorageException("File is not open");
+                }
                 long fileSize = fileAccess.length();
                 if (fileSize == 0) {
                     internalCloseDelete();
@@ -555,7 +553,7 @@ public final class RAFFileLegacy implements IRAFFile {
                 lock.unlock();
                 counter.finish();
             }
-        }, executor));
+        });
     }
 
     /*

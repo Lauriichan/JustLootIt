@@ -1,5 +1,6 @@
 package me.lauriichan.spigot.justlootit.command.impl;
 
+import java.time.Duration;
 import java.util.Objects;
 
 import org.bukkit.Bukkit;
@@ -12,7 +13,11 @@ import me.lauriichan.laylib.localization.Key;
 import me.lauriichan.laylib.localization.MessageProvider;
 import me.lauriichan.minecraft.pluginbase.message.component.ComponentBuilder;
 import me.lauriichan.minecraft.pluginbase.message.component.SubComponentBuilder;
-import me.lauriichan.spigot.justlootit.util.ProgressNotifier;
+import me.lauriichan.spigot.justlootit.storage.util.Tuple;
+import me.lauriichan.spigot.justlootit.util.DataHelper;
+import me.lauriichan.spigot.justlootit.util.progress.IDoneNotifier;
+import me.lauriichan.spigot.justlootit.util.progress.IProgressNotifier;
+import me.lauriichan.spigot.justlootit.util.progress.ProgressTracker;
 import net.md_5.bungee.api.ChatMessageType;
 
 public final class ActorNotifierBuilder<P extends CommandSender> {
@@ -90,73 +95,109 @@ public final class ActorNotifierBuilder<P extends CommandSender> {
         return doneMessage;
     }
 
-    public ProgressNotifier build(Key... placeholders) {
+    public ProgressTracker buildTracker(Key... placeholders) {
+        return new ProgressTracker().notifiers(build(placeholders));
+    }
+
+    public Tuple<IProgressNotifier, IDoneNotifier> build(Key... placeholders) {
         if (progressMessage == null) {
             throw new IllegalArgumentException("Progress message not set");
         }
-        ProgressNotifier notifier = new ProgressNotifier();
         final ChatMessageType messageType = this.messageType;
         final LootItActor<P> actor = this.actor;
         final IMessage doneMessage = translate(this.doneMessage), progressMessage = translate(this.progressMessage),
             detailedProgressMessage = translate(this.detailedProgressMessage);
-        if (actor.isPlayer() && useBossBar) {
+
+        IDoneNotifier doneNotifier = null;
+        IProgressNotifier progressNotifier;
+
+        boolean actuallyUseBossBar = actor.isPlayer() && useBossBar;
+        if (actuallyUseBossBar) {
             final int ticks = this.messageUpdateDelay;
             CommandSender console = Bukkit.getConsoleSender();
-            notifier.progressNotifier((progress, elapsed, detailed) -> {
+            progressNotifier = IProgressNotifier.attributed((attributes, progress, elapsed, detailed) -> {
+                if (!attributes.attrHas("setup")) {
+                    BossBar bossBar = actor.bossBar();
+                    bossBar.setTitle("");
+                    bossBar.setProgress(0);
+                    bossBar.setVisible(true);
+                    attributes.attrSet("setup", true);
+                }
                 double progressPerc = progress.counter().progress();
-                Key[] mergedPlaceholders = merge(placeholders, Key.of("progress", ProgressNotifier.asPercentage(progressPerc)),
+                Key[] mergedPlaceholders = merge(placeholders, Key.of("progress", ProgressTracker.asPercentage(progressPerc)),
+                    Key.of("elapsed", DataHelper.formTimeString(actor, Duration.ofMillis(elapsed))),
                     Key.of("current", progress.counter().current()), Key.of("amount", progress.counter().max()));
                 if (detailed && detailedProgressMessage != null) {
                     actor.componentBuilder(detailedProgressMessage, mergedPlaceholders).send(actor, messageType);
                 }
                 if (ticks != 0) {
-                    int delay = notifier.attrOrDefault("delay", Number.class, 0).intValue() + 1;
-                    notifier.attrSet("delay", delay);
+                    int delay = attributes.attrOrDefault("delay", Number.class, 0).intValue() + 1;
+                    attributes.attrSet("delay", delay);
                     if (delay > ticks) {
                         return;
                     }
-                    notifier.attrUnset("delay");
+                    attributes.attrUnset("delay");
                 }
-                ComponentBuilder<?, ?> builder = ComponentBuilder.parse(actor.getMessageManager().format(progressMessage, mergedPlaceholders));
+                ComponentBuilder<?, ?> builder = ComponentBuilder
+                    .parse(actor.getMessageManager().format(progressMessage, mergedPlaceholders));
                 BossBar bossBar = actor.bossBar();
                 bossBar.setProgress(progressPerc);
                 bossBar.setTitle(builder.asLegacyText());
-                
-                int consoleDelay = notifier.attrOrDefault("consoleDelay", Number.class, 0).intValue() + 1;
-                notifier.attrSet("consoleDelay", consoleDelay);
-                if (consoleDelay > 10) {
+
+                int consoleDelay = attributes.attrOrDefault("consoleDelay", Number.class, 0).intValue() + 1;
+                attributes.attrSet("consoleDelay", consoleDelay);
+                if (consoleDelay > 4) {
                     return;
                 }
-                notifier.attrUnset("consoleDelay");
-                builder.send(console);
+                attributes.attrUnset("consoleDelay");
+                if (!actor.isConsole()) {
+                    builder.send(console);
+                }
             });
         } else {
-            notifier.progressNotifier((progress, elapsed, detailed) -> {
+            progressNotifier = (progress, elapsed, detailed) -> {
                 if (detailed && detailedProgressMessage != null) {
-                    actor
-                        .componentBuilder(detailedProgressMessage,
-                            merge(placeholders, Key.of("progress", ProgressNotifier.asPercentage(progress)),
-                                Key.of("current", progress.counter().current()), Key.of("amount", progress.counter().max())))
-                        .send(actor, messageType);
+                    SubComponentBuilder<?, ?> builder = actor.componentBuilder(detailedProgressMessage,
+                        merge(placeholders, Key.of("progress", ProgressTracker.asPercentage(progress)),
+                            Key.of("elapsed", DataHelper.formTimeString(actor, Duration.ofMillis(elapsed))),
+                            Key.of("current", progress.counter().current()), Key.of("amount", progress.counter().max())));
+                    builder.send(actor, messageType);
+                    if (!actor.isConsole()) {
+                        builder.sendConsole();
+                    }
                     return;
                 }
-                actor
-                    .componentBuilder(progressMessage,
-                        merge(placeholders, Key.of("progress", ProgressNotifier.asPercentage(progress)),
-                            Key.of("current", progress.counter().current()), Key.of("amount", progress.counter().max())))
-                    .send(actor, messageType);
-            });
+                SubComponentBuilder<?, ?> builder = actor.componentBuilder(progressMessage,
+                    merge(placeholders, Key.of("progress", ProgressTracker.asPercentage(progress)),
+                        Key.of("elapsed", DataHelper.formTimeString(actor, Duration.ofMillis(elapsed))),
+                        Key.of("current", progress.counter().current()), Key.of("amount", progress.counter().max())));
+                builder.send(actor, messageType);
+                if (!actor.isConsole()) {
+                    builder.sendConsole();
+                }
+            };
         }
         if (doneMessage != null) {
-            notifier.doneNotifier((progress, elapsed) -> {
-                SubComponentBuilder<?, ?> builder = actor.componentBuilder(progressMessage,
-                    merge(placeholders, Key.of("progress", ProgressNotifier.asPercentage(progress)),
+            doneNotifier = (progress, elapsed) -> {
+                SubComponentBuilder<?, ?> builder = actor.componentBuilder(doneMessage,
+                    merge(placeholders, Key.of("elapsed", DataHelper.formTimeString(actor, Duration.ofMillis(elapsed))),
                         Key.of("current", progress.counter().current()), Key.of("amount", progress.counter().max())));
                 builder.send(actor);
-                builder.sendConsole();
-            });
+                if (!actor.isConsole()) {
+                    builder.sendConsole();
+                }
+                if (actuallyUseBossBar && actor.hasBossBar()) {
+                    actor.bossBar().setVisible(false);
+                }
+            };
+        } else if (actuallyUseBossBar) {
+            doneNotifier = (progress, elapsed) -> {
+                if (actor.hasBossBar()) {
+                    actor.bossBar().setVisible(false);
+                }
+            };
         }
-        return notifier;
+        return new Tuple<>(progressNotifier, doneNotifier);
     }
 
     private Key[] merge(Key[] base, Key... add) {

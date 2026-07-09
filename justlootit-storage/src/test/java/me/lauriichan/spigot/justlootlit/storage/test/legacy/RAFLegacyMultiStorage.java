@@ -1,7 +1,6 @@
 package me.lauriichan.spigot.justlootlit.storage.test.legacy;
 
 import java.io.File;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
@@ -24,12 +23,14 @@ import me.lauriichan.spigot.justlootit.storage.randomaccessfile.IRAFFile;
 import me.lauriichan.spigot.justlootit.storage.randomaccessfile.RAFFileHelper;
 import me.lauriichan.spigot.justlootit.storage.randomaccessfile.legacy.RAFFileLegacy;
 import me.lauriichan.spigot.justlootit.storage.randomaccessfile.legacy.RAFSettingsLegacy;
+import me.lauriichan.spigot.justlootit.storage.util.Tuple;
 import me.lauriichan.spigot.justlootit.storage.util.cache.Int2ObjectMapCache;
 import me.lauriichan.spigot.justlootit.storage.util.cache.ThreadSafeMapCache;
 import me.lauriichan.spigot.justlootit.storage.util.counter.CompositeCounter;
 import me.lauriichan.spigot.justlootit.storage.util.counter.Counter;
 import me.lauriichan.spigot.justlootit.storage.util.counter.CounterProgress;
 import me.lauriichan.spigot.justlootit.storage.util.counter.SimpleCounter;
+import me.lauriichan.spigot.justlootit.storage.util.executor.FutureTask;
 
 public final class RAFLegacyMultiStorage extends Storage {
 
@@ -238,74 +239,50 @@ public final class RAFLegacyMultiStorage extends Storage {
         files.tickPaused(true);
         CompositeCounter counter = new CompositeCounter();
         final File[] fileArray = directory.listFiles(RAFFileHelper.FILE_FILTER);
-        ObjectArrayList<CompletableFuture<Void>> list = new ObjectArrayList<>();
-        Map.Entry<Counter, CompletableFuture<Void>> fileFuture;
+        ObjectArrayList<FutureTask> list = new ObjectArrayList<>();
+        Tuple<Counter, Runnable> fileTask;
         for (final File file : fileArray) {
             int fileId;
             try {
-                fileId = Integer.parseInt(RAFFileHelper.getRAFFileName(file));
+                fileId = Integer.parseInt(RAFFileHelper.getRAFFileName(file), 16);
             } catch (NumberFormatException nfe) {
                 continue;
             }
             if (files.has(fileId)) {
-                IRAFFile rafFile = files.get(fileId);
-                try {
-                    fileFuture = forEach(rafFile, reader, executor);
-                } catch (final StorageException exp) {
-                    fileFuture = null;
-                    logger.warning("Failed to perform read for file '{0}'!", exp, Integer.toHexString(fileId));
-                }
-                if (fileFuture == null) {
+                fileTask = forEach(files.get(fileId), reader);
+                if (fileTask == null) {
                     files.remove(fileId);
                     continue;
                 }
-                counter.add(fileFuture.getKey());
-                list.add(fileFuture.getValue().exceptionally(exp -> {
-                    logger.warning("Failed to perform read for file '{0}'", exp, rafFile.hexId());
-                    return null;
-                }));
+                counter.add(fileTask.first());
+                list.add(new FutureTask(fileTask.second()));
                 continue;
             }
             try {
                 // No try resource here
                 IRAFFile rafFile = createFile(fileId);
-                fileFuture = forEach(rafFile, reader, executor);
-                if (fileFuture != null) {
-                    counter.add(fileFuture.getKey());
-                    list.add(fileFuture.getValue().exceptionally(exp -> {
-                        logger.warning("Failed to perform read for file '{0}'", exp, rafFile.hexId());
-                        return null;
-                    }).thenRun(() -> rafFile.close()));
+                fileTask = forEach(rafFile, reader);
+                if (fileTask != null) {
+                    counter.add(fileTask.first());
+                    list.add(new FutureTask(fileTask.second()));
                 }
             } catch (StorageException exp) {
                 logger.warning("Failed to perform read for file '{0}'!", exp, Integer.toHexString(fileId));
             }
         }
+        CompletableFuture.allOf(list.toArray(FutureTask[]::new)).whenComplete((_1, _2) -> files.tickPaused(false));
         CounterProgress progress = new CounterProgress(counter, ObjectLists.unmodifiable(list));
-        if (progress.isDone()) {
-            files.tickPaused(false);
-            return progress;
-        }
-        Runnable runnable = () -> {
-            if (!progress.isDone()) {
-                return;
-            }
-            files.tickPaused(false);
-        };
-        for (int i = 0; i < list.size(); i++) {
-            list.set(i, list.get(i).thenRun(runnable));
+        for (FutureTask task : list) {
+            executor.execute(task);
         }
         return progress;
     }
 
-    private Map.Entry<Counter, CompletableFuture<Void>> forEach(IRAFFile file, Consumer<Stored<?>> reader, Executor executor) {
-        if (!file.isOpen()) {
-            if (!file.exists()) {
-                return null;
-            }
-            file.open();
+    private Tuple<Counter, Runnable> forEach(IRAFFile file, Consumer<Stored<?>> reader) {
+        if (file == null || !file.exists()) {
+            return null;
         }
-        return file.forEach(entry -> {
+        Tuple<Counter, Runnable> tuple = file.forEach(entry -> {
             try {
                 Stored<?> stored;
                 try {
@@ -319,7 +296,24 @@ public final class RAFLegacyMultiStorage extends Storage {
             } catch (RuntimeException exp) {
                 logger.warning("Failed to read entry '{0}' of file '{1}'", entry.id(), file.hexId());
             }
-        }, executor);
+        });
+        return new Tuple<>(tuple.first(), () -> {
+            try {
+                boolean fileWasOpen = file.isOpen();
+                if (!fileWasOpen) {
+                    file.open();
+                }
+                try {
+                    tuple.second().run();
+                } finally {
+                    if (!fileWasOpen) {
+                        file.close();
+                    }
+                }
+            } catch (RuntimeException exp) {
+                logger.warning("Failed to perform read for file '{0}'", exp, file.hexId());
+            }
+        });
     }
 
     @Override
@@ -328,77 +322,54 @@ public final class RAFLegacyMultiStorage extends Storage {
             return new CounterProgress(new SimpleCounter(0), ObjectLists.emptyList());
         }
         files.tickPaused(true);
+        files.clear();
         CompositeCounter counter = new CompositeCounter();
         final File[] fileArray = directory.listFiles(RAFFileHelper.FILE_FILTER);
-        ObjectArrayList<CompletableFuture<Void>> list = new ObjectArrayList<>();
-        Map.Entry<Counter, CompletableFuture<Void>> fileFuture;
+        ObjectArrayList<FutureTask> list = new ObjectArrayList<>();
+        Tuple<Counter, Runnable> fileTask;
         for (final File file : fileArray) {
             int fileId;
             try {
-                fileId = Integer.parseInt(RAFFileHelper.getRAFFileName(file));
+                fileId = Integer.parseInt(RAFFileHelper.getRAFFileName(file), 16);
             } catch (NumberFormatException nfe) {
                 continue;
             }
             if (files.has(fileId)) {
                 IRAFFile rafFile = files.get(fileId);
-                try {
-                    fileFuture = updateEach(rafFile, updater, executor);
-                } catch (final StorageException exp) {
-                    fileFuture = null;
-                    logger.warning("Failed to run update for file '{0}'!", exp, Integer.toHexString(fileId));
-                }
-                if (fileFuture == null) {
+                fileTask = updateEach(rafFile, updater);
+                if (fileTask == null) {
                     files.remove(fileId);
                     continue;
                 }
-                counter.add(fileFuture.getKey());
-                list.add(fileFuture.getValue().exceptionally(exp -> {
-                    logger.warning("Failed to run update for file '{0}'", exp, rafFile.hexId());
-                    return null;
-                }));
+                counter.add(fileTask.first());
+                list.add(new FutureTask(fileTask.second()));
                 continue;
             }
             try {
                 // No try resource here
                 IRAFFile rafFile = createFile(fileId);
-                fileFuture = updateEach(rafFile, updater, executor);
-                if (fileFuture != null) {
-                    counter.add(fileFuture.getKey());
-                    list.add(fileFuture.getValue().exceptionally(exp -> {
-                        logger.warning("Failed to run update for file '{0}'", exp, rafFile.hexId());
-                        return null;
-                    }).thenRun(() -> rafFile.close()));
+                fileTask = updateEach(rafFile, updater);
+                if (fileTask != null) {
+                    counter.add(fileTask.first());
+                    list.add(new FutureTask(fileTask.second()));
                 }
             } catch (StorageException exp) {
                 logger.warning("Failed to run update for file '{0}'!", exp, Integer.toHexString(fileId));
             }
         }
+        CompletableFuture.allOf(list.toArray(FutureTask[]::new)).whenComplete((_1, _2) -> files.tickPaused(false));
         CounterProgress progress = new CounterProgress(counter, ObjectLists.unmodifiable(list));
-        if (progress.isDone()) {
-            files.tickPaused(false);
-            return progress;
-        }
-        Runnable runnable = () -> {
-            if (!progress.isDone()) {
-                return;
-            }
-            files.tickPaused(false);
-        };
-        for (int i = 0; i < list.size(); i++) {
-            list.set(i, list.get(i).thenRun(runnable));
+        for (FutureTask task : list) {
+            executor.execute(task);
         }
         return progress;
     }
 
-    private Map.Entry<Counter, CompletableFuture<Void>> updateEach(IRAFFile file, Function<Stored<?>, UpdateInfo<?>> updater,
-        Executor executor) {
-        if (!file.isOpen()) {
-            if (!file.exists()) {
-                return null;
-            }
-            file.open();
+    private Tuple<Counter, Runnable> updateEach(IRAFFile file, Function<Stored<?>, UpdateInfo<?>> updater) {
+        if (!file.exists()) {
+            return null;
         }
-        return file.modifyEach(entry -> {
+        Tuple<Counter, Runnable> tuple = file.modifyEach(entry -> {
             try {
                 Stored<?> stored;
                 try {
@@ -426,10 +397,27 @@ public final class RAFLegacyMultiStorage extends Storage {
                 stored.write(logger, buffer);
                 return file.newEntry(entry.id(), stored.adapter().typeId(), stored.version(), buffer);
             } catch (RuntimeException exp) {
-                logger.warning("Failed to modify entry '{0}' of file '{1}'", entry.id(), file.hexId());
+                logger.warning("Failed to modify entry '{0}' of file '{1}'", exp, entry.id(), file.hexId());
                 return entry;
             }
-        }, executor);
+        });
+        return new Tuple<>(tuple.first(), () -> {
+            try {
+                boolean fileWasOpen = file.isOpen();
+                if (!fileWasOpen) {
+                    file.open();
+                }
+                try {
+                    tuple.second().run();
+                } finally {
+                    if (!fileWasOpen) {
+                        file.close();
+                    }
+                }
+            } catch (RuntimeException exp) {
+                logger.warning("Failed to run update for file '{0}'", exp, file.hexId());
+            }
+        });
     }
 
     @Override

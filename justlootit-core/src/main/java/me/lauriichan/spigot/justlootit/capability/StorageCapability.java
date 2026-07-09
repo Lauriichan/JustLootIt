@@ -1,10 +1,12 @@
 package me.lauriichan.spigot.justlootit.capability;
 
 import java.io.File;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.config.MainConfig;
+import me.lauriichan.spigot.justlootit.data.alternation.AlternationAction;
 import me.lauriichan.spigot.justlootit.nms.LevelAdapter;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
@@ -18,6 +20,9 @@ import me.lauriichan.spigot.justlootit.storage.randomaccessfile.RAFSingleStorage
 import me.lauriichan.spigot.justlootit.storage.randomaccessfile.versionized.RAFSettings;
 import me.lauriichan.spigot.justlootit.storage.randomaccessfile.versionized.RAFSettings.MigrationSettings;
 import me.lauriichan.spigot.justlootit.storage.util.cache.CacheTickTimer;
+import me.lauriichan.spigot.justlootit.storage.util.counter.CounterProgress;
+import me.lauriichan.spigot.justlootit.util.progress.MultiNotifier;
+import me.lauriichan.spigot.justlootit.util.progress.ProgressTracker;
 
 public abstract class StorageCapability implements ICapability {
 
@@ -50,13 +55,19 @@ public abstract class StorageCapability implements ICapability {
         }
     }
 
+    private final JustLootItPlugin plugin;
+
     private final CacheTickTimer tickTimer;
     private final boolean player;
+
+    private final MultiNotifier alterationNotifier = new MultiNotifier();
+    private final AtomicReference<ProgressTracker> alterationProgress = new AtomicReference<>();
 
     protected final IStorage storage;
 
     public StorageCapability(final JustLootItPlugin plugin, final BiFunction<JustLootItPlugin, StorageAdapterRegistry, IStorage> creator,
         final boolean player, final boolean cached) {
+        this.plugin = plugin;
         this.tickTimer = player ? plugin.playerTickTimer() : plugin.levelTickTimer();
         this.player = player;
         IStorage storage = creator.apply(plugin, player ? plugin.playerStorageRegistry() : plugin.levelStorageRegistry());
@@ -68,6 +79,40 @@ public abstract class StorageCapability implements ICapability {
             updateConfiguration(plugin.configManager().config(MainConfig.class));
             tickTimer.add(cachedStorage.cache());
         }
+    }
+
+    public final boolean hasBulkOperationRunning() {
+        ProgressTracker tracker = alterationProgress.get();
+        if (tracker != null && tracker.progress() != null && !tracker.progress().isDone()) {
+            return true;
+        }
+        return false;
+    }
+
+    public CounterProgress bulkProgress() {
+        ProgressTracker tracker = alterationProgress.get();
+        if (tracker == null) {
+            return null;
+        }
+        return tracker.progress();
+    }
+
+    public final boolean executeBulkOperation(AlternationAction<?>... actions) {
+        ProgressTracker prev = alterationProgress.getAndUpdate((current) -> {
+            if (current != null && current.progress() != null && !current.progress().isDone()) {
+                return current;
+            }
+            ProgressTracker notifier = new ProgressTracker()
+                .progress(storage.updateEach(AlternationAction.updaterFor(storage, actions), plugin.executor())).waitTimeout(25)
+                .progressNotifier(alterationNotifier).doneNotifier(alterationNotifier);
+            plugin.scheduler().async(notifier::await);
+            return notifier;
+        });
+        return prev != alterationProgress.get();
+    }
+
+    public final MultiNotifier bulkNotifier() {
+        return alterationNotifier;
     }
 
     public final IStorage storage() {

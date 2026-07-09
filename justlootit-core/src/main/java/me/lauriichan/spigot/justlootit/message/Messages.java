@@ -172,12 +172,12 @@ public final class Messages implements IMessageExtension {
     public static MessageProvider CONTAINER_PLACE_UNPERMITTED_BLOCK;
     @Message(id = "container.place.unpermitted.entity", content = "$#plugin.prefix You are not allowed to place loot container entities.")
     public static MessageProvider CONTAINER_PLACE_UNPERMITTED_ENTITY;
-    
+
     @Message(id = "container.place.failure.block", content = "$#plugin.prefix Couldn't place a loot container block.")
     public static MessageProvider CONTAINER_PLACE_FAILURE_BLOCK;
     @Message(id = "container.place.failure.entity", content = "$#plugin.prefix Couldn't place a loot container entity.")
     public static MessageProvider CONTAINER_PLACE_FAILURE_ENTITY;
-    
+
     @Message(id = "container.place.created.block", content = "$#plugin.prefix You successfully created a new loot container (&c$id&7) with seed &c$seed&7 and linked it to the placed block.")
     public static MessageProvider CONTAINER_PLACE_CREATED_BLOCK;
     @Message(id = "container.place.created.entity", content = "$#plugin.prefix You successfully created a new loot container (&c$id&7) with seed &c$seed&7 and linked it to the placed entity.")
@@ -228,6 +228,9 @@ public final class Messages implements IMessageExtension {
     public static MessageProvider CONTAINER_TIME_FORMAT_HOURS;
     @Message(id = "container.time.format.days", content = "&c$days &7and &c$hours")
     public static MessageProvider CONTAINER_TIME_FORMAT_DAYS;
+    
+    @Message(id = "container.access.storage.busy", content = "$#plugin.prefix There is currently a data operation running for this world, therefore you can not interact with any JLI containers, please try again later.")
+    public static MessageProvider CONTAINER_ACCESS_STORAGE_BUSY;
 
     /*
      * Commands
@@ -485,12 +488,18 @@ public final class Messages implements IMessageExtension {
 
     @Message(id = "command.container.bulk.replace.loottable.progress", content = "&7Replacing loot table '&5$loottableFrom&7' with '&5$loottableTo&7' in '&d$world&7' ($progress / $current scanned)")
     public static MessageProvider COMMAND_CONTAINER_BULK_REPLACE_LOOTTABLE_PROGRESS;
-    @Message(id = "command.container.bulk.replace.loottable.done", content = "$#plugin.prefix Successfully scanned through all &d$amount containers &7and replaced the loot table '&5$loottableFrom&7' with '&5$loottableTo&7' in '&d$world&7'")
+    @Message(id = "command.container.bulk.replace.loottable.done", content = "$#plugin.prefix Successfully scanned through all &d$amount containers &7and replaced the loot table '&5$loottableFrom&7' with '&5$loottableTo&7' in '&d$world&7' which took &c$elapsed&7.")
     public static MessageProvider COMMAND_CONTAINER_BULK_REPLACE_LOOTTABLE_DONE;
+
     @Message(id = "command.container.bulk.reset.access.progress", content = "&7Resetting access of all containers in '&d$world&7' ($progress | $current/$amount)")
     public static MessageProvider COMMAND_CONTAINER_BULK_RESET_ACCESS_PROGRESS;
-    @Message(id = "command.container.bulk.reset.access.done", content = "$#plugin.prefix Successfully resetted access of all &d$amount containers &7in '&d$world&7'")
+    @Message(id = "command.container.bulk.reset.access.done", content = "$#plugin.prefix Successfully resetted access of all &d$amount containers &7in '&d$world&7' which took &c$elapsed&7.")
     public static MessageProvider COMMAND_CONTAINER_BULK_RESET_ACCESS_DONE;
+
+    @Message(id = "command.container.bulk.started", content = "$#plugin.prefix You successfully started a bulk operation for world '&d$world&7'.")
+    public static MessageProvider COMMAND_CONTAINER_BULK_STARTED;
+    @Message(id = "command.container.bulk.busy", content = "$#plugin.prefix The storage you are trying to start a bulk operation on is already busy running one, please try again later.")
+    public static MessageProvider COMMAND_CONTAINER_BULK_BUSY;
 
     // Config
 

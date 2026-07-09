@@ -142,12 +142,31 @@ public class ContainerListener implements IListenerExtension {
             actor.sendTranslatedMessage(Messages.CONTAINER_BREAK_CONFIRMATION_BLOCK);
             return;
         }
-        if (otherContainer != null) {
-            event.setCancelled(false);
-            if (!JustLootItAccess.hasIdentity(dataContainer)) {
-                JustLootItAccess.removeOffset(otherContainer.getPersistentDataContainer());
+        actor.versionHandler().getLevel(player.getWorld()).getCapability(StorageCapability.class).ifPresent(capability -> {
+            if (capability.hasBulkOperationRunning()) {
+                actor.sendTranslatedMessage(Messages.CONTAINER_ACCESS_STORAGE_BUSY);
+                return;
+            }
+            if (otherContainer != null) {
+                event.setCancelled(false);
+                if (!JustLootItAccess.hasIdentity(dataContainer)) {
+                    JustLootItAccess.removeOffset(otherContainer.getPersistentDataContainer());
+                    JustLootItAccess.removeOffset(dataContainer);
+                    container.update(false, false);
+                    Chest chest = (Chest) otherContainer.getBlockData();
+                    chest.setType(Type.SINGLE);
+                    otherContainer.setBlockData(chest);
+                    otherContainer.update(true, false);
+                    actor.sendTranslatedBarMessage(Messages.CONTAINER_BREAK_DOUBLE_CHEST);
+                    return;
+                }
+                final long id = JustLootItAccess.getIdentity(dataContainer);
                 JustLootItAccess.removeOffset(dataContainer);
+                JustLootItAccess.removeIdentity(dataContainer);
                 container.update(false, false);
+                PersistentDataContainer otherDataContainer = otherContainer.getPersistentDataContainer();
+                JustLootItAccess.removeOffset(otherDataContainer);
+                JustLootItAccess.setIdentity(otherDataContainer, id);
                 Chest chest = (Chest) otherContainer.getBlockData();
                 chest.setType(Type.SINGLE);
                 otherContainer.setBlockData(chest);
@@ -156,27 +175,12 @@ public class ContainerListener implements IListenerExtension {
                 return;
             }
             final long id = JustLootItAccess.getIdentity(dataContainer);
-            JustLootItAccess.removeOffset(dataContainer);
             JustLootItAccess.removeIdentity(dataContainer);
-            container.update(false, false);
-            PersistentDataContainer otherDataContainer = otherContainer.getPersistentDataContainer();
-            JustLootItAccess.removeOffset(otherDataContainer);
-            JustLootItAccess.setIdentity(otherDataContainer, id);
-            Chest chest = (Chest) otherContainer.getBlockData();
-            chest.setType(Type.SINGLE);
-            otherContainer.setBlockData(chest);
-            otherContainer.update(true, false);
-            actor.sendTranslatedBarMessage(Messages.CONTAINER_BREAK_DOUBLE_CHEST);
-            return;
-        }
-        final long id = JustLootItAccess.getIdentity(dataContainer);
-        JustLootItAccess.removeIdentity(dataContainer);
-        container.update(true, false);
-        actor.sendTranslatedMessage(Messages.CONTAINER_BREAK_REMOVED_BLOCK, Key.of("id", id));
-        if (!config.deleteOnBreak()) {
-            return;
-        }
-        actor.versionHandler().getLevel(player.getWorld()).getCapability(StorageCapability.class).ifPresent(capability -> {
+            container.update(true, false);
+            actor.sendTranslatedMessage(Messages.CONTAINER_BREAK_REMOVED_BLOCK, Key.of("id", id));
+            if (!config.deleteOnBreak()) {
+                return;
+            }
             if (!capability.storage().delete(id)) {
                 actor.sendTranslatedMessage(Messages.CONTAINER_BREAK_NO_CONTAINER, Key.of("id", id));
             }
@@ -238,11 +242,28 @@ public class ContainerListener implements IListenerExtension {
                 return;
             }
         }
-        if (otherContainer != null) {
-            if (!JustLootItAccess.hasIdentity(dataContainer)) {
-                JustLootItAccess.removeOffset(otherContainer.getPersistentDataContainer());
+        level.getCapability(StorageCapability.class).ifPresent(capability -> {
+            if (capability.hasBulkOperationRunning()) {
+                return;
+            }
+            if (otherContainer != null) {
+                if (!JustLootItAccess.hasIdentity(dataContainer)) {
+                    JustLootItAccess.removeOffset(otherContainer.getPersistentDataContainer());
+                    JustLootItAccess.removeOffset(dataContainer);
+                    container.update(false, false);
+                    Chest chest = (Chest) otherContainer.getBlockData();
+                    chest.setType(Type.SINGLE);
+                    otherContainer.setBlockData(chest);
+                    otherContainer.update(true, false);
+                    return;
+                }
+                final long id = JustLootItAccess.getIdentity(dataContainer);
                 JustLootItAccess.removeOffset(dataContainer);
+                JustLootItAccess.removeIdentity(dataContainer);
                 container.update(false, false);
+                PersistentDataContainer otherDataContainer = otherContainer.getPersistentDataContainer();
+                JustLootItAccess.removeOffset(otherDataContainer);
+                JustLootItAccess.setIdentity(otherDataContainer, id);
                 Chest chest = (Chest) otherContainer.getBlockData();
                 chest.setType(Type.SINGLE);
                 otherContainer.setBlockData(chest);
@@ -250,24 +271,12 @@ public class ContainerListener implements IListenerExtension {
                 return;
             }
             final long id = JustLootItAccess.getIdentity(dataContainer);
-            JustLootItAccess.removeOffset(dataContainer);
             JustLootItAccess.removeIdentity(dataContainer);
-            container.update(false, false);
-            PersistentDataContainer otherDataContainer = otherContainer.getPersistentDataContainer();
-            JustLootItAccess.removeOffset(otherDataContainer);
-            JustLootItAccess.setIdentity(otherDataContainer, id);
-            Chest chest = (Chest) otherContainer.getBlockData();
-            chest.setType(Type.SINGLE);
-            otherContainer.setBlockData(chest);
-            otherContainer.update(true, false);
-            return;
-        }
-        final long id = JustLootItAccess.getIdentity(dataContainer);
-        JustLootItAccess.removeIdentity(dataContainer);
-        container.update(true, false);
-        if (config.deleteOnBreak()) {
-            level.getCapability(StorageCapability.class).ifPresent(capability -> capability.storage().delete(id));
-        }
+            container.update(true, false);
+            if (config.deleteOnBreak()) {
+                capability.storage().delete(id);
+            }
+        });
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
@@ -319,13 +328,17 @@ public class ContainerListener implements IListenerExtension {
             actor.sendTranslatedMessage(Messages.CONTAINER_BREAK_CONFIRMATION_ENTITY);
             return;
         }
-        final long id = JustLootItAccess.getIdentity(dataContainer);
-        JustLootItAccess.removeIdentity(dataContainer);
-        actor.sendTranslatedMessage(Messages.CONTAINER_BREAK_REMOVED_ENTITY, Key.of("id", id));
-        if (!config.deleteOnBreak()) {
-            return;
-        }
         actor.versionHandler().getLevel(player.getWorld()).getCapability(StorageCapability.class).ifPresent(capability -> {
+            if (capability.hasBulkOperationRunning()) {
+                actor.sendTranslatedMessage(Messages.CONTAINER_ACCESS_STORAGE_BUSY);
+                return;
+            }
+            final long id = JustLootItAccess.getIdentity(dataContainer);
+            JustLootItAccess.removeIdentity(dataContainer);
+            actor.sendTranslatedMessage(Messages.CONTAINER_BREAK_REMOVED_ENTITY, Key.of("id", id));
+            if (!config.deleteOnBreak()) {
+                return;
+            }
             if (!capability.storage().delete(id)) {
                 actor.sendTranslatedMessage(Messages.CONTAINER_BREAK_NO_CONTAINER, Key.of("id", id));
             }
@@ -450,6 +463,11 @@ public class ContainerListener implements IListenerExtension {
         final UUID playerId = bukkitPlayer.getUniqueId();
         final LevelAdapter level = actor.versionHandler().getLevel(world);
         level.getCapability(StorageCapability.class).ifPresentOrElse(capability -> {
+            if (capability.hasBulkOperationRunning()) {
+                actor.sendTranslatedMessage(Messages.CONTAINER_ACCESS_STORAGE_BUSY);
+                player.removeData(BaseLootUIHandler.PLAYER_DATA_LOOTING);
+                return;
+            }
             final Stored<Container> dataContainer = capability.storage().read(id);
             if (dataContainer == null) {
                 JustLootItAccess.removeIdentity(data);

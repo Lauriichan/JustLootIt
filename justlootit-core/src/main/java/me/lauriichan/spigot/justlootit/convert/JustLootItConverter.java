@@ -19,7 +19,7 @@ import me.lauriichan.spigot.justlootit.nms.convert.ConversionAdapter;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoChunk;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoWorld;
 import me.lauriichan.spigot.justlootit.storage.util.counter.CounterProgress;
-import me.lauriichan.spigot.justlootit.util.ProgressNotifier;
+import me.lauriichan.spigot.justlootit.util.progress.ProgressTracker;
 
 public final class JustLootItConverter {
 
@@ -92,7 +92,7 @@ public final class JustLootItConverter {
                         logger.info("Skipping level '{0}', couldn't find any regions.", world.getName());
                         continue;
                     }
-                    new ProgressNotifier().progress(counterProgress).detailedTimeout(TimeUnit.SECONDS, 15)
+                    new ProgressTracker().progress(counterProgress).detailedTimeout(TimeUnit.SECONDS, 15)
                         .waitTimeout(TimeUnit.SECONDS, 2)
                         .progressNotifier((progress, elapsed, detailed) -> {
                             if (detailed) {
@@ -100,7 +100,7 @@ public final class JustLootItConverter {
                                 return;
                             }
                             logger.info("Converting level '{0}'... ({2}) [{1} / {3} Chunks]", world.getName(), progress.counter().current(),
-                                ProgressNotifier.asPercentage(progress), progress.counter().max());
+                                ProgressTracker.asPercentage(progress), progress.counter().max());
                         }).doneNotifier((progress, elapsed) -> logger.info("Conversion of level '{0}' done! [{1} Chunks]", world.getName(),
                             progress.counter().max()))
                         .await();
@@ -133,7 +133,7 @@ public final class JustLootItConverter {
         logger.info("  ├► CHUNKS TOTAL: {0}", progress.counter().max());
         logger.info("  ├► CHUNKS DONE:  {0}", progress.counter().current());
         logger.info("  │");
-        logger.info("  ├► PROGRESS:     {0}", ProgressNotifier.asPercentage(progress));
+        logger.info("  ├► PROGRESS:     {0}", ProgressTracker.asPercentage(progress));
         logger.info("  │");
         logger.info("  └──► Conversion ({0})", level);
         logger.info(" ");

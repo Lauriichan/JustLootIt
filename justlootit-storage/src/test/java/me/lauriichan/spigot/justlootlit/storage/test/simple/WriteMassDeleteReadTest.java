@@ -1,13 +1,11 @@
 package me.lauriichan.spigot.justlootlit.storage.test.simple;
 
-import static me.lauriichan.spigot.justlootlit.storage.test.junit.AssertArrayNotEquals.*;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.Random;
 
-import it.unimi.dsi.fastutil.longs.Long2ObjectArrayMap;
 import me.lauriichan.spigot.justlootit.storage.Storage;
 import me.lauriichan.spigot.justlootit.storage.StorageAdapterRegistry;
 import me.lauriichan.spigot.justlootit.storage.Stored;
@@ -17,12 +15,12 @@ import me.lauriichan.spigot.justlootlit.storage.test.BaseTest;
 import me.lauriichan.spigot.justlootlit.storage.test.simple.model.SimpleObject;
 import me.lauriichan.spigot.justlootlit.storage.test.simple.model.SimpleObjectAdapter;
 
-public class WriteUpdateReadTest extends BaseTest {
+public class WriteMassDeleteReadTest extends BaseTest {
 
     private final int amount;
 
-    public WriteUpdateReadTest(final int amount) {
-        super("WriteUpdateRead (" + Math.abs(amount) + "x)");
+    public WriteMassDeleteReadTest(final int amount) {
+        super("WriteMassDeleteRead (" + Math.abs(amount) + "x)");
         this.amount = Math.abs(amount);
     }
 
@@ -43,17 +41,10 @@ public class WriteUpdateReadTest extends BaseTest {
             storage.write(storage.registry().create(object).id(id));
         }
 
-        final Long2ObjectArrayMap<SimpleObject> objMap = new Long2ObjectArrayMap<>();
         CounterProgress progress = storage.updateEach(stored -> {
-            final long mod = stored.id() % 3;
+            final long mod = stored.id() % 2;
             if (mod == 0) {
                 return UpdateInfo.none();
-            }
-            if (mod == 1) {
-                SimpleObject newObj = new SimpleObject(random.nextInt(Integer.MAX_VALUE));
-                stored.value(newObj);
-                objMap.put(stored.id(), newObj);
-                return UpdateInfo.modify(stored);
             }
             return UpdateInfo.delete();
         }, Runnable::run);
@@ -72,14 +63,9 @@ public class WriteUpdateReadTest extends BaseTest {
 
         for (int id = 0; id < actualAmount; id++) {
             final Stored<SimpleObject> loaded = storage.read(id);
-            final long mod = id % 3;
-            if (mod == 2) {
-                assertNull(loaded, "Invalid entry " + id);
-                continue;
-            }
+            final long mod = id % 2;
             if (mod == 1) {
-                assertArrayNotEquals(objects[id].numbers, loaded.value().numbers, "Invalid entry " + id);
-                assertArrayEquals(objMap.get(id).numbers, loaded.value().numbers, "Invalid entry " + id);
+                assertNull(loaded, "Invalid entry " + id);
                 continue;
             }
             assertArrayEquals(objects[id].numbers, loaded.value().numbers, "Invalid entry " + id);

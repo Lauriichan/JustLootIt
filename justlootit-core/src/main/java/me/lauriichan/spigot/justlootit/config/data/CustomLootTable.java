@@ -24,14 +24,22 @@ public record CustomLootTable(VersionHandler versionHandler, NamespacedKey id, I
     @Override
     public Collection<ItemStack> populateLoot(Random random, LootContext context) {
         ObjectArrayList<ItemStack> list = new ObjectArrayList<>();
-        provider.provideLoot(versionHandler, random, list);
+        try {
+            provider.provideLoot(versionHandler, random, list);
+        } catch (RuntimeException re) {
+            versionHandler.logger().warning("Failed to generate loot using custom loot table '{0}'", re, id.toString());
+        }
         return list;
     }
 
     @Override
     public void fillInventory(Inventory inventory, Random random, LootContext context) {
         ObjectArrayList<ItemStack> list = new ObjectArrayList<>();
-        provider.provideLoot(versionHandler, random, list);
+        try {
+            provider.provideLoot(versionHandler, random, list);
+        } catch (RuntimeException re) {
+            versionHandler.logger().warning("Failed to generate loot using custom loot table '{0}'", re, id.toString());
+        }
         LootHelper.scrambleInto(list, inventory, random.nextLong());
     }
 

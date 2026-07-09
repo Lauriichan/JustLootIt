@@ -1,4 +1,4 @@
-package me.lauriichan.spigot.justlootit.util;
+package me.lauriichan.spigot.justlootit.util.progress;
 
 import java.text.DecimalFormat;
 import java.util.concurrent.ExecutionException;
@@ -6,21 +6,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import me.lauriichan.minecraft.pluginbase.util.attribute.Attributable;
+import me.lauriichan.spigot.justlootit.storage.util.Tuple;
 import me.lauriichan.spigot.justlootit.storage.util.counter.CounterProgress;
 
-public final class ProgressNotifier extends Attributable {
-    
-    public static interface IProgressNotifier {
-
-        void notify(CounterProgress progress, long elapsed, boolean detailed);
-
-    }
-
-    public static interface IDoneNotifier {
-
-        void notify(CounterProgress progress, long elapsed);
-
-    }
+public final class ProgressTracker extends Attributable {
 
     public static final DecimalFormat PERCENTAGE_FORMAT = new DecimalFormat("0.00%");
 
@@ -34,6 +23,8 @@ public final class ProgressNotifier extends Attributable {
 
     private CounterProgress progress;
 
+    private volatile long progressSetTime;
+    
     private volatile long waitTimeout = -1;
     private volatile long detailedTimeout = -1;
 
@@ -44,28 +35,44 @@ public final class ProgressNotifier extends Attributable {
         return progress;
     }
 
-    public final ProgressNotifier progress(CounterProgress progress) {
+    public final ProgressTracker progress(CounterProgress progress) {
         if (this.progress != null && !this.progress.isDone()) {
             throw new IllegalStateException("Can't replace an ongoing process.");
         }
         this.progress = progress;
+        this.progressSetTime = System.currentTimeMillis();
         return this;
     }
-    
+
+    public Tuple<IProgressNotifier, IDoneNotifier> notifiers() {
+        return new Tuple<>(progressNotifier, doneNotifier);
+    }
+
+    public ProgressTracker notifiers(Tuple<IProgressNotifier, IDoneNotifier> notifiers) {
+        if (notifiers == null) {
+            doneNotifier = null;
+            progressNotifier = null;
+            return this;
+        }
+        this.progressNotifier = notifiers.first();
+        this.doneNotifier = notifiers.second();
+        return this;
+    }
+
     public IDoneNotifier doneNotifier() {
         return doneNotifier;
     }
-    
-    public ProgressNotifier doneNotifier(IDoneNotifier doneNotifier) {
+
+    public ProgressTracker doneNotifier(IDoneNotifier doneNotifier) {
         this.doneNotifier = doneNotifier;
         return this;
     }
-    
+
     public IProgressNotifier progressNotifier() {
         return progressNotifier;
     }
-    
-    public ProgressNotifier progressNotifier(IProgressNotifier progressNotifier) {
+
+    public ProgressTracker progressNotifier(IProgressNotifier progressNotifier) {
         this.progressNotifier = progressNotifier;
         return this;
     }
@@ -74,11 +81,11 @@ public final class ProgressNotifier extends Attributable {
         return waitTimeout;
     }
 
-    public ProgressNotifier waitTimeout(TimeUnit unit, long waitTimeout) {
+    public ProgressTracker waitTimeout(TimeUnit unit, long waitTimeout) {
         return waitTimeout(unit.toMillis(waitTimeout));
     }
 
-    public ProgressNotifier waitTimeout(long waitTimeout) {
+    public ProgressTracker waitTimeout(long waitTimeout) {
         this.waitTimeout = Math.max(waitTimeout, 100);
         return this;
     }
@@ -87,11 +94,11 @@ public final class ProgressNotifier extends Attributable {
         return detailedTimeout;
     }
 
-    public ProgressNotifier detailedTimeout(TimeUnit unit, long detailedInfoTimeout) {
+    public ProgressTracker detailedTimeout(TimeUnit unit, long detailedInfoTimeout) {
         return detailedTimeout(unit.toMillis(detailedInfoTimeout));
     }
 
-    public ProgressNotifier detailedTimeout(long detailedInfoTimeout) {
+    public ProgressTracker detailedTimeout(long detailedInfoTimeout) {
         this.detailedTimeout = Math.max(detailedInfoTimeout, -1);
         return this;
     }
@@ -107,9 +114,12 @@ public final class ProgressNotifier extends Attributable {
             throw new IllegalArgumentException("Wait timeout not defined");
         }
         if (progress.isDone()) {
+            if (doneNotifier != null) {
+                doneNotifier.notify(progress, System.currentTimeMillis() - progressSetTime);
+            }
             return;
         }
-        long now = System.currentTimeMillis(), dumpTime = now, start = now;
+        long now = System.currentTimeMillis(), dumpTime = now, start = progressSetTime;
         boolean detailed;
         loop:
         while (true) {

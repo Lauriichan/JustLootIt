@@ -5,9 +5,9 @@ import static me.lauriichan.spigot.justlootit.storage.randomaccessfile.versioniz
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -16,12 +16,14 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.shorts.Short2LongOpenHashMap;
 import it.unimi.dsi.fastutil.shorts.ShortArrayList;
 import me.lauriichan.spigot.justlootit.storage.StorageException;
 import me.lauriichan.spigot.justlootit.storage.randomaccessfile.IRAFEntry;
 import me.lauriichan.spigot.justlootit.storage.randomaccessfile.IRAFFile;
 import me.lauriichan.spigot.justlootit.storage.randomaccessfile.IRAFSettings;
+import me.lauriichan.spigot.justlootit.storage.util.Tuple;
 import me.lauriichan.spigot.justlootit.storage.util.counter.Counter;
 import me.lauriichan.spigot.justlootit.storage.util.counter.ScaledCounter;
 import me.lauriichan.spigot.justlootit.storage.util.counter.SimpleCounter;
@@ -203,7 +205,7 @@ public final class RAFFile implements IRAFFile {
         if (isInvalidId(entry.id())) {
             throw new StorageException("Invalid value id '" + entry.id() + "'!");
         }
-        entry.buffer().resetReaderIndex();
+        entry.buffer().readerIndex(0);
         final int bufferSize = entry.buffer().readableBytes();
         final int valueId = (int) (entry.id() & settings.valueIdMask);
         lock.lock();
@@ -341,9 +343,9 @@ public final class RAFFile implements IRAFFile {
      */
 
     @Override
-    public Map.Entry<Counter, CompletableFuture<Void>> forEach(Consumer<IRAFEntry> consumer, Executor executor) {
+    public Tuple<Counter, Runnable> forEach(Consumer<IRAFEntry> consumer) {
         SimpleCounter counter = new SimpleCounter(settings.valueIdAmount);
-        return Map.entry(counter, CompletableFuture.runAsync(() -> {
+        return new Tuple<>(counter, () -> {
             lock.lock();
             try {
                 if (!isOpen()) {
@@ -382,19 +384,25 @@ public final class RAFFile implements IRAFFile {
                 lock.unlock();
                 counter.finish();
             }
-        }, executor));
+        });
     }
 
     /*
      * Modify each
      */
 
+    private static record Modified(int valueId, int oldSize, int newSize, IRAFEntry entry) {}
+
     @Override
-    public Map.Entry<Counter, CompletableFuture<Void>> modifyEach(Function<IRAFEntry, IRAFEntry> func, Executor executor) {
+    public Tuple<Counter, Runnable> modifyEach(Function<IRAFEntry, IRAFEntry> func) {
         SimpleCounter counter = new SimpleCounter(settings.valueIdAmount);
-        return Map.entry(counter, CompletableFuture.runAsync(() -> {
+        return new Tuple<>(counter, () -> {
             lock.lock();
             try {
+                Path copyPath = new File(file.getParentFile(), file.getName() + ".bck").toPath();
+                if (file.exists()) {
+                    Files.copy(file.toPath(), copyPath, StandardCopyOption.REPLACE_EXISTING);
+                }
                 if (!isOpen()) {
                     counter.finish();
                     throw new StorageException("File is not open");
@@ -404,79 +412,102 @@ public final class RAFFile implements IRAFFile {
                     internalCloseDelete();
                     return;
                 }
-                ShortArrayList deleteList = new ShortArrayList();
-                fileAccess.seek(LOOKUP_AMOUNT_OFFSET);
-                int items = fileAccess.readUnsignedShort();
-                long headerOffset;
-                long lookupPosition;
-                for (int valueId = 0; valueId < settings.valueIdAmount; valueId++) {
-                    headerOffset = LOOKUP_ENTRY_BASE_OFFSET + LOOKUP_ENTRY_SIZE * valueId;
-                    fileAccess.seek(headerOffset);
-                    lookupPosition = fileAccess.readLong();
-                    if (lookupPosition == INVALID_HEADER_OFFSET) {
-                        counter.increment();
-                        continue;
-                    }
-                    final long id = idBase + valueId;
-                    fileAccess.seek(lookupPosition);
-                    final int version = fileAccess.readUnsignedShort();
-                    final int typeId = fileAccess.readUnsignedShort();
-                    final int dataSize = fileAccess.readInt();
-                    final byte[] buffer = new byte[dataSize];
-                    fileAccess.read(buffer);
-                    IRAFEntry entry = new RAFEntry(id, typeId, version, Unpooled.wrappedBuffer(buffer));
-                    IRAFEntry result = func.apply(entry);
-                    if (result == entry) {
-                        counter.increment();
-                        continue;
-                    }
-                    if (result == null) {
-                        if ((items -= 1) == 0) {
-                            internalCloseDelete();
-                            return; // File is gone
+                try {
+                    ShortArrayList deleteList = new ShortArrayList();
+                    ObjectArrayList<Modified> modifiedList = new ObjectArrayList<>();
+                    fileAccess.seek(LOOKUP_AMOUNT_OFFSET);
+                    int items = fileAccess.readUnsignedShort();
+                    long headerOffset;
+                    long lookupPosition;
+                    for (int valueId = 0; valueId < settings.valueIdAmount; valueId++) {
+                        headerOffset = LOOKUP_ENTRY_BASE_OFFSET + LOOKUP_ENTRY_SIZE * valueId;
+                        fileAccess.seek(headerOffset);
+                        lookupPosition = fileAccess.readLong();
+                        if (lookupPosition == INVALID_HEADER_OFFSET) {
+                            counter.increment();
+                            continue;
+                        }
+                        final long id = idBase + valueId;
+                        fileAccess.seek(lookupPosition);
+                        final int typeId = fileAccess.readUnsignedShort();
+                        final int version = fileAccess.readUnsignedShort();
+                        final int dataSize = fileAccess.readInt();
+                        final byte[] buffer = new byte[dataSize];
+                        fileAccess.read(buffer);
+                        IRAFEntry entry = new RAFEntry(id, typeId, version, Unpooled.wrappedBuffer(buffer));
+                        IRAFEntry result = func.apply(entry);
+                        if (result == entry) {
+                            counter.increment();
+                            continue;
+                        }
+                        if (result == null) {
+                            if ((items -= 1) == 0) {
+                                internalCloseDelete();
+                                return; // File is gone
+                            }
+                            deleteList.add((short) valueId);
+                            continue;
+                        }
+                        result.buffer().readerIndex(0);
+                        final int bufferSize = result.buffer().readableBytes();
+                        if (bufferSize == dataSize) {
+                            fileAccess.seek(lookupPosition);
+                            fileAccess.writeShort(result.typeId());
+                            fileAccess.writeShort(result.version());
+                            fileAccess.writeInt(bufferSize);
+                            result.buffer().readBytes(fileAccess.getChannel(), fileAccess.getFilePointer(), bufferSize);
+                            counter.increment();
+                            continue;
                         }
                         deleteList.add((short) valueId);
-                        continue;
+                        modifiedList.add(new Modified(valueId, dataSize, bufferSize, result));
                     }
-                    result.buffer().resetReaderIndex();
-                    final int bufferSize = result.buffer().readableBytes();
-                    final long offset = updateFileSize(lookupPosition, dataSize, bufferSize);
-                    if (offset != 0) {
-                        fileAccess.seek(LOOKUP_ENTRY_BASE_OFFSET);
-                        final long oldDataEnd = lookupPosition + dataSize + VALUE_HEADER_SIZE;
-                        while (fileAccess.getFilePointer() != settings.lookupHeaderSize) {
-                            final long entryOffset = fileAccess.readLong();
-                            if (entryOffset < oldDataEnd) {
-                                continue;
-                            }
-                            fileAccess.seek(fileAccess.getFilePointer() - LOOKUP_ENTRY_SIZE);
-                            fileAccess.writeLong(entryOffset + offset);
+                    long expectedFileSize = fileAccess.length();
+                    if (!deleteList.isEmpty()) {
+                        // Here we delete all entries mentioned above
+                        // This should speed up this process by a lot compared to individual delete operations
+                        expectedFileSize = doMassDeletion(counter, deleteList, items - modifiedList.size(), modifiedList.isEmpty());
+                    }
+                    if (!modifiedList.isEmpty()) {
+                        long modifiedSize = 0;
+                        for (Modified modified : modifiedList) {
+                            modifiedSize = modified.newSize() + VALUE_HEADER_SIZE;
+                        }
+                        lookupPosition = expectedFileSize;
+                        fileAccess.setLength(expectedFileSize + modifiedSize);
+                        fileAccess.seek(LOOKUP_AMOUNT_OFFSET);
+                        fileAccess.writeShort(items);
+                        for (Modified modified : modifiedList) {
+                            headerOffset = LOOKUP_ENTRY_BASE_OFFSET + LOOKUP_ENTRY_SIZE * modified.valueId();
+                            fileAccess.seek(headerOffset);
+                            fileAccess.writeLong(lookupPosition);
+                            fileAccess.seek(lookupPosition);
+                            fileAccess.writeShort(modified.entry().typeId());
+                            fileAccess.writeShort(modified.entry().version());
+                            fileAccess.writeInt(modified.newSize());
+                            modified.entry().buffer().readBytes(fileAccess.getChannel(), fileAccess.getFilePointer(), modified.newSize());
+                            lookupPosition += modified.newSize() + VALUE_HEADER_SIZE;
                         }
                     }
-                    fileAccess.seek(lookupPosition);
-                    fileAccess.writeShort(result.typeId());
-                    fileAccess.writeShort(result.version());
-                    fileAccess.writeInt(bufferSize);
-                    result.buffer().readBytes(fileAccess.getChannel(), fileAccess.getFilePointer(), bufferSize);
-                    counter.increment();
+                } catch (RuntimeException | IOException e) {
+                    // Restore to prevent damage
+                    internalClose();
+                    Files.copy(copyPath, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                    throw e;
+                } finally {
+                    Files.delete(copyPath);
                 }
-                if (deleteList.isEmpty()) {
-                    return;
-                }
-                // Here we delete all entries mentioned above
-                // This should speed up this process by a lot compared to individual delete operations
-                doMassDeletion(counter, deleteList, items);
-            } catch (final IOException e) {
+            } catch (final IOException | RuntimeException e) {
                 counter.finish();
-                throw new StorageException("Failed to modify all entries from file!", e);
+                throw new StorageException("Failed to modify all entries from file '%s'!".formatted(hexId), e);
             } finally {
                 lock.unlock();
                 counter.finish();
             }
-        }, executor));
+        });
     }
-    
-    private void doMassDeletion(SimpleCounter counter, ShortArrayList deleteList, int items) throws IOException {
+
+    private long doMassDeletion(SimpleCounter counter, ShortArrayList deleteList, int items, boolean resizeFile) throws IOException {
         int amount = deleteList.size();
         fileAccess.seek(LOOKUP_AMOUNT_OFFSET);
         fileAccess.writeShort(items);
@@ -536,8 +567,8 @@ public final class RAFFile implements IRAFFile {
                 modifiedDeleteHeaders.put(entryId, headerValue - dataSize);
             }
         }
-        headerKeys.sort(
-            (k1, k2) -> Long.compare(headerNewValues.getLong(keysToIndex.get(k1)), headerNewValues.getLong(keysToIndex.get(k2))));
+        headerKeys
+            .sort((k1, k2) -> Long.compare(headerNewValues.getLong(keysToIndex.get(k1)), headerNewValues.getLong(keysToIndex.get(k2))));
         int valueIdx;
         long copyFrom, copyTo, copyEnd, copyAmount;
         final byte[] buffer = new byte[settings.copyBufferSize];
@@ -571,7 +602,10 @@ public final class RAFFile implements IRAFFile {
             }
             scaledCounter.increment();
         }
-        fileAccess.setLength(fileSize);
+        if (resizeFile) {
+            fileAccess.setLength(fileSize);
+        }
+        return fileSize;
     }
 
     /*
@@ -618,7 +652,8 @@ public final class RAFFile implements IRAFFile {
             if (fileAccess != null) {
                 try {
                     fileAccess.close();
-                } catch (IOException ignore) {}
+                } catch (IOException ignore) {
+                }
                 fileAccess = null;
             }
             throw new StorageException("Failed to open file '" + file.getName() + "'", exp);
@@ -660,7 +695,7 @@ public final class RAFFile implements IRAFFile {
         fileAccess.seek(0);
         return true;
     }
-    
+
     private boolean resizeFile() throws IOException {
         fileAccess.seek(FORMAT_VERSION);
         int bits = fileAccess.readUnsignedByte();
@@ -687,7 +722,7 @@ public final class RAFFile implements IRAFFile {
                     items--;
                 }
                 SimpleCounter counter = new SimpleCounter(deleteList.size());
-                doMassDeletion(counter, deleteList, items);
+                doMassDeletion(counter, deleteList, items, true);
                 long sizeDiff = settings.lookupHeaderSize - headerSize;
                 shrinkFile(headerSize, sizeDiff);
                 updateAllLookupTableOffsets(-sizeDiff, settings.lookupHeaderSize);
@@ -734,11 +769,11 @@ public final class RAFFile implements IRAFFile {
         internalClose();
         file.delete();
     }
-    
+
     /*
      * Lookup table helper
      */
-    
+
     private void zeroOutAllLookupTableOffsets(final long startOffset) throws IOException {
         fileAccess.seek(startOffset);
         while (fileAccess.getFilePointer() != settings.lookupHeaderSize) {
@@ -750,7 +785,7 @@ public final class RAFFile implements IRAFFile {
             fileAccess.writeLong(INVALID_HEADER_OFFSET);
         }
     }
-    
+
     private void updateAllLookupTableOffsets(final long offset, final long headerSize) throws IOException {
         fileAccess.seek(LOOKUP_ENTRY_BASE_OFFSET);
         while (fileAccess.getFilePointer() != headerSize) {

@@ -16,6 +16,9 @@ public final class ResetAccessAction extends AlternationAction<Container> {
 
     @Override
     protected UpdateState updateEntry(ISimpleLogger logger, Stored<?> stored, Container value, boolean possiblyModified) {
+        if (value.accessAmount() == 0) {
+            return UpdateState.NONE;
+        }
         value.resetAllAccesses();
         return UpdateState.MODIFY;
     }

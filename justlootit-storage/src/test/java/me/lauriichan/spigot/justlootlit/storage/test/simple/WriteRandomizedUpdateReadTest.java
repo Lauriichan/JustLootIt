@@ -1,7 +1,5 @@
 package me.lauriichan.spigot.justlootlit.storage.test.simple;
 
-import static me.lauriichan.spigot.justlootlit.storage.test.junit.AssertArrayNotEquals.*;
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -17,13 +15,18 @@ import me.lauriichan.spigot.justlootlit.storage.test.BaseTest;
 import me.lauriichan.spigot.justlootlit.storage.test.simple.model.SimpleObject;
 import me.lauriichan.spigot.justlootlit.storage.test.simple.model.SimpleObjectAdapter;
 
-public class WriteUpdateReadTest extends BaseTest {
+public class WriteRandomizedUpdateReadTest extends BaseTest {
 
     private final int amount;
+    private final int variance;
 
-    public WriteUpdateReadTest(final int amount) {
-        super("WriteUpdateRead (" + Math.abs(amount) + "x)");
+    public WriteRandomizedUpdateReadTest(final int amount, final int variance) {
+        super("WriteRandomizedUpdateRead (" + Math.abs(amount) + "x, 1-" + variance + ")");
+        if (variance < 2) {
+            throw new IllegalArgumentException("Variance has to be 2 or higher.");
+        }
         this.amount = Math.abs(amount);
+        this.variance = Math.abs(variance) - 1;
     }
 
     @Override
@@ -38,7 +41,11 @@ public class WriteUpdateReadTest extends BaseTest {
                 actualAmount = id;
                 break;
             }
-            final SimpleObject object = new SimpleObject(random.nextInt(Integer.MAX_VALUE));
+            int[] numbers = new int[random.nextInt(variance) + 1];
+            for (int i = 0; i < numbers.length; i++) {
+                numbers[i] = random.nextInt(Integer.MAX_VALUE);
+            }
+            final SimpleObject object = new SimpleObject(numbers);
             objects[id] = object;
             storage.write(storage.registry().create(object).id(id));
         }
@@ -50,7 +57,11 @@ public class WriteUpdateReadTest extends BaseTest {
                 return UpdateInfo.none();
             }
             if (mod == 1) {
-                SimpleObject newObj = new SimpleObject(random.nextInt(Integer.MAX_VALUE));
+                int[] numbers = new int[random.nextInt(variance) + 1];
+                for (int i = 0; i < numbers.length; i++) {
+                    numbers[i] = random.nextInt(Integer.MAX_VALUE);
+                }
+                SimpleObject newObj = new SimpleObject(numbers);
                 stored.value(newObj);
                 objMap.put(stored.id(), newObj);
                 return UpdateInfo.modify(stored);
@@ -78,11 +89,29 @@ public class WriteUpdateReadTest extends BaseTest {
                 continue;
             }
             if (mod == 1) {
-                assertArrayNotEquals(objects[id].numbers, loaded.value().numbers, "Invalid entry " + id);
                 assertArrayEquals(objMap.get(id).numbers, loaded.value().numbers, "Invalid entry " + id);
                 continue;
             }
             assertArrayEquals(objects[id].numbers, loaded.value().numbers, "Invalid entry " + id);
+        }
+    }
+
+    private void assertArrayEquals(int[] expected, int[] value, String message) {
+        StringBuilder assertion = new StringBuilder();
+        if (message != null) {
+            assertion.append(message).append(" ==> ");
+        }
+        int maxLength = Math.min(expected.length, value.length);
+        for (int i = 0; i < maxLength; i++) {
+            if (expected[i] != value[i]) {
+                fail(assertion
+                    .append("array value at index %s is different, expected: <%s> but was: <%s>".formatted(i, expected[i], value[i]))
+                    .toString());
+            }
+        }
+        if (expected.length != value.length) {
+            fail(
+                assertion.append("array lengths differ, expected: <%s> but was: <%s>".formatted(expected.length, value.length)).toString());
         }
     }
 

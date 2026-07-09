@@ -81,66 +81,71 @@ public class ItemPlaceListener implements IListenerExtension {
             actor.sendTranslatedMessage(Messages.CONTAINER_PLACE_UNPERMITTED_ENTITY);
             return;
         }
-        TableKey key = itemContainer.get(JustLootItKey.identity(), TableKey.KEY_TYPE);
-        Block targetBlock = event.getClickedBlock();
-        BlockFace targetFace = event.getBlockFace();
-        Material blockType = targetBlock.getType();
-        if (EntityUtil.isChestBoat(type)) {
-            if (blockType != Material.WATER) {
-                RayTraceResult result = event.getPlayer().rayTraceBlocks(5, FluidCollisionMode.ALWAYS);
-                if (result != null) {
-                    Block hit = result.getHitBlock();
-                    if (hit != null && hit.getType() == Material.WATER) {
-                        targetBlock = hit;
-                        targetFace = result.getHitBlockFace();
+        plugin.versionHandler().getLevel(event.getPlayer().getWorld()).getCapability(StorageCapability.class)
+            .ifPresentOrElse(capability -> {
+                if (capability.hasBulkOperationRunning()) {
+                    actor.sendTranslatedMessage(Messages.CONTAINER_ACCESS_STORAGE_BUSY);
+                    return;
+                }
+                TableKey key = itemContainer.get(JustLootItKey.identity(), TableKey.KEY_TYPE);
+                Block targetBlock = event.getClickedBlock();
+                BlockFace targetFace = event.getBlockFace();
+                Material blockType = targetBlock.getType();
+                if (EntityUtil.isChestBoat(type)) {
+                    if (blockType != Material.WATER) {
+                        RayTraceResult result = event.getPlayer().rayTraceBlocks(5, FluidCollisionMode.ALWAYS);
+                        if (result != null) {
+                            Block hit = result.getHitBlock();
+                            if (hit != null && hit.getType() == Material.WATER) {
+                                targetBlock = hit;
+                                targetFace = result.getHitBlockFace();
+                            }
+                        }
+                    }
+                } else if (EntityUtil.isMinecart(type)) {
+                    if (blockType != Material.RAIL && !blockType.name().endsWith("_RAIL")) {
+                        return;
                     }
                 }
-            }
-        } else if (EntityUtil.isMinecart(type)) {
-            if (blockType != Material.RAIL && !blockType.name().endsWith("_RAIL")) {
-                return;
-            }
-        }
-        int inventorySize = EntityUtil.getInventorySize(type);
-        if (inventorySize == 0) {
-            // This is an item frame
-            actor.sendTranslatedMessage(Messages.CONTAINER_PLACE_FAILURE_ENTITY);
-            return;
-        }
-        Entity entity = targetBlock.getWorld().spawnEntity(targetBlock.getLocation().add(0.5, 0, 0.5), type);
-        if (entity instanceof Directional directional) {
-            directional.setFacingDirection(targetFace.getOppositeFace());
-        }
-        entity.setPersistent(true);
-        plugin.versionHandler().getLevel(entity.getWorld()).getCapability(StorageCapability.class).ifPresentOrElse(capability -> {
-            IStorage storage = capability.storage();
-            PersistentDataContainer data = entity.getPersistentDataContainer();
-            Container jliContainer = null;
-            long seed = seedRandom.nextLong();
-            switch (key.type()) {
-            case COMPATIBILITY:
-                jliContainer = new CompatibilityContainer(CompatibilityDataExtension.get(key.namespace()).createData(key.key(), seed));
-                break;
-            case CUSTOM:
-                jliContainer = new CustomContainer(NamespacedKey.fromString(key.namespace() + ':' + key.key()), seed);
-                break;
-            case VANILLA:
-                jliContainer = new VanillaContainer(NamespacedKey.fromString(key.namespace() + ':' + key.key()), seed);
-                break;
-            }
-            if (jliContainer == null) {
+                int inventorySize = EntityUtil.getInventorySize(type);
+                if (inventorySize == 0) {
+                    // This is an item frame
+                    actor.sendTranslatedMessage(Messages.CONTAINER_PLACE_FAILURE_ENTITY);
+                    return;
+                }
+                Entity entity = targetBlock.getWorld().spawnEntity(targetBlock.getLocation().add(0.5, 0, 0.5), type);
+                if (entity instanceof Directional directional) {
+                    directional.setFacingDirection(targetFace.getOppositeFace());
+                }
+                entity.setPersistent(true);
+                IStorage storage = capability.storage();
+                PersistentDataContainer data = entity.getPersistentDataContainer();
+                Container jliContainer = null;
+                long seed = seedRandom.nextLong();
+                switch (key.type()) {
+                case COMPATIBILITY:
+                    jliContainer = new CompatibilityContainer(CompatibilityDataExtension.get(key.namespace()).createData(key.key(), seed));
+                    break;
+                case CUSTOM:
+                    jliContainer = new CustomContainer(NamespacedKey.fromString(key.namespace() + ':' + key.key()), seed);
+                    break;
+                case VANILLA:
+                    jliContainer = new VanillaContainer(NamespacedKey.fromString(key.namespace() + ':' + key.key()), seed);
+                    break;
+                }
+                if (jliContainer == null) {
+                    event.setCancelled(true);
+                    actor.sendTranslatedMessage(Messages.CONTAINER_PLACE_FAILURE_ENTITY);
+                    return;
+                }
+                Stored<?> stored;
+                storage.write(stored = storage.registry().create(jliContainer));
+                JustLootItAccess.setIdentity(data, stored.id());
+                actor.sendTranslatedMessage(Messages.CONTAINER_PLACE_CREATED_ENTITY, Key.of("id", stored.id()), Key.of("seed", seed));
+            }, () -> {
                 event.setCancelled(true);
                 actor.sendTranslatedMessage(Messages.CONTAINER_PLACE_FAILURE_ENTITY);
-                return;
-            }
-            Stored<?> stored;
-            storage.write(stored = storage.registry().create(jliContainer));
-            JustLootItAccess.setIdentity(data, stored.id());
-            actor.sendTranslatedMessage(Messages.CONTAINER_PLACE_CREATED_ENTITY, Key.of("id", stored.id()), Key.of("seed", seed));
-        }, () -> {
-            event.setCancelled(true);
-            actor.sendTranslatedMessage(Messages.CONTAINER_PLACE_FAILURE_ENTITY);
-        });
+            });
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)

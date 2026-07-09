@@ -25,62 +25,70 @@ public record LootModification(NamespacedKey id, ILootCondition condition, ILoot
     }
 
     public void apply(VersionHandler versionHandler, Inventory inventory, long seed) {
-        if (modifier != null) {
-            int size = inventory.getSize();
-            Random random = new Random(seed);
-            Ref<ItemStack> itemRef = Ref.of();
-            Ref<ItemMeta> metaRef = Ref.of();
-            for (int i = 0; i < size; i++) {
-                ItemStack itemStack = inventory.getItem(i);
-                if (itemStack == null || itemStack.getType().isAir()) {
-                    continue;
-                }
-                itemRef.set(itemStack);
-                metaRef.set(itemStack.getItemMeta());
-                modifier.modify(versionHandler, random, itemRef, metaRef);
-                if (itemStack != itemRef.get()) {
-                    itemStack = itemRef.get();
+        try {
+            if (modifier != null) {
+                int size = inventory.getSize();
+                Random random = new Random(seed);
+                Ref<ItemStack> itemRef = Ref.of();
+                Ref<ItemMeta> metaRef = Ref.of();
+                for (int i = 0; i < size; i++) {
+                    ItemStack itemStack = inventory.getItem(i);
+                    if (itemStack == null || itemStack.getType().isAir()) {
+                        continue;
+                    }
+                    itemRef.set(itemStack);
+                    metaRef.set(itemStack.getItemMeta());
+                    modifier.modify(versionHandler, random, itemRef, metaRef);
+                    if (itemStack != itemRef.get()) {
+                        itemStack = itemRef.get();
+                        itemStack.setItemMeta(metaRef.get());
+                        inventory.setItem(i, itemStack);
+                        continue;
+                    }
                     itemStack.setItemMeta(metaRef.get());
-                    inventory.setItem(i, itemStack);
-                    continue;
                 }
-                itemStack.setItemMeta(metaRef.get());
             }
-        }
-        if (provider != null) {
-            ObjectArrayList<ItemStack> additionalItems = new ObjectArrayList<>();
-            Random random = new Random(seed);
-            provider.provideLoot(versionHandler, random, additionalItems);
-            LootHelper.mergeContents(additionalItems, inventory);
-            inventory.clear();
-            LootHelper.scrambleInto(additionalItems, inventory, seed);
+            if (provider != null) {
+                ObjectArrayList<ItemStack> additionalItems = new ObjectArrayList<>();
+                Random random = new Random(seed);
+                provider.provideLoot(versionHandler, random, additionalItems);
+                LootHelper.mergeContents(additionalItems, inventory);
+                inventory.clear();
+                LootHelper.scrambleInto(additionalItems, inventory, seed);
+            }
+        } catch(RuntimeException re) {
+            versionHandler.logger().warning("Failed to run loot modification with id '{0}'", re, id.toString());
         }
     }
 
     public void apply(VersionHandler versionHandler, ObjectArrayList<ItemStack> items, long seed) {
-        if (modifier != null) {
-            Ref<ItemStack> itemRef = Ref.of();
-            Ref<ItemMeta> metaRef = Ref.of();
-            Random random = new Random(seed);
-            for (int i = 0; i < items.size(); i++) {
-                ItemStack itemStack = items.get(i);
-                if (itemStack == null || itemStack.getType().isAir()) {
-                    continue;
-                }
-                itemRef.set(itemStack);
-                metaRef.set(itemStack.getItemMeta());
-                modifier.modify(versionHandler, random, itemRef, metaRef);
-                if (itemStack != itemRef.get()) {
-                    itemStack = itemRef.get();
+        try {
+            if (modifier != null) {
+                Ref<ItemStack> itemRef = Ref.of();
+                Ref<ItemMeta> metaRef = Ref.of();
+                Random random = new Random(seed);
+                for (int i = 0; i < items.size(); i++) {
+                    ItemStack itemStack = items.get(i);
+                    if (itemStack == null || itemStack.getType().isAir()) {
+                        continue;
+                    }
+                    itemRef.set(itemStack);
+                    metaRef.set(itemStack.getItemMeta());
+                    modifier.modify(versionHandler, random, itemRef, metaRef);
+                    if (itemStack != itemRef.get()) {
+                        itemStack = itemRef.get();
+                        itemStack.setItemMeta(metaRef.get());
+                        items.set(i, itemStack);
+                        continue;
+                    }
                     itemStack.setItemMeta(metaRef.get());
-                    items.set(i, itemStack);
-                    continue;
                 }
-                itemStack.setItemMeta(metaRef.get());
             }
-        }
-        if (provider != null) {
-            provider.provideLoot(versionHandler, new Random(seed), items);
+            if (provider != null) {
+                provider.provideLoot(versionHandler, new Random(seed), items);
+            }
+        } catch(RuntimeException re) {
+            versionHandler.logger().warning("Failed to run loot modification with id '{0}'", re, id.toString());
         }
     }
 

@@ -11,7 +11,6 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.data.type.Chest;
-import org.bukkit.boss.BossBar;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.loot.LootTable;
@@ -46,7 +45,6 @@ import me.lauriichan.spigot.justlootit.data.ContainerType;
 import me.lauriichan.spigot.justlootit.data.CustomContainer;
 import me.lauriichan.spigot.justlootit.data.FrameContainer;
 import me.lauriichan.spigot.justlootit.data.VanillaContainer;
-import me.lauriichan.spigot.justlootit.data.alternation.AlternationAction;
 import me.lauriichan.spigot.justlootit.data.alternation.container.ResetAccessAction;
 import me.lauriichan.spigot.justlootit.data.alternation.container.vanilla.UpdateLootTableAction;
 import me.lauriichan.spigot.justlootit.inventory.handler.manage.ContainerPageHandler;
@@ -57,7 +55,6 @@ import me.lauriichan.spigot.justlootit.storage.Stored;
 import me.lauriichan.spigot.justlootit.util.BlockUtil;
 import me.lauriichan.spigot.justlootit.util.CommandUtil;
 import me.lauriichan.spigot.justlootit.util.EntityUtil;
-import me.lauriichan.spigot.justlootit.util.ProgressNotifier;
 import me.lauriichan.spigot.justlootit.util.TypeName;
 import net.md_5.bungee.api.chat.HoverEvent;
 
@@ -68,64 +65,50 @@ public class ContainerCommand implements ICommandExtension {
 
     @Action("bulk replace loottable")
     @Description("$#command.description.justlootit.container.bulk.replace.loottable")
-    public void bulkReplaceLootTableWIP(final JustLootItPlugin plugin, final LootItActor<?> actor,
-        @Argument(name = "world", index = 1) final World world,
-        @Argument(name = "loottable to replace", index = 2) final NamespacedKey find,
-        @Argument(name = "loottable to set", index = 3) final LootTable replace) {
-        actor.sendTranslatedMessage(Messages.WARNING_WIP);
-    }
-
     public void bulkReplaceLootTable(final JustLootItPlugin plugin, final LootItActor<?> actor,
         @Argument(name = "world", index = 1) final World world,
         @Argument(name = "loottable to replace", index = 2) final NamespacedKey find,
         @Argument(name = "loottable to set", index = 3) final LootTable replace) {
         plugin.versionHandler().getLevel(world).getCapability(StorageCapability.class).ifPresent(capability -> {
             plugin.scheduler().async(() -> {
-                ProgressNotifier notifier = actor.newNotifier().useBossBar(true)
+                if (capability.hasBulkOperationRunning()) {
+                    actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_BULK_BUSY);
+                    return;
+                }
+                var notifiers = actor.newNotifier().useBossBar(true)
                     .progressMessage(Messages.COMMAND_CONTAINER_BULK_REPLACE_LOOTTABLE_PROGRESS)
                     .doneMessage(Messages.COMMAND_CONTAINER_BULK_REPLACE_LOOTTABLE_DONE).build(Key.of("world", world.getName()),
                         Key.of("loottableFrom", find.toString()), Key.of("loottableTo", replace.getKey().toString()));
-                if (actor.hasBossBar()) {
-                    BossBar bossBar = actor.bossBar();
-                    bossBar.setTitle("");
-                    bossBar.setProgress(0);
-                    bossBar.setVisible(true);
+                capability.bulkNotifier().register(notifiers);
+                if (!capability.executeBulkOperation(new UpdateLootTableAction(find, replace))) {
+                    capability.bulkNotifier().unregister(notifiers);
+                    actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_BULK_BUSY);
+                    return;
                 }
-                notifier
-                    .progress(AlternationAction.apply(plugin.executor(), capability.storage(), new UpdateLootTableAction(find, replace)))
-                    .waitTimeout(200).await();
-                if (actor.hasBossBar()) {
-                    actor.bossBar().setVisible(false);
-                }
+                actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_BULK_STARTED, Key.of("world", world.getName()));
             });
         });
     }
 
     @Action("bulk reset access")
     @Description("$#command.description.justlootit.container.bulk.reset.access")
-    public void bulkResetAccessWIP(final JustLootItPlugin plugin, final LootItActor<?> actor,
-        @Argument(name = "world", index = 1) final World world) {
-        actor.sendTranslatedMessage(Messages.WARNING_WIP);
-    }
-
     public void bulkResetAccess(final JustLootItPlugin plugin, final LootItActor<?> actor,
         @Argument(name = "world", index = 1) final World world) {
         plugin.versionHandler().getLevel(world).getCapability(StorageCapability.class).ifPresent(capability -> {
             plugin.scheduler().async(() -> {
-                ProgressNotifier notifier = actor.newNotifier().useBossBar(true)
-                    .progressMessage(Messages.COMMAND_CONTAINER_BULK_RESET_ACCESS_PROGRESS)
+                if (capability.hasBulkOperationRunning()) {
+                    actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_BULK_BUSY);
+                    return;
+                }
+                var notifiers = actor.newNotifier().useBossBar(true).progressMessage(Messages.COMMAND_CONTAINER_BULK_RESET_ACCESS_PROGRESS)
                     .doneMessage(Messages.COMMAND_CONTAINER_BULK_RESET_ACCESS_DONE).build(Key.of("world", world.getName()));
-                if (actor.hasBossBar()) {
-                    BossBar bossBar = actor.bossBar();
-                    bossBar.setTitle("");
-                    bossBar.setProgress(0);
-                    bossBar.setVisible(true);
+                capability.bulkNotifier().register(notifiers);
+                if (!capability.executeBulkOperation(ResetAccessAction.RESET)) {
+                    capability.bulkNotifier().unregister(notifiers);
+                    actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_BULK_BUSY);
+                    return;
                 }
-                notifier.progress(AlternationAction.apply(plugin.executor(), capability.storage(), ResetAccessAction.RESET))
-                    .waitTimeout(200).await();
-                if (actor.hasBossBar()) {
-                    actor.bossBar().setVisible(false);
-                }
+                actor.sendTranslatedMessage(Messages.COMMAND_CONTAINER_BULK_STARTED, Key.of("world", world.getName()));
             });
         });
     }
@@ -304,11 +287,6 @@ public class ContainerCommand implements ICommandExtension {
         }
         return getIdentity(otherContainer.getPersistentDataContainer());
     }
-
-    //    @Action("alter")
-    //    public void alter(final JustLootItPlugin plugin, final Actor<?> actor, @Argument(name = "alternation action", index = 0) final AlterAction action) {
-    //        
-    //    }
 
     @Action("link entity")
     public void linkEntity(final JustLootItPlugin plugin, final Actor<?> actor,

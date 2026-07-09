@@ -30,6 +30,8 @@ public class FeatureTest {
         new WriteReadTest(TEST_VOLUME),
         new WriteReadDeleteTest(TEST_VOLUME),
         new WriteUpdateReadTest(TEST_VOLUME),
+        new WriteRandomizedUpdateReadTest(TEST_VOLUME, 250),
+        new WriteMassDeleteReadTest(TEST_VOLUME),
         new ShuffledWriteReadTest(TEST_VOLUME),
         new WriteOverwriteReadTest(TEST_VOLUME)
     };

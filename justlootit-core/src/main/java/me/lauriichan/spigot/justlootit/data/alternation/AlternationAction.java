@@ -1,14 +1,13 @@
 package me.lauriichan.spigot.justlootit.data.alternation;
 
 import java.util.Objects;
+import java.util.function.Function;
 
 import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.spigot.justlootit.storage.IStorage;
 import me.lauriichan.spigot.justlootit.storage.Stored;
 import me.lauriichan.spigot.justlootit.storage.UpdateInfo;
 import me.lauriichan.spigot.justlootit.storage.UpdateInfo.UpdateState;
-import me.lauriichan.spigot.justlootit.storage.util.counter.CounterProgress;
-import me.lauriichan.spigot.justlootit.storage.util.executor.ProtoExecutor;
 
 public abstract class AlternationAction<T> {
 
@@ -35,9 +34,8 @@ public abstract class AlternationAction<T> {
 
     protected abstract UpdateState updateEntry(ISimpleLogger logger, Stored<?> stored, T value, boolean possiblyModified);
 
-    public static CounterProgress apply(ProtoExecutor<?> executor, IStorage storage, AlternationAction<?>... actions) {
-        System.out.println("Applying");
-        return storage.updateEach(stored -> {
+    public static Function<Stored<?>, UpdateInfo<?>> updaterFor(IStorage storage, AlternationAction<?>[] actions) {
+        return stored -> {
             UpdateState state = UpdateState.NONE;
             boolean possiblyModified = false;
             UpdateState tmp;
@@ -54,18 +52,15 @@ public abstract class AlternationAction<T> {
             }
             switch (state) {
             case DELETE:
-                System.out.println("Delete");
                 return UpdateInfo.delete();
             case MODIFY:
-                System.out.println("Modify");
                 return UpdateInfo.modify();
             case NONE:
             default:
-                System.out.println("None");
                 // We set 'default' to NONE as null is not an option here
                 return UpdateInfo.none();
             }
-        }, executor);
+        };
     }
 
 }

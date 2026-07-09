@@ -1,8 +1,6 @@
 package me.lauriichan.spigot.justlootit.storage.randomaccessfile;
 
 import java.io.File;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -19,9 +17,11 @@ import me.lauriichan.spigot.justlootit.storage.UpdateInfo.UpdateState;
 import me.lauriichan.spigot.justlootit.storage.identifier.FileIdentifier;
 import me.lauriichan.spigot.justlootit.storage.identifier.IIdentifier;
 import me.lauriichan.spigot.justlootit.storage.randomaccessfile.versionized.RAFSettings;
+import me.lauriichan.spigot.justlootit.storage.util.Tuple;
 import me.lauriichan.spigot.justlootit.storage.util.counter.Counter;
 import me.lauriichan.spigot.justlootit.storage.util.counter.CounterProgress;
 import me.lauriichan.spigot.justlootit.storage.util.counter.SimpleCounter;
+import me.lauriichan.spigot.justlootit.storage.util.executor.FutureTask;
 
 public final class RAFSingleStorage extends Storage {
 
@@ -110,16 +110,13 @@ public final class RAFSingleStorage extends Storage {
         }
         return file.delete(id);
     }
-    
+
     @Override
     public CounterProgress forEach(Consumer<Stored<?>> reader, Executor executor) {
-        if (!file.isOpen()) {
-            if (!file.exists()) {
-                return new CounterProgress(new SimpleCounter(0), ObjectLists.emptyList());
-            }
-            file.open();
+        if (!file.exists()) {
+            return new CounterProgress(new SimpleCounter(0), ObjectLists.emptyList());
         }
-        Map.Entry<Counter, CompletableFuture<Void>> fileFuture = file.forEach(entry -> {
+        Tuple<Counter, Runnable> tuple = file.forEach(entry -> {
             try {
                 Stored<?> stored;
                 try {
@@ -133,8 +130,26 @@ public final class RAFSingleStorage extends Storage {
             } catch (RuntimeException exp) {
                 logger.warning("Failed to read entry '{0}'", exp, entry.id());
             }
-        }, executor);
-        return new CounterProgress(fileFuture.getKey(), ObjectLists.singleton(fileFuture.getValue()));
+        });
+        FutureTask task = new FutureTask(() -> {
+            try {
+                boolean fileWasOpen = file.isOpen();
+                if (!fileWasOpen) {
+                    file.open();
+                }
+                try {
+                    tuple.second().run();
+                } finally {
+                    if (!fileWasOpen) {
+                        file.close();
+                    }
+                }
+            } catch (RuntimeException exp) {
+                logger.warning("Failed to perform read for file '{0}'", exp, file.hexId());
+            }
+        });
+        executor.execute(task);
+        return new CounterProgress(tuple.first(), ObjectLists.singleton(task));
     }
 
     @Override
@@ -145,7 +160,7 @@ public final class RAFSingleStorage extends Storage {
             }
             file.open();
         }
-        Map.Entry<Counter, CompletableFuture<Void>> fileFuture = file.modifyEach(entry -> {
+        Tuple<Counter, Runnable> tuple = file.modifyEach(entry -> {
             try {
                 Stored<?> stored;
                 try {
@@ -176,8 +191,26 @@ public final class RAFSingleStorage extends Storage {
                 logger.warning("Failed to modify entry '{0}'", exp, entry.id());
                 return entry;
             }
-        }, executor);
-        return new CounterProgress(fileFuture.getKey(), ObjectLists.singleton(fileFuture.getValue()));
+        });
+        FutureTask task = new FutureTask(() -> {
+            try {
+                boolean fileWasOpen = file.isOpen();
+                if (!fileWasOpen) {
+                    file.open();
+                }
+                try {
+                    tuple.second().run();
+                } finally {
+                    if (!fileWasOpen) {
+                        file.close();
+                    }
+                }
+            } catch (RuntimeException exp) {
+                logger.warning("Failed to run update for file '{0}'", exp, file.hexId());
+            }
+        });
+        executor.execute(task);
+        return new CounterProgress(tuple.first(), ObjectLists.singleton(task));
     }
 
     @Override

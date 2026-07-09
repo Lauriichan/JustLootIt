@@ -99,6 +99,9 @@ public class ItemFrameEventListener implements IListenerExtension {
         final long id = JustLootItAccess.getIdentity(container);
         final World world = entity.getWorld();
         versionHandler.getLevel(world).getCapability(StorageCapability.class).ifPresent(capability -> {
+            if (capability.hasBulkOperationRunning()) {
+                return;
+            }
             final Stored<FrameContainer> stored = capability.storage().read(id);
             if (!stored.value().canAccess(world, event.getPlayer().getUniqueId())) {
                 // If the player can not access this item frame we don't need to send an update
@@ -219,16 +222,20 @@ public class ItemFrameEventListener implements IListenerExtension {
         if (!worldConfig.isExplosionAllowed(type)) {
             return true;
         }
-        PersistentDataContainer container = entity.getPersistentDataContainer();
-        final long id = JustLootItAccess.getIdentity(container);
-        JustLootItAccess.removeIdentity(container);
-        versionHandler
-            .broadcast(versionHandler.packetManager().createPacket(new ArgumentMap().set("entity", entity), PacketOutSetEntityData.class));
-        if (config.deleteOnBreak()) {
-            versionHandler.getLevel(entity.getWorld()).getCapability(StorageCapability.class)
-                .ifPresent(capability -> capability.storage().delete(id));
-        }
-        return false;
+        return versionHandler.getLevel(entity.getWorld()).getCapability(StorageCapability.class).map(capability -> {
+            if (capability.hasBulkOperationRunning()) {
+                return true;
+            }
+            PersistentDataContainer container = entity.getPersistentDataContainer();
+            final long id = JustLootItAccess.getIdentity(container);
+            JustLootItAccess.removeIdentity(container);
+            versionHandler.broadcast(
+                versionHandler.packetManager().createPacket(new ArgumentMap().set("entity", entity), PacketOutSetEntityData.class));
+            if (config.deleteOnBreak()) {
+                capability.storage().delete(id);
+            }
+            return false;
+        }).orElse(false);
     }
 
     private void breakFrame(Entity entity, LootItActor<Player> actor, PersistentDataContainer container) {
@@ -236,15 +243,19 @@ public class ItemFrameEventListener implements IListenerExtension {
             actor.sendTranslatedMessage(Messages.CONTAINER_BREAK_CONFIRMATION_ENTITY);
             return;
         }
-        final long id = JustLootItAccess.getIdentity(container);
-        JustLootItAccess.removeIdentity(container);
-        actor.sendTranslatedMessage(Messages.CONTAINER_BREAK_REMOVED_ENTITY, Key.of("id", id));
-        actor.versionHandler().broadcast(
-            actor.versionHandler().packetManager().createPacket(new ArgumentMap().set("entity", entity), PacketOutSetEntityData.class));
-        if (!config.deleteOnBreak()) {
-            return;
-        }
         actor.versionHandler().getLevel(entity.getWorld()).getCapability(StorageCapability.class).ifPresent(capability -> {
+            if (capability.hasBulkOperationRunning()) {
+                actor.sendTranslatedMessage(Messages.CONTAINER_ACCESS_STORAGE_BUSY);
+                return;
+            }
+            final long id = JustLootItAccess.getIdentity(container);
+            JustLootItAccess.removeIdentity(container);
+            actor.sendTranslatedMessage(Messages.CONTAINER_BREAK_REMOVED_ENTITY, Key.of("id", id));
+            actor.versionHandler().broadcast(
+                actor.versionHandler().packetManager().createPacket(new ArgumentMap().set("entity", entity), PacketOutSetEntityData.class));
+            if (!config.deleteOnBreak()) {
+                return;
+            }
             if (!capability.storage().delete(id)) {
                 actor.sendTranslatedMessage(Messages.CONTAINER_BREAK_NO_CONTAINER, Key.of("id", id));
             }
@@ -262,6 +273,10 @@ public class ItemFrameEventListener implements IListenerExtension {
             final long id = JustLootItAccess.getIdentity(container);
             final World world = entity.getWorld();
             actor.versionHandler().getLevel(world).getCapability(StorageCapability.class).ifPresent(capability -> {
+                if (capability.hasBulkOperationRunning()) {
+                    actor.sendTranslatedMessage(Messages.CONTAINER_ACCESS_STORAGE_BUSY);
+                    return;
+                }
                 final Stored<FrameContainer> stored = capability.storage().read(id);
                 final FrameContainer frame = stored.value();
                 if (!frame.access(world, player.getUniqueId())) {
