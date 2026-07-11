@@ -275,11 +275,14 @@ public final class JsonNbtHelper {
 
     public static JsonObject asJson(ICompoundTag tag) {
         JsonObject object = new JsonObject();
-        if (tag.isEmpty()) {
+        if (tag == null || tag.isEmpty()) {
             return object;
         }
         for (String key : tag.keys()) {
             TagType<?> type = tag.getType(key);
+            if (type == null) {
+                continue;
+            }
             switch (type.tagId()) {
             case TagType.ID_BYTE:
                 object.put(key, asJson(tag.getByte(key)));
