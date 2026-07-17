@@ -15,7 +15,7 @@ import me.lauriichan.spigot.justlootit.util.CategorizedKeyMap;
 
 @Extension
 public class CustomStructuresDataExtension extends CompatibilityDataExtension<ICustomStructuresData> {
-    
+
     private static final NamespacedKey GENERIC = NamespacedKey.fromString("customstructures:justlootit/generic");
 
     public CustomStructuresDataExtension() {
@@ -25,11 +25,11 @@ public class CustomStructuresDataExtension extends CompatibilityDataExtension<IC
     public ICustomStructuresData create(String tableName, long seed) {
         return new CustomStructuresDataV2(this, createDataId(tableName), tableName, seed);
     }
-    
+
     private NamespacedKey createDataId(String name) {
         try {
             return NamespacedKey.fromString("customstructures:" + name);
-        } catch(IllegalArgumentException iae) {
+        } catch (IllegalArgumentException iae) {
             return GENERIC;
         }
     }
@@ -47,6 +47,11 @@ public class CustomStructuresDataExtension extends CompatibilityDataExtension<IC
             BufIO.writeString(buffer, v1.structureName());
             buffer.writeLong(v1.seed());
             return;
+        case 1:
+            CustomStructuresDataV2 v2 = (CustomStructuresDataV2) data;
+            BufIO.writeString(buffer, v2.tableName());
+            buffer.writeLong(v2.seed());
+            return;
         }
     }
 
@@ -56,17 +61,15 @@ public class CustomStructuresDataExtension extends CompatibilityDataExtension<IC
         case 0:
             String structureName_v1 = BufIO.readString(buffer);
             long seed_v1 = buffer.readLong();
-            return new CustomStructuresDataV1(this, createDataId(structureName_v1), structureName_v1,
-                seed_v1);
+            return new CustomStructuresDataV1(this, createDataId(structureName_v1), structureName_v1, seed_v1);
         case 1:
             String tableName_v2 = BufIO.readString(buffer);
             long seed_v2 = buffer.readLong();
-            return new CustomStructuresDataV2(this, createDataId(tableName_v2), tableName_v2,
-                seed_v2);
+            return new CustomStructuresDataV2(this, createDataId(tableName_v2), tableName_v2, seed_v2);
         }
         return null;
     }
-    
+
     @Override
     public boolean provideLootTableKeys(World world, CategorizedKeyMap keyMap) {
         ICustomStructuresProvider provider = CompatDependency.getActiveProvider(id(), ICustomStructuresProvider.class);
@@ -76,7 +79,7 @@ public class CustomStructuresDataExtension extends CompatibilityDataExtension<IC
         provider.access().provideLootTableKeys(keyMap);
         return true;
     }
-    
+
     @Override
     public ICompatibilityData createData(String key, long seed) {
         return create(key, seed);

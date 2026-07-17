@@ -6,9 +6,15 @@ import me.lauriichan.spigot.justlootit.util.CategorizedKeyMap;
 
 public interface IBetterStructuresAccess {
     
-    boolean hasLootForFile(String fileName);
+    boolean hasLootForGeneratorFile(String fileName);
     
-    boolean fillWithLootForFile(Inventory inventory, String fileName);
+    boolean fillWithLootForGeneratorFile(Inventory inventory, String fileName);
+    
+    boolean hasLootForTreasureFile(String fileName);
+    
+    boolean fillWithLootForTreasureFile(Inventory inventory, String fileName);
+    
+    String migrateGeneratorFileToTreasureFile(String fileName);
     
     void provideLootTableKeys(CategorizedKeyMap keyMap);
 

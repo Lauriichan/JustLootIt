@@ -42,10 +42,19 @@ public class CompatibilityContainer extends Container implements IInventoryConta
             int version = buffer.readInt();
             CompatibilityDataExtension<?> extension = CompatibilityDataExtension.get(compatId);
             ICompatibilityData compatData = extension.load(buffer, version);
-            while (extension.hasUpgrade(compatData)) {
+            ICompatibilityData previousCompatData;
+            while (extension.hasUpgrade(previousCompatData = compatData)) {
                 compatData = extension.upgrade(compatData);
+                if (compatData == null || compatData == previousCompatData) {
+                    break;
+                }
             }
-            return new CompatibilityContainer(data, compatData);
+            if (previousCompatData != compatData) {
+                CompatibilityContainer container = new CompatibilityContainer(data, compatData);
+                container.setDirty();
+                return container;
+            }
+            return new CompatibilityContainer(data, previousCompatData);
         }
 
     };
@@ -131,7 +140,8 @@ public class CompatibilityContainer extends Container implements IInventoryConta
                 compatibilityData.extension().id(), compatibilityData.version());
             return IResult.failed();
         }
-        lootModifications.applyModifications(this, player, location, inventory, compatibilityData.dataId(), generateSeed(location.getWorld(), player, BlockUtil.getSeed(location)));
+        lootModifications.applyModifications(this, player, location, inventory, compatibilityData.dataId(),
+            generateSeed(location.getWorld(), player, BlockUtil.getSeed(location)));
         return IResult.empty();
     }
 

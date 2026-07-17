@@ -17,7 +17,7 @@ public class BetterStructuresCompatProvider implements IBetterStructuresProvider
     
     @Override
     public void onEnable(JustLootItPlugin jli, Plugin plugin) {
-        pluginManager().registerEvents(listener = new BetterStructuresSchematicListener(plugin.getName(), jli.versionHandler(), jli.configManager()), jli);
+        pluginManager().registerEvents(listener = createSchematicListener(jli, plugin), jli);
         access = new BetterStructuresAccess(plugin.getName());
     }
 
@@ -25,6 +25,10 @@ public class BetterStructuresCompatProvider implements IBetterStructuresProvider
     public void onDisable(JustLootItPlugin jli, Plugin plugin) {
         HandlerList.unregisterAll(listener);
         clear();
+    }
+    
+    protected Listener createSchematicListener(JustLootItPlugin jli, Plugin plugin) {
+        return new BetterStructuresListener(plugin.getName(), jli.versionHandler(), jli.configManager());
     }
     
     protected void clear() {

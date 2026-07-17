@@ -37,7 +37,7 @@ import me.lauriichan.spigot.justlootit.storage.IStorage;
 import me.lauriichan.spigot.justlootit.storage.Stored;
 import me.lauriichan.spigot.justlootit.util.BlockUtil;
 
-public class BetterStructuresSchematicListener implements Listener {
+public class BetterStructuresListener implements Listener {
 
     private final BetterStructuresDataExtension dataExtension = CompatibilityDataExtension.get("BetterStructures",
         BetterStructuresDataExtension.class);
@@ -52,7 +52,7 @@ public class BetterStructuresSchematicListener implements Listener {
     
     private final MainConfig mainConfig;
 
-    public BetterStructuresSchematicListener(final String pluginId, final VersionHandler versionHandler, final ConfigManager configManager) {
+    public BetterStructuresListener(final String pluginId, final VersionHandler versionHandler, final ConfigManager configManager) {
         this.pluginId = pluginId;
         this.versionHandler = versionHandler;
         this.configManager = configManager;

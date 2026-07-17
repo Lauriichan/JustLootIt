@@ -23,7 +23,7 @@ public class BetterStructuresDataExtension extends CompatibilityDataExtension<IB
     }
 
     public IBetterStructuresData create(String fileName) {
-        return new BetterStructuresDataV1(this, createDataId(fileName), fileName);
+        return new BetterStructuresDataV2(this, createDataId(fileName), fileName);
     }
 
     private NamespacedKey createDataId(String name) {
@@ -46,6 +46,10 @@ public class BetterStructuresDataExtension extends CompatibilityDataExtension<IB
             BetterStructuresDataV1 v1 = (BetterStructuresDataV1) data;
             BufIO.writeString(buffer, v1.fileName());
             return;
+        case 1:
+            BetterStructuresDataV2 v2 = (BetterStructuresDataV2) data;
+            BufIO.writeString(buffer, v2.fileName());
+            return;
         }
     }
 
@@ -54,7 +58,10 @@ public class BetterStructuresDataExtension extends CompatibilityDataExtension<IB
         switch (version) {
         case 0:
             String fileName_v1 = BufIO.readString(buffer);
-            return new BetterStructuresDataV1(this, NamespacedKey.fromString("betterstructures:" + fileName_v1), fileName_v1);
+            return new BetterStructuresDataV1(this, createKey(fileName_v1), fileName_v1);
+        case 1:
+            String fileName_v2 = BufIO.readString(buffer);
+            return new BetterStructuresDataV2(this, createKey(fileName_v2), fileName_v2);
         }
         return null;
     }
@@ -67,6 +74,30 @@ public class BetterStructuresDataExtension extends CompatibilityDataExtension<IB
         }
         provider.access().provideLootTableKeys(keyMap);
         return true;
+    }
+
+    @Override
+    protected boolean hasUpgradeImpl(IBetterStructuresData data) {
+        return data.version() < 1;
+    }
+
+    @Override
+    protected IBetterStructuresData upgradeImpl(IBetterStructuresData data) {
+        IBetterStructuresProvider provider = CompatDependency.getActiveProvider(id(), IBetterStructuresProvider.class);
+        if (provider == null) {
+            return data;
+        }
+        if (data instanceof BetterStructuresDataV1 v1) {
+            String treasureFile = provider.access().migrateGeneratorFileToTreasureFile(v1.fileName());
+            if (treasureFile != null) {
+                return new BetterStructuresDataV2(this, createKey(treasureFile), treasureFile);
+            }
+        }
+        return data;
+    }
+
+    private NamespacedKey createKey(String key) {
+        return NamespacedKey.fromString("betterstructures:" + key);
     }
 
     @Override
