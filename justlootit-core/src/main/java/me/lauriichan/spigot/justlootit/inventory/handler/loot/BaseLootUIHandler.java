@@ -67,9 +67,15 @@ public abstract class BaseLootUIHandler implements IHandler {
                 if (cached != null && cached.value().equals(inventory.getInventory())) {
                     return;
                 }
+                if (inventory.getInventory().isEmpty()) {
+                    if (cached != null) {
+                        capability.storage().delete(id);
+                    }
+                    return;
+                }
                 CachedInventory cachedInventory = new CachedInventory(inventory.getInventory());
                 if (cached == null) {
-                    cached = capability.storage().registry().create(cachedInventory).id(id.longValue());
+                    cached = capability.storage().registry().create(cachedInventory).id(id);
                 } else {
                     cached.value(cachedInventory);
                 }

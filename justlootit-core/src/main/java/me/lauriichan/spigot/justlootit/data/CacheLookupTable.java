@@ -267,7 +267,7 @@ public class CacheLookupTable implements IModifiable {
 
     public static CacheLookupTable retrieve(final JustLootItPlugin plugin, final IStorage storage) {
         final Stored<CacheLookupTable> entry = storage.read(ID);
-        if (entry != null) {
+        if (entry != null && entry.isPresent()) {
             return entry.value();
         }
         final CacheLookupTable table = new CacheLookupTable(0);
