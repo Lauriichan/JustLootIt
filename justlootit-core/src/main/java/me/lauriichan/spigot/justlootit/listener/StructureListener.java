@@ -41,6 +41,7 @@ import me.lauriichan.spigot.justlootit.data.VanillaContainer;
 import me.lauriichan.spigot.justlootit.nms.LevelAdapter;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.nms.util.RegistryUtil;
+import me.lauriichan.spigot.justlootit.platform.scheduler.Scheduler;
 import me.lauriichan.spigot.justlootit.storage.IStorage;
 import me.lauriichan.spigot.justlootit.storage.Stored;
 import me.lauriichan.spigot.justlootit.util.BlockUtil;
@@ -79,7 +80,7 @@ public class StructureListener implements IListenerExtension {
         StructureTransformer transformer = transformers.get(event.getWorld().getUID());
         if (transformer == null || transformer.isTerminated()) {
             transformers.put(event.getWorld().getUID(),
-                transformer = new StructureTransformer(versionHandler.getLevel(event.getWorld()), config));
+                transformer = new StructureTransformer(versionHandler.getLevel(event.getWorld()), versionHandler.scheduler(), config));
         }
         event.setBlockTransformer(JustLootItKey.identity(), transformer);
         event.setEntityTransformer(JustLootItKey.identity(), transformer);
@@ -92,11 +93,13 @@ public class StructureListener implements IListenerExtension {
 
     private static final class StructureTransformer implements BlockTransformer, EntityTransformer {
 
+        private final Scheduler scheduler;
         private final LevelAdapter level;
         private final WorldConfig config;
 
-        public StructureTransformer(final LevelAdapter level, final WorldConfig config) {
+        public StructureTransformer(final LevelAdapter level, final Scheduler scheduler, final WorldConfig config) {
             this.level = level;
+            this.scheduler = scheduler;
             this.config = config;
         }
 
@@ -156,7 +159,21 @@ public class StructureListener implements IListenerExtension {
                     if (inventory.isEmpty()) {
                         Container otherContainer = BlockUtil.getNearbyChest(region, container);
                         if (otherContainer != null && JustLootItAccess.hasIdentity(otherContainer.getPersistentDataContainer())) {
-                            BlockUtil.setContainerOffset(container, otherContainer, true);
+                            if (!scheduler.isRegional()) {
+                                BlockUtil.setContainerOffset(container, otherContainer, true);
+                                return;
+                            }
+                            // Folia specific work around
+                            BlockUtil.setContainerOffset(container, otherContainer, false);
+                            container.update(false, false); // This is safe
+                            try {
+                                otherContainer.update(false, false);
+                            } catch(IllegalStateException ise) {
+                                if (!ise.getMessage().contains("main thread check")) {
+                                    throw ise;
+                                }
+                                scheduler.regional(otherContainer.getLocation(), () -> otherContainer.update(false, false));
+                            }
                         }
                         return;
                     }
