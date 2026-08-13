@@ -1,7 +1,7 @@
 package me.lauriichan.spigot.justlootit.util;
 
+import org.bukkit.block.Chest;
 import org.bukkit.block.DoubleChest;
-import org.bukkit.block.data.type.Chest;
 import org.bukkit.inventory.DoubleChestInventory;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
