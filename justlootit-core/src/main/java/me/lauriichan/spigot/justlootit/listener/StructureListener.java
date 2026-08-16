@@ -168,8 +168,9 @@ public class StructureListener implements IListenerExtension {
                             container.update(false, false); // This is safe
                             try {
                                 otherContainer.update(false, false);
-                            } catch(IllegalStateException ise) {
-                                if (!ise.getMessage().contains("main thread check")) {
+                            } catch (IllegalStateException ise) {
+                                if (!ise.getMessage().isEmpty() || ise.getCause() == null
+                                    || !ise.getCause().getMessage().contains("main thread check")) {
                                     throw ise;
                                 }
                                 scheduler.regional(otherContainer.getLocation(), () -> otherContainer.update(false, false));
