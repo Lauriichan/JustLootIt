@@ -2,8 +2,10 @@ package me.lauriichan.spigot.justlootit.listener;
 
 import java.util.UUID;
 
+import org.bukkit.RegionAccessor;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Container;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.type.Chest;
 import org.bukkit.block.data.type.Chest.Type;
 import org.bukkit.entity.ChestBoat;
@@ -135,7 +137,7 @@ public class StructureListener implements IListenerExtension {
                                 lootable.setSeed(0);
                                 container.update();
                             }
-                            BlockUtil.setContainerOffset(container, otherContainer, true);
+                            setContainerOffset(container, otherContainer);
                             return current;
                         }
                     }
@@ -159,22 +161,7 @@ public class StructureListener implements IListenerExtension {
                     if (inventory.isEmpty()) {
                         Container otherContainer = BlockUtil.getNearbyChest(region, container);
                         if (otherContainer != null && JustLootItAccess.hasIdentity(otherContainer.getPersistentDataContainer())) {
-                            if (!scheduler.isRegional()) {
-                                BlockUtil.setContainerOffset(container, otherContainer, true);
-                                return;
-                            }
-                            // Folia specific work around
-                            BlockUtil.setContainerOffset(container, otherContainer, false);
-                            container.update(false, false); // This is safe
-                            try {
-                                otherContainer.update(false, false);
-                            } catch (IllegalStateException ise) {
-                                if (!ise.getMessage().isEmpty() || ise.getCause() == null
-                                    || !ise.getCause().getMessage().contains("main thread check")) {
-                                    throw ise;
-                                }
-                                scheduler.regional(otherContainer.getLocation(), () -> otherContainer.update(false, false));
-                            }
+                            setContainerOffset(container, otherContainer);
                         }
                         return;
                     }
@@ -195,12 +182,44 @@ public class StructureListener implements IListenerExtension {
         }
 
         private long getIdOfBlockState(LimitedRegion region, int x, int y, int z, IStorage storage, Container container) {
-            BlockUtil.setContainerOffsetToNearbyChest(region, container);
+            setContainerOffsetToNearbyChest(region, container);
             PersistentDataContainer dataContainer = container.getPersistentDataContainer();
             if (JustLootItAccess.hasIdentity(dataContainer)) {
                 return JustLootItAccess.getIdentity(dataContainer);
             }
             return -1;
+        }
+        
+        private void setContainerOffset(Container container, Container otherContainer) {
+            if (!scheduler.isRegional()) {
+                BlockUtil.setContainerOffset(container, otherContainer, true);
+                return;
+            }
+            // Folia specific work around
+            BlockUtil.setContainerOffset(container, otherContainer, false);
+            container.update(false, false); // This is safe
+            try {
+                otherContainer.update(false, false);
+            } catch (IllegalStateException ise) {
+                if (!ise.getMessage().isEmpty() || ise.getCause() == null
+                    || !ise.getCause().getMessage().contains("main thread check")) {
+                    throw ise;
+                }
+                scheduler.regional(otherContainer.getLocation(), () -> otherContainer.update(false, false));
+            }
+        }
+        
+        private void setContainerOffsetToNearbyChest(RegionAccessor region, Container container) {
+            BlockData data = container.getBlockData();
+            if (!(data instanceof Chest chest) || chest.getType() == Type.SINGLE) {
+                return;
+            }
+            Container otherContainer = BlockUtil.findChestAround(region, container.getX(), container.getY(), container.getZ(),
+                chest.getType(), chest.getFacing());
+            if (otherContainer == null) {
+                return;
+            }
+            setContainerOffset(container, otherContainer);
         }
 
         @Override
