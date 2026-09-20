@@ -7,6 +7,7 @@ import org.bukkit.craftbukkit.v1_20_R3.persistence.CraftPersistentDataTypeRegist
 
 import com.mojang.serialization.Dynamic;
 
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.spigot.justlootit.nms.convert.ConversionAdapter;
 import me.lauriichan.spigot.justlootit.nms.v1_20_R3.VersionHandler1_20_R3;
@@ -30,21 +31,19 @@ public final class ConversionAdapter1_20_R3 extends ConversionAdapter {
     static final CraftPersistentDataTypeRegistry DATA_TYPE_REGISTRY = NmsHelper1_20_R3.dataTypeRegistry();
 
     private final ISimpleLogger logger;
-    private final VersionHandler1_20_R3 handler;
 
     public ConversionAdapter1_20_R3(VersionHandler1_20_R3 handler) {
         this.logger = handler.logger();
-        this.handler = handler;
     }
 
     @Override
-    public ProtoWorld1_20_R3 getWorld(File directory) {
+    public ObjectList<ProtoWorld1_20_R3> getWorlds(File directory) {
         if (!directory.exists() || directory.isFile()) {
-            return null;
+            return ObjectList.of();
         }
         File file = new File(directory, "level.dat");
         if (!file.exists()) {
-            return null;
+            return ObjectList.of();
         }
         MinecraftServer server = NmsHelper1_20_R3.getServer();
         LevelStorageAccess session = server.storageSource;
@@ -55,7 +54,7 @@ public final class ConversionAdapter1_20_R3 extends ConversionAdapter {
                 session = session.parent().validateAndCreateAccess(directory.getName(), dimensionKey);
                 closeSession = true;
             } catch (IOException | ContentValidationException e) {
-                return null;
+                return ObjectList.of();
             }
         }
         Dynamic<?> dynamic;
@@ -65,7 +64,7 @@ public final class ConversionAdapter1_20_R3 extends ConversionAdapter {
                 if (closeSession) {
                     session.close();
                 }
-                return null;
+                return ObjectList.of();
             }
             try {
                 dynamic = session.getDataTag();
@@ -78,7 +77,7 @@ public final class ConversionAdapter1_20_R3 extends ConversionAdapter {
                     if (closeSession) {
                         session.close();
                     }
-                    return null;
+                    return ObjectList.of();
                 }
                 session.restoreLevelDataFromOld();
             }
@@ -90,13 +89,13 @@ public final class ConversionAdapter1_20_R3 extends ConversionAdapter {
             }
         } catch (IOException e) {
             // Ignore cause we're just closing :)
-            return null;
+            return ObjectList.of();
         }
         WorldLoader.DataLoadContext context = server.worldLoader;
         LevelDataAndDimensions levelData = LevelStorageSource.getLevelDataAndDimensions(dynamic, context.dataConfiguration(),
             context.datapackDimensions().registryOrThrow(Registries.LEVEL_STEM), context.datapackWorldgen());
-        return handler.applyCapabilities(new ProtoWorld1_20_R3(workerPool(logger), logger, new ChunkStorage(null, DataFixers.getDataFixer(), false),
-            session, closeSession, dimensionKey, levelData.worldData()));
+        return ObjectList.of(new ProtoWorld1_20_R3(workerPool(logger), logger,
+            new ChunkStorage(null, DataFixers.getDataFixer(), false), session, closeSession, dimensionKey, levelData.worldData()));
     }
 
     private ResourceKey<LevelStem> findKey(File directory) {

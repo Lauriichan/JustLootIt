@@ -46,6 +46,10 @@ public class CachedStorage implements IStorage {
     public final Long2ObjectMapCache<Stored<?>> cache() {
         return cache;
     }
+    
+    public final IStorage delegate() {
+        return delegate;
+    }
 
     @Override
     public ISimpleLogger logger() {

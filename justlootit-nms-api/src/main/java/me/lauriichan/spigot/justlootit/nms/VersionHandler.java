@@ -194,6 +194,7 @@ public abstract class VersionHandler {
         }
         final LevelAdapter adapter = createAdapter(world);
         levels.put(levelId, applyCapabilities(adapter));
+        serviceProvider.onLevelLoad(adapter);
         return adapter;
     }
 
@@ -201,7 +202,9 @@ public abstract class VersionHandler {
         if (levels.containsKey(world.getUID())) {
             return;
         }
-        levels.put(world.getUID(), applyCapabilities(createAdapter(world)));
+        LevelAdapter adapter = createAdapter(world);
+        levels.put(world.getUID(), applyCapabilities(adapter));
+        serviceProvider.onLevelLoad(adapter);
     }
 
     final void unload(final World world) {

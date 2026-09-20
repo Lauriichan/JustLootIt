@@ -10,6 +10,8 @@ import org.bukkit.entity.Player;
 
 import me.lauriichan.spigot.justlootit.nms.LevelAdapter;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.entity.LevelEntityGetter;
@@ -49,6 +51,11 @@ public class LevelAdapter26_1 extends LevelAdapter {
             return null;
         }
         return entity.getBukkitEntity();
+    }
+    
+    @Override
+    public String determineDimensionType() {
+        return level.dimensionTypeRegistration().unwrapKey().map(ResourceKey::identifier).map(Identifier::toString).orElse(null);
     }
 
     @Override

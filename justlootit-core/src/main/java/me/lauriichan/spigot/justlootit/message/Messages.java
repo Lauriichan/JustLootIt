@@ -123,13 +123,13 @@ public final class Messages implements IMessageExtension {
     })
     public static MessageProvider INPUT_PROMPT_CONVERT_BLACKLIST_WORLD_INFO;
     @Message(id = "input.prompt.convert.blacklist-world.added", content = {
-        "&7The world folder '&a$worldName&7' was added to the conversion blacklist.",
+        "&7The world '&a$worldName&7' was added to the conversion blacklist.",
         "&7If you want to blacklist another world from the conversion process do so now.",
         "&7Otherwise press enter or type '#start' to start the process."
     })
     public static MessageProvider INPUT_PROMPT_CONVERT_BLACKLIST_WORLD_ADDED;
     @Message(id = "input.prompt.convert.blacklist-world.failed", content = {
-        "&7The world folder '&c$worldName&7' doesn't exist.",
+        "&7The world '&c$worldName&7' doesn't exist.",
         "&7If you still want to blacklist a world from the conversion process do so now.",
         "&7Otherwise press enter or type '#start' to start the process."
     })
@@ -144,6 +144,24 @@ public final class Messages implements IMessageExtension {
         "&7Note: A fully restored world can be converted back to JLI using &c/jli convert&7."
     })
     public static MessageProvider INPUT_PROMPT_CONVERT_RESTORATION_ARE_YOU_SURE;
+    
+    // Prompts (Backup)
+    @Message(id = "input.prompt.backup.apply.are-you-sure", content = {
+        "&7The backup apply process is &4&lunreverseable&r&7, no backups will be created beforehand.",
+        "&7This process will delete all JLI player data that you have on your server.",
+        "&7It will also delete all JLI container data that you have for worlds which are contained within the backup.",
+        "&7Worlds which are not contained within your selected backup &c$backupName &7will not be affected.",
+        "",
+        "&cIt is highly recommended to backup your world before applying a JLI data backup.",
+        "",
+        "&7Note: A JLI data backup will not modify your world, therefore containers which were made after your backup will be GONE.",
+        "&7This only applies to worlds which are contained within the backup.",
+        "",
+        "&cPlease make sure nobody is generating chunks or accessing containers while this process is going on.",
+        "",
+        "&7Do you still want to apply the backup? (&cyes&7/&cno&7)"
+    })
+    public static MessageProvider INPUT_PROMPT_BACKUP_APPLY_ARE_YOU_SURE;
 
     /*
      * Container
@@ -228,7 +246,7 @@ public final class Messages implements IMessageExtension {
     public static MessageProvider CONTAINER_TIME_FORMAT_HOURS;
     @Message(id = "container.time.format.days", content = "&c$days &7and &c$hours")
     public static MessageProvider CONTAINER_TIME_FORMAT_DAYS;
-    
+
     @Message(id = "container.access.storage.busy", content = "$#plugin.prefix There is currently a data operation running for this world, therefore you can not interact with any JLI containers, please try again later.")
     public static MessageProvider CONTAINER_ACCESS_STORAGE_BUSY;
 
@@ -288,6 +306,87 @@ public final class Messages implements IMessageExtension {
     public static MessageProvider COMMAND_HELP_COMMAND_FORMAT_NOARGS;
     @Message(id = "command.help.command.format.withargs", content = "&7$prefix &c$name $arguments &8- &7$description")
     public static MessageProvider COMMAND_HELP_COMMAND_FORMAT_WITHARGS;
+
+    // Backup
+
+    @Message(id = "command.backup.create.step.collect", content = "$#plugin.prefix Collecting data files...")
+    public static MessageProvider COMMAND_BACKUP_CREATE_STEP_COLLECT;
+    @Message(id = "command.backup.create.step.pack.start", content = "$#plugin.prefix Packing data files into zip file...")
+    public static MessageProvider COMMAND_BACKUP_CREATE_STEP_PACK_START;
+    @Message(id = "command.backup.create.step.pack.failed", content = "$#plugin.prefix An error occured while packing JLIs data files, please report to an administrator.")
+    public static MessageProvider COMMAND_BACKUP_CREATE_STEP_PACK_FAILED;
+    @Message(id = "command.backup.create.done", content = "$#plugin.prefix Successfully created backup named &c$name&7 and can be found in &7'&cplugins/justlootit/backup/data&7'.")
+    public static MessageProvider COMMAND_BACKUP_CREATE_DONE;
+
+    @Message(id = "command.backup.list.header.format.start", content = "$#plugin.name &8| &7Backups &8[&c$page&8/&7$maxPage&8]")
+    public static MessageProvider COMMAND_BACKUP_LIST_HEADER_FORMAT_START;
+    @Message(id = "command.backup.list.header.format.end", content = "$#plugin.name &8| &7Backups &8[&c$page&8/&7$maxPage&8]")
+    public static MessageProvider COMMAND_BACKUP_LIST_HEADER_FORMAT_END;
+    @Message(id = "command.backup.list.entry.text", content = "&8- &c$name &8[&7$fileSize&8]")
+    public static MessageProvider COMMAND_BACKUP_LIST_ENTRY_TEXT;
+    @Message(id = "command.backup.list.entry.hover", content = "&7Click to get command to apply the backup")
+    public static MessageProvider COMMAND_BACKUP_LIST_ENTRY_HOVER;
+    @Message(id = "command.backup.list.no-entries", content = "$#plugin.prefix There are no backups to display.")
+    public static MessageProvider COMMAND_BACKUP_LIST_NO_ENTRIES;
+
+    @Message(id = "command.backup.apply.init.unknown-backup", content = "$#plugin.prefix A backup with the name '&c$name&7' doesn't exist.")
+    public static MessageProvider COMMAND_BACKUP_APPLY_INIT_UNKNOWN_BACKUP;
+    @Message(id = "command.backup.apply.init.no-backup", content = "$#plugin.prefix Couldn't find a backup to apply.")
+    public static MessageProvider COMMAND_BACKUP_APPLY_INIT_NO_BACKUP;
+    @Message(id = "command.backup.apply.init.latest", content = "$#plugin.prefix No backup provided, using latest backup called '&c$name&7'.")
+    public static MessageProvider COMMAND_BACKUP_APPLY_INIT_LATEST;
+    @Message(id = "command.backup.apply.init.aborted", content = "$#plugin.prefix Backup application process cancelled.")
+    public static MessageProvider COMMAND_BACKUP_APPLY_INIT_ABORTED;
+    
+    @Message(id = "command.backup.apply.step.unpack.start", content = "$#plugin.prefix Unpacking backup '&c$name&7'...")
+    public static MessageProvider COMMAND_BACKUP_APPLY_STEP_UNPACK_START;
+    @Message(id = "command.backup.apply.step.unpack.failed", content = "$#plugin.prefix Failed to unpack backup '&c$name&7', please report to an administrator.")
+    public static MessageProvider COMMAND_BACKUP_APPLY_STEP_UNPACK_FAILED;
+    @Message(id = "command.backup.apply.step.unpack.done", content = "$#plugin.prefix Successfully unpacked backup '&c$name&7'.")
+    public static MessageProvider COMMAND_BACKUP_APPLY_STEP_UNPACK_DONE;
+    
+    @Message(id = "command.backup.apply.step.clean.temporary.start", content = "$#plugin.prefix Cleaning temporary files for backup '&c$name&7'...")
+    public static MessageProvider COMMAND_BACKUP_APPLY_STEP_CLEAN_TEMPORARY_START;
+    @Message(id = "command.backup.apply.step.clean.temporary.failed", content = "$#plugin.prefix Failed to clean temporary files for backup '&c$name&7', please report to an administrator.")
+    public static MessageProvider COMMAND_BACKUP_APPLY_STEP_CLEAN_TEMPORARY_FAILED;
+    @Message(id = "command.backup.apply.step.clean.temporary.done", content = "$#plugin.prefix Successfully cleaned temporary files for backup '&c$name&7'.")
+    public static MessageProvider COMMAND_BACKUP_APPLY_STEP_CLEAN_TEMPORARY_DONE;
+    
+    @Message(id = "command.backup.apply.step.clean.permanent.player.start", content = "$#plugin.prefix Cleaning existing player data files in order to apply backup '&c$name&7'...")
+    public static MessageProvider COMMAND_BACKUP_APPLY_STEP_CLEAN_PERMANENT_PLAYER_START;
+    @Message(id = "command.backup.apply.step.clean.permanent.player.failed", content = "$#plugin.prefix Failed to clean existing player data files in order to apply backup '&c$name&7', please report to an administrator.")
+    public static MessageProvider COMMAND_BACKUP_APPLY_STEP_CLEAN_PERMANENT_PLAYER_FAILED;
+    @Message(id = "command.backup.apply.step.clean.permanent.player.done", content = "$#plugin.prefix Successfully cleaned existing player data files.")
+    public static MessageProvider COMMAND_BACKUP_APPLY_STEP_CLEAN_PERMANENT_PLAYER_DONE;
+    
+    @Message(id = "command.backup.apply.step.clean.permanent.level.start", content = "$#plugin.prefix Cleaning existing container data files of level '&c$level&7' in order to apply backup '&c$name&7'...")
+    public static MessageProvider COMMAND_BACKUP_APPLY_STEP_CLEAN_PERMANENT_LEVEL_START;
+    @Message(id = "command.backup.apply.step.clean.permanent.level.failed", content = "$#plugin.prefix Failed to clean existing container data files of level '&c$level&7' in order to apply backup '&c$name&7', please report to an administrator.")
+    public static MessageProvider COMMAND_BACKUP_APPLY_STEP_CLEAN_PERMANENT_LEVEL_FAILED;
+    @Message(id = "command.backup.apply.step.clean.permanent.level.done", content = "$#plugin.prefix Successfully cleaned existing container data files of level '&c$level&7'.")
+    public static MessageProvider COMMAND_BACKUP_APPLY_STEP_CLEAN_PERMANENT_LEVEL_DONE;
+    
+    @Message(id = "command.backup.apply.step.apply.player.start", content = "$#plugin.prefix Applying player data of backup '&c$name&7'...")
+    public static MessageProvider COMMAND_BACKUP_APPLY_STEP_APPLY_PLAYER_START;
+    @Message(id = "command.backup.apply.step.apply.player.failed", content = "$#plugin.prefix Failed to apply player data of backup '&c$name&7'.")
+    public static MessageProvider COMMAND_BACKUP_APPLY_STEP_APPLY_PLAYER_FAILED;
+    @Message(id = "command.backup.apply.step.apply.player.done", content = "$#plugin.prefix Successfully applied player data of backup '&c$name&7'.")
+    public static MessageProvider COMMAND_BACKUP_APPLY_STEP_APPLY_PLAYER_DONE;
+    
+    @Message(id = "command.backup.apply.step.apply.level.list-failed", content = "$#plugin.prefix Failed to retrieve level ids from files of backup '&c$name&7'.")
+    public static MessageProvider COMMAND_BACKUP_APPLY_STEP_APPLY_LIST_FAILED;
+    @Message(id = "command.backup.apply.step.apply.level.found-but-unknown", content = "$#plugin.prefix Found containers in backup '&c$name&7' for level '&c$id&7' but level doesn't exist, skipping.")
+    public static MessageProvider COMMAND_BACKUP_APPLY_STEP_APPLY_FOUND_BUT_UNKNOWN;
+    
+    @Message(id = "command.backup.apply.step.apply.level.start", content = "$#plugin.prefix Applying container data of backup '&c$name&7' for level '&c$level&7'...")
+    public static MessageProvider COMMAND_BACKUP_APPLY_STEP_APPLY_LEVEL_START;
+    @Message(id = "command.backup.apply.step.apply.level.failed", content = "$#plugin.prefix Failed to apply container data of backup '&c$name&7' for level '&c$level&7'.")
+    public static MessageProvider COMMAND_BACKUP_APPLY_STEP_APPLY_LEVEL_FAILED;
+    @Message(id = "command.backup.apply.step.apply.level.done", content = "$#plugin.prefix Successfully applied container data of backup '&c$name&7' for level '&c$level&7'.")
+    public static MessageProvider COMMAND_BACKUP_APPLY_STEP_APPLY_LEVEL_DONE;
+    
+    @Message(id = "command.backup.apply.done", content = "$#plugin.prefix Successfully applied backup '&c$name&7'.")
+    public static MessageProvider COMMAND_BACKUP_APPLY_DONE;
 
     // Debug
 

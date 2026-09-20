@@ -24,11 +24,14 @@ import me.lauriichan.spigot.justlootit.storage.randomaccessfile.versionized.RAFS
 import me.lauriichan.spigot.justlootit.storage.randomaccessfile.versionized.RAFSettings.MigrationSettings;
 import me.lauriichan.spigot.justlootit.storage.util.cache.CacheTickTimer;
 import me.lauriichan.spigot.justlootit.storage.util.counter.CounterProgress;
-import me.lauriichan.spigot.justlootit.util.IOUtil;
+import me.lauriichan.spigot.justlootit.nms.util.IOUtil;
 import me.lauriichan.spigot.justlootit.util.progress.MultiNotifier;
 import me.lauriichan.spigot.justlootit.util.progress.ProgressTracker;
 
 public abstract class StorageCapability implements ICapability {
+    
+    public static final String CONTAINER_PATH = "justlootit/containers";
+    public static final String PLAYER_PATH = "justlootit/players";
 
     private static File migrateWorldFiles(VersionHandler handler, LevelAdapter level, String path) {
         Path newPath = level.dataFolder().toPath().resolve(path);
@@ -97,7 +100,7 @@ public abstract class StorageCapability implements ICapability {
 
         public LevelContainerImpl(final VersionHandler handler, final LevelAdapter adapter) {
             super((JustLootItPlugin) handler.plugin(),
-                (plugin, registry) -> new RAFMultiStorage(registry, migrateWorldFiles(handler, adapter, "justlootit/containers"), SETTINGS),
+                (plugin, registry) -> new RAFMultiStorage(registry, migrateWorldFiles(handler, adapter, CONTAINER_PATH), SETTINGS),
                 false, true);
         }
 
@@ -114,7 +117,7 @@ public abstract class StorageCapability implements ICapability {
 
         public PlayerImpl(final VersionHandler handler, final PlayerAdapter adapter) {
             super((JustLootItPlugin) handler.plugin(),
-                (plugin, registry) -> new RAFSingleStorage(registry, migrateGlobalFiles(handler, adapter, "justlootit/players"), SETTINGS),
+                (plugin, registry) -> new RAFSingleStorage(registry, migrateGlobalFiles(handler, adapter, PLAYER_PATH), SETTINGS),
                 true, true);
         }
     }

@@ -17,6 +17,10 @@ public enum CommandDescription implements IMessageDefinition, IMessageExtension 
 
     JUSTLOOTIT_DEBUG_PDC("Reads all data from a block or entity"),
     
+    JUSTLOOTIT_BACKUP_CREATE("Creates a backup of the JLI data files for all worlds"),
+    JUSTLOOTIT_BACKUP_LIST("Lists all JLI data backups"),
+    JUSTLOOTIT_BACKUP_APPLY("Applies the currently saved backup of the JLI data files to all worlds"),
+    
     JUSTLOOTIT_CONTAINER_INFO("Gets various details about the container linked to a block or entity"),
     JUSTLOOTIT_CONTAINER_SET("Links a container to a block or entity"),
     JUSTLOOTIT_CONTAINER_GROUP_SET("Sets the refresh group of a container linked to a block or entity"),

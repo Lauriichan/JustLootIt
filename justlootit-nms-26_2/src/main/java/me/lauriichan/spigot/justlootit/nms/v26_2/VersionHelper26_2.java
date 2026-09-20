@@ -1,6 +1,7 @@
 package me.lauriichan.spigot.justlootit.nms.v26_2;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
@@ -59,7 +60,11 @@ public class VersionHelper26_2 extends VersionHelper {
         this.handler = handler;
         MinecraftServer server = NmsHelper26_2.getServer();
         this.resourceRegistry = server.resources.managers().fullRegistries();
-        this.globalDataFolder = server.storageSource.getLevelPath(LevelResource.ROOT).resolve(LevelResource.DATA.id()).toFile();
+        try {
+            this.globalDataFolder = server.storageSource.getLevelPath(LevelResource.ROOT).resolve(LevelResource.DATA.id()).toFile().getCanonicalFile();
+        } catch (IOException e) {
+            throw new IllegalStateException("Global data folder couldn't be resolved", e);
+        }
     }
 
     @Override

@@ -20,6 +20,10 @@ public abstract class LevelAdapter extends Capable<LevelAdapter> {
 
     public abstract Entity getBukkitEntityById(int id);
     
+    public String determineDimensionType() {
+        return null;
+    }
+    
     public abstract void triggerGameEvent(Player player, GameEvent event, Location location);
 
 }

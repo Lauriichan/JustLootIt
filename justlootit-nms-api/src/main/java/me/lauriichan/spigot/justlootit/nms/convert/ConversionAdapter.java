@@ -2,6 +2,7 @@ package me.lauriichan.spigot.justlootit.nms.convert;
 
 import java.io.File;
 
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.spigot.justlootit.storage.util.executor.ProtoExecutor;
 
@@ -35,7 +36,7 @@ public abstract class ConversionAdapter implements AutoCloseable {
         }).logger(logger).minThreads(4).maxThreads(32).percentage(0.75f).build();
     }
 
-    public abstract ProtoWorld getWorld(File directory);
+    public abstract ObjectList<? extends ProtoWorld> getWorlds(File directory);
 
     public void close() {
         if (executor != null) {

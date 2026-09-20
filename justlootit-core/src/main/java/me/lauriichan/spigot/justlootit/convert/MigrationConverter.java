@@ -14,6 +14,8 @@ import me.lauriichan.spigot.justlootit.convert.migration.provider.IBlockEntityMi
 import me.lauriichan.spigot.justlootit.convert.migration.provider.IChunkMigration;
 import me.lauriichan.spigot.justlootit.convert.migration.provider.IEntityMigration;
 import me.lauriichan.spigot.justlootit.convert.migration.provider.IProtoMigration;
+import me.lauriichan.spigot.justlootit.convert.property.ConvProp;
+import me.lauriichan.spigot.justlootit.convert.property.ConversionProperties;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoBlockEntity;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoChunk;

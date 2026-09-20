@@ -2,25 +2,39 @@ package me.lauriichan.spigot.justlootit.nms.paper.v26_2.convert;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Iterator;
 
 import org.bukkit.craftbukkit.persistence.CraftPersistentDataTypeRegistry;
+import org.bukkit.persistence.PersistentDataType;
 
 import com.mojang.serialization.Dynamic;
 
+import io.papermc.paper.world.saveddata.PaperWorldPDC;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.spigot.justlootit.nms.convert.ConversionAdapter;
 import me.lauriichan.spigot.justlootit.nms.paper.v26_2.VersionHandler26_2;
 import me.lauriichan.spigot.justlootit.nms.paper.v26_2.util.NmsHelper26_2;
+import me.lauriichan.spigot.justlootit.nms.util.IOUtil;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.NbtException;
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.WorldLoader;
-import net.minecraft.world.level.dimension.LevelStem;
-import net.minecraft.world.level.storage.LevelDataAndDimensions;
+import net.minecraft.util.datafix.DataFixers;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.levelgen.WorldGenSettings;
+import net.minecraft.world.level.storage.LevelResource;
 import net.minecraft.world.level.storage.LevelStorageSource;
 import net.minecraft.world.level.storage.LevelStorageSource.LevelStorageAccess;
 import net.minecraft.world.level.storage.LevelSummary;
+import net.minecraft.world.level.storage.SavedDataStorage;
+import net.minecraft.world.level.storage.LevelDataAndDimensions.WorldDataAndGenSettings;
 import net.minecraft.world.level.validation.ContentValidationException;
 
 public final class ConversionAdapter26_2 extends ConversionAdapter {
@@ -36,24 +50,24 @@ public final class ConversionAdapter26_2 extends ConversionAdapter {
     }
 
     @Override
-    public ProtoWorld26_2 getWorld(File directory) {
+    public ObjectList<ProtoWorld26_2> getWorlds(File directory) {
         if (!directory.exists() || directory.isFile()) {
-            return null;
+            return ObjectList.of();
         }
         File file = new File(directory, "level.dat");
         if (!file.exists()) {
-            return null;
+            return ObjectList.of();
         }
         MinecraftServer server = NmsHelper26_2.getServer();
         LevelStorageAccess session = server.storageSource;
         boolean closeSession = false;
-        ResourceKey<LevelStem> dimensionKey = findKey(directory);
-        if (!directory.toPath().equals(session.getLevelDirectory().path())) {
+
+        if (!directory.toPath().toAbsolutePath().equals(session.getLevelDirectory().path().normalize().toAbsolutePath())) {
             try {
                 session = session.parent().validateAndCreateAccess(directory.getName());
                 closeSession = true;
             } catch (IOException | ContentValidationException e) {
-                return null;
+                return ObjectList.of();
             }
         }
         Dynamic<?> dynamic;
@@ -63,7 +77,7 @@ public final class ConversionAdapter26_2 extends ConversionAdapter {
                 if (closeSession) {
                     session.close();
                 }
-                return null;
+                return ObjectList.of();
             }
             try {
                 dynamic = session.getUnfixedDataTag(false);
@@ -76,7 +90,7 @@ public final class ConversionAdapter26_2 extends ConversionAdapter {
                     if (closeSession) {
                         session.close();
                     }
-                    return null;
+                    return ObjectList.of();
                 }
                 session.restoreLevelDataFromOld();
             }
@@ -84,29 +98,77 @@ public final class ConversionAdapter26_2 extends ConversionAdapter {
                 if (closeSession) {
                     session.close();
                 }
-                return null;
+                return ObjectList.of();
             }
         } catch (IOException e) {
             // Ignore cause we're just closing :)
-            return null;
+            return ObjectList.of();
+        }
+        Path dimensionsPath = session.getLevelDirectory().path().resolve("dimensions");
+        Iterator<Path> namespaceIter;
+        try {
+            namespaceIter = IOUtil.list(dimensionsPath);
+        } catch (IOException e) {
+            logger.debug(e);
+            return ObjectList.of();
         }
         WorldLoader.DataLoadContext context = server.worldLoaderContext;
-        LevelDataAndDimensions levelData = LevelStorageSource.getLevelDataAndDimensions(session, dynamic, context.dataConfiguration(),
-            context.datapackDimensions().lookupOrThrow(Registries.LEVEL_STEM), context.datapackWorldgen(), ResourceKey.create(Registries.DIMENSION, dimensionKey.identifier()));
-        return handler.applyCapabilities(new ProtoWorld26_2(workerPool(logger), logger,
-            session, closeSession, dimensionKey, levelData.worldDataAndGenSettings()));
-    }
-
-    private ResourceKey<LevelStem> findKey(File directory) {
-        File file = new File(directory, "DIM-1");
-        if (file.exists()) {
-            return LevelStem.NETHER;
+        ObjectArrayList<ProtoWorld26_2> worlds = new ObjectArrayList<>();
+        while (namespaceIter.hasNext()) {
+            Path namespacePath = namespaceIter.next();
+            if (!Files.isDirectory(namespacePath)) {
+                continue;
+            }
+            String namespaceStr = namespacePath.getFileName().toString();
+            if (!Identifier.isValidNamespace(namespaceStr)) {
+                continue;
+            }
+            Iterator<Path> idIter;
+            try {
+                idIter = IOUtil.list(namespacePath);
+            } catch (IOException e) {
+                logger.debug(e);
+                continue;
+            }
+            while (idIter.hasNext()) {
+                Path idPath = idIter.next();
+                if (!Files.isDirectory(idPath)) {
+                    continue;
+                }
+                Identifier levelStemId = Identifier.tryBuild(namespaceStr, idPath.getFileName().toString());
+                if (levelStemId == null) {
+                    continue;
+                }
+                PaperWorldPDC pdc;
+                try (SavedDataStorage tmpStorage = new SavedDataStorage(idPath.resolve(LevelResource.DATA.id()), DataFixers.getDataFixer(),
+                    server.registryAccess())) {
+                    pdc = tmpStorage.get(PaperWorldPDC.TYPE);
+                }
+                if (pdc == null) {
+                    continue;
+                }
+                String dimensionTypeIdRaw = pdc.persistentData().getOrDefault(handler.serviceProvider().dimensionTypeKey(),
+                    PersistentDataType.STRING, "");
+                if (dimensionTypeIdRaw.isEmpty()) {
+                    continue;
+                }
+                Identifier dimensionTypeId = Identifier.tryParse(dimensionTypeIdRaw);
+                if (dimensionTypeId == null) {
+                    continue;
+                }
+                ResourceKey<Level> worldKey = ResourceKey.create(Registries.DIMENSION, levelStemId);
+                WorldGenSettings worldGenSettings = LevelStorageSource
+                    .readExistingSavedData(session, worldKey, context.datapackWorldgen(), WorldGenSettings.TYPE).result()
+                    .orElse(null);
+                if (worldGenSettings == null) {
+                    continue;
+                }
+                WorldDataAndGenSettings worldData = new WorldDataAndGenSettings(server.getWorldData(), worldGenSettings);
+                worlds.add(new ProtoWorld26_2(server, logger, session, closeSession, worldKey,
+                    ResourceKey.create(Registries.LEVEL_STEM, dimensionTypeId), worldData));
+            }
         }
-        file = new File(directory, "DIM1");
-        if (file.exists()) {
-            return LevelStem.END;
-        }
-        return LevelStem.OVERWORLD;
+        return ObjectLists.unmodifiable(worlds);
     }
 
 }

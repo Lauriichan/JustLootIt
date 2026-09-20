@@ -1,10 +1,13 @@
 package me.lauriichan.spigot.justlootit.command;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
+import org.bukkit.NamespacedKey;
 
 import me.lauriichan.laylib.command.Actor;
 import me.lauriichan.laylib.command.annotation.Action;
@@ -17,11 +20,13 @@ import me.lauriichan.spigot.justlootit.JustLootItPermission;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.capability.ActorCapability;
 import me.lauriichan.spigot.justlootit.command.impl.LootItActor;
-import me.lauriichan.spigot.justlootit.convert.ConvProp;
-import me.lauriichan.spigot.justlootit.convert.ConversionProperties;
+import me.lauriichan.spigot.justlootit.convert.property.ConvProp;
+import me.lauriichan.spigot.justlootit.convert.property.ConversionProperties;
 import me.lauriichan.spigot.justlootit.input.SimpleChatInputProvider;
 import me.lauriichan.spigot.justlootit.message.Messages;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
+import me.lauriichan.spigot.justlootit.platform.JustLootItPlatform;
+import me.lauriichan.spigot.justlootit.platform.PlatformType;
 
 @Extension
 @Command(name = "convert")
@@ -242,8 +247,8 @@ public class ConvertCommand implements ICommandExtension {
     }
 
     private void migrationPrompt(Actor<?> actor) {
-        inputProvider.getBooleanInput(actor, actor.getTranslatedMessageAsString(Messages.INPUT_PROMPT_CONVERT_DO_MIGRATION), null,
-            this::propertyMigration);
+        inputProvider.getBooleanInput(actor, actor.getTranslatedMessageAsString(Messages.INPUT_PROMPT_CONVERT_DO_MIGRATION),
+            actor.getTranslatedMessageAsString(Messages.INPUT_RETRY_BOOLEAN), this::propertyMigration);
     }
 
     private void propertyMigration(Actor<?> actor, Boolean state) {
@@ -256,26 +261,64 @@ public class ConvertCommand implements ICommandExtension {
             this::blacklistWorldSubmit);
     }
 
-    private void blacklistWorldSubmit(Actor<?> actor, String worldName) {
+    private void blacklistWorldSubmit(Actor<?> uncastedActor, String worldName) {
         if (worldName == null) {
-            clearProperties(actor);
+            clearProperties(uncastedActor);
             return;
         }
         if (worldName.equalsIgnoreCase("#start") || worldName.isBlank()) {
-            prepareConversion(actor);
+            prepareConversion(uncastedActor);
             return;
         }
-        File world = new File(Bukkit.getWorldContainer(), worldName);
-        if (!world.isDirectory()) {
+        LootItActor<?> actor = (LootItActor<?>) uncastedActor;
+        JustLootItPlatform platform = actor.plugin().platform();
+        if (platform.version().minecraftVersion().major() < 26) {
+            File world = new File(Bukkit.getWorldContainer(), worldName);
+            if (!world.isDirectory()) {
+                inputProvider.getStringInput(actor, actor.getTranslatedMessageAsString(Messages.INPUT_PROMPT_CONVERT_BLACKLIST_WORLD_FAILED,
+                    Key.of("worldName", worldName)), null, this::blacklistWorldSubmit);
+            } else {
+                properties(actor).addPropertyEntry(ConvProp.BLACKLISTED_WORLDS, worldName);
+                inputProvider.getStringInput(actor,
+                    actor.getTranslatedMessageAsString(Messages.INPUT_PROMPT_CONVERT_BLACKLIST_WORLD_ADDED, Key.of("worldName", worldName)),
+                    null, this::blacklistWorldSubmit);
+            }
+            return;
+        }
+        if (platform.type() == PlatformType.SPIGOT) {
+            File world = new File(Bukkit.getWorldContainer(), worldName);
+            if (!world.isDirectory()) {
+                inputProvider.getStringInput(actor, actor.getTranslatedMessageAsString(Messages.INPUT_PROMPT_CONVERT_BLACKLIST_WORLD_FAILED,
+                    Key.of("worldName", worldName)), null, this::blacklistWorldSubmit);
+            } else {
+                properties(actor).addPropertyEntry(ConvProp.BLACKLISTED_WORLDS, worldName);
+                inputProvider.getStringInput(actor,
+                    actor.getTranslatedMessageAsString(Messages.INPUT_PROMPT_CONVERT_BLACKLIST_WORLD_ADDED, Key.of("worldName", worldName)),
+                    null, this::blacklistWorldSubmit);
+            }
+            return;
+        }
+        Path dimensions = actor.versionHelper().globalDataFolder().toPath().getParent().resolve("dimensions");
+        NamespacedKey key;
+        try {
+            key = NamespacedKey.fromString(worldName);
+        } catch (RuntimeException re) {
             inputProvider.getStringInput(actor,
                 actor.getTranslatedMessageAsString(Messages.INPUT_PROMPT_CONVERT_BLACKLIST_WORLD_FAILED, Key.of("worldName", worldName)),
                 null, this::blacklistWorldSubmit);
-        } else {
-            properties(actor).addPropertyEntry(ConvProp.BLACKLISTED_WORLDS, worldName);
-            inputProvider.getStringInput(actor,
-                actor.getTranslatedMessageAsString(Messages.INPUT_PROMPT_CONVERT_BLACKLIST_WORLD_ADDED, Key.of("worldName", worldName)),
-                null, this::blacklistWorldSubmit);
+            return;
         }
+        worldName = key.toString();
+        if (!Files.exists(dimensions.resolve(key.getNamespace()).resolve(key.getKey()))) {
+            inputProvider.getStringInput(actor,
+                actor.getTranslatedMessageAsString(Messages.INPUT_PROMPT_CONVERT_BLACKLIST_WORLD_FAILED, Key.of("worldName", worldName)),
+                null, this::blacklistWorldSubmit);
+            return;
+        }
+        properties(actor).addPropertyEntry(ConvProp.BLACKLISTED_WORLDS, worldName);
+        inputProvider.getStringInput(actor,
+            actor.getTranslatedMessageAsString(Messages.INPUT_PROMPT_CONVERT_BLACKLIST_WORLD_ADDED, Key.of("worldName", worldName)), null,
+            this::blacklistWorldSubmit);
     }
 
     private void prepareConversion(Actor<?> actor) {

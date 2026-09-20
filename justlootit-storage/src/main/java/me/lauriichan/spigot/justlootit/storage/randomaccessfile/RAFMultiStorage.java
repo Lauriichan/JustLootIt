@@ -111,6 +111,10 @@ public final class RAFMultiStorage extends Storage {
             fileLock.unlock();
         }
     }
+    
+    public final File directory() {
+        return directory;
+    }
 
     @Override
     public boolean isSupported(long id) {

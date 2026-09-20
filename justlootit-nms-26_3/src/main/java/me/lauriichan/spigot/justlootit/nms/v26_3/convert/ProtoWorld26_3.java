@@ -139,7 +139,7 @@ public class ProtoWorld26_3 extends ProtoWorld implements LevelHeightAccessor {
 
     @Override
     public String getName() {
-        return dimensionKey.identifier().toString();
+        return worldData.data().getLevelName();
     }
 
     @Override

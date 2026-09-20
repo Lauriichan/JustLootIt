@@ -8,6 +8,7 @@ public final class JustLootItPermission {
 
     public static final String COMMAND_CONVERT = "justlootit.command.convert";
     public static final String COMMAND_CONFIG = "justlootit.command.config";
+    public static final String COMMAND_BACKUP = "justlootit.command.backup";
     public static final String COMMAND_DATA = "justlootit.command.data";
     public static final String COMMAND_CONTAINER = "justlootit.command.container";
     public static final String COMMAND_GROUP = "justlootit.command.group";

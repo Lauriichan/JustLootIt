@@ -13,11 +13,15 @@ import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.laylib.reflection.StackTracker;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.capability.StorageCapability;
+import me.lauriichan.spigot.justlootit.convert.property.ConvProp;
+import me.lauriichan.spigot.justlootit.convert.property.ConversionProperties;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.nms.convert.ConvThread;
 import me.lauriichan.spigot.justlootit.nms.convert.ConversionAdapter;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoChunk;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoWorld;
+import me.lauriichan.spigot.justlootit.platform.JustLootItPlatform;
+import me.lauriichan.spigot.justlootit.platform.PlatformType;
 import me.lauriichan.spigot.justlootit.storage.util.counter.CounterProgress;
 import me.lauriichan.spigot.justlootit.util.progress.ProgressTracker;
 
@@ -33,9 +37,9 @@ public final class JustLootItConverter {
         addConverter(converters, new LootinConverter(versionHandler, properties));
         addConverter(converters, new VanillaConverter(versionHandler, properties));
     }
-    
-    private static void createRestorators(ObjectArrayList<ChunkConverter> converters, JustLootItPlugin plugin, VersionHandler versionHandler,
-        ConversionProperties properties) {
+
+    private static void createRestorators(ObjectArrayList<ChunkConverter> converters, JustLootItPlugin plugin,
+        VersionHandler versionHandler, ConversionProperties properties) {
         addConverter(converters, new ContainerRestorer(versionHandler, properties));
     }
 
@@ -61,39 +65,33 @@ public final class JustLootItConverter {
             return false;
         }
         try (ConversionAdapter conversionAdapter = versionHandler.conversionAdapter()) {
-            File worldContainer = Bukkit.getWorldContainer();
-            File[] possibleWorldFiles = worldContainer.listFiles();
             boolean somethingWasConverted = false;
             ISimpleLogger logger = versionHandler.logger();
-            ObjectList<String> blacklistedWorldNames = properties.getPropertyEntries(ConvProp.BLACKLISTED_WORLDS);
-            for (File file : possibleWorldFiles) {
-                if (!file.isDirectory() || blacklistedWorldNames.contains(file.getName())) {
-                    continue;
-                }
-                try (ProtoWorld world = conversionAdapter.getWorld(file)) {
-                    if (world == null) {
-                        continue;
-                    }
+            ObjectList<ProtoWorld> worlds = findWorlds(conversionAdapter, versionHandler,
+                properties.getPropertyEntries(ConvProp.BLACKLISTED_WORLDS));
+            logger.debug("Conversion enabled, found {0} world(s) to convert", worlds.size());
+            for (ProtoWorld world : worlds) {
+                try {
+                    versionHandler.applyCapabilities(world);
                     ChunkConverter[] enabledConverters = converters.stream().filter(converter -> converter.isEnabledFor(world))
                         .toArray(ChunkConverter[]::new);
                     if (enabledConverters.length == 0 || world.getCapability(StorageCapability.class).isEmpty()) {
                         continue;
                     }
+                    somethingWasConverted = true;
                     Consumer<ProtoChunk> chunkConsumer = chunk -> {
                         Random random = new Random(chunk.getWorld().getSeed() | chunk.getPosAsLong());
                         for (ChunkConverter converter : enabledConverters) {
                             converter.convert(chunk, random);
                         }
                     };
-                    somethingWasConverted = true;
                     logger.info("Starting conversion of level '{0}'...", world.getName());
                     CounterProgress counterProgress = world.streamChunks(chunkConsumer);
                     if (!counterProgress.hasFutures()) {
                         logger.info("Skipping level '{0}', couldn't find any regions.", world.getName());
                         continue;
                     }
-                    new ProgressTracker().progress(counterProgress).detailedTimeout(TimeUnit.SECONDS, 15)
-                        .waitTimeout(TimeUnit.SECONDS, 2)
+                    new ProgressTracker().progress(counterProgress).detailedTimeout(TimeUnit.SECONDS, 15).waitTimeout(TimeUnit.SECONDS, 2)
                         .progressNotifier((progress, elapsed, detailed) -> {
                             if (detailed) {
                                 printThreads(logger, world.getName(), progress, conversionAdapter.executor().threads());
@@ -110,11 +108,45 @@ public final class JustLootItConverter {
                     }
                     logger.info("Level '{0}' has fully completed the conversion process!", world.getName());
                 } catch (RuntimeException exp) {
-                    logger.error("Couldn't start conversion of world '{0}'...", exp, file.getName());
+                    logger.error("Couldn't start conversion of world '{0}'...", exp, world.getName());
                 }
             }
             return somethingWasConverted;
         }
+    }
+
+    private static ObjectList<ProtoWorld> findWorlds(ConversionAdapter conversionAdapter, VersionHandler handler,
+        ObjectList<String> blacklistedWorldNames) {
+        ObjectArrayList<ProtoWorld> worlds = new ObjectArrayList<>();
+        JustLootItPlatform platform = handler.platform();
+        ISimpleLogger logger = platform.logger();
+        if (platform.version().minecraftVersion().major() < 26 || platform.type() == PlatformType.SPIGOT) {
+            File worldContainer = Bukkit.getWorldContainer();
+            File[] possibleWorldFiles = worldContainer.listFiles();
+            for (File file : possibleWorldFiles) {
+                if (!file.isDirectory() || blacklistedWorldNames.contains(file.getName())) {
+                    continue;
+                }
+                try {
+                    worlds.addAll(conversionAdapter.getWorlds(file));
+                } catch (RuntimeException exp) {
+                    logger.error("Couldn't retrieve worlds for folder '{0}'...", exp, file.getName());
+                }
+            }
+            return worlds;
+        }
+        File levelContainer = handler.versionHelper().globalDataFolder().getParentFile();
+        try {
+            for (ProtoWorld world : conversionAdapter.getWorlds(levelContainer)) {
+                if (blacklistedWorldNames.contains(world.getName())) {
+                    continue;
+                }
+                worlds.add(world);
+            }
+        } catch (RuntimeException exp) {
+            logger.error("Couldn't retrieve worlds for folder '{0}'...", exp, levelContainer.toString());
+        }
+        return worlds;
     }
 
     private static void printThreads(ISimpleLogger logger, String level, CounterProgress progress, ObjectList<ConvThread> threads) {

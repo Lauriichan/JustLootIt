@@ -1,4 +1,4 @@
-package me.lauriichan.spigot.justlootit.util;
+package me.lauriichan.spigot.justlootit.nms.util;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -81,6 +81,25 @@ public final class IOUtil {
             Path next = iter.next();
             copy(next, target.resolve(next.getFileName()));
         }
+    }
+
+    public static void move(Path origin, Path target) throws IOException {
+        if (!Files.isDirectory(origin)) {
+            if (!Files.exists(target) && !Files.exists(target.getParent())) {
+                Files.createDirectories(target.getParent());
+            }
+            Files.move(origin, target, StandardCopyOption.REPLACE_EXISTING);
+            return;
+        }
+        if (!Files.exists(target)) {
+            Files.createDirectories(target);
+        }
+        Iterator<Path> iter = list(origin);
+        while (iter.hasNext()) {
+            Path next = iter.next();
+            move(next, target.resolve(next.getFileName()));
+        }
+        Files.delete(origin);
     }
 
 }

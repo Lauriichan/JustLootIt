@@ -13,7 +13,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.entity.LevelEntityGetter;
 
 public class LevelAdapter26_3 extends LevelAdapter {
@@ -41,7 +40,7 @@ public class LevelAdapter26_3 extends LevelAdapter {
     
     @Override
     public File dataFolder() {
-        return DimensionType.getStorageFolder(level.dimension(), level.storageSource.levelDirectory.path()).resolve("data").toFile();
+        return level.storageSource.getDimensionPath(level.dimension()).resolve("data").toFile();
     }
 
     @Override

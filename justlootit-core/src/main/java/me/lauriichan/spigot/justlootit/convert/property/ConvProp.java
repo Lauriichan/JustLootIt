@@ -1,4 +1,4 @@
-package me.lauriichan.spigot.justlootit.convert;
+package me.lauriichan.spigot.justlootit.convert.property;
 
 public final class ConvProp {
     

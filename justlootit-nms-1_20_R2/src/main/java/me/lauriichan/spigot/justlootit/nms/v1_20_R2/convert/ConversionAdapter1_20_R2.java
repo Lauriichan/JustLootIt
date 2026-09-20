@@ -8,6 +8,7 @@ import org.bukkit.craftbukkit.v1_20_R2.persistence.CraftPersistentDataTypeRegist
 
 import com.mojang.datafixers.util.Pair;
 
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.spigot.justlootit.nms.convert.ConversionAdapter;
 import me.lauriichan.spigot.justlootit.nms.v1_20_R2.VersionHandler1_20_R2;
@@ -33,21 +34,19 @@ public final class ConversionAdapter1_20_R2 extends ConversionAdapter {
     static final CraftPersistentDataTypeRegistry DATA_TYPE_REGISTRY = NmsHelper1_20_R2.dataTypeRegistry();
 
     private final ISimpleLogger logger;
-    private final VersionHandler1_20_R2 handler;
 
     public ConversionAdapter1_20_R2(VersionHandler1_20_R2 handler) {
         this.logger = handler.logger();
-        this.handler = handler;
     }
 
     @Override
-    public ProtoWorld1_20_R2 getWorld(File directory) {
+    public ObjectList<ProtoWorld1_20_R2> getWorlds(File directory) {
         if (!directory.exists() || directory.isFile()) {
-            return null;
+            return ObjectList.of();
         }
         File file = new File(directory, "level.dat");
         if (!file.exists()) {
-            return null;
+            return ObjectList.of();
         }
         MinecraftServer server = NmsHelper1_20_R2.getServer();
         LevelStorageAccess session = server.storageSource;
@@ -59,24 +58,24 @@ public final class ConversionAdapter1_20_R2 extends ConversionAdapter {
                 session = LevelStorageSource.createDefault(path).validateAndCreateAccess(directory.getName(), dimensionKey);
                 closeSession = true;
             } catch (IOException | ContentValidationException e) {
-                return null;
+                return ObjectList.of();
             }
         }
         LevelSummary info = session.getSummary();
         try {
             if (info != null && (info.requiresManualConversion() || !info.isCompatible())) {
                 session.close();
-                return null;
+                return ObjectList.of();
             }
         } catch (IOException exp) {
             // Ignore cause we're just closing :)
-            return null;
+            return ObjectList.of();
         }
         WorldLoader.DataLoadContext context = server.worldLoader;
         Pair<WorldData, WorldDimensions.Complete> pair = session.getDataTag(RegistryOps.create(NbtOps.INSTANCE, context.datapackWorldgen()),
             context.dataConfiguration(), context.datapackDimensions().registryOrThrow(Registries.LEVEL_STEM),
             context.datapackWorldgen().allRegistriesLifecycle());
-        return handler.applyCapabilities(new ProtoWorld1_20_R2(workerPool(logger), logger, new ChunkStorage(null, DataFixers.getDataFixer(), false),
+        return ObjectList.of(new ProtoWorld1_20_R2(workerPool(logger), logger, new ChunkStorage(null, DataFixers.getDataFixer(), false),
             session, closeSession, dimensionKey, pair.getFirst()));
     }
 

@@ -14,6 +14,7 @@ import me.lauriichan.spigot.justlootit.capability.StorageCapability;
 import me.lauriichan.spigot.justlootit.config.MainConfig;
 import me.lauriichan.spigot.justlootit.config.world.WorldConfig;
 import me.lauriichan.spigot.justlootit.config.world.WorldMultiConfig;
+import me.lauriichan.spigot.justlootit.convert.property.ConversionProperties;
 import me.lauriichan.spigot.justlootit.data.FrameContainer;
 import me.lauriichan.spigot.justlootit.data.IInventoryContainer;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
@@ -21,11 +22,11 @@ import me.lauriichan.spigot.justlootit.nms.convert.ProtoBlockEntity;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoChunk;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoEntity;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoWorld;
+import me.lauriichan.spigot.justlootit.nms.util.IOUtil;
 import me.lauriichan.spigot.justlootit.nms.util.Vec3i;
 import me.lauriichan.spigot.justlootit.storage.IStorage;
 import me.lauriichan.spigot.justlootit.storage.Stored;
 import me.lauriichan.spigot.justlootit.util.EntityUtil;
-import me.lauriichan.spigot.justlootit.util.IOUtil;
 
 public class ContainerRestorer extends ChunkConverter {
 

@@ -27,6 +27,8 @@ import me.lauriichan.spigot.justlootit.capability.StorageCapability;
 import me.lauriichan.spigot.justlootit.compatibility.data.CompatibilityDataExtension;
 import me.lauriichan.spigot.justlootit.compatibility.data.betterstructures.BetterStructuresDataExtension;
 import me.lauriichan.spigot.justlootit.compatibility.data.customstructures.CustomStructuresDataExtension;
+import me.lauriichan.spigot.justlootit.convert.property.ConvProp;
+import me.lauriichan.spigot.justlootit.convert.property.ConversionProperties;
 import me.lauriichan.spigot.justlootit.data.CompatibilityContainer;
 import me.lauriichan.spigot.justlootit.data.FrameContainer;
 import me.lauriichan.spigot.justlootit.data.StaticContainer;

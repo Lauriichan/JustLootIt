@@ -12,6 +12,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -51,8 +52,8 @@ import me.lauriichan.spigot.justlootit.compatibility.provider.CompatDependency;
 import me.lauriichan.spigot.justlootit.compatibility.provider.Compatibility;
 import me.lauriichan.spigot.justlootit.compatibility.provider.ICompatProvider;
 import me.lauriichan.spigot.justlootit.compatibility.provider.floodgate.FloodGateHelper;
-import me.lauriichan.spigot.justlootit.convert.ConversionProperties;
 import me.lauriichan.spigot.justlootit.convert.JustLootItConverter;
+import me.lauriichan.spigot.justlootit.convert.property.ConversionProperties;
 import me.lauriichan.spigot.justlootit.data.CacheLookupTable;
 import me.lauriichan.spigot.justlootit.data.CachedInventory;
 import me.lauriichan.spigot.justlootit.data.CompatibilityContainer;
@@ -67,6 +68,7 @@ import me.lauriichan.spigot.justlootit.input.SimpleChatInputProvider;
 import me.lauriichan.spigot.justlootit.listener.ItemFramePacketListener;
 import me.lauriichan.spigot.justlootit.message.Messages;
 import me.lauriichan.spigot.justlootit.nms.IServiceProvider;
+import me.lauriichan.spigot.justlootit.nms.LevelAdapter;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.nms.VersionHelper;
@@ -271,6 +273,7 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         // Register argument types
         registry.registerArgumentType(DataArgument.class);
         registry.registerArgumentType(WorldArgument.class);
+        registry.registerArgumentType(BackupArgument.class);
         registry.registerArgumentType(ConfigArgument.class);
         registry.registerArgumentType(LootTableArgument.class);
         registry.registerArgumentType(CoordinateArgument.class);
@@ -495,6 +498,14 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         }
     }
 
+    @Override
+    public void onLevelLoad(LevelAdapter adapter) {
+        String dimType = adapter.determineDimensionType();
+        if (dimType != null) {
+            adapter.asBukkit().getPersistentDataContainer().set(JustLootItKey.dimensionType(), PersistentDataType.STRING, dimType);
+        }
+    }
+
     /*
      * Setter
      */
@@ -551,8 +562,14 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         return executor;
     }
 
+    @Override
     public File mainWorldFolder() {
         return mainWorldFolder;
+    }
+    
+    @Override
+    public NamespacedKey dimensionTypeKey() {
+        return JustLootItKey.dimensionType();
     }
 
     public SpigotUpdater<PluginVersion> updater() {

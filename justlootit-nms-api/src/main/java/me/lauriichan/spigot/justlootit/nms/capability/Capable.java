@@ -84,10 +84,17 @@ public abstract class Capable<C extends Capable<C>> {
         }
     }
 
+    public final void reset() {
+        if (!terminated) {
+            return;
+        }
+        terminated = false;
+    }
+
     public final boolean isTerminated() {
         return terminated;
     }
-    
+
     public final void terminate() {
         if (terminated) {
             return;

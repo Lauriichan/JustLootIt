@@ -20,7 +20,7 @@ import me.lauriichan.spigot.justlootit.JustLootItPermission;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.message.Messages;
 import me.lauriichan.spigot.justlootit.nms.nbt.NbtHelper;
-import me.lauriichan.spigot.justlootit.util.IOUtil;
+import me.lauriichan.spigot.justlootit.nms.util.IOUtil;
 import me.lauriichan.spigot.justlootit.util.TypeName;
 
 @Extension

@@ -7,6 +7,7 @@ import org.bukkit.craftbukkit.persistence.CraftPersistentDataTypeRegistry;
 
 import com.mojang.serialization.Dynamic;
 
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import me.lauriichan.laylib.logger.ISimpleLogger;
 import me.lauriichan.spigot.justlootit.nms.convert.ConversionAdapter;
 import me.lauriichan.spigot.justlootit.nms.v26_3.VersionHandler26_3;
@@ -28,32 +29,34 @@ public final class ConversionAdapter26_3 extends ConversionAdapter {
     static final CraftPersistentDataTypeRegistry DATA_TYPE_REGISTRY = NmsHelper26_3.dataTypeRegistry();
 
     private final ISimpleLogger logger;
-    private final VersionHandler26_3 handler;
 
     public ConversionAdapter26_3(VersionHandler26_3 handler) {
         this.logger = handler.logger();
-        this.handler = handler;
     }
 
     @Override
-    public ProtoWorld26_3 getWorld(File directory) {
+    public ObjectList<ProtoWorld26_3> getWorlds(File directory) {
         if (!directory.exists() || directory.isFile()) {
-            return null;
+            return ObjectList.of();
         }
         File file = new File(directory, "level.dat");
         if (!file.exists()) {
-            return null;
+            return ObjectList.of();
         }
         MinecraftServer server = NmsHelper26_3.getServer();
         LevelStorageAccess session = server.storageSource;
+        session.getLevelDirectory();
         boolean closeSession = false;
         ResourceKey<LevelStem> dimensionKey = findKey(directory);
+        if (dimensionKey == null) {
+            return ObjectList.of();
+        }
         if (!directory.toPath().equals(session.getLevelDirectory().path())) {
             try {
                 session = session.parent().validateAndCreateAccess(directory.getName(), dimensionKey);
                 closeSession = true;
             } catch (IOException | ContentValidationException e) {
-                return null;
+                return ObjectList.of();
             }
         }
         Dynamic<?> dynamic;
@@ -63,7 +66,7 @@ public final class ConversionAdapter26_3 extends ConversionAdapter {
                 if (closeSession) {
                     session.close();
                 }
-                return null;
+                return ObjectList.of();
             }
             try {
                 dynamic = session.getUnfixedDataTag(false);
@@ -76,7 +79,7 @@ public final class ConversionAdapter26_3 extends ConversionAdapter {
                     if (closeSession) {
                         session.close();
                     }
-                    return null;
+                    return ObjectList.of();
                 }
                 session.restoreLevelDataFromOld();
             }
@@ -84,29 +87,33 @@ public final class ConversionAdapter26_3 extends ConversionAdapter {
                 if (closeSession) {
                     session.close();
                 }
-                return null;
+                return ObjectList.of();
             }
         } catch (IOException e) {
             // Ignore cause we're just closing :)
-            return null;
+            return ObjectList.of();
         }
         WorldLoader.DataLoadContext context = server.worldLoader;
         LevelDataAndDimensions levelData = LevelStorageSource.getLevelDataAndDimensions(session, dynamic, context.dataConfiguration(),
             context.datapackDimensions().lookupOrThrow(Registries.LEVEL_STEM), context.datapackWorldRegistries());
-        return handler.applyCapabilities(new ProtoWorld26_3(workerPool(logger), logger,
-            session, closeSession, dimensionKey, levelData.worldDataAndGenSettings()));
+        return ObjectList
+            .of(new ProtoWorld26_3(workerPool(logger), logger, session, closeSession, dimensionKey, levelData.worldDataAndGenSettings()));
     }
 
     private ResourceKey<LevelStem> findKey(File directory) {
-        File file = new File(directory, "DIM-1");
+        File file = new File(directory, "dimensions/minecraft/overworld/region");
+        if (file.exists()) {
+            return LevelStem.OVERWORLD;
+        }
+        file = new File(directory, "dimensions/minecraft/the_nether/region");
         if (file.exists()) {
             return LevelStem.NETHER;
         }
-        file = new File(directory, "DIM1");
+        file = new File(directory, "dimensions/minecraft/the_end/region");
         if (file.exists()) {
             return LevelStem.END;
         }
-        return LevelStem.OVERWORLD;
+        return null; // TODO: No clue, this has to be fixed
     }
 
 }

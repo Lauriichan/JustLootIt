@@ -2,6 +2,7 @@ package me.lauriichan.spigot.justlootit.nms;
 
 import java.io.File;
 
+import org.bukkit.NamespacedKey;
 import org.bukkit.plugin.Plugin;
 
 import me.lauriichan.laylib.logger.ISimpleLogger;
@@ -22,10 +23,14 @@ public interface IServiceProvider {
     
     File mainWorldFolder();
     
+    NamespacedKey dimensionTypeKey();
+    
     default void onPlayerSetup(PlayerAdapter adapter) {}
     
     default void onPlayerJoin(PlayerAdapter adapter) {}
     
     default void onPlayerLeave(PlayerAdapter adapter) {}
+    
+    default void onLevelLoad(LevelAdapter adapter) {}
 
 }

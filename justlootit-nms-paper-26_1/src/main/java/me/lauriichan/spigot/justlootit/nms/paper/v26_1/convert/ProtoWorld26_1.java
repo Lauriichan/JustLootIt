@@ -91,7 +91,7 @@ public class ProtoWorld26_1 extends ProtoWorld implements LevelHeightAccessor {
     private final Frozen registry;
 
     public ProtoWorld26_1(final Executor executor, final ISimpleLogger logger, final LevelStorageAccess session,
-        final boolean closeSession, final ResourceKey<LevelStem> dimensionKey, LevelDataAndDimensions.WorldDataAndGenSettings worldData) {
+        final boolean closeSession, final ResourceKey<Level> worldKey, final ResourceKey<LevelStem> dimensionKey, LevelDataAndDimensions.WorldDataAndGenSettings worldData) {
         super(executor);
         this.registry = NmsHelper26_1.getServer().registryAccess();
         this.logger = logger;
@@ -99,7 +99,7 @@ public class ProtoWorld26_1 extends ProtoWorld implements LevelHeightAccessor {
         LevelStem levelStem = registry.lookupOrThrow(Registries.LEVEL_STEM).getValue(dimensionKey);
         this.chunkGenerator = levelStem.generator();
         this.dimensionType = levelStem.type().value();
-        this.worldKey = ResourceKey.create(Registries.DIMENSION, dimensionKey.identifier());
+        this.worldKey = worldKey;
         Path dimensionPath = session.getDimensionPath(worldKey);
         this.worldFolder = dimensionPath.toFile();
         this.regionPath = dimensionPath.resolve("region");
@@ -138,7 +138,7 @@ public class ProtoWorld26_1 extends ProtoWorld implements LevelHeightAccessor {
 
     @Override
     public String getName() {
-        return worldData.data().getLevelName();
+        return worldKey.identifier().toString();
     }
 
     @Override

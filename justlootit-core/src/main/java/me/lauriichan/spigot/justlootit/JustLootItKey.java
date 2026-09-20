@@ -17,6 +17,8 @@ public final class JustLootItKey {
     private static NamespacedKey tableType;
     private static NamespacedKey tableNamespace;
     private static NamespacedKey tableKey;
+    
+    private static NamespacedKey dimensionType;
 
     public static void setup(final JustLootItPlugin plugin) {
         identity = plugin.key("id");
@@ -27,6 +29,7 @@ public final class JustLootItKey {
         tableType = plugin.key("table/type");
         tableNamespace = plugin.key("table/namespace");
         tableKey = plugin.key("table/key");
+        dimensionType = plugin.key("dimension/type");
     }
 
     public final static NamespacedKey identity() {
@@ -59,6 +62,10 @@ public final class JustLootItKey {
 
     public final static NamespacedKey tableKey() {
         return tableKey;
+    }
+
+    public final static NamespacedKey dimensionType() {
+        return dimensionType;
     }
 
 }
