@@ -351,7 +351,9 @@ public final class Messages implements IMessageExtension {
     public static MessageProvider COMMAND_BACKUP_APPLY_STEP_CLEAN_TEMPORARY_FAILED;
     @Message(id = "command.backup.apply.step.clean.temporary.done", content = "$#plugin.prefix Successfully cleaned temporary files for backup '&c$name&7'.")
     public static MessageProvider COMMAND_BACKUP_APPLY_STEP_CLEAN_TEMPORARY_DONE;
-    
+
+    @Message(id = "command.backup.apply.step.clean.permanent.player.prepare", content = "$#plugin.prefix Preparing loaded player data for backup application...")
+    public static MessageProvider COMMAND_BACKUP_APPLY_STEP_CLEAN_PERMANENT_PLAYER_PREPARE;
     @Message(id = "command.backup.apply.step.clean.permanent.player.start", content = "$#plugin.prefix Cleaning existing player data files in order to apply backup '&c$name&7'...")
     public static MessageProvider COMMAND_BACKUP_APPLY_STEP_CLEAN_PERMANENT_PLAYER_START;
     @Message(id = "command.backup.apply.step.clean.permanent.player.failed", content = "$#plugin.prefix Failed to clean existing player data files in order to apply backup '&c$name&7', please report to an administrator.")

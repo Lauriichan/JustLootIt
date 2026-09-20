@@ -21,6 +21,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
+import org.bukkit.entity.Player;
+
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import me.lauriichan.laylib.command.Actor;
@@ -228,7 +230,8 @@ public class BackupCommand implements ICommandExtension {
         actor.attributes().attrSet("BackupApply", new BackupApply(source, fileName));
         inputProvider.getBooleanInput(actor,
             actor.getTranslatedMessageAsString(Messages.INPUT_PROMPT_BACKUP_APPLY_ARE_YOU_SURE, Key.of("backupName", fileName)),
-            actor.getTranslatedMessageAsString(Messages.INPUT_RETRY_BOOLEAN), this::doApplyBackup);
+            actor.getTranslatedMessageAsString(Messages.INPUT_RETRY_BOOLEAN),
+            (act, state) -> actor.plugin().scheduler().async(() -> doApplyBackup(act, state)));
     }
 
     private void doApplyBackup(Actor<?> uncastedActor, Boolean state) {
@@ -278,32 +281,45 @@ public class BackupCommand implements ICommandExtension {
                 actor.sendTranslatedMessage(Messages.COMMAND_BACKUP_APPLY_STEP_UNPACK_FAILED, backupKey);
                 return;
             }
+            VersionHandler handler = actor.versionHandler();
             Path backedPlayerDir = tempDir.resolve("player_data");
             if (Files.exists(backedPlayerDir)) {
                 Path playerDir = new File(actor.versionHelper().globalDataFolder(), StorageCapability.PLAYER_PATH).toPath();
+                actor.sendTranslatedMessage(Messages.COMMAND_BACKUP_APPLY_STEP_CLEAN_PERMANENT_PLAYER_PREPARE);
+                handler.forEachPlayer(player -> {
+                    Player bktPlayer = player.asBukkit();
+                    handler.platform().scheduler().syncEntity(bktPlayer, bktPlayer::closeInventory).join();
+                    player.terminate();
+                });
                 try {
-                    if (Files.exists(playerDir)) {
-                        actor.sendTranslatedMessage(Messages.COMMAND_BACKUP_APPLY_STEP_CLEAN_PERMANENT_PLAYER_START, backupKey);
-                        IOUtil.delete(playerDir);
-                        actor.sendTranslatedMessage(Messages.COMMAND_BACKUP_APPLY_STEP_CLEAN_PERMANENT_PLAYER_DONE, backupKey);
+                    try {
+                        if (Files.exists(playerDir)) {
+                            actor.sendTranslatedMessage(Messages.COMMAND_BACKUP_APPLY_STEP_CLEAN_PERMANENT_PLAYER_START, backupKey);
+                            IOUtil.delete(playerDir);
+                            actor.sendTranslatedMessage(Messages.COMMAND_BACKUP_APPLY_STEP_CLEAN_PERMANENT_PLAYER_DONE, backupKey);
+                        }
+                    } catch (IOException e) {
+                        actor.logger().error("Failed to delete player data files", e);
+                        actor.sendTranslatedMessage(Messages.COMMAND_BACKUP_APPLY_STEP_CLEAN_PERMANENT_PLAYER_FAILED, backupKey);
+                        return;
                     }
-                } catch (IOException e) {
-                    actor.logger().error("Failed to delete player data files", e);
-                    actor.sendTranslatedMessage(Messages.COMMAND_BACKUP_APPLY_STEP_CLEAN_PERMANENT_PLAYER_FAILED, backupKey);
-                    return;
-                }
-                try {
-                    actor.sendTranslatedMessage(Messages.COMMAND_BACKUP_APPLY_STEP_APPLY_PLAYER_START, backupKey);
-                    Files.createDirectories(playerDir);
-                    IOUtil.move(backedPlayerDir, playerDir);
-                    actor.sendTranslatedMessage(Messages.COMMAND_BACKUP_APPLY_STEP_APPLY_PLAYER_DONE, backupKey);
-                } catch (IOException e) {
-                    actor.logger().error("Failed to apply player data files of backup '{0}'", e, fileName);
-                    actor.sendTranslatedMessage(Messages.COMMAND_BACKUP_APPLY_STEP_APPLY_PLAYER_FAILED, backupKey);
-                    return;
+                    try {
+                        actor.sendTranslatedMessage(Messages.COMMAND_BACKUP_APPLY_STEP_APPLY_PLAYER_START, backupKey);
+                        Files.createDirectories(playerDir);
+                        IOUtil.move(backedPlayerDir, playerDir);
+                        actor.sendTranslatedMessage(Messages.COMMAND_BACKUP_APPLY_STEP_APPLY_PLAYER_DONE, backupKey);
+                    } catch (IOException e) {
+                        actor.logger().error("Failed to apply player data files of backup '{0}'", e, fileName);
+                        actor.sendTranslatedMessage(Messages.COMMAND_BACKUP_APPLY_STEP_APPLY_PLAYER_FAILED, backupKey);
+                        return;
+                    }
+                } finally {
+                    handler.forEachPlayer(player -> {
+                        player.reset();
+                        handler.applyCapabilities(player);
+                    });
                 }
             }
-            VersionHandler handler = actor.versionHandler();
             Iterator<Path> levels;
             try {
                 levels = IOUtil.list(tempDir);
@@ -331,30 +347,36 @@ public class BackupCommand implements ICommandExtension {
                     continue;
                 }
                 String levelName = level.asBukkit().getName();
+                Key levelKey = Key.of("level", levelName);
                 level.terminate();
-                Path storagePath = level.dataFolder().toPath().resolve(StorageCapability.CONTAINER_PATH);
                 try {
-                    if (Files.exists(storagePath)) {
-                        actor.sendTranslatedMessage(Messages.COMMAND_BACKUP_APPLY_STEP_CLEAN_PERMANENT_LEVEL_START, backupKey);
-                        IOUtil.delete(storagePath);
-                        actor.sendTranslatedMessage(Messages.COMMAND_BACKUP_APPLY_STEP_CLEAN_PERMANENT_LEVEL_DONE, backupKey);
+                    Path storagePath = level.dataFolder().toPath().resolve(StorageCapability.CONTAINER_PATH);
+                    try {
+                        if (Files.exists(storagePath)) {
+                            actor.sendTranslatedMessage(Messages.COMMAND_BACKUP_APPLY_STEP_CLEAN_PERMANENT_LEVEL_START, backupKey,
+                                levelKey);
+                            IOUtil.delete(storagePath);
+                            actor.sendTranslatedMessage(Messages.COMMAND_BACKUP_APPLY_STEP_CLEAN_PERMANENT_LEVEL_DONE, backupKey, levelKey);
+                        }
+                    } catch (IOException e) {
+                        actor.logger().error("Failed to delete container data files of level '{0}'", e, levelName);
+                        actor.sendTranslatedMessage(Messages.COMMAND_BACKUP_APPLY_STEP_CLEAN_PERMANENT_LEVEL_FAILED, backupKey, levelKey);
+                        continue;
                     }
-                } catch (IOException e) {
-                    actor.logger().error("Failed to delete container data files of level '{0}'", e, levelName);
-                    actor.sendTranslatedMessage(Messages.COMMAND_BACKUP_APPLY_STEP_CLEAN_PERMANENT_LEVEL_FAILED, backupKey);
-                    return;
+                    try {
+                        actor.sendTranslatedMessage(Messages.COMMAND_BACKUP_APPLY_STEP_APPLY_LEVEL_START, backupKey, levelKey);
+                        IOUtil.move(levelDataPath, storagePath);
+                    } catch (IOException e) {
+                        actor.logger().error("Failed to apply container data files of backup '{1}' for level '{0}'", e, levelName,
+                            fileName);
+                        actor.sendTranslatedMessage(Messages.COMMAND_BACKUP_APPLY_STEP_APPLY_LEVEL_FAILED, backupKey, levelKey);
+                        continue;
+                    }
+                    actor.sendTranslatedMessage(Messages.COMMAND_BACKUP_APPLY_STEP_APPLY_LEVEL_DONE, backupKey, levelKey);
+                } finally {
+                    level.reset();
+                    handler.applyCapabilities(level);
                 }
-                try {
-                    actor.sendTranslatedMessage(Messages.COMMAND_BACKUP_APPLY_STEP_APPLY_LEVEL_START, backupKey);
-                    IOUtil.move(levelDataPath, storagePath);
-                } catch (IOException e) {
-                    actor.logger().error("Failed to apply container data files of backup '{1}' for level '{0}'", e, levelName, fileName);
-                    actor.sendTranslatedMessage(Messages.COMMAND_BACKUP_APPLY_STEP_APPLY_LEVEL_FAILED, backupKey);
-                    return;
-                }
-                level.reset();
-                handler.applyCapabilities(level);
-                actor.sendTranslatedMessage(Messages.COMMAND_BACKUP_APPLY_STEP_APPLY_LEVEL_DONE, backupKey);
             }
             actor.sendTranslatedMessage(Messages.COMMAND_BACKUP_APPLY_DONE, backupKey);
         } finally {
