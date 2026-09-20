@@ -22,7 +22,7 @@ public final class NbtHelper26_3 extends NbtHelper {
     public <T> IListTag<T> createList(TagType<T> type) {
         return new ListTag26_3<>(type);
     }
-    
+
     @Override
     public ICompoundTag asTag(ItemStack itemStack) {
         return new CompoundTag26_3(ItemStackIO26_3.ITEM_STACK.asNbt(itemStack));
@@ -40,7 +40,7 @@ public final class NbtHelper26_3 extends NbtHelper {
         }
         return new CompoundTag26_3(tag);
     }
-    
+
     @Override
     public ItemStack asItem(ICompoundTag tag) {
         return ItemStackIO26_3.ITEM_STACK.fromNbt(((CompoundTag26_3) tag).handle());

@@ -1,5 +1,8 @@
 package me.lauriichan.spigot.justlootit.nms.paper.v26_2.nbt;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.Set;
 import java.util.UUID;
 
@@ -277,6 +280,18 @@ public final class CompoundTag26_2 implements ICompoundTag {
     @Override
     public String asString() {
         return compoundTag.toString();
+    }
+
+    @Override
+    public void read(DataInput input) throws IOException {
+        CompoundTag tag = NbtIo.read(input);
+        clear();
+        tag.forEach(compoundTag::put);
+    }
+
+    @Override
+    public void write(DataOutput output) throws IOException {
+        NbtIo.write(compoundTag, output);
     }
 
 }

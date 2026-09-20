@@ -89,6 +89,7 @@ import me.lauriichan.spigot.justlootit.storage.util.cache.CacheTickTimer;
 import me.lauriichan.spigot.justlootit.storage.util.executor.ProtoExecutor;
 import me.lauriichan.spigot.justlootit.util.JLIInitializationException;
 import me.lauriichan.spigot.justlootit.util.JLIInitializationException.ErrorType;
+import me.lauriichan.spigot.justlootit.version.VersionMigration;
 import me.lauriichan.spigot.justlootit.util.PluginVersion;
 
 public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> implements IServiceProvider {
@@ -294,6 +295,9 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         }
         // Setup storage before conversion
         setupStorage();
+        // Also do version migrations before conversion
+        JustLootItDataStore.STORE.load(this);
+        doVersionMigrations();
         if (doWorldConversion()) {
             // Restart server afterwards, just to be safe
             getServer().spigot().restart();
@@ -321,6 +325,22 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         registerCommands(commandManager);
         // Initialize compatibilities
         initializeCompatibilities();
+    }
+
+    private void doVersionMigrations() {
+        SimpleVersion lastVersion = JustLootItDataStore.STORE.lastMinecraftVersion();
+        SimpleVersion currentVersion = platform.version().minecraftVersion();
+        JustLootItDataStore.STORE.lastMinecraftVersion(currentVersion);
+        if (lastVersion == null) {
+            return;
+        }
+        extension(VersionMigration.class, true).extensions().stream().sorted((o1, o2) -> Integer.compare(o1.id(), o2.id()))
+            .forEach(migration -> {
+                if (migration.applies(platform.type(), lastVersion, currentVersion)) {
+                    logger().info("[VERSION MIGRATION] {0}", migration.message());
+                    migration.run(logger(), this);
+                }
+            });
     }
 
     private boolean doWorldConversion() {
@@ -459,6 +479,7 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
 
     @Override
     public void onPluginDisable() {
+        JustLootItDataStore.STORE.save();
         stopTimers();
         if (executor != null) {
             executor.setInactive();
@@ -566,7 +587,7 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
     public File mainWorldFolder() {
         return mainWorldFolder;
     }
-    
+
     @Override
     public NamespacedKey dimensionTypeKey() {
         return JustLootItKey.dimensionType();

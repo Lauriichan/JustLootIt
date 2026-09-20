@@ -35,10 +35,10 @@ public final class NmsHelper26_3 {
     private static final MethodHandle WRAP = Access.wrap();
     private static final VarHandle DATA_TYPE_REGISTRY = Access.dataTypeRegistry();
     private static final VarHandle TAGS = Access.tags();
-    
+
     private static final MethodHandle CREATE_TAG_VALUE_WRAPPER = Access.createTagValueWrapper();
     private static final VarHandle CUSTOM_DATA = Access.customData();
-    
+
     private static volatile boolean dataTypeRegistrySetup = false;
 
     private static final class Access {
@@ -66,7 +66,8 @@ public final class NmsHelper26_3 {
         static VarHandle dataTypeRegistry() {
             Field field = ClassUtil.getField(CraftEntity.class, "DATA_TYPE_REGISTRY");
             if (field == null || !CraftPersistentDataTypeRegistry.class.isAssignableFrom(field.getType())) {
-                throw new IllegalStateException("Couldn't find field 'DATA_TYPE_REGISTRY', JustLootIt won't be able to convert anything here.");
+                throw new IllegalStateException(
+                    "Couldn't find field 'DATA_TYPE_REGISTRY', JustLootIt won't be able to convert anything here.");
             }
             return JavaLookup.PLATFORM.unreflect(field);
         }
@@ -80,7 +81,8 @@ public final class NmsHelper26_3 {
         }
 
         static MethodHandle createTagValueWrapper() {
-            Constructor<?> constructor = ClassUtil.getConstructor(TagValueOutput.class, ProblemReporter.class, DynamicOps.class, CompoundTag.class);
+            Constructor<?> constructor = ClassUtil.getConstructor(TagValueOutput.class, ProblemReporter.class, DynamicOps.class,
+                CompoundTag.class);
             if (constructor == null) {
                 throw new IllegalStateException("Couldn't find method 'getTileEntity', JustLootIt won't work here.");
             }
@@ -100,7 +102,7 @@ public final class NmsHelper26_3 {
         }
 
     }
-    
+
     public static <E extends BlockEntity> E getTileEntity(CraftBlockEntityState<E> state) {
         try {
             return (E) GET_TILE_ENTITY.invoke(state);
@@ -108,7 +110,7 @@ public final class NmsHelper26_3 {
             return null;
         }
     }
-    
+
     public static CraftPersistentDataTypeRegistry dataTypeRegistry() {
         CraftPersistentDataTypeRegistry registry = (CraftPersistentDataTypeRegistry) DATA_TYPE_REGISTRY.get();
         if (!dataTypeRegistrySetup) {
@@ -117,7 +119,7 @@ public final class NmsHelper26_3 {
         }
         return registry;
     }
-    
+
     private static void setupRegistry(CraftPersistentDataTypeRegistry registry) {
         wrap(registry, PersistentDataType.BYTE, Byte.valueOf((byte) 0));
         wrap(registry, PersistentDataType.SHORT, Short.valueOf((short) 0));
@@ -130,7 +132,7 @@ public final class NmsHelper26_3 {
         wrap(registry, PersistentDataType.LONG_ARRAY, new long[0]);
         wrap(registry, PersistentDataType.TAG_CONTAINER, new CraftPersistentDataContainer(registry));
     }
-    
+
     private static <P> void wrap(CraftPersistentDataTypeRegistry registry, PersistentDataType<P, ?> type, P value) {
         try {
             WRAP.invokeWithArguments(registry, type, value);
@@ -138,7 +140,7 @@ public final class NmsHelper26_3 {
             throw new RuntimeException("Failed to wrap primitive '" + type.getPrimitiveType().getName() + "'", e);
         }
     }
-    
+
     public static TagValueOutput createTagOutput(ProblemReporter reporter, DynamicOps<Tag> ops, CompoundTag tag) {
         try {
             return (TagValueOutput) CREATE_TAG_VALUE_WRAPPER.invoke(reporter, ops, tag);
@@ -154,11 +156,11 @@ public final class NmsHelper26_3 {
     public static void setCustomData(ItemMeta meta, CompoundTag tag) {
         CUSTOM_DATA.set(meta, tag);
     }
-    
+
     public static void clearCompound(CompoundTag tag) {
         ((Map<?, ?>) TAGS.get(tag)).clear();
     }
-    
+
     public static MinecraftServer getServer() {
         return ((CraftServer) Bukkit.getServer()).getServer();
     }

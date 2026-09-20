@@ -1,5 +1,8 @@
 package me.lauriichan.spigot.justlootit.nms.v1_21_R3.nbt;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.Set;
 import java.util.UUID;
 
@@ -33,7 +36,7 @@ public final class CompoundTag1_21_R3 implements ICompoundTag {
         }
         return TagType.getType(tag.getId());
     }
-    
+
     @Override
     public TagType<?> getListType(String key) {
         Tag tag = compoundTag.get(key);
@@ -42,7 +45,7 @@ public final class CompoundTag1_21_R3 implements ICompoundTag {
         }
         return TagType.getType(((ListTag) tag).getElementType());
     }
-    
+
     @Override
     public boolean has(String key) {
         return compoundTag.contains(key);
@@ -52,7 +55,7 @@ public final class CompoundTag1_21_R3 implements ICompoundTag {
     public boolean has(String key, TagType<?> type) {
         return type == getType(key);
     }
-    
+
     @Override
     public boolean hasNumeric(String key) {
         TagType<?> type = getType(key);
@@ -73,7 +76,7 @@ public final class CompoundTag1_21_R3 implements ICompoundTag {
     public byte getByte(String key) {
         return compoundTag.getByte(key);
     }
-    
+
     @Override
     public boolean getBoolean(String key) {
         return compoundTag.getBoolean(key);
@@ -127,12 +130,12 @@ public final class CompoundTag1_21_R3 implements ICompoundTag {
         }
         return null;
     }
-    
+
     @Override
     public UUID getUUID(String key) {
         try {
             return compoundTag.getUUID(key);
-        } catch(IllegalArgumentException ignore) {
+        } catch (IllegalArgumentException ignore) {
             return null;
         }
     }
@@ -144,7 +147,7 @@ public final class CompoundTag1_21_R3 implements ICompoundTag {
         }
         return null;
     }
-    
+
     @Override
     public IListTag<?> getList(String key) {
         if (compoundTag.contains(key, TagType.LIST.tagId())) {
@@ -178,7 +181,7 @@ public final class CompoundTag1_21_R3 implements ICompoundTag {
     public void set(String key, byte value) {
         compoundTag.putByte(key, value);
     }
-    
+
     @Override
     public void set(String key, boolean value) {
         compoundTag.putBoolean(key, value);
@@ -228,7 +231,7 @@ public final class CompoundTag1_21_R3 implements ICompoundTag {
     public void set(String key, long[] value) {
         compoundTag.putLongArray(key, value);
     }
-    
+
     @Override
     public void set(String key, UUID uuid) {
         compoundTag.putUUID(key, uuid);
@@ -243,35 +246,49 @@ public final class CompoundTag1_21_R3 implements ICompoundTag {
     public void set(String key, IListTag<?> list) {
         compoundTag.put(key, ((ListTag1_21_R3<?>) list).handle());
     }
-    
+
     @Override
     public void remove(String key) {
         compoundTag.remove(key);
     }
-    
+
     @Override
     public Set<String> keys() {
         return compoundTag.getAllKeys();
     }
-    
+
     @Override
     public int size() {
         return compoundTag.size();
     }
-    
+
     @Override
     public boolean isEmpty() {
         return compoundTag.isEmpty();
     }
-    
+
     @Override
     public void clear() {
         NmsHelper1_21_R3.clearCompound(compoundTag);
     }
-    
+
     @Override
     public String asString() {
         return compoundTag.getAsString();
+    }
+
+    @Override
+    public void read(DataInput input) throws IOException {
+        CompoundTag tag = NbtIo.read(input);
+        clear();
+        for (String key : tag.getAllKeys()) {
+            compoundTag.put(key, tag.get(key));
+        }
+    }
+
+    @Override
+    public void write(DataOutput output) throws IOException {
+        NbtIo.write(compoundTag, output);
     }
 
 }

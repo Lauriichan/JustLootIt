@@ -1,5 +1,8 @@
 package me.lauriichan.spigot.justlootit.nms.nbt;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.Set;
 import java.util.UUID;
 
@@ -86,5 +89,9 @@ public interface ICompoundTag {
     void clear();
     
     String asString();
+    
+    void read(DataInput input) throws IOException;
+    
+    void write(DataOutput output) throws IOException;
     
 }
