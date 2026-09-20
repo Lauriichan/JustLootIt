@@ -1,5 +1,6 @@
 package me.lauriichan.spigot.justlootit.nms;
 
+import java.io.File;
 import java.util.List;
 
 import org.bukkit.Location;
@@ -21,6 +22,10 @@ public abstract class VersionHelper {
     public final Item createItemHover(ItemStack itemStack) {
         return new Item(RegistryUtil.getKey(itemStack.getType()).toString(), itemStack.getAmount(),
             ItemTag.ofNbt(handler().nbtHelper().asTag(itemStack).asString()));
+    }
+    
+    public File globalDataFolder() {
+        return new File(handler().mainWorldFolder(), "data");
     }
 
     public abstract net.md_5.bungee.api.chat.hover.content.Entity createEntityHover(Entity entity);

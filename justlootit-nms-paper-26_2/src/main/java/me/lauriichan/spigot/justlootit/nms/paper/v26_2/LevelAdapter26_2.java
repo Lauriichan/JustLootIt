@@ -1,5 +1,7 @@
 package me.lauriichan.spigot.justlootit.nms.paper.v26_2;
 
+import java.io.File;
+
 import org.bukkit.Location;
 import org.bukkit.craftbukkit.CraftRegistry;
 import org.bukkit.craftbukkit.CraftWorld;
@@ -33,6 +35,11 @@ public class LevelAdapter26_2 extends LevelAdapter {
     @Override
     public CraftWorld asBukkit() {
         return level.getWorld();
+    }
+    
+    @Override
+    public File dataFolder() {
+        return new File(level.getWorld().getWorldFolder(), "data");
     }
 
     @Override

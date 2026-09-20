@@ -1,5 +1,6 @@
 package me.lauriichan.spigot.justlootit.nms.v26_2;
 
+import java.io.File;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,6 +40,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.decoration.ItemFrame;
 import net.minecraft.world.entity.monster.piglin.PiglinAi;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.storage.LevelResource;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
@@ -50,16 +52,24 @@ public class VersionHelper26_2 extends VersionHelper {
     private final VersionHandler26_2 handler;
 
     private final ReloadableServerRegistries.Holder resourceRegistry;
+    
+    private final File globalDataFolder;
 
     public VersionHelper26_2(final VersionHandler26_2 handler) {
         this.handler = handler;
         MinecraftServer server = NmsHelper26_2.getServer();
         this.resourceRegistry = server.resources.managers().fullRegistries();
+        this.globalDataFolder = server.storageSource.getLevelPath(LevelResource.ROOT).resolve(LevelResource.DATA.id()).toFile();
     }
 
     @Override
     public VersionHandler handler() {
         return handler;
+    }
+    
+    @Override
+    public File globalDataFolder() {
+        return globalDataFolder;
     }
 
     @Override

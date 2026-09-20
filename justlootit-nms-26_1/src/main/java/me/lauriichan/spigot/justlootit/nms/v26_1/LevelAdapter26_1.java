@@ -1,5 +1,7 @@
 package me.lauriichan.spigot.justlootit.nms.v26_1;
 
+import java.io.File;
+
 import org.bukkit.Location;
 import org.bukkit.craftbukkit.CraftRegistry;
 import org.bukkit.craftbukkit.CraftWorld;
@@ -11,6 +13,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.entity.LevelEntityGetter;
 
 public class LevelAdapter26_1 extends LevelAdapter {
@@ -34,6 +37,11 @@ public class LevelAdapter26_1 extends LevelAdapter {
     @Override
     public CraftWorld asBukkit() {
         return level.getWorld();
+    }
+    
+    @Override
+    public File dataFolder() {
+        return DimensionType.getStorageFolder(level.dimension(), level.storageSource.levelDirectory.path()).resolve("data").toFile();
     }
 
     @Override

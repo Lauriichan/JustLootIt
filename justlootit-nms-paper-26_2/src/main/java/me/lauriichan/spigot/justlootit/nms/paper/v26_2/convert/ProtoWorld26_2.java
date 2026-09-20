@@ -101,7 +101,7 @@ public class ProtoWorld26_2 extends ProtoWorld implements LevelHeightAccessor {
         this.dimensionType = levelStem.type().value();
         this.worldKey = ResourceKey.create(Registries.DIMENSION, dimensionKey.identifier());
         Path dimensionPath = session.getDimensionPath(worldKey);
-        this.worldFolder = toWorldFolder(dimensionPath);
+        this.worldFolder = dimensionPath.toFile();
         this.regionPath = dimensionPath.resolve("region");
         this.entityPath = dimensionPath.resolve("entities");
         this.worldData = worldData;
@@ -116,15 +116,6 @@ public class ProtoWorld26_2 extends ProtoWorld implements LevelHeightAccessor {
         Blocks.AIR.getClass();
         EntityTypes.BAT.getClass();
         BlockEntityTypes.CHEST.getClass();
-    }
-
-    private File toWorldFolder(Path dimensionPath) {
-        File folder = dimensionPath.toFile();
-        Path levelDatPath = dimensionPath.resolve("level.dat");
-        if (Files.exists(levelDatPath) && !Files.isDirectory(levelDatPath)) {
-            return folder;
-        }
-        return folder.getParentFile();
     }
 
     @Override

@@ -5,6 +5,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.DirectoryIteratorException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.Iterator;
 
 import me.lauriichan.laylib.json.IJson;
@@ -62,6 +63,24 @@ public final class IOUtil {
                 }
             }
         };
+    }
+
+    public static void copy(Path origin, Path target) throws IOException {
+        if (!Files.isDirectory(origin)) {
+            if (!Files.exists(target) && !Files.exists(target.getParent())) {
+                Files.createDirectories(target.getParent());
+            }
+            Files.copy(origin, target, StandardCopyOption.REPLACE_EXISTING);
+            return;
+        }
+        if (!Files.exists(target)) {
+            Files.createDirectories(target);
+        }
+        Iterator<Path> iter = list(origin);
+        while (iter.hasNext()) {
+            Path next = iter.next();
+            copy(next, target.resolve(next.getFileName()));
+        }
     }
 
 }

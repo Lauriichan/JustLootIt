@@ -1,5 +1,6 @@
 package me.lauriichan.spigot.justlootit.nms.paper.v26_2;
 
+import java.io.File;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +42,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.decoration.ItemFrame;
 import net.minecraft.world.entity.monster.piglin.PiglinAi;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.storage.LevelResource;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
@@ -53,12 +55,15 @@ public class VersionHelper26_2 extends VersionHelper {
 
     private final ReloadableServerRegistries.Holder resourceRegistry;
     private final int itemFrameDataItemId;
+    
+    private final File globalDataFolder;
 
     public VersionHelper26_2(final VersionHandler26_2 handler) {
         this.handler = handler;
         MinecraftServer server = NmsHelper26_2.getServer();
         this.resourceRegistry = server.reloadableRegistries();
         this.itemFrameDataItemId = resolveItemFrameDataItemId();
+        this.globalDataFolder = server.storageSource.getLevelPath(LevelResource.ROOT).resolve(LevelResource.DATA.id()).toFile();
     }
 
     private int resolveItemFrameDataItemId() {
@@ -73,6 +78,11 @@ public class VersionHelper26_2 extends VersionHelper {
     @Override
     public VersionHandler handler() {
         return handler;
+    }
+    
+    @Override
+    public File globalDataFolder() {
+        return globalDataFolder;
     }
 
     @Override

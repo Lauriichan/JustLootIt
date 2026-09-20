@@ -22,7 +22,6 @@ import me.lauriichan.spigot.justlootit.convert.ConversionProperties;
 import me.lauriichan.spigot.justlootit.input.SimpleChatInputProvider;
 import me.lauriichan.spigot.justlootit.message.Messages;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
-import me.lauriichan.spigot.justlootit.platform.PlatformType;
 
 @Extension
 @Command(name = "convert")
@@ -31,32 +30,47 @@ public class ConvertCommand implements ICommandExtension {
 
     private static final String ATTR_PROPERTIES = "conversion_properties";
 
+    private static enum CommandType {
+
+        RESTORE,
+        CONVERT;
+
+    }
+
+    private static record ConvRequest(UUID id, CommandType type) {}
+
     private final SimpleChatInputProvider inputProvider = SimpleChatInputProvider.CHAT;
 
     private volatile OffsetDateTime requestExpiry;
-    private volatile UUID request;
+    private volatile ConvRequest request;
 
     private volatile UUID conversionSetup;
 
     @Action("restore")
     @Description("$#command.description.justlootit.convert.restore")
     public void restore(final JustLootItPlugin plugin, LootItActor<?> actor) {
-        if (!setup(plugin, actor)) {
+        if (!setup(plugin, actor, CommandType.RESTORE)) {
             return;
         }
-        actor = correctActor(plugin, actor);
-        properties(actor).setProperty(ConvProp.DO_RESTORATION, true);
-        inputProvider.getStringInput(actor, actor.getTranslatedMessageAsString(Messages.INPUT_PROMPT_CONVERT_BLACKLIST_WORLD_INFO), null,
-            this::blacklistWorldSubmit);
+        startConversion(correctActor(plugin, actor));
     }
 
     @Action("")
     @Description("$#command.description.justlootit.convert.conversion")
     public void convert(final JustLootItPlugin plugin, LootItActor<?> actor) {
-        if (!setup(plugin, actor)) {
+        if (!setup(plugin, actor, CommandType.CONVERT)) {
             return;
         }
-        actor = correctActor(plugin, actor);
+        startConversion(correctActor(plugin, actor));
+    }
+
+    private void startConversion(LootItActor<?> actor) {
+        ConversionProperties properties = properties(actor);
+        if (properties.isProperty(ConvProp.DO_RESTORATION, false)) {
+            inputProvider.getStringInput(actor, actor.getTranslatedMessageAsString(Messages.INPUT_PROMPT_CONVERT_BLACKLIST_WORLD_INFO),
+                null, this::blacklistWorldSubmit);
+            return;
+        }
         inputProvider.getBooleanInput(actor, actor.getTranslatedMessageAsString(Messages.INPUT_PROMPT_CONVERT_DO_LOOTIN),
             actor.getTranslatedMessageAsString(Messages.INPUT_RETRY_BOOLEAN), this::propertyDoLootin);
     }
@@ -74,24 +88,25 @@ public class ConvertCommand implements ICommandExtension {
         return ActorCapability.actor(adapter);
     }
 
-    private boolean setup(final JustLootItPlugin plugin, LootItActor<?> actor) {
-        if (plugin.platform().type() != PlatformType.SPIGOT && plugin.platform().version().minecraftVersion().major() >= 26) {
-            actor.sendTranslatedMessage(Messages.COMMAND_CONVERT_PROCESS_UNSUPPORTED,
-                Key.of("platform.type", plugin.platform().type().name().toLowerCase()),
-                Key.of("platform.version", plugin.platform().version().minecraftVersion()));
-            return false;
-        }
+    private boolean setup(final JustLootItPlugin plugin, LootItActor<?> actor, CommandType type) {
+        //        TODO: Remove this code as its no longer necessary but keep it for now so we can quickly push an update to disable again
+        //        if (plugin.platform().type() != PlatformType.SPIGOT && plugin.platform().version().minecraftVersion().major() >= 26) {
+        //            actor.sendTranslatedMessage(Messages.COMMAND_CONVERT_PROCESS_UNSUPPORTED,
+        //                Key.of("platform.type", plugin.platform().type().name().toLowerCase()),
+        //                Key.of("platform.version", plugin.platform().version().minecraftVersion()));
+        //            return false;
+        //        }
         if (conversionSetup != null) {
             actor.sendTranslatedMessage(Messages.COMMAND_CONVERT_PROCESS_ONGOING, Key.of("name", actorName(conversionSetup, plugin)));
             return false;
         }
         if (!actor.isConsole()) {
             if (requestExpiry != null && !OffsetDateTime.now().isAfter(requestExpiry)) {
-                actor.sendTranslatedMessage(Messages.COMMAND_CONVERT_PROCESS_ONGOING, Key.of("name", actorName(request, plugin)));
+                actor.sendTranslatedMessage(Messages.COMMAND_CONVERT_PROCESS_ONGOING, Key.of("name", actorName(request.id(), plugin)));
                 return false;
             }
             requestExpiry = OffsetDateTime.now().plusMinutes(3);
-            request = actor.getId();
+            request = new ConvRequest(actor.getId(), type);
             actor.sendTranslatedMessage(Messages.COMMAND_CONVERT_PROCESS_USER_REQUEST);
             return false;
         }
@@ -102,13 +117,14 @@ public class ConvertCommand implements ICommandExtension {
                 actor.sendTranslatedMessage(Messages.COMMAND_CONVERT_PROCESS_USER_EXPIRED);
                 return false;
             }
-            PlayerAdapter adapter = plugin.versionHandler().getPlayer(request);
+            PlayerAdapter adapter = plugin.versionHandler().getPlayer(request.id());
             if (adapter == null) {
                 actor.sendTranslatedMessage(Messages.COMMAND_CONVERT_PROCESS_USER_EXPIRED);
                 return false;
             }
             actor.sendTranslatedMessage(Messages.COMMAND_CONVERT_PROCESS_USER_CONFIRMED_CONSOLE, Key.of("name", adapter.getName()));
             conversionSetup = adapter.getUniqueId();
+            type = request.type();
             request = null;
             requestExpiry = null;
             actor = ActorCapability.actor(adapter);
@@ -116,7 +132,16 @@ public class ConvertCommand implements ICommandExtension {
         } else {
             conversionSetup = actor.getId();
         }
-        newProperties(plugin, actor);
+        // Setup properties related to command type
+        ConversionProperties properties = newProperties(plugin, actor);
+        switch (type) {
+        case RESTORE:
+            properties.setProperty(ConvProp.DO_RESTORATION, true);
+            break;
+        default:
+        case CONVERT:
+            break;
+        }
         return true;
     }
 
@@ -127,9 +152,10 @@ public class ConvertCommand implements ICommandExtension {
         return plugin.versionHandler().getPlayer(uuid).getName();
     }
 
-    private void newProperties(final JustLootItPlugin plugin, Actor<?> actor) {
-        ((LootItActor<?>) actor).attributes().attrSet(ATTR_PROPERTIES,
-            new ConversionProperties(plugin.logger(), plugin.getConversionPropertyFile(), true));
+    private ConversionProperties newProperties(final JustLootItPlugin plugin, Actor<?> actor) {
+        ConversionProperties properties = new ConversionProperties(plugin.logger(), plugin.getConversionPropertyFile(), true);
+        ((LootItActor<?>) actor).attributes().attrSet(ATTR_PROPERTIES, properties);
+        return properties;
     }
 
     private ConversionProperties properties(Actor<?> actor) {

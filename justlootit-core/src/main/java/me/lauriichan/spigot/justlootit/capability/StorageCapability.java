@@ -1,6 +1,9 @@
 package me.lauriichan.spigot.justlootit.capability;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 
@@ -21,24 +24,86 @@ import me.lauriichan.spigot.justlootit.storage.randomaccessfile.versionized.RAFS
 import me.lauriichan.spigot.justlootit.storage.randomaccessfile.versionized.RAFSettings.MigrationSettings;
 import me.lauriichan.spigot.justlootit.storage.util.cache.CacheTickTimer;
 import me.lauriichan.spigot.justlootit.storage.util.counter.CounterProgress;
+import me.lauriichan.spigot.justlootit.util.IOUtil;
 import me.lauriichan.spigot.justlootit.util.progress.MultiNotifier;
 import me.lauriichan.spigot.justlootit.util.progress.ProgressTracker;
 
 public abstract class StorageCapability implements ICapability {
+
+    private static File migrateWorldFiles(VersionHandler handler, LevelAdapter level, String path) {
+        Path newPath = level.dataFolder().toPath().resolve(path);
+        if (!Files.exists(newPath)) {
+            Path oldPath = new File(level.asBukkit().getWorldFolder(), "data").toPath().resolve(path);
+            if (Files.exists(oldPath)) {
+                try {
+                    handler.logger().error("[MIGRATION] Copying JLI container files of world '{0}' from old data location to new one",
+                        level.asBukkit().getName());
+                    IOUtil.copy(oldPath, newPath);
+                } catch (IOException e) {
+                    handler.logger().error("Failed to copy JLI container files of world '{0}' from old data location to new one", e,
+                        level.asBukkit().getName());
+                }
+            } else {
+                oldPath = level.asBukkit().getWorldFolder().toPath().resolve(path);
+                if (Files.exists(oldPath)) {
+                    try {
+                        handler.logger().error("[MIGRATION] Copying JLI container files of world '{0}' from old data location to new one",
+                            level.asBukkit().getName());
+                        IOUtil.copy(oldPath, newPath);
+                    } catch (IOException e) {
+                        handler.logger().error("Failed to copy JLI container files of world '{0}' from old data location to new one", e,
+                            level.asBukkit().getName());
+                    }
+                }
+            }
+        }
+        return newPath.toFile();
+    }
+
+    private static File migrateGlobalFiles(VersionHandler handler, PlayerAdapter player, String path) {
+        File mainWorld = handler.mainWorldFolder();
+        File globalData = handler.versionHelper().globalDataFolder();
+        if (globalData.equals(mainWorld)) {
+            return new File(mainWorld, path + '/' + player.getUniqueId().toString() + ".jli");
+        }
+        Path newPath = globalData.toPath().resolve(path);
+        if (!Files.exists(newPath)) {
+            Path oldPath = mainWorld.toPath().resolve("data").resolve(path);
+            if (Files.exists(oldPath)) {
+                try {
+                    handler.logger().error("[MIGRATION] Copying JLI player files from old data location to new one");
+                    IOUtil.copy(oldPath, newPath);
+                } catch (IOException e) {
+                    handler.logger().error("Failed to copy JLI player files from old data location to new one", e);
+                }
+            } else {
+                oldPath = mainWorld.toPath().resolve(path);
+                if (Files.exists(oldPath)) {
+                    try {
+                        handler.logger().error("[MIGRATION] Copying JLI player files from old data location to new one");
+                        IOUtil.copy(oldPath, newPath);
+                    } catch (IOException e) {
+                        handler.logger().error("Failed to copy JLI player files from old data location to new one", e);
+                    }
+                }
+            }
+        }
+        return newPath.resolve(player.getUniqueId().toString() + ".jli").toFile();
+    }
 
     static final class LevelContainerImpl extends StorageCapability {
         public static final MigrationSettings MIGRATION = new MigrationSettings(1024);
         public static final RAFSettings SETTINGS = RAFSettings.builder().migrationSupport(MIGRATION).build();
 
         public LevelContainerImpl(final VersionHandler handler, final LevelAdapter adapter) {
-            super((JustLootItPlugin) handler.plugin(), (plugin, registry) -> new RAFMultiStorage(registry,
-                new File(adapter.asBukkit().getWorldFolder(), "justlootit/containers"), SETTINGS), false, true);
+            super((JustLootItPlugin) handler.plugin(),
+                (plugin, registry) -> new RAFMultiStorage(registry, migrateWorldFiles(handler, adapter, "justlootit/containers"), SETTINGS),
+                false, true);
         }
 
         public LevelContainerImpl(final VersionHandler handler, final ProtoWorld world) {
-            super((JustLootItPlugin) handler.plugin(),
-                (plugin, registry) -> new RAFMultiStorage(registry, new File(world.getWorldFolder(), "justlootit/containers"), SETTINGS),
-                false, false);
+            super((JustLootItPlugin) handler.plugin(), (plugin, registry) -> new RAFMultiStorage(registry,
+                new File(world.getWorldFolder(), "data/justlootit/containers"), SETTINGS), false, false);
         }
     }
 
@@ -49,8 +114,7 @@ public abstract class StorageCapability implements ICapability {
 
         public PlayerImpl(final VersionHandler handler, final PlayerAdapter adapter) {
             super((JustLootItPlugin) handler.plugin(),
-                (plugin, registry) -> new RAFSingleStorage(registry,
-                    new File(plugin.mainWorldFolder(), "justlootit/players/" + adapter.getUniqueId().toString() + ".jli"), SETTINGS),
+                (plugin, registry) -> new RAFSingleStorage(registry, migrateGlobalFiles(handler, adapter, "justlootit/players"), SETTINGS),
                 true, true);
         }
     }

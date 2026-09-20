@@ -1,5 +1,7 @@
 package me.lauriichan.spigot.justlootit.nms;
 
+import java.io.File;
+
 import org.bukkit.GameEvent;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -13,6 +15,8 @@ public abstract class LevelAdapter extends Capable<LevelAdapter> {
     public abstract VersionHandler versionHandler();
 
     public abstract World asBukkit();
+    
+    public abstract File dataFolder();
 
     public abstract Entity getBukkitEntityById(int id);
     
