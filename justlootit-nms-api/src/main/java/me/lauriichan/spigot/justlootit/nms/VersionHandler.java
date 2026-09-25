@@ -239,6 +239,8 @@ public abstract class VersionHandler {
 
     public abstract VersionHelper versionHelper();
     
+    public abstract RandomHelper randomHelper();
+    
     public abstract NbtHelper nbtHelper();
     
     public final IServiceProvider serviceProvider() {

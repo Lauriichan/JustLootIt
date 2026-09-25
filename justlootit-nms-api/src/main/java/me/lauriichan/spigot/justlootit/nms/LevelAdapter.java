@@ -24,6 +24,8 @@ public abstract class LevelAdapter extends Capable<LevelAdapter> {
         return null;
     }
     
+    public abstract IMinecraftRandom random();
+    
     public abstract void triggerGameEvent(Player player, GameEvent event, Location location);
     
     public abstract void triggerBlockOpen(Player player, Location location);

@@ -512,7 +512,7 @@ public class ContainerListener implements IListenerExtension {
                                         inventory.setHandler(CachedLootUIHandler.LOOT_HANDLER);
                                         plugin.scheduler().regional(location, () -> {
                                             level.triggerBlockOpen(bukkitPlayer, location);
-                                            BlockUtil.awardStatistic(bukkitPlayer, location);
+                                            BlockUtil.triggerBlockOpen(level, bukkitPlayer, location);
                                         });
                                         inventory.open(bukkitPlayer);
                                     });
@@ -545,7 +545,7 @@ public class ContainerListener implements IListenerExtension {
                     inventory.attrSet(GeneratedLootUIHandler.ATTR_INVENTORY_HOLDER, inventoryHolder);
                     plugin.scheduler().regional(location, () -> {
                         level.triggerBlockOpen(bukkitPlayer, location);
-                        BlockUtil.awardStatistic(bukkitPlayer, location);
+                        BlockUtil.triggerBlockOpen(level, bukkitPlayer, location);
                     });
                     inventory.open(bukkitPlayer);
                 });

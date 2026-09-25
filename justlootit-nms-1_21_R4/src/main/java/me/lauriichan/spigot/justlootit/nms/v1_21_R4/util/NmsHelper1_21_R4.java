@@ -22,6 +22,7 @@ import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.ContainerOpenersCounter;
 
 public final class NmsHelper1_21_R4 {
 
@@ -31,6 +32,8 @@ public final class NmsHelper1_21_R4 {
     private static final VarHandle TAGS = Access.tags();
     
     private static final VarHandle CUSTOM_DATA = Access.customData();
+
+    private static final VarHandle OPEN_COUNT = Access.openCount();
     
     private static volatile boolean dataTypeRegistrySetup = false;
 
@@ -80,6 +83,15 @@ public final class NmsHelper1_21_R4 {
             Field field = ClassUtil.getField(craftMetaItem, "customTag");
             if (field == null || !CompoundTag.class.isAssignableFrom(field.getType())) {
                 throw new IllegalStateException("Couldn't find field 'customTag', JustLootIt won't be able to convert anything here.");
+            }
+            return JavaLookup.PLATFORM.unreflect(field);
+        }
+
+        static VarHandle openCount() {
+            Field field = ClassUtil.getField(ContainerOpenersCounter.class, "openCount");
+            if (field == null) {
+                throw new IllegalStateException(
+                    "Couldn't find field 'openCount', JustLootIt won't be able to trigger container animations here.");
             }
             return JavaLookup.PLATFORM.unreflect(field);
         }
@@ -134,6 +146,10 @@ public final class NmsHelper1_21_R4 {
     
     public static void clearCompound(CompoundTag tag) {
         ((Map<?, ?>) TAGS.get(tag)).clear();
+    }
+
+    public static void setOpenCount(ContainerOpenersCounter counter, int newValue) {
+        OPEN_COUNT.setVolatile(counter, newValue);
     }
     
     public static MinecraftServer getServer() {

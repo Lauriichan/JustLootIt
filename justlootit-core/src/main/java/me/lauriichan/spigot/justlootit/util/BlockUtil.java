@@ -1,9 +1,12 @@
 package me.lauriichan.spigot.justlootit.util;
 
 import org.bukkit.Bukkit;
+import org.bukkit.GameEvent;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.RegionAccessor;
+import org.bukkit.Sound;
+import org.bukkit.SoundCategory;
 import org.bukkit.Statistic;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
@@ -16,6 +19,7 @@ import org.bukkit.persistence.PersistentDataContainer;
 
 import me.lauriichan.spigot.justlootit.JustLootItAccess;
 import me.lauriichan.spigot.justlootit.JustLootItPlugin;
+import me.lauriichan.spigot.justlootit.nms.LevelAdapter;
 import me.lauriichan.spigot.justlootit.nms.convert.ProtoChunk;
 import me.lauriichan.spigot.justlootit.nms.util.Vec3i;
 import me.lauriichan.spigot.justlootit.platform.scheduler.Scheduler;
@@ -39,25 +43,24 @@ public final class BlockUtil {
         }
         return location;
     }
-    
+
     public static Container getNearbyChest(RegionAccessor region, Container container) {
         BlockData data = container.getBlockData();
         if (!(data instanceof Chest chest) || chest.getType() == Type.SINGLE) {
             return null;
         }
-        return BlockUtil.findChestAround(region, container.getX(), container.getY(), container.getZ(),
-            chest.getType(), chest.getFacing());
+        return BlockUtil.findChestAround(region, container.getX(), container.getY(), container.getZ(), chest.getType(), chest.getFacing());
     }
-    
+
     public static Container getNearbyChest(Container container) {
         BlockData data = container.getBlockData();
         if (!(data instanceof Chest chest) || chest.getType() == Type.SINGLE) {
             return null;
         }
-        return BlockUtil.findChestAround(container.getWorld(), container.getX(), container.getY(), container.getZ(),
-            chest.getType(), chest.getFacing());
+        return BlockUtil.findChestAround(container.getWorld(), container.getX(), container.getY(), container.getZ(), chest.getType(),
+            chest.getFacing());
     }
-    
+
     public static void setContainerOffsetToNearbyChest(Container container) {
         BlockData data = container.getBlockData();
         if (!(data instanceof Chest chest) || chest.getType() == Type.SINGLE) {
@@ -68,14 +71,18 @@ public final class BlockUtil {
         if (otherContainer == null) {
             return;
         }
-        JustLootItAccess.setOffset(otherContainer.getPersistentDataContainer(), calculateOffset(otherContainer.getLocation(), container.getLocation()));
-        JustLootItAccess.setOffset(container.getPersistentDataContainer(), calculateOffset(container.getLocation(), otherContainer.getLocation()));
+        JustLootItAccess.setOffset(otherContainer.getPersistentDataContainer(),
+            calculateOffset(otherContainer.getLocation(), container.getLocation()));
+        JustLootItAccess.setOffset(container.getPersistentDataContainer(),
+            calculateOffset(container.getLocation(), otherContainer.getLocation()));
         otherContainer.update(false, false);
     }
-    
+
     public static void setContainerOffset(Container container, Container otherContainer, boolean update) {
-        JustLootItAccess.setOffset(otherContainer.getPersistentDataContainer(), calculateOffset(otherContainer.getLocation(), container.getLocation()));
-        JustLootItAccess.setOffset(container.getPersistentDataContainer(), calculateOffset(container.getLocation(), otherContainer.getLocation()));
+        JustLootItAccess.setOffset(otherContainer.getPersistentDataContainer(),
+            calculateOffset(otherContainer.getLocation(), container.getLocation()));
+        JustLootItAccess.setOffset(container.getPersistentDataContainer(),
+            calculateOffset(container.getLocation(), otherContainer.getLocation()));
         if (update) {
             otherContainer.update(false, false);
             container.update(false, false);
@@ -103,7 +110,7 @@ public final class BlockUtil {
                 return null;
             }
         }
-        if (!(otherContainer.getBlockData() instanceof Chest chest) || chest.getType() == Chest.Type.SINGLE){
+        if (!(otherContainer.getBlockData() instanceof Chest chest) || chest.getType() == Chest.Type.SINGLE) {
             JustLootItAccess.removeOffset(otherDataContainer);
             otherContainer.update(false, false);
             return null;
@@ -118,12 +125,12 @@ public final class BlockUtil {
                     JustLootItAccess.removeLegacyOffset(dataContainer);
                     JustLootItAccess.setOffset(dataContainer, offset);
                     container.update(false, false);
-                } else if(!JustLootItAccess.hasOffsetV1(dataContainer)) {
+                } else if (!JustLootItAccess.hasOffsetV1(dataContainer)) {
                     offset = JustLootItAccess.getOffsetV1(dataContainer);
                     JustLootItAccess.removeOffsetV1(dataContainer);
                     JustLootItAccess.setOffset(dataContainer, offset);
                     container.update(false, false);
-                } else if(!JustLootItAccess.hasOffset(dataContainer)) {
+                } else if (!JustLootItAccess.hasOffset(dataContainer)) {
                     JustLootItAccess.setOffset(dataContainer, calculateOffset(blockLocation, otherContainer.getLocation()));
                     container.update(false, false);
                 }
@@ -135,11 +142,11 @@ public final class BlockUtil {
         otherContainer.update(false, false);
         return null;
     }
-    
+
     public static Vec3i calculateOffset(Location origin, Location other) {
         return new Vec3i(other).subtractOf(origin);
     }
-    
+
     public static Container findChestAround(RegionAccessor region, int x, int y, int z, Type chestType, BlockFace chestFace) {
         if (chestFace.getModZ() != 0) {
             x += chestType == Type.LEFT ? -chestFace.getModZ() : chestFace.getModZ();
@@ -152,23 +159,68 @@ public final class BlockUtil {
         }
         return null;
     }
-    
-    public static void awardStatistic(Player player, Location location) {
-        Material type = player.getWorld().getBlockData(location).getMaterial();
+
+    public static void triggerBlockOpen(LevelAdapter level, Player player, Location location) {
+        BlockState state = player.getWorld().getBlockState(location);
+        Material type = state.getType();
         if (MaterialRegistry.BARREL.isValue(type)) {
             player.incrementStatistic(Statistic.OPEN_BARREL);
+            level.triggerBlockOpen(player, location);
+            level.triggerGameEvent(player, GameEvent.CONTAINER_OPEN, location);
+            player.playSound(location, Sound.BLOCK_BARREL_OPEN, SoundCategory.BLOCKS, 0.5f, 1f);
             return;
         } else if (MaterialRegistry.CHEST.isValue(type)) {
             player.incrementStatistic(Statistic.CHEST_OPENED);
+            level.triggerBlockOpen(player, location);
+            level.triggerGameEvent(player, GameEvent.CONTAINER_OPEN, location);
+            player.playSound(location, Sound.BLOCK_CHEST_OPEN, SoundCategory.BLOCKS, 0.5f, 1f);
             return;
         } else if (MaterialRegistry.TRAPPED_CHEST.isValue(type)) {
             player.incrementStatistic(Statistic.TRAPPED_CHEST_TRIGGERED);
+            level.triggerBlockOpen(player, location);
+            level.triggerGameEvent(player, GameEvent.CONTAINER_OPEN, location);
+            player.playSound(location, Sound.BLOCK_CHEST_OPEN, SoundCategory.BLOCKS, 0.5f, 1f);
             return;
         } else if (MaterialRegistry.ENDER_CHEST.isValue(type)) {
             player.incrementStatistic(Statistic.ENDERCHEST_OPENED);
+            level.triggerBlockOpen(player, location);
+            level.triggerGameEvent(player, GameEvent.CONTAINER_OPEN, location);
+            player.playSound(location, Sound.BLOCK_ENDER_CHEST_OPEN, SoundCategory.BLOCKS, 0.5f, 1f);
             return;
         } else if (MaterialRegistry.SHULKER_BOX.isValue(type)) {
             player.incrementStatistic(Statistic.SHULKER_BOX_OPENED);
+            level.triggerBlockOpen(player, location);
+            level.triggerGameEvent(player, GameEvent.CONTAINER_OPEN, location);
+            level.asBukkit().playSound(location, Sound.BLOCK_SHULKER_BOX_OPEN, SoundCategory.BLOCKS, 0.5f,
+                level.random().nextFloat() * 0.1f + 0.9f);
+            return;
+        }
+    }
+
+    public static void triggerBlockClose(LevelAdapter level, Player player, Location location) {
+        BlockState state = player.getWorld().getBlockState(location);
+        Material type = state.getType();
+        if (MaterialRegistry.BARREL.isValue(type)) {
+            level.triggerBlockClose(player, location);
+            level.triggerGameEvent(player, GameEvent.CONTAINER_CLOSE, location);
+            return;
+        } else if (MaterialRegistry.CHEST.isValue(type)) {
+            level.triggerBlockClose(player, location);
+            level.triggerGameEvent(player, GameEvent.CONTAINER_CLOSE, location);
+            return;
+        } else if (MaterialRegistry.TRAPPED_CHEST.isValue(type)) {
+            level.triggerBlockClose(player, location);
+            level.triggerGameEvent(player, GameEvent.CONTAINER_CLOSE, location);
+            return;
+        } else if (MaterialRegistry.ENDER_CHEST.isValue(type)) {
+            level.triggerBlockClose(player, location);
+            level.triggerGameEvent(player, GameEvent.CONTAINER_CLOSE, location);
+            return;
+        } else if (MaterialRegistry.SHULKER_BOX.isValue(type)) {
+            level.triggerBlockClose(player, location);
+            level.triggerGameEvent(player, GameEvent.CONTAINER_CLOSE, location);
+            level.asBukkit().playSound(location, Sound.BLOCK_SHULKER_BOX_CLOSE, SoundCategory.BLOCKS, 0.5f,
+                level.random().nextFloat() * 0.1f + 0.9f);
             return;
         }
     }

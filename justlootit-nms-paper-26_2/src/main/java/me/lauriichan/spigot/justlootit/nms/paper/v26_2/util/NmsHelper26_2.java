@@ -27,6 +27,8 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.ContainerOpenersCounter;
+import net.minecraft.world.level.block.entity.ShulkerBoxBlockEntity;
 import net.minecraft.world.level.storage.TagValueOutput;
 
 public final class NmsHelper26_2 {
@@ -38,6 +40,9 @@ public final class NmsHelper26_2 {
     
     private static final MethodHandle CREATE_TAG_VALUE_WRAPPER = Access.createTagValueWrapper();
     private static final VarHandle CUSTOM_DATA = Access.customData();
+
+    private static final VarHandle OPEN_COUNT = Access.openCount();
+    private static final VarHandle SHULKERBOX_OPEN_COUNT = Access.shulkerboxOpenCount();
     
     private static volatile boolean dataTypeRegistrySetup = false;
 
@@ -95,6 +100,24 @@ public final class NmsHelper26_2 {
             Field field = ClassUtil.getField(craftMetaItem, "customTag");
             if (field == null || !CompoundTag.class.isAssignableFrom(field.getType())) {
                 throw new IllegalStateException("Couldn't find field 'customTag', JustLootIt won't be able to convert anything here.");
+            }
+            return JavaLookup.PLATFORM.unreflect(field);
+        }
+
+        static VarHandle openCount() {
+            Field field = ClassUtil.getField(ContainerOpenersCounter.class, "openCount");
+            if (field == null) {
+                throw new IllegalStateException(
+                    "Couldn't find field 'openCount', JustLootIt won't be able to trigger container animations here.");
+            }
+            return JavaLookup.PLATFORM.unreflect(field);
+        }
+
+        static VarHandle shulkerboxOpenCount() {
+            Field field = ClassUtil.getField(ShulkerBoxBlockEntity.class, "openCount");
+            if (field == null) {
+                throw new IllegalStateException(
+                    "Couldn't find field 'openCount', JustLootIt won't be able to trigger container animations here.");
             }
             return JavaLookup.PLATFORM.unreflect(field);
         }
@@ -157,6 +180,18 @@ public final class NmsHelper26_2 {
     
     public static void clearCompound(CompoundTag tag) {
         ((Map<?, ?>) TAGS.get(tag)).clear();
+    }
+
+    public static void setOpenCount(ContainerOpenersCounter counter, int newValue) {
+        OPEN_COUNT.setVolatile(counter, newValue);
+    }
+
+    public static int getOpenCount(ShulkerBoxBlockEntity shulker) {
+        return (int) SHULKERBOX_OPEN_COUNT.getVolatile(shulker);
+    }
+
+    public static void setOpenCount(ShulkerBoxBlockEntity shulker, int newValue) {
+        SHULKERBOX_OPEN_COUNT.setVolatile(shulker, shulker);
     }
     
     public static MinecraftServer getServer() {

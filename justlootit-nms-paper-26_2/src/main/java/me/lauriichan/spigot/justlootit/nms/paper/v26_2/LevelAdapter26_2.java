@@ -6,20 +6,26 @@ import org.bukkit.Location;
 import org.bukkit.craftbukkit.CraftRegistry;
 import org.bukkit.craftbukkit.CraftWorld;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
+import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.entity.Player;
 
+import me.lauriichan.spigot.justlootit.nms.IMinecraftRandom;
 import me.lauriichan.spigot.justlootit.nms.LevelAdapter;
+import me.lauriichan.spigot.justlootit.nms.paper.v26_2.util.NmsHelper26_2;
+import me.lauriichan.spigot.justlootit.nms.paper.v26_2.util.random.MinecraftRandom;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.block.entity.BarrelBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
+import net.minecraft.world.level.block.entity.ContainerOpenersCounter;
 import net.minecraft.world.level.block.entity.EnderChestBlockEntity;
 import net.minecraft.world.level.block.entity.ShulkerBoxBlockEntity;
+import net.minecraft.world.level.block.entity.TrappedChestBlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.entity.LevelEntityGetter;
 
 public class LevelAdapter26_2 extends LevelAdapter {
@@ -58,6 +64,11 @@ public class LevelAdapter26_2 extends LevelAdapter {
         }
         return entity.getBukkitEntity();
     }
+
+    @Override
+    public IMinecraftRandom random() {
+        return new MinecraftRandom(level.getRandom());
+    }
     
     @Override
     public String determineDimensionType() {
@@ -72,37 +83,89 @@ public class LevelAdapter26_2 extends LevelAdapter {
 
     @Override
     public void triggerBlockOpen(Player player, Location location) {
-        BlockEntity blockEntity = level.getBlockEntity(new BlockPos(location.getBlockX(), location.getBlockY(), location.getBlockZ()));
+        BlockPos blockPos = new BlockPos(location.getBlockX(), location.getBlockY(), location.getBlockZ());
+        BlockEntity blockEntity = level.getBlockEntity(blockPos);
         if (blockEntity == null) {
             return;
         }
-        ServerPlayer serverPlayer = ((CraftPlayer) player).getHandle();
+        BlockState blockState = blockEntity.getBlockState();
+        ContainerOpenersCounter counter;
+        boolean isTrapped = false;
         if (blockEntity instanceof BarrelBlockEntity bbe) {
-            bbe.startOpen(serverPlayer);
+            counter = bbe.openersCounter;
         } else if (blockEntity instanceof ChestBlockEntity cbe) {
-            cbe.startOpen(serverPlayer);
+            counter = cbe.openersCounter;
+            isTrapped = cbe instanceof TrappedChestBlockEntity;
         } else if (blockEntity instanceof EnderChestBlockEntity ecbe) {
-            ecbe.startOpen(serverPlayer);
+            counter = ecbe.openersCounter;
         } else if (blockEntity instanceof ShulkerBoxBlockEntity sbbe) {
-            sbbe.startOpen(serverPlayer);
+            int openCount = NmsHelper26_2.getOpenCount(sbbe), newCount = Math.max(openCount + 1, 1);
+            NmsHelper26_2.setOpenCount(sbbe, newCount);
+            level.blockEvent(blockPos, blockState.getBlock(), openCount, newCount);
+            if (!sbbe.opened && newCount > 0) {
+                sbbe.opened = true;
+            }
+            return;
+        } else {
+            return;
+        }
+        int openerCount = counter.getOpenerCount(), newCount = Math.max(openerCount + 1, 1);
+        if (isTrapped) {
+            int oldPower = Math.max(0, Math.min(15, openerCount));
+            int newPower = Math.max(0, Math.min(15, newCount));
+            if (oldPower != newPower) {
+                CraftEventFactory.callRedstoneChange(level, blockPos, oldPower, newPower);
+            }
+        }
+        counter.onOpenAPI(level, blockPos, blockState);
+        NmsHelper26_2.setOpenCount(counter, newCount);
+        counter.openerCountChangedAPI(level, blockPos, blockState, openerCount, newCount);
+        if (!counter.opened && newCount > 0) {
+            counter.opened = true;
         }
     }
 
     @Override
     public void triggerBlockClose(Player player, Location location) {
-        BlockEntity blockEntity = level.getBlockEntity(new BlockPos(location.getBlockX(), location.getBlockY(), location.getBlockZ()));
+        BlockPos blockPos = new BlockPos(location.getBlockX(), location.getBlockY(), location.getBlockZ());
+        BlockEntity blockEntity = level.getBlockEntity(blockPos);
         if (blockEntity == null) {
             return;
         }
-        ServerPlayer serverPlayer = ((CraftPlayer) player).getHandle();
+        BlockState blockState = blockEntity.getBlockState();
+        ContainerOpenersCounter counter;
+        boolean isTrapped = false;
         if (blockEntity instanceof BarrelBlockEntity bbe) {
-            bbe.stopOpen(serverPlayer);
+            counter = bbe.openersCounter;
         } else if (blockEntity instanceof ChestBlockEntity cbe) {
-            cbe.stopOpen(serverPlayer);
+            counter = cbe.openersCounter;
+            isTrapped = cbe instanceof TrappedChestBlockEntity;
         } else if (blockEntity instanceof EnderChestBlockEntity ecbe) {
-            ecbe.stopOpen(serverPlayer);
+            counter = ecbe.openersCounter;
         } else if (blockEntity instanceof ShulkerBoxBlockEntity sbbe) {
-            sbbe.stopOpen(serverPlayer);
+            int openCount = NmsHelper26_2.getOpenCount(sbbe), newCount = Math.max(openCount - 1, 0);
+            NmsHelper26_2.setOpenCount(sbbe, newCount);
+            level.blockEvent(blockPos, blockState.getBlock(), openCount, newCount);
+            if (sbbe.opened && newCount == 0) {
+                sbbe.opened = false;
+            }
+            return;
+        } else {
+            return;
+        }
+        int openerCount = counter.getOpenerCount(), newCount = Math.max(openerCount - 1, 0);
+        if (isTrapped) {
+            int oldPower = Math.max(0, Math.min(15, openerCount));
+            int newPower = Math.max(0, Math.min(15, newCount));
+            if (oldPower != newPower) {
+                CraftEventFactory.callRedstoneChange(level, blockPos, oldPower, newPower);
+            }
+        }
+        counter.onCloseAPI(level, blockPos, blockState);
+        NmsHelper26_2.setOpenCount(counter, newCount);
+        counter.openerCountChangedAPI(level, blockPos, blockState, openerCount, newCount);
+        if (counter.opened && newCount == 0) {
+            counter.opened = false;
         }
     }
 

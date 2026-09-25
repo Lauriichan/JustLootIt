@@ -27,6 +27,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.ContainerOpenersCounter;
 import net.minecraft.world.level.storage.TagValueOutput;
 
 public final class NmsHelper26_3 {
@@ -38,6 +39,8 @@ public final class NmsHelper26_3 {
 
     private static final MethodHandle CREATE_TAG_VALUE_WRAPPER = Access.createTagValueWrapper();
     private static final VarHandle CUSTOM_DATA = Access.customData();
+
+    private static final VarHandle OPEN_COUNT = Access.openCount();
 
     private static volatile boolean dataTypeRegistrySetup = false;
 
@@ -101,6 +104,15 @@ public final class NmsHelper26_3 {
             return JavaLookup.PLATFORM.unreflect(field);
         }
 
+        static VarHandle openCount() {
+            Field field = ClassUtil.getField(ContainerOpenersCounter.class, "openCount");
+            if (field == null) {
+                throw new IllegalStateException(
+                    "Couldn't find field 'openCount', JustLootIt won't be able to trigger container animations here.");
+            }
+            return JavaLookup.PLATFORM.unreflect(field);
+        }
+
     }
 
     public static <E extends BlockEntity> E getTileEntity(CraftBlockEntityState<E> state) {
@@ -159,6 +171,10 @@ public final class NmsHelper26_3 {
 
     public static void clearCompound(CompoundTag tag) {
         ((Map<?, ?>) TAGS.get(tag)).clear();
+    }
+
+    public static void setOpenCount(ContainerOpenersCounter counter, int newValue) {
+        OPEN_COUNT.setVolatile(counter, newValue);
     }
 
     public static MinecraftServer getServer() {

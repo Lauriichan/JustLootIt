@@ -16,6 +16,7 @@ import me.lauriichan.spigot.justlootit.nms.v1_21_R7.io.ItemStackIO1_21_R7;
 import me.lauriichan.spigot.justlootit.nms.v1_21_R7.nbt.NbtHelper1_21_R7;
 import me.lauriichan.spigot.justlootit.nms.v1_21_R7.network.PacketManager1_21_R7;
 import me.lauriichan.spigot.justlootit.nms.v1_21_R7.packet.*;
+import me.lauriichan.spigot.justlootit.nms.v1_21_R7.util.random.RandomHelperImpl;
 import me.lauriichan.spigot.justlootit.nms.version.VersionImpl;
 import net.minecraft.network.protocol.game.*;
 
@@ -56,6 +57,11 @@ public final class VersionHandler1_21_R7 extends VersionHandler {
 
     private void registerIO() {
         io.register(ItemStackIO1_21_R7.ITEM_STACK);
+    }
+
+    @Override
+    public RandomHelperImpl randomHelper() {
+        return RandomHelperImpl.INSTANCE;
     }
 
     @Override

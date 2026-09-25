@@ -27,6 +27,8 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.ContainerOpenersCounter;
+import net.minecraft.world.level.block.entity.ShulkerBoxBlockEntity;
 import net.minecraft.world.level.storage.TagValueOutput;
 
 public final class NmsHelper26_3 {
@@ -35,10 +37,13 @@ public final class NmsHelper26_3 {
     private static final MethodHandle WRAP = Access.wrap();
     private static final VarHandle DATA_TYPE_REGISTRY = Access.dataTypeRegistry();
     private static final VarHandle TAGS = Access.tags();
-    
+
     private static final MethodHandle CREATE_TAG_VALUE_WRAPPER = Access.createTagValueWrapper();
     private static final VarHandle CUSTOM_DATA = Access.customData();
-    
+
+    private static final VarHandle OPEN_COUNT = Access.openCount();
+    private static final VarHandle SHULKERBOX_OPEN_COUNT = Access.shulkerboxOpenCount();
+
     private static volatile boolean dataTypeRegistrySetup = false;
 
     private static final class Access {
@@ -66,7 +71,8 @@ public final class NmsHelper26_3 {
         static VarHandle dataTypeRegistry() {
             Field field = ClassUtil.getField(CraftEntity.class, "DATA_TYPE_REGISTRY");
             if (field == null || !CraftPersistentDataTypeRegistry.class.isAssignableFrom(field.getType())) {
-                throw new IllegalStateException("Couldn't find field 'DATA_TYPE_REGISTRY', JustLootIt won't be able to convert anything here.");
+                throw new IllegalStateException(
+                    "Couldn't find field 'DATA_TYPE_REGISTRY', JustLootIt won't be able to convert anything here.");
             }
             return JavaLookup.PLATFORM.unreflect(field);
         }
@@ -80,7 +86,8 @@ public final class NmsHelper26_3 {
         }
 
         static MethodHandle createTagValueWrapper() {
-            Constructor<?> constructor = ClassUtil.getConstructor(TagValueOutput.class, ProblemReporter.class, DynamicOps.class, CompoundTag.class);
+            Constructor<?> constructor = ClassUtil.getConstructor(TagValueOutput.class, ProblemReporter.class, DynamicOps.class,
+                CompoundTag.class);
             if (constructor == null) {
                 throw new IllegalStateException("Couldn't find method 'getTileEntity', JustLootIt won't work here.");
             }
@@ -99,8 +106,26 @@ public final class NmsHelper26_3 {
             return JavaLookup.PLATFORM.unreflect(field);
         }
 
+        static VarHandle openCount() {
+            Field field = ClassUtil.getField(ContainerOpenersCounter.class, "openCount");
+            if (field == null) {
+                throw new IllegalStateException(
+                    "Couldn't find field 'openCount', JustLootIt won't be able to trigger container animations here.");
+            }
+            return JavaLookup.PLATFORM.unreflect(field);
+        }
+
+        static VarHandle shulkerboxOpenCount() {
+            Field field = ClassUtil.getField(ShulkerBoxBlockEntity.class, "openCount");
+            if (field == null) {
+                throw new IllegalStateException(
+                    "Couldn't find field 'openCount', JustLootIt won't be able to trigger container animations here.");
+            }
+            return JavaLookup.PLATFORM.unreflect(field);
+        }
+
     }
-    
+
     public static <E extends BlockEntity> E getTileEntity(CraftBlockEntityState<E> state) {
         try {
             return (E) GET_TILE_ENTITY.invoke(state);
@@ -108,7 +133,7 @@ public final class NmsHelper26_3 {
             return null;
         }
     }
-    
+
     public static CraftPersistentDataTypeRegistry dataTypeRegistry() {
         CraftPersistentDataTypeRegistry registry = (CraftPersistentDataTypeRegistry) DATA_TYPE_REGISTRY.get();
         if (!dataTypeRegistrySetup) {
@@ -117,7 +142,7 @@ public final class NmsHelper26_3 {
         }
         return registry;
     }
-    
+
     private static void setupRegistry(CraftPersistentDataTypeRegistry registry) {
         wrap(registry, PersistentDataType.BYTE, Byte.valueOf((byte) 0));
         wrap(registry, PersistentDataType.SHORT, Short.valueOf((short) 0));
@@ -130,7 +155,7 @@ public final class NmsHelper26_3 {
         wrap(registry, PersistentDataType.LONG_ARRAY, new long[0]);
         wrap(registry, PersistentDataType.TAG_CONTAINER, new CraftPersistentDataContainer(registry));
     }
-    
+
     private static <P> void wrap(CraftPersistentDataTypeRegistry registry, PersistentDataType<P, ?> type, P value) {
         try {
             WRAP.invokeWithArguments(registry, type, value);
@@ -138,7 +163,7 @@ public final class NmsHelper26_3 {
             throw new RuntimeException("Failed to wrap primitive '" + type.getPrimitiveType().getName() + "'", e);
         }
     }
-    
+
     public static TagValueOutput createTagOutput(ProblemReporter reporter, DynamicOps<Tag> ops, CompoundTag tag) {
         try {
             return (TagValueOutput) CREATE_TAG_VALUE_WRAPPER.invoke(reporter, ops, tag);
@@ -154,11 +179,23 @@ public final class NmsHelper26_3 {
     public static void setCustomData(ItemMeta meta, CompoundTag tag) {
         CUSTOM_DATA.set(meta, tag);
     }
-    
+
     public static void clearCompound(CompoundTag tag) {
         ((Map<?, ?>) TAGS.get(tag)).clear();
     }
-    
+
+    public static void setOpenCount(ContainerOpenersCounter counter, int newValue) {
+        OPEN_COUNT.setVolatile(counter, newValue);
+    }
+
+    public static int getOpenCount(ShulkerBoxBlockEntity shulker) {
+        return (int) SHULKERBOX_OPEN_COUNT.getVolatile(shulker);
+    }
+
+    public static void setOpenCount(ShulkerBoxBlockEntity shulker, int newValue) {
+        SHULKERBOX_OPEN_COUNT.setVolatile(shulker, shulker);
+    }
+
     public static MinecraftServer getServer() {
         return ((CraftServer) Bukkit.getServer()).getServer();
     }
