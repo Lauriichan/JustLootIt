@@ -10,13 +10,15 @@ import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 
 @ExtensionPoint
 public interface ICompatProvider extends IExtension {
-    
-    void onEnable(JustLootItPlugin jli, Plugin plugin);
-    
-    void onDisable(JustLootItPlugin jli, Plugin plugin);
-    
+
+    default void onLoad(JustLootItPlugin jli, Plugin plugin) {}
+
+    default void onEnable(JustLootItPlugin jli, Plugin plugin) {}
+
+    default void onDisable(JustLootItPlugin jli, Plugin plugin) {}
+
     default PluginManager pluginManager() {
         return Bukkit.getServer().getPluginManager();
     }
-    
+
 }

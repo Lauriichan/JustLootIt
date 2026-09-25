@@ -18,14 +18,14 @@ import me.lauriichan.spigot.justlootit.JustLootItPermission;
 public final class WorldGuardAccess implements IWorldGuardAccess {
 
     private final WorldGuardPlugin plugin;
-    private final RegionContainer regionContainer;
     private final StateFlag flag;
 
     private final boolean flagSuccess;
 
+    private RegionContainer regionContainer;
+
     public WorldGuardAccess(ISimpleLogger logger, Plugin plugin) {
         this.plugin = (WorldGuardPlugin) plugin;
-        this.regionContainer = WorldGuard.getInstance().getPlatform().getRegionContainer();
         this.flag = new StateFlag("jli-container-access", true);
         boolean flagSuccess = true;
         try {
@@ -35,6 +35,13 @@ public final class WorldGuardAccess implements IWorldGuardAccess {
             logger.warning("Failed to register WorldGuard flag", exp);
         }
         this.flagSuccess = flagSuccess;
+    }
+
+    public final void init() {
+        if (regionContainer != null) {
+            return;
+        }
+        this.regionContainer = WorldGuard.getInstance().getPlatform().getRegionContainer();
     }
 
     @Override

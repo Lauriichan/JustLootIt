@@ -325,6 +325,8 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
         registerCommands(commandManager);
         // Initialize compatibilities
         initializeCompatibilities();
+        // Trigger compatibilities load
+        CompatDependency.loadAll(this);
     }
 
     private void doVersionMigrations() {

@@ -15,8 +15,13 @@ public class WorldGuardCompatProvider implements ICompatProvider {
     private IWorldGuardAccess access;
 
     @Override
-    public void onEnable(JustLootItPlugin jli, Plugin plugin) {
+    public void onLoad(JustLootItPlugin jli, Plugin plugin) {
         this.access = new WorldGuardAccess(jli.logger(), plugin);
+    }
+
+    @Override
+    public void onEnable(JustLootItPlugin jli, Plugin plugin) {
+        access.init();
         AccessSupport.INSTANCE.register(access);
     }
 

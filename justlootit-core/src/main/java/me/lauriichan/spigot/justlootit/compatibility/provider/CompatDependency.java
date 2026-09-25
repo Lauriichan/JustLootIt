@@ -15,6 +15,20 @@ public record CompatDependency(String name, int minMajor, int maxMajor, int minM
     private static final Object2ObjectArrayMap<String, ObjectArrayList<CompatDependency>> DEPENDENCIES = new Object2ObjectArrayMap<>();
     private static final Object2ObjectArrayMap<String, CompatDependency> ACTIVE_DEPENDENCY = new Object2ObjectArrayMap<>();
 
+    public static void loadAll(JustLootItPlugin jliPlugin) {
+        Class<?> caller = StackTracker.getCallerClass().orElse(null);
+        if (caller == null || JustLootItPlugin.class.getClassLoader() != caller.getClassLoader()) {
+            throw new UnsupportedOperationException("Only JustLootIt is allowed to update JustLootIt dependencies");
+        }
+        Plugin[] plugins = Bukkit.getPluginManager().getPlugins();
+        for (Plugin plugin : plugins) {
+            if (jliPlugin == plugin) {
+                continue;
+            }
+            handleLoad(jliPlugin, plugin);
+        }
+    }
+
     public static void updateAll(JustLootItPlugin jliPlugin) {
         Class<?> caller = StackTracker.getCallerClass().orElse(null);
         if (caller == null || JustLootItPlugin.class.getClassLoader() != caller.getClassLoader()) {
@@ -26,6 +40,28 @@ public record CompatDependency(String name, int minMajor, int maxMajor, int minM
                 continue;
             }
             handleUpdate(jliPlugin, plugin, true);
+        }
+    }
+
+    public static void handleLoad(JustLootItPlugin justlootit, Plugin plugin) {
+        Class<?> caller = StackTracker.getCallerClass().orElse(null);
+        if (caller == null || JustLootItPlugin.class.getClassLoader() != caller.getClassLoader()) {
+            throw new UnsupportedOperationException("Only JustLootIt is allowed to update JustLootIt dependencies");
+        }
+        ObjectArrayList<CompatDependency> dependencies = DEPENDENCIES.get(plugin.getName());
+        if (dependencies == null) {
+            return;
+        }
+        for (CompatDependency dependency : dependencies) {
+            if (dependency.isSupported(plugin)) {
+                try {
+                    justlootit.logger().info("Loading compatibility for {0}.", dependency.name());
+                    dependency.provider().onLoad(justlootit, plugin);
+                } catch (Throwable exception) {
+                    justlootit.logger().error("Failed to load compatibility for {0}.", exception, dependency.name());
+                }
+                break;
+            }
         }
     }
 
