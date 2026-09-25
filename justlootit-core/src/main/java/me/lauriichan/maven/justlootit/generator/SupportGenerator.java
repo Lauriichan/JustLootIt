@@ -68,7 +68,6 @@ public class SupportGenerator implements ISourceGenerator {
                 bodyBuilder.append("return tmp; }");
                 bodyBuilder.append("output = tmp; }");
                 bodyBuilder.append("return output;");
-                System.out.println(bodyBuilder.toString());
                 methodSrc.setBody(bodyBuilder.toString());
             }
         });
