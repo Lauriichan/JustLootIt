@@ -18,6 +18,7 @@ import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.capability.StorageCapability;
 import me.lauriichan.spigot.justlootit.config.MainConfig;
 import me.lauriichan.spigot.justlootit.data.CachedInventory;
+import me.lauriichan.spigot.justlootit.nms.LevelAdapter;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.storage.Stored;
@@ -28,7 +29,7 @@ public abstract class BaseLootUIHandler implements IHandler {
     protected static final ChestSize[] CHEST_VALUES = ChestSize.values();
 
     public static final String ATTR_ID = "PlayerStorageId";
-    public static final String ATTR_LIDDED_LOCATION = "LiddedBlockLocation";
+    public static final String ATTR_LOCATION = "Location";
 
     public static final String PLAYER_DATA_LOOTING = "PlayerIsLooting";
     public static final int PLAYER_DATA_LOOTING_VALUE = 2;
@@ -39,6 +40,20 @@ public abstract class BaseLootUIHandler implements IHandler {
     protected final MainConfig config = plugin.configManager().config(MainConfig.class);
 
     protected BaseLootUIHandler() {}
+
+    @Override
+    public boolean onEventOpen(HumanEntity entity, IGuiInventory inventory) {
+        final PlayerAdapter player = versionHandler.getPlayer(entity.getUniqueId());
+        final Location blockLocation = inventory.attr(ATTR_LOCATION, Location.class);
+        if (player != null || blockLocation != null) {
+            LevelAdapter level = player.getLevel();
+            player.versionHandler().platform().scheduler().regional(blockLocation, () -> {
+                level.triggerBlockOpen(player.asBukkit(), blockLocation);
+                BlockUtil.awardStatistic(player.asBukkit(), blockLocation);
+            });
+        }
+        return IHandler.super.onEventOpen(entity, inventory);
+    }
 
     @SuppressWarnings("unlikely-arg-type")
     @Override
@@ -57,10 +72,12 @@ public abstract class BaseLootUIHandler implements IHandler {
                 return false;
             }
             player.removeData(PLAYER_DATA_LOOTING);
-            final Location blockLocation = inventory.attr(ATTR_LIDDED_LOCATION, Location.class);
+            final Location blockLocation = inventory.attr(ATTR_LOCATION, Location.class);
             if (blockLocation != null) {
-                player.versionHandler().platform().scheduler().regional(blockLocation,
-                    () -> BlockUtil.sendBlockClose(player.getLevel(), player.asBukkit(), blockLocation));
+                LevelAdapter level = player.getLevel();
+                player.versionHandler().platform().scheduler().regional(blockLocation, () -> {
+                    level.triggerBlockClose(player.asBukkit(), blockLocation);
+                });
             }
             player.getCapability(StorageCapability.class).ifPresent(capability -> {
                 Stored<CachedInventory> cached = capability.storage().read(id);

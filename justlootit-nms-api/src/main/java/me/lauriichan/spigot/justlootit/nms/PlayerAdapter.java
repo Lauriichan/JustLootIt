@@ -112,5 +112,7 @@ public abstract class PlayerAdapter extends Capable<PlayerAdapter> {
     public abstract void acknowledgeBlockChangesUpTo(int sequence);
 
     public abstract void send(AbstractPacketOut... packets);
+    
+    public abstract void angerNearbyPiglins();
 
 }

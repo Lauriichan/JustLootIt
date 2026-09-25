@@ -24,7 +24,6 @@ public final class GeneratedLootUIHandler extends BaseLootUIHandler {
 
     public static final String ATTR_CONTAINER = "Container";
     public static final String ATTR_INVENTORY_HOLDER = "InventoryHolder";
-    public static final String ATTR_LOCATION = "Location";
 
     private GeneratedLootUIHandler() {}
 
@@ -56,7 +55,7 @@ public final class GeneratedLootUIHandler extends BaseLootUIHandler {
         }
         InventoryHolder holder = inventory.attrUnset(ATTR_INVENTORY_HOLDER, InventoryHolder.class);
         Container container = inventory.attrUnset(ATTR_CONTAINER, Container.class);
-        Location location = inventory.attrUnset(ATTR_LOCATION, Location.class);
+        Location location = inventory.attr(ATTR_LOCATION, Location.class);
 
         PlayerAdapter player = versionHandler.getPlayer(inventory.attrUnset(PagedInventoryHandler.PLAYER_PROPERTY, Player.class));
         IResult result = ((IInventoryContainer) container).fill(player, holder, location, inventory.getInventory());

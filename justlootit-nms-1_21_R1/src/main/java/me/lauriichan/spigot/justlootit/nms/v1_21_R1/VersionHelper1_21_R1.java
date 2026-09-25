@@ -36,7 +36,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.decoration.ItemFrame;
-import net.minecraft.world.entity.monster.piglin.PiglinAi;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.LootTable;
@@ -145,10 +144,5 @@ public class VersionHelper1_21_R1 extends VersionHelper {
         BlockPos pos = new BlockPos(block.getBlockX(), block.getBlockY(), block.getBlockZ());
         CriteriaTriggers.DEFAULT_BLOCK_USE.trigger(minecraftPlayer, pos);
         CriteriaTriggers.ANY_BLOCK_USE.trigger(minecraftPlayer, pos, itemStack);
-    }
-
-    @Override
-    public void triggerPiglins(Player player) {
-        PiglinAi.angerNearbyPiglins(((CraftPlayer) player).getHandle(), true);
     }
 }

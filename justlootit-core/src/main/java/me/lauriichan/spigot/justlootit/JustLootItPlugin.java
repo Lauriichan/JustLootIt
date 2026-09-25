@@ -518,6 +518,11 @@ public final class JustLootItPlugin extends BasePlugin<JustLootItPlugin> impleme
             informAboutUpdate(adapter.asBukkit());
         }
     }
+    
+    @Override
+    public void onPlayerLeave(PlayerAdapter adapter) {
+        adapter.asBukkit().closeInventory();
+    }
 
     @Override
     public void onLevelLoad(LevelAdapter adapter) {

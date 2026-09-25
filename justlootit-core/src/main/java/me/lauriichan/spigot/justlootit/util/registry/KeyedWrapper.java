@@ -27,7 +27,11 @@ public class KeyedWrapper<T extends Keyed> {
             }
             values.add(value);
         }
-        return new KeyedWrapper<>(values.isEmpty() ? ObjectLists.emptyList() : ObjectLists.unmodifiable(values));
+        if (values.isEmpty()) {
+            return new KeyedWrapper<>(ObjectLists.emptyList());
+        }
+        values.trim();
+        return new KeyedWrapper<>(ObjectLists.unmodifiable(values));
     }
 
     protected final ObjectList<T> valid;
@@ -52,7 +56,7 @@ public class KeyedWrapper<T extends Keyed> {
     public final int count() {
         return valid.size();
     }
-    
+
     public final ObjectList<T> values() {
         return valid;
     }

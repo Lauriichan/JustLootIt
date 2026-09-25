@@ -44,6 +44,4 @@ public abstract class VersionHelper {
 
     public abstract void triggerItemUsedCriteria(Player player, Location block, ItemStack bukkitStack);
 
-    public abstract void triggerPiglins(Player player);
-
 }

@@ -13,7 +13,13 @@ import me.lauriichan.spigot.justlootit.nms.v1_20_R4.util.PlatformHelper1_20_R4;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.block.entity.BarrelBlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.ChestBlockEntity;
+import net.minecraft.world.level.block.entity.EnderChestBlockEntity;
+import net.minecraft.world.level.block.entity.ShulkerBoxBlockEntity;
 import net.minecraft.world.level.entity.LevelEntityGetter;
 
 public class LevelAdapter1_20_R4 extends LevelAdapter {
@@ -57,6 +63,42 @@ public class LevelAdapter1_20_R4 extends LevelAdapter {
     public void triggerGameEvent(Player player, org.bukkit.GameEvent event, Location location) {
         level.gameEvent(((CraftPlayer) player).getHandle(), CraftRegistry.bukkitToMinecraftHolder(event, Registries.GAME_EVENT),
             new BlockPos(location.getBlockX(), location.getBlockY(), location.getBlockZ()));
+    }
+
+    @Override
+    public void triggerBlockOpen(Player player, Location location) {
+        BlockEntity blockEntity = level.getBlockEntity(new BlockPos(location.getBlockX(), location.getBlockY(), location.getBlockZ()));
+        if (blockEntity == null) {
+            return;
+        }
+        ServerPlayer serverPlayer = ((CraftPlayer) player).getHandle();
+        if (blockEntity instanceof BarrelBlockEntity bbe) {
+            bbe.startOpen(serverPlayer);
+        } else if (blockEntity instanceof ChestBlockEntity cbe) {
+            cbe.startOpen(serverPlayer);
+        } else if (blockEntity instanceof EnderChestBlockEntity ecbe) {
+            ecbe.startOpen(serverPlayer);
+        } else if (blockEntity instanceof ShulkerBoxBlockEntity sbbe) {
+            sbbe.startOpen(serverPlayer);
+        }
+    }
+
+    @Override
+    public void triggerBlockClose(Player player, Location location) {
+        BlockEntity blockEntity = level.getBlockEntity(new BlockPos(location.getBlockX(), location.getBlockY(), location.getBlockZ()));
+        if (blockEntity == null) {
+            return;
+        }
+        ServerPlayer serverPlayer = ((CraftPlayer) player).getHandle();
+        if (blockEntity instanceof BarrelBlockEntity bbe) {
+            bbe.stopOpen(serverPlayer);
+        } else if (blockEntity instanceof ChestBlockEntity cbe) {
+            cbe.stopOpen(serverPlayer);
+        } else if (blockEntity instanceof EnderChestBlockEntity ecbe) {
+            ecbe.stopOpen(serverPlayer);
+        } else if (blockEntity instanceof ShulkerBoxBlockEntity sbbe) {
+            sbbe.stopOpen(serverPlayer);
+        }
     }
 
 }

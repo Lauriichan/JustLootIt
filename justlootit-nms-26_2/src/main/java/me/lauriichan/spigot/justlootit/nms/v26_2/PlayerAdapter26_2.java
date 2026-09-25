@@ -22,8 +22,10 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientboundContainerClosePacket;
 import net.minecraft.network.protocol.game.ClientboundOpenScreenPacket;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerCommonPacketListenerImpl;
+import net.minecraft.world.entity.monster.piglin.PiglinAi;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.AnvilMenu;
 
@@ -134,6 +136,15 @@ public final class PlayerAdapter26_2 extends PlayerAdapter {
             throw new IllegalStateException("Unable to get player channel", e);
         }
         return connection.channel;
+    }
+    
+    @Override
+    public void angerNearbyPiglins() {
+        ServerLevel level = minecraft.level();
+        if (level.getServer() == null) {
+            return;
+        }
+        PiglinAi.angerNearbyPiglins(level, minecraft, true);
     }
 
 }

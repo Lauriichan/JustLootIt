@@ -9,8 +9,6 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
-import org.bukkit.block.DoubleChest;
-import org.bukkit.block.Lidded;
 import org.bukkit.block.data.type.Chest;
 import org.bukkit.block.data.type.Chest.Type;
 import org.bukkit.entity.Entity;
@@ -64,7 +62,6 @@ import me.lauriichan.spigot.justlootit.inventory.handler.loot.GeneratedLootUIHan
 import me.lauriichan.spigot.justlootit.message.Messages;
 import me.lauriichan.spigot.justlootit.nms.LevelAdapter;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
-import me.lauriichan.spigot.justlootit.nms.VersionHelper;
 import me.lauriichan.spigot.justlootit.storage.IStorage;
 import me.lauriichan.spigot.justlootit.storage.Stored;
 import me.lauriichan.spigot.justlootit.util.BlockUtil;
@@ -395,9 +392,8 @@ public class ContainerListener implements IListenerExtension {
         accessContainer(block.getLocation(), container, dataContainer, event, event.getPlayer(),
             JustLootItAccess.getIdentity(dataContainer));
         if (!isBlockCancelled && event.useItemInHand() == Result.DENY) {
-            VersionHelper helper = plugin.versionHelper();
-            helper.triggerItemUsedCriteria(player, block.getLocation(), event.getItem());
-            helper.triggerPiglins(player);
+            plugin.versionHelper().triggerItemUsedCriteria(player, block.getLocation(), event.getItem());
+            plugin.versionHandler().getPlayer(player).angerNearbyPiglins();
         }
         if (JustLootItAccess.hasIdentity(dataContainer)) {
             return;
@@ -418,7 +414,7 @@ public class ContainerListener implements IListenerExtension {
         accessContainer(entity.getLocation(), (InventoryHolder) entity, dataContainer, event, event.getPlayer(),
             JustLootItAccess.getIdentity(dataContainer));
         if (event.isCancelled()) {
-            plugin.versionHelper().triggerPiglins(event.getPlayer());
+            plugin.versionHandler().getPlayer(event.getPlayer()).angerNearbyPiglins();
         }
     }
 
@@ -435,7 +431,7 @@ public class ContainerListener implements IListenerExtension {
         accessContainer(entity.getLocation(), (InventoryHolder) entity, dataContainer, event, event.getPlayer(),
             JustLootItAccess.getIdentity(dataContainer));
         if (event.isCancelled()) {
-            plugin.versionHelper().triggerPiglins(event.getPlayer());
+            plugin.versionHandler().getPlayer(event.getPlayer()).angerNearbyPiglins();
         }
     }
 
@@ -494,13 +490,10 @@ public class ContainerListener implements IListenerExtension {
                                         final IGuiInventory inventory = guiCapability.gui();
                                         player.setData(BaseLootUIHandler.PLAYER_DATA_LOOTING, BaseLootUIHandler.PLAYER_DATA_LOOTING_VALUE);
                                         inventory.attrSet(BaseLootUIHandler.ATTR_ID, storedCachedInventory.id());
+                                        inventory.attrSet(BaseLootUIHandler.ATTR_LOCATION, location);
                                         inventory.attrSet(CachedLootUIHandler.ATTR_CACHED_INVENTORY, cachedInventory);
                                         inventory.setHandler(CachedLootUIHandler.LOOT_HANDLER);
                                         inventory.open(bukkitPlayer);
-                                        if (inventoryHolder instanceof DoubleChest || inventoryHolder instanceof Lidded) {
-                                            inventory.attrSet(BaseLootUIHandler.ATTR_LIDDED_LOCATION, location);
-                                            BlockUtil.sendBlockOpen(level, bukkitPlayer, location);
-                                        }
                                     });
                                     return;
                                 }
@@ -526,14 +519,10 @@ public class ContainerListener implements IListenerExtension {
                     inventory.setHandler(GeneratedLootUIHandler.LOOT_HANDLER);
                     player.setData(BaseLootUIHandler.PLAYER_DATA_LOOTING, CachedLootUIHandler.PLAYER_DATA_LOOTING_VALUE);
                     inventory.attrSet(BaseLootUIHandler.ATTR_ID, lookupTable.acquire(entryId));
+                    inventory.attrSet(BaseLootUIHandler.ATTR_LOCATION, location);
                     inventory.attrSet(GeneratedLootUIHandler.ATTR_CONTAINER, dataContainer.value());
                     inventory.attrSet(GeneratedLootUIHandler.ATTR_INVENTORY_HOLDER, inventoryHolder);
-                    inventory.attrSet(GeneratedLootUIHandler.ATTR_LOCATION, location);
                     inventory.open(bukkitPlayer);
-                    if (inventoryHolder instanceof DoubleChest || inventoryHolder instanceof Lidded) {
-                        inventory.attrSet(CachedLootUIHandler.ATTR_LIDDED_LOCATION, location);
-                        BlockUtil.sendBlockOpen(level, bukkitPlayer, location);
-                    }
                 });
             });
         }, () -> event.setCancelled(true));

@@ -25,5 +25,9 @@ public abstract class LevelAdapter extends Capable<LevelAdapter> {
     }
     
     public abstract void triggerGameEvent(Player player, GameEvent event, Location location);
+    
+    public abstract void triggerBlockOpen(Player player, Location location);
+    
+    public abstract void triggerBlockClose(Player player, Location location);
 
 }
