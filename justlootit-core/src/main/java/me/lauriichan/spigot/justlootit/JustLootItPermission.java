@@ -15,6 +15,7 @@ public final class JustLootItPermission {
     public static final String COMMAND_DEBUG = "justlootit.command.debug";
     public static final String COMMAND_HELP = "justlootit.command.help";
 
+    public static final String ADMIN_BYPASS = "justlootit.admin.bypass";
     public static final String ADMIN_INFORM_VERSION = "justlootit.admin.version";
     public static final String ADMIN_INFORM_VERSION_UP2DATE = "justlootit.admin.version.up2date";
 

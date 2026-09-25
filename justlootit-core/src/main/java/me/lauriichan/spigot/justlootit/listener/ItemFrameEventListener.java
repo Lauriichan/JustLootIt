@@ -3,6 +3,7 @@ package me.lauriichan.spigot.justlootit.listener;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -45,6 +46,7 @@ import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.capability.ActorCapability;
 import me.lauriichan.spigot.justlootit.capability.StorageCapability;
 import me.lauriichan.spigot.justlootit.command.impl.LootItActor;
+import me.lauriichan.spigot.justlootit.compatibility.support.AccessSupport;
 import me.lauriichan.spigot.justlootit.config.MainConfig;
 import me.lauriichan.spigot.justlootit.config.world.WorldConfig;
 import me.lauriichan.spigot.justlootit.config.world.WorldMultiConfig;
@@ -103,7 +105,7 @@ public class ItemFrameEventListener implements IListenerExtension {
                 return;
             }
             final Stored<FrameContainer> stored = capability.storage().read(id);
-            if (!stored.value().canAccess(world, event.getPlayer().getUniqueId())) {
+            if (stored == null || !stored.value().canAccess(world, event.getPlayer().getUniqueId())) {
                 // If the player can not access this item frame we don't need to send an update
                 return;
             }
@@ -195,7 +197,7 @@ public class ItemFrameEventListener implements IListenerExtension {
         }
         final Player player = (Player) remover;
         if (!player.isSneaking()) {
-            accessFrame(entity, type, player, container);
+            event.setCancelled(accessFrame(entity, type, player, container));
             return;
         }
         LootItActor<Player> actor = ActorCapability.actor(plugin, player);
@@ -262,22 +264,32 @@ public class ItemFrameEventListener implements IListenerExtension {
         });
     }
 
-    private void accessFrame(Entity entity, EntityType type, Player player, PersistentDataContainer container) {
+    private boolean accessFrame(Entity entity, EntityType type, Player player, PersistentDataContainer container) {
         final LootItActor<?> actor = ActorCapability.actor(plugin, player);
         PlayerAdapter adapter = actor.versionHandler().getPlayer(player);
         if (adapter.getDataOrFallback(PLAYER_DATA_FRAME_LOOTING, false, boolean.class)) {
-            return;
+            return false;
         }
         adapter.setData(PLAYER_DATA_FRAME_LOOTING, true);
         try {
             final long id = JustLootItAccess.getIdentity(container);
             final World world = entity.getWorld();
+            AtomicBoolean returnValue = new AtomicBoolean(false);
             actor.versionHandler().getLevel(world).getCapability(StorageCapability.class).ifPresent(capability -> {
                 if (capability.hasBulkOperationRunning()) {
                     actor.sendTranslatedMessage(Messages.CONTAINER_ACCESS_STORAGE_BUSY);
                     return;
                 }
                 final Stored<FrameContainer> stored = capability.storage().read(id);
+                if (stored == null) {
+                    JustLootItAccess.removeIdentity(container);
+                    returnValue.set(true);
+                    return;
+                }
+                if (!AccessSupport.INSTANCE.canAccess(player, entity.getLocation())) {
+                    actor.sendTranslatedBarMessage(Messages.CONTAINER_ACCESS_UNPERMITTED);
+                    return;
+                }
                 final FrameContainer frame = stored.value();
                 if (!frame.access(world, player.getUniqueId())) {
                     final Duration duration = frame.durationUntilNextAccess(world, player.getUniqueId());
@@ -309,6 +321,7 @@ public class ItemFrameEventListener implements IListenerExtension {
                     }
                 }
             });
+            return returnValue.get();
         } finally {
             adapter.removeData(PLAYER_DATA_FRAME_LOOTING);
         }

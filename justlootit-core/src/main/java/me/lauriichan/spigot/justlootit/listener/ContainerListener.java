@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -49,6 +50,7 @@ import me.lauriichan.spigot.justlootit.capability.ActorCapability;
 import me.lauriichan.spigot.justlootit.capability.PlayerGUICapability;
 import me.lauriichan.spigot.justlootit.capability.StorageCapability;
 import me.lauriichan.spigot.justlootit.command.impl.LootItActor;
+import me.lauriichan.spigot.justlootit.compatibility.support.AccessSupport;
 import me.lauriichan.spigot.justlootit.config.MainConfig;
 import me.lauriichan.spigot.justlootit.config.world.WorldMultiConfig;
 import me.lauriichan.spigot.justlootit.data.CacheLookupTable;
@@ -373,8 +375,14 @@ public class ContainerListener implements IListenerExtension {
                 container.update(false, false);
                 return;
             }
-            accessContainer(otherContainer.getLocation(), otherContainer, otherDataContainer, event, event.getPlayer(),
-                JustLootItAccess.getIdentity(otherDataContainer));
+            boolean isBlockCancelled = event.useInteractedBlock() == Result.DENY;
+            if (accessContainer(otherContainer.getLocation(), otherContainer, otherDataContainer, event, event.getPlayer(),
+                JustLootItAccess.getIdentity(otherDataContainer))) {
+                if (!isBlockCancelled && event.useItemInHand() == Result.DENY) {
+                    plugin.versionHelper().triggerItemUsedCriteria(player, block.getLocation(), event.getItem());
+                    plugin.versionHandler().getPlayer(player).angerNearbyPiglins();
+                }
+            }
             if (JustLootItAccess.hasIdentity(otherDataContainer)) {
                 return;
             }
@@ -389,11 +397,12 @@ public class ContainerListener implements IListenerExtension {
             return;
         }
         boolean isBlockCancelled = event.useInteractedBlock() == Result.DENY;
-        accessContainer(block.getLocation(), container, dataContainer, event, event.getPlayer(),
-            JustLootItAccess.getIdentity(dataContainer));
-        if (!isBlockCancelled && event.useItemInHand() == Result.DENY) {
-            plugin.versionHelper().triggerItemUsedCriteria(player, block.getLocation(), event.getItem());
-            plugin.versionHandler().getPlayer(player).angerNearbyPiglins();
+        if (accessContainer(block.getLocation(), container, dataContainer, event, event.getPlayer(),
+            JustLootItAccess.getIdentity(dataContainer))) {
+            if (!isBlockCancelled && event.useItemInHand() == Result.DENY) {
+                plugin.versionHelper().triggerItemUsedCriteria(player, block.getLocation(), event.getItem());
+                plugin.versionHandler().getPlayer(player).angerNearbyPiglins();
+            }
         }
         if (JustLootItAccess.hasIdentity(dataContainer)) {
             return;
@@ -411,10 +420,11 @@ public class ContainerListener implements IListenerExtension {
         if (!JustLootItAccess.hasIdentity(dataContainer)) {
             return;
         }
-        accessContainer(entity.getLocation(), (InventoryHolder) entity, dataContainer, event, event.getPlayer(),
-            JustLootItAccess.getIdentity(dataContainer));
-        if (event.isCancelled()) {
-            plugin.versionHandler().getPlayer(event.getPlayer()).angerNearbyPiglins();
+        if (accessContainer(entity.getLocation(), (InventoryHolder) entity, dataContainer, event, event.getPlayer(),
+            JustLootItAccess.getIdentity(dataContainer))) {
+            if (event.isCancelled()) {
+                plugin.versionHandler().getPlayer(event.getPlayer()).angerNearbyPiglins();
+            }
         }
     }
 
@@ -428,14 +438,15 @@ public class ContainerListener implements IListenerExtension {
         if (!JustLootItAccess.hasIdentity(dataContainer)) {
             return;
         }
-        accessContainer(entity.getLocation(), (InventoryHolder) entity, dataContainer, event, event.getPlayer(),
-            JustLootItAccess.getIdentity(dataContainer));
-        if (event.isCancelled()) {
-            plugin.versionHandler().getPlayer(event.getPlayer()).angerNearbyPiglins();
+        if (accessContainer(entity.getLocation(), (InventoryHolder) entity, dataContainer, event, event.getPlayer(),
+            JustLootItAccess.getIdentity(dataContainer))) {
+            if (event.isCancelled()) {
+                plugin.versionHandler().getPlayer(event.getPlayer()).angerNearbyPiglins();
+            }
         }
     }
 
-    private void accessContainer(final Location location, final InventoryHolder inventoryHolder, final PersistentDataContainer data,
+    private boolean accessContainer(final Location location, final InventoryHolder inventoryHolder, final PersistentDataContainer data,
         final Cancellable event, final Player bukkitPlayer, final long id) {
         final PlayerAdapter player = plugin.versionHandler().getPlayer(bukkitPlayer);
         final LootItActor<?> actor = ActorCapability.actor(player);
@@ -445,7 +456,7 @@ public class ContainerListener implements IListenerExtension {
                 event.setCancelled(true);
                 player.setData(BaseLootUIHandler.PLAYER_DATA_LOOTING, value - 1);
                 actor.sendTranslatedMessage(Messages.CONTAINER_ACCESS_WAIT_FOR_ACCESS);
-                return;
+                return false;
             }
             // Force close loot ui handler if open after second access
             player.getCapability(PlayerGUICapability.class).ifPresent(guiCapability -> {
@@ -458,6 +469,7 @@ public class ContainerListener implements IListenerExtension {
         final WorldEntry entryId = new WorldEntry(world, id);
         final UUID playerId = bukkitPlayer.getUniqueId();
         final LevelAdapter level = actor.versionHandler().getLevel(world);
+        AtomicBoolean returnValue = new AtomicBoolean(false);
         level.getCapability(StorageCapability.class).ifPresentOrElse(capability -> {
             if (capability.hasBulkOperationRunning()) {
                 actor.sendTranslatedMessage(Messages.CONTAINER_ACCESS_STORAGE_BUSY);
@@ -470,6 +482,11 @@ public class ContainerListener implements IListenerExtension {
                 return;
             }
             event.setCancelled(true);
+            if (!AccessSupport.INSTANCE.canAccess(bukkitPlayer, location)) {
+                actor.sendTranslatedBarMessage(Messages.CONTAINER_ACCESS_UNPERMITTED);
+                return;
+            }
+            returnValue.set(true);
             player.getCapability(StorageCapability.class).ifPresent(playerCapability -> {
                 final IStorage playerStorage = playerCapability.storage();
                 final CacheLookupTable lookupTable = CacheLookupTable.retrieve(actor.plugin(), playerStorage);
@@ -526,6 +543,7 @@ public class ContainerListener implements IListenerExtension {
                 });
             });
         }, () -> event.setCancelled(true));
+        return returnValue.get();
     }
 
 }
