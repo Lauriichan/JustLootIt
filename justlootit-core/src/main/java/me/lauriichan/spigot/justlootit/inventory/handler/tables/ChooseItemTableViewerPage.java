@@ -101,9 +101,17 @@ public class ChooseItemTableViewerPage extends LootTableViewerPage {
         if (itemType == Material.BLACK_STAINED_GLASS_PANE || itemType.isAir()) {
             return true;
         }
+        String keyLastSegment = key.key();
+        int segmentSeparatorIdx = keyLastSegment.lastIndexOf('/');
+        if (segmentSeparatorIdx != -1) {
+            keyLastSegment = keyLastSegment.substring(segmentSeparatorIdx);
+        }
         Key[] keys = new Key[] {
             Key.of("container.type", StringUtil.formatPascalCase(key.type().name())),
-            Key.of("key", key.namespace() + ":" + key.key())
+            Key.of("key", key.namespace() + ":" + key.key()),
+            Key.of("key.namespace", key.namespace()),
+            Key.of("key.path", key.key()),
+            Key.of("key.last_segment", keyLastSegment)
         };
         ItemStack containerItem = ItemEditor.of(itemType)
             .setName(actor.getTranslatedMessageAsString(UIInventoryNames.LOOTTABLE_VIEWER_PAGE_CHOOSER_CONTAINER_ITEM_NAME, keys)).lore()

@@ -156,7 +156,7 @@ public final class UIInventoryNames implements IMessageExtension {
     })
     public static MessageProvider LOOTTABLE_VIEWER_PAGE_CHOOSER_BACK_LORE;
 
-    @Message(id = "inventory.loottable-viewer.page.chooser.container-item.name", content = "$#plugin.name &d$container.type &7container")
+    @Message(id = "inventory.loottable-viewer.page.chooser.container-item.name", content = "$#plugin.name &d$container.type &7container ($key.last_segment)")
     public static MessageProvider LOOTTABLE_VIEWER_PAGE_CHOOSER_CONTAINER_ITEM_NAME;
     @Message(id = "inventory.loottable-viewer.page.chooser.container-item.lore", content = {
         "",
