@@ -163,29 +163,26 @@ public final class BlockUtil {
     public static void triggerBlockOpen(LevelAdapter level, Player player, Location location) {
         BlockState state = player.getWorld().getBlockState(location);
         Material type = state.getType();
+        player.swingMainHand();
         if (MaterialRegistry.BARREL.isValue(type)) {
             player.incrementStatistic(Statistic.OPEN_BARREL);
             level.triggerBlockOpen(player, location);
             level.triggerGameEvent(player, GameEvent.CONTAINER_OPEN, location);
-            player.playSound(location, Sound.BLOCK_BARREL_OPEN, SoundCategory.BLOCKS, 0.5f, 1f);
             return;
         } else if (MaterialRegistry.CHEST.isValue(type)) {
             player.incrementStatistic(Statistic.CHEST_OPENED);
             level.triggerBlockOpen(player, location);
             level.triggerGameEvent(player, GameEvent.CONTAINER_OPEN, location);
-            player.playSound(location, Sound.BLOCK_CHEST_OPEN, SoundCategory.BLOCKS, 0.5f, 1f);
             return;
         } else if (MaterialRegistry.TRAPPED_CHEST.isValue(type)) {
             player.incrementStatistic(Statistic.TRAPPED_CHEST_TRIGGERED);
             level.triggerBlockOpen(player, location);
             level.triggerGameEvent(player, GameEvent.CONTAINER_OPEN, location);
-            player.playSound(location, Sound.BLOCK_CHEST_OPEN, SoundCategory.BLOCKS, 0.5f, 1f);
             return;
         } else if (MaterialRegistry.ENDER_CHEST.isValue(type)) {
             player.incrementStatistic(Statistic.ENDERCHEST_OPENED);
             level.triggerBlockOpen(player, location);
             level.triggerGameEvent(player, GameEvent.CONTAINER_OPEN, location);
-            player.playSound(location, Sound.BLOCK_ENDER_CHEST_OPEN, SoundCategory.BLOCKS, 0.5f, 1f);
             return;
         } else if (MaterialRegistry.SHULKER_BOX.isValue(type)) {
             player.incrementStatistic(Statistic.SHULKER_BOX_OPENED);

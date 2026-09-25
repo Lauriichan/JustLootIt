@@ -22,6 +22,7 @@ import me.lauriichan.spigot.justlootit.nms.LevelAdapter;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.storage.Stored;
+import me.lauriichan.spigot.justlootit.util.BlockUtil;
 
 public abstract class BaseLootUIHandler implements IHandler {
 
@@ -61,7 +62,7 @@ public abstract class BaseLootUIHandler implements IHandler {
             if (blockLocation != null) {
                 LevelAdapter level = player.getLevel();
                 player.versionHandler().platform().scheduler().regional(blockLocation,
-                    () -> level.triggerBlockClose(player.asBukkit(), blockLocation));
+                    () -> BlockUtil.triggerBlockClose(level, player.asBukkit(), blockLocation));
             }
             player.getCapability(StorageCapability.class).ifPresent(capability -> {
                 Stored<CachedInventory> cached = capability.storage().read(id);
