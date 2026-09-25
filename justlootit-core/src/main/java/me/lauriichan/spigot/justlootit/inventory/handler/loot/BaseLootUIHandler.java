@@ -22,7 +22,6 @@ import me.lauriichan.spigot.justlootit.nms.LevelAdapter;
 import me.lauriichan.spigot.justlootit.nms.PlayerAdapter;
 import me.lauriichan.spigot.justlootit.nms.VersionHandler;
 import me.lauriichan.spigot.justlootit.storage.Stored;
-import me.lauriichan.spigot.justlootit.util.BlockUtil;
 
 public abstract class BaseLootUIHandler implements IHandler {
 
@@ -40,20 +39,6 @@ public abstract class BaseLootUIHandler implements IHandler {
     protected final MainConfig config = plugin.configManager().config(MainConfig.class);
 
     protected BaseLootUIHandler() {}
-
-    @Override
-    public boolean onEventOpen(HumanEntity entity, IGuiInventory inventory) {
-        final PlayerAdapter player = versionHandler.getPlayer(entity.getUniqueId());
-        final Location blockLocation = inventory.attr(ATTR_LOCATION, Location.class);
-        if (player != null || blockLocation != null) {
-            LevelAdapter level = player.getLevel();
-            player.versionHandler().platform().scheduler().regional(blockLocation, () -> {
-                level.triggerBlockOpen(player.asBukkit(), blockLocation);
-                BlockUtil.awardStatistic(player.asBukkit(), blockLocation);
-            });
-        }
-        return IHandler.super.onEventOpen(entity, inventory);
-    }
 
     @SuppressWarnings("unlikely-arg-type")
     @Override
@@ -75,9 +60,8 @@ public abstract class BaseLootUIHandler implements IHandler {
             final Location blockLocation = inventory.attr(ATTR_LOCATION, Location.class);
             if (blockLocation != null) {
                 LevelAdapter level = player.getLevel();
-                player.versionHandler().platform().scheduler().regional(blockLocation, () -> {
-                    level.triggerBlockClose(player.asBukkit(), blockLocation);
-                });
+                player.versionHandler().platform().scheduler().regional(blockLocation,
+                    () -> level.triggerBlockClose(player.asBukkit(), blockLocation));
             }
             player.getCapability(StorageCapability.class).ifPresent(capability -> {
                 Stored<CachedInventory> cached = capability.storage().read(id);

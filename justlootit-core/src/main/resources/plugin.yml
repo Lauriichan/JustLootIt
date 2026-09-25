@@ -4,8 +4,8 @@ author: Lauriichan
 version: ${project.version}
 api-version: 1.20
 load: startup
-softdepend: [BetterInputs, Iris, BetterStructures, CustomStructures, floodgate]
-loadbefore: [BetterInputs, Iris, BetterStructures, CustomStructures, floodgate]
+softdepend: [BetterInputs, Iris, BetterStructures, CustomStructures, floodgate, WorldGuard]
+loadbefore: [BetterInputs, Iris, BetterStructures, CustomStructures, floodgate, WorldGuard]
 
 folia-supported: true
 
@@ -14,16 +14,16 @@ permissions:
         description: Gives access to all JustLootIt permissions
         default: op
         children:
-			justlootit.admin.*: true
+            justlootit.admin.*: true
             justlootit.command.*: true
             justlootit.remove.container.*: true
             justlootit.place.container.*: true
-	justlootit.admin.*:
-		default: false
-		description: Gives access to all JustLootIt admin permissions
-	justlootit.admin.bypass:
-		default: false
-		description: Allows the user to bypass all additional protection around JLI containers (like WorldGuard).
+    justlootit.admin.*:
+        default: false
+        description: Gives access to all JustLootIt admin permissions
+    justlootit.admin.bypass:
+        default: false
+        description: Allows the user to bypass all additional protection around JLI containers (like WorldGuard).
     justlootit.command.*:
         description: Gives access to all JustLootIt commands
         default: false
