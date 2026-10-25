@@ -138,7 +138,8 @@ public class ItemFrameEventListener implements IListenerExtension {
             return;
         }
         BlockState state = entity.getWorld().getBlockState(event.getEntity().getLocation());
-        if (state.getType().isAir()) {
+        Material blockType = state.getType();
+        if (blockType.isAir() || !blockType.isItem()) {
             return;
         }
         List<ItemStack> drops = new ArrayList<>();
