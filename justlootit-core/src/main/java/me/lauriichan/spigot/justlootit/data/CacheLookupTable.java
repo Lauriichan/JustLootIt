@@ -200,6 +200,12 @@ public class CacheLookupTable implements IModifiable {
             return;
         }
         entryIds.rem(entry.entryId);
+        tableToMapped.remove(entry.tableId);
+        for (int index = entry.tableId + 1; index < tableToMapped.size(); index++) {
+            final LookupEntry current = tableToMapped.remove(index);
+            tableToMapped.put(--current.tableId, current);
+        }
+        setDirty();
     }
 
     public boolean access(final WorldEntry mappedId) {
