@@ -201,10 +201,7 @@ public class CacheLookupTable implements IModifiable {
         }
         entryIds.rem(entry.entryId);
         tableToMapped.remove(entry.tableId);
-        for (int index = entry.tableId + 1; index < tableToMapped.size(); index++) {
-            final LookupEntry current = tableToMapped.remove(index);
-            tableToMapped.put(--current.tableId, current);
-        }
+        updateIndexFrom(entry.tableId + 1);
         setDirty();
     }
 
@@ -217,15 +214,24 @@ public class CacheLookupTable implements IModifiable {
         if (entry.tableId != tableToMapped.size() - 1) {
             // Push to top
             tableToMapped.remove(entry.tableId);
-            for (int index = entry.tableId + 1; index < tableToMapped.size(); index++) {
-                final LookupEntry current = tableToMapped.remove(index);
-                tableToMapped.put(--current.tableId, current);
-            }
+            updateIndexFrom(entry.tableId + 1);
             entry.tableId = tableToMapped.size() - 1;
             tableToMapped.put(entry.tableId, entry);
             setDirty();
         }
         return true;
+    }
+    
+    private void updateIndexFrom(int startIndex) {
+        for (int index = startIndex; index < tableToMapped.size(); index++) {
+            final LookupEntry current = tableToMapped.remove(index);
+            if (current == null) {
+                index--;
+                continue;
+            }
+            current.tableId = index - 1;
+            tableToMapped.put(index, current);
+        }
     }
 
     public long acquire(final WorldEntry mappedId) {
