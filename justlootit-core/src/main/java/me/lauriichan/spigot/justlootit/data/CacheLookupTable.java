@@ -129,13 +129,13 @@ public class CacheLookupTable implements IModifiable {
         if (days == 0) {
             return;
         }
-        int offset = 0;
+        int offset = 0, tableId;
         final OffsetDateTime now = OffsetDateTime.now();
         for (int index = 0; index < maxSize; index++) {
             final LookupEntry entry = tableToMapped.remove(index);
             if (entry == null) {
-                // Null means we're done
-                break;
+                offset++;
+                continue;
             }
             if (now.isAfter(entry.cached.plusDays(days))) {
                 mappedToTable.remove(entry.mappedId);
@@ -143,7 +143,8 @@ public class CacheLookupTable implements IModifiable {
                 offset++;
                 continue;
             }
-            tableToMapped.put(index - offset, entry);
+            entry.tableId = tableId = index - offset;
+            tableToMapped.put(tableId, entry);
         }
         if (offset != 0) {
             setDirty();
@@ -223,14 +224,15 @@ public class CacheLookupTable implements IModifiable {
     }
     
     private void updateIndexFrom(int startIndex) {
-        for (int index = startIndex; index < tableToMapped.size(); index++) {
+        int offset = 1, tableId;
+        for (int index = startIndex; index < maxSize; index++) {
             final LookupEntry current = tableToMapped.remove(index);
             if (current == null) {
-                index--;
+                offset++;
                 continue;
             }
-            current.tableId = index - 1;
-            tableToMapped.put(index, current);
+            current.tableId = tableId = index - offset;
+            tableToMapped.put(tableId, current);
         }
     }
 
