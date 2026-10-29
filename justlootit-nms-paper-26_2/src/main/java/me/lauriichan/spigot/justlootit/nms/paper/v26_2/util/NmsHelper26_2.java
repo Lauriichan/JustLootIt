@@ -191,7 +191,7 @@ public final class NmsHelper26_2 {
     }
 
     public static void setOpenCount(ShulkerBoxBlockEntity shulker, int newValue) {
-        SHULKERBOX_OPEN_COUNT.setVolatile(shulker, shulker);
+        SHULKERBOX_OPEN_COUNT.setVolatile(shulker, newValue);
     }
     
     public static MinecraftServer getServer() {
