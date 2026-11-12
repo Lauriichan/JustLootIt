@@ -7,6 +7,7 @@ import me.lauriichan.spigot.justlootit.JustLootItPlugin;
 import me.lauriichan.spigot.justlootit.compatibility.provider.Compatibility;
 import me.lauriichan.spigot.justlootit.compatibility.provider.ICompatProvider;
 import me.lauriichan.spigot.justlootit.compatibility.support.AccessSupport;
+import me.lauriichan.spigot.justlootit.compatibility.support.DestructionSupport;
 
 @Extension
 @Compatibility(name = "WorldGuard", minMajor = 7, minMinor = 0)
@@ -23,11 +24,13 @@ public class WorldGuardCompatProvider implements ICompatProvider {
     public void onEnable(JustLootItPlugin jli, Plugin plugin) {
         access.init();
         AccessSupport.INSTANCE.register(access);
+        DestructionSupport.INSTANCE.register(access);
     }
 
     @Override
     public void onDisable(JustLootItPlugin jli, Plugin plugin) {
         AccessSupport.INSTANCE.unregister(access);
+        DestructionSupport.INSTANCE.unregister(access);
     }
 
 }

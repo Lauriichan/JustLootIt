@@ -51,6 +51,7 @@ import me.lauriichan.spigot.justlootit.capability.PlayerGUICapability;
 import me.lauriichan.spigot.justlootit.capability.StorageCapability;
 import me.lauriichan.spigot.justlootit.command.impl.LootItActor;
 import me.lauriichan.spigot.justlootit.compatibility.support.AccessSupport;
+import me.lauriichan.spigot.justlootit.compatibility.support.DestructionSupport;
 import me.lauriichan.spigot.justlootit.config.MainConfig;
 import me.lauriichan.spigot.justlootit.config.world.WorldMultiConfig;
 import me.lauriichan.spigot.justlootit.data.CacheLookupTable;
@@ -128,7 +129,8 @@ public class ContainerListener implements IListenerExtension {
         event.setCancelled(true);
         Player player = event.getPlayer();
         LootItActor<?> actor = ActorCapability.actor(plugin, player);
-        if (!player.hasPermission(JustLootItPermission.ACTION_REMOVE_CONTAINER_BLOCK)) {
+        if (!player.hasPermission(JustLootItPermission.ACTION_REMOVE_CONTAINER_BLOCK)
+            || !DestructionSupport.INSTANCE.canDestroy(player, block.getLocation())) {
             actor.sendTranslatedMessage(Messages.CONTAINER_BREAK_UNPERMITTED_BLOCK);
             return;
         }
@@ -315,7 +317,8 @@ public class ContainerListener implements IListenerExtension {
         }
         Player player = (Player) attacker;
         LootItActor<?> actor = ActorCapability.actor(plugin, player);
-        if (!player.hasPermission(JustLootItPermission.ACTION_REMOVE_CONTAINER_ENTITY)) {
+        if (!player.hasPermission(JustLootItPermission.ACTION_REMOVE_CONTAINER_ENTITY)
+            || !DestructionSupport.INSTANCE.canDestroy(player, vehicle.getLocation())) {
             actor.sendTranslatedMessage(Messages.CONTAINER_BREAK_UNPERMITTED_ENTITY);
             return;
         }

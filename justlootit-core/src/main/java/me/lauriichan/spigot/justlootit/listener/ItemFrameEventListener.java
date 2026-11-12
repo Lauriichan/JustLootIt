@@ -47,6 +47,7 @@ import me.lauriichan.spigot.justlootit.capability.ActorCapability;
 import me.lauriichan.spigot.justlootit.capability.StorageCapability;
 import me.lauriichan.spigot.justlootit.command.impl.LootItActor;
 import me.lauriichan.spigot.justlootit.compatibility.support.AccessSupport;
+import me.lauriichan.spigot.justlootit.compatibility.support.DestructionSupport;
 import me.lauriichan.spigot.justlootit.config.MainConfig;
 import me.lauriichan.spigot.justlootit.config.world.WorldConfig;
 import me.lauriichan.spigot.justlootit.config.world.WorldMultiConfig;
@@ -202,7 +203,8 @@ public class ItemFrameEventListener implements IListenerExtension {
             return;
         }
         LootItActor<Player> actor = ActorCapability.actor(plugin, player);
-        if (!player.hasPermission(JustLootItPermission.ACTION_REMOVE_CONTAINER_ENTITY)) {
+        if (!player.hasPermission(JustLootItPermission.ACTION_REMOVE_CONTAINER_ENTITY)
+            || !DestructionSupport.INSTANCE.canDestroy(player, entity.getLocation())) {
             actor.sendTranslatedMessage(Messages.CONTAINER_BREAK_UNPERMITTED_ENTITY);
             return;
         }

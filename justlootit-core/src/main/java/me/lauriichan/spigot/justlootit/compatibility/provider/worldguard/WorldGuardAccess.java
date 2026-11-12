@@ -17,24 +17,36 @@ import me.lauriichan.spigot.justlootit.JustLootItPermission;
 
 public final class WorldGuardAccess implements IWorldGuardAccess {
 
-    private final WorldGuardPlugin plugin;
-    private final StateFlag flag;
+    private static record RegisteredFlag(StateFlag flag, boolean success) {}
 
-    private final boolean flagSuccess;
+    private final ISimpleLogger logger;
+
+    private final WorldGuard worldGuard;
+    private final WorldGuardPlugin plugin;
+
+    private final RegisteredFlag accessFlag, destroyFlag;
 
     private RegionContainer regionContainer;
 
     public WorldGuardAccess(ISimpleLogger logger, Plugin plugin) {
+        this.logger = logger;
         this.plugin = (WorldGuardPlugin) plugin;
-        this.flag = new StateFlag("jli-container-access", true);
-        boolean flagSuccess = true;
+        this.worldGuard = WorldGuard.getInstance();
+
+        this.accessFlag = registerFlag("jli-container-access", true);
+        this.destroyFlag = registerFlag("jli-container-destruction", true);
+    }
+
+    private RegisteredFlag registerFlag(String name, boolean defaultValue) {
+        boolean success = true;
+        StateFlag flag = new StateFlag(name, defaultValue);
         try {
-            WorldGuard.getInstance().getFlagRegistry().register(flag);
+            worldGuard.getFlagRegistry().register(flag);
         } catch (FlagConflictException | IllegalStateException exp) {
-            flagSuccess = false;
+            success = false;
             logger.warning("Failed to register WorldGuard flag", exp);
         }
-        this.flagSuccess = flagSuccess;
+        return new RegisteredFlag(flag, success);
     }
 
     public final void init() {
@@ -46,12 +58,24 @@ public final class WorldGuardAccess implements IWorldGuardAccess {
 
     @Override
     public boolean canAccess(Player player, Location location) {
-        if (!flagSuccess || player.hasPermission(JustLootItPermission.ADMIN_BYPASS)) {
+        if (!accessFlag.success() || player.hasPermission(JustLootItPermission.ADMIN_BYPASS)) {
             return true;
         }
         LocalPlayer localPlayer = plugin.wrapPlayer(player);
         return regionContainer.get(localPlayer.getWorld())
-            .getApplicableRegions(BlockVector3.at(location.getX(), location.getY(), location.getZ())).testState(localPlayer, flag);
+            .getApplicableRegions(BlockVector3.at(location.getX(), location.getY(), location.getZ()))
+            .testState(localPlayer, accessFlag.flag());
+    }
+
+    @Override
+    public boolean canDestroy(Player player, Location location) {
+        if (!destroyFlag.success() || player.hasPermission(JustLootItPermission.ADMIN_BYPASS)) {
+            return true;
+        }
+        LocalPlayer localPlayer = plugin.wrapPlayer(player);
+        return regionContainer.get(localPlayer.getWorld())
+            .getApplicableRegions(BlockVector3.at(location.getX(), location.getY(), location.getZ()))
+            .testState(localPlayer, destroyFlag.flag());
     }
 
 }
